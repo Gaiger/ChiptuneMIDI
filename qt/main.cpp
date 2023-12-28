@@ -22,12 +22,10 @@
 
 #include <QMidiOut.h>
 #include <QMidiFile.h>
-#include "MidiPlayerThread.h"
+#include "MidiPlayer.h"
 
 static void ListAvailableMidiDevices(void)
 {
-	fprintf(stderr, "Usage: %s -p<port> <MidiFile>\n\n", qApp->applicationName().toLatin1().constData());
-	fputs("Ports:\nID\tName\n----------------\n", stderr);
 	QMap<QString, QString> vals = QMidiOut::devices();
 	QList<QString> key_list = vals.keys();
 	for(QString & key : key_list) {
@@ -63,9 +61,10 @@ int main(int argc, char* argv[])
 	QMidiOut* midi_out = new QMidiOut();
 	midi_out->connect(midiOutName);
 
-	MidiPlayer* p = new MidiPlayer(midi_file, midi_out);
-	QObject::connect(p, SIGNAL(finished()), &a, SLOT(quit()));
-	p->start();
+	MidiPlayer* p_player = new MidiPlayer(midi_file, midi_out, &a);
+	QObject::connect(p_player, &MidiPlayer::Finished, &a,  &QCoreApplication::quit);
+	//p_player->moveToThread(a.thread());
+	p_player->Play();
 
 	return a.exec();
 }
