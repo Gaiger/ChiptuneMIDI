@@ -34,7 +34,7 @@ public:
 				}
 			}while(p_midi_event->type() == QMidiEvent::Meta || p_midi_event->type() == QMidiEvent::SysEx);
 
-			//if(0 == p_midi_event->track() || 2 == p_midi_event->track())
+			//if(0 == p_midi_event->track() || 1 == p_midi_event->track())
 			{
 				break;
 			}

@@ -73,6 +73,8 @@ static float s_delta_tick = (float)(DEFAULT_SAMPLING_RATE * 60.0/DEFAULT_TEMPO/D
 static int(*s_handler_get_next_midi_message)(uint32_t * const p_message, uint32_t * const p_tick) = NULL;
 static void(*s_handler_tune_ending_notification)(void) = NULL;
 
+static s_is_tune_ending_notified = false;
+
 /**********************************************************************************/
 
 void chiptune_set_midi_message_callback( int(*handler_get_next_midi_message)(uint32_t * const p_message, uint32_t * const p_tick) )
@@ -82,9 +84,9 @@ void chiptune_set_midi_message_callback( int(*handler_get_next_midi_message)(uin
 
 
 /**********************************************************************************/
-void chiptune_set_tune_ending_notfication_callback( void(*handler_ending_notification)(void))
+void chiptune_set_tune_ending_notfication_callback( void(*handler_tune_ending_notification)(void))
 {
-	s_handler_tune_ending_notification = handler_ending_notification;
+	s_handler_tune_ending_notification = handler_tune_ending_notification;
 }
 
 /**********************************************************************************/
@@ -99,7 +101,7 @@ enum
 };
 
 #define MAX_TRACK_NUMBER							(16)
-#define MAX_OSCILLATOR_NUMBER						(MAX_TRACK_NUMBER * 10)
+#define MAX_OSCILLATOR_NUMBER						(MAX_TRACK_NUMBER * 2)
 
 struct _oscillator
 {
@@ -221,22 +223,6 @@ static int setup_program_change_into_track_info(uint8_t const voice, uint8_t con
 
 /**********************************************************************************/
 
-static bool is_all_oscillators_completed(void)
-{
-	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(UNSED_OSCILLATOR == s_oscillator[i].track_index){
-			continue;
-		}
-		if(false == s_oscillator[i].is_completed){
-			return false;
-		}
-	}
-
-	return true;
-}
-
-/**********************************************************************************/
-
 static bool is_all_oscillators_unused(void)
 {
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
@@ -254,6 +240,11 @@ static bool is_all_oscillators_unused(void)
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 uint8_t const voice, uint8_t const note, uint8_t const velocity)
 {
+#if(1)
+	if(818880 < s_time_tick){
+		CHIPTUNE_PRINTF(pDeveloping, "tick = %u, voice = %u, note = %u, is_note_on = %u\r\n", tick, voice, note, is_note_on);
+	}
+#endif
 	do
 	{
 		int ii = 0;
@@ -265,7 +256,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			}
 
 			if(MAX_OSCILLATOR_NUMBER== ii){
-				CHIPTUNE_PRINTF(pDeveloping, "ERROR::s_oscillator full\r\n");
+				CHIPTUNE_PRINTF(pDeveloping, "ERROR::all oscillator are used\r\n");
 				return -1;
 			}
 			s_oscillator[ii].track_index = voice;
@@ -275,6 +266,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			s_oscillator[ii].note = note;
 			s_oscillator[ii].phase = 0;
 			s_oscillator[ii].start_tick = tick;
+			s_oscillator[ii].end_tick = UINT32_MAX;
 			s_oscillator[ii].is_completed = false;
 			break;
 		}
@@ -359,25 +351,66 @@ static void process_midi_message(uint32_t const message, uint32_t const tick, bo
 
 /**********************************************************************************/
 
-inline static int process_next_midi_message(bool * const p_is_note_message)
+uint32_t s_fetched_message = UINT32_MAX;
+uint32_t s_fetched_tick = UINT32_MAX;
+
+inline static int process_timely_midi_message(void)
 {
 	uint32_t message;
 	uint32_t tick;
-	do
-	{
-		if(-1 == s_handler_get_next_midi_message(&message, &tick)){
-			return -1;
-		}
-		process_midi_message(message, tick, p_is_note_message);
-	}while(0);
 
-	return 0;
+	int ii = 0;
+	bool is_note_message;
+	if(!(UINT32_MAX == s_fetched_message && UINT32_MAX == s_fetched_tick)){
+		if(s_fetched_tick > s_time_tick + s_delta_tick){
+			return 0;
+		}
+		process_midi_message(s_fetched_message, s_fetched_tick, &is_note_message);
+		ii += 1;
+	}
+
+	bool is_no_more_message = false;
+	while(1)
+	{
+		if(0 != s_handler_get_next_midi_message(&message, &tick)){
+			is_no_more_message = true;
+			break;
+		}
+
+		if(tick > s_time_tick + s_delta_tick){
+			break;
+		}
+
+		process_midi_message(message, tick, &is_note_message);
+		ii += 1;
+	}
+
+#if(1)
+	if(818880 == tick){
+		UPDATE_DELTA_TICK();
+	}
+#endif
+
+	s_fetched_message = message;
+	s_fetched_tick = tick;
+	if(true == is_no_more_message){
+		s_fetched_message = UINT32_MAX;
+		s_fetched_tick = UINT32_MAX;
+	}
+
+	if(0== ii){
+		return -1;
+	}
+
+	return ii;
 }
 
 /**********************************************************************************/
 
 void chiptune_initialize(uint32_t const sampling_rate)
 {
+	s_is_tune_ending_notified = false;
+
 	s_time_tick = 0.0;
 	s_sampling_rate = sampling_rate;
 	UPDATE_DELTA_TICK();
@@ -398,12 +431,7 @@ void chiptune_initialize(uint32_t const sampling_rate)
 		s_phase_table[i] = (uint16_t)((UINT16_MAX + 1) * frequency / sampling_rate);
 	}
 
-	bool is_note_message;
-	do
-	{
-		process_next_midi_message(&is_note_message);
-	}while(false == is_note_message);
-
+	process_timely_midi_message();
 	return ;
 }
 
@@ -421,36 +449,37 @@ void chiptune_set_resolution(uint32_t const resolution)
 {
 	s_resolution = resolution;
 	UPDATE_DELTA_TICK();
+#if(1)
+	s_delta_tick *= 100;
+#endif
 }
 
 /**********************************************************************************/
 
 uint8_t chiptune_fetch_wave(void)
 {
-	while(false == is_all_oscillators_completed()
-		  || true == is_all_oscillators_unused())
-	{
-		bool is_note_message;
-		if(0 != process_next_midi_message(&is_note_message)){
+	if(-1 == process_timely_midi_message()){
+		if(true == is_all_oscillators_unused()){
 			if(NULL != s_handler_tune_ending_notification){
-				s_handler_tune_ending_notification();
+				if(false == s_is_tune_ending_notified){
+					s_handler_tune_ending_notification();
+					s_is_tune_ending_notified = true;
+				}
 			}
-			break;
 		}
 	}
 
 	int16_t accumulated_value = 0;
-	for(int i = 0; i < MAX_OSCILLATOR_NUMBER;i++){
+	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		if(UNSED_OSCILLATOR == s_oscillator[i].track_index){
-			continue;
-		}
-
-		if(s_time_tick < s_oscillator[i].start_tick){
 			continue;
 		}
 
 		if(s_time_tick > s_oscillator[i].end_tick){
 			s_oscillator[i].track_index = UNSED_OSCILLATOR;
+		}
+
+		if(s_time_tick < s_oscillator[i].start_tick){
 			continue;
 		}
 

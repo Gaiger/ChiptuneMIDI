@@ -1,6 +1,7 @@
 #include <QDebug>
 #include <QEventLoop>
 #include <QBuffer>
+#include <QTimer>
 
 #include "AudioPlayer.h"
 
@@ -40,17 +41,18 @@ AudioPlayer::AudioPlayer(TuneManager *p_tune_manager, QObject *parent)
 	m_p_tune_manager(p_tune_manager)
 {
 
-#if(1)
 	QObject::connect(m_p_tune_manager, &TuneManager::TuneEnded,
 					this,
 					[&]()
 					{
 						if(nullptr != m_p_audio_output){
-							AudioPlayer::Stop();
+							QTimer::singleShot(1000, this, [&](){
+								QObject::disconnect(m_p_audio_output, &QAudioOutput::notify, this, &AudioPlayer::HandleAudioNotify);
+							});
 						}
 					}
 	);
-#endif
+
 }
 
 /**********************************************************************************/
