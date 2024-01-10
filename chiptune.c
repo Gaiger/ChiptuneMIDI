@@ -53,27 +53,29 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 												}while(0)
 #endif
 
+typedef double chiptune_float;
+
 #define DEFAULT_TEMPO								(120.0)
 #define DEFAULT_SAMPLING_RATE						(16000)
 #define DEFAULT_RESOLUTION							(960)
 
 uint16_t s_phase_table[MIDI_FREQUENCY_TABLE_SIZE] = {0};
 
-static float s_tempo = DEFAULT_TEMPO;
+static chiptune_float s_tempo = DEFAULT_TEMPO;
 static uint32_t s_sampling_rate = DEFAULT_SAMPLING_RATE;
 
 static uint32_t s_resolution = DEFAULT_RESOLUTION;
-static float s_time_tick = 0.0f;
-static float s_delta_tick = (float)(DEFAULT_SAMPLING_RATE * 60.0/DEFAULT_TEMPO/DEFAULT_RESOLUTION);
+static chiptune_float s_time_tick = 0.0f;
+static chiptune_float s_delta_tick = (double)(DEFAULT_SAMPLING_RATE * 60.0/DEFAULT_TEMPO/DEFAULT_RESOLUTION);
 
 #define UPDATE_DELTA_TICK()				do{			\
-											s_delta_tick = (float)(1.0/(s_sampling_rate * 60.0/s_tempo/(float)s_resolution)); \
+											s_delta_tick = (double)(1.0/(s_sampling_rate * 60.0/s_tempo/(double)s_resolution)); \
 										} while(0)
 
 static int(*s_handler_get_next_midi_message)(uint32_t * const p_message, uint32_t * const p_tick) = NULL;
 static void(*s_handler_tune_ending_notification)(void) = NULL;
 
-static s_is_tune_ending_notified = false;
+static bool s_is_tune_ending_notified = false;
 
 /**********************************************************************************/
 
@@ -423,8 +425,8 @@ void chiptune_initialize(uint32_t const sampling_rate)
 		/*
 		 * freq = 440 * 2**((n-69)/12)
 		*/
-		float frequency = 440.0f * powf(2.0f, (float)(i- 69)/12.0f);
-		frequency = roundf(frequency * 100.0f + 0.5f)/100.0f;
+		double frequency = 440.0 * pow(2.0, (float)(i- 69)/12.0);
+		frequency = round(frequency * 100.0 + 0.5)/100.0;
 		/*
 		 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX = + 1)/phase
 		*/
@@ -439,7 +441,7 @@ void chiptune_initialize(uint32_t const sampling_rate)
 
 void chiptune_set_tempo(float const tempo)
 {
-	s_tempo = tempo;
+	s_tempo = (chiptune_float)tempo;
 	UPDATE_DELTA_TICK();
 }
 
@@ -449,7 +451,7 @@ void chiptune_set_resolution(uint32_t const resolution)
 {
 	s_resolution = resolution;
 	UPDATE_DELTA_TICK();
-#if(1)
+#if(0)
 	s_delta_tick *= 100;
 #endif
 }
