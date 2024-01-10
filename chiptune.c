@@ -2,9 +2,56 @@
 #include <string.h>
 #include <math.h>
 
+#include<stdarg.h>
 #include <stdio.h>
 
 #include "chiptune.h"
+
+#define _PRINT_MIDI_SETUP
+#define _PRINT_MIDI_DEVELOPING
+
+enum
+{
+	pDeveloping = 0,
+
+	pMidiSetup = 1,
+} PrintType;
+
+void chiptune_printf(int const print_type, const char* fmt, ...)
+{
+	bool is_print_out = false;
+
+#ifdef _PRINT_MIDI_SETUP
+	if(pMidiSetup == print_type){
+		is_print_out = true;
+	}
+#endif
+
+#ifdef _PRINT_MIDI_DEVELOPING
+	if(pDeveloping == print_type){
+		is_print_out = true;
+	}
+#endif
+
+	if (false == is_print_out){
+			return;
+	}
+
+	va_list args;
+	va_start(args, fmt);
+	vfprintf(stdout, fmt, args);
+	va_end(args);
+}
+
+#define CHIPTUNE_PRINTF(PRINT_TYPE, FMT, ...)				do { \
+													chiptune_printf(PRINT_TYPE, FMT, ##__VA_ARGS__); \
+												}while(0)
+
+#if(0)
+#define CHIPTUNE_PRINTF(PRINT_TYPE, FMT, ...)				do { \
+													(void)0; \
+												}while(0)
+#endif
 
 #define DEFAULT_TEMPO								(120.0)
 #define DEFAULT_SAMPLING_RATE						(16000)
@@ -52,7 +99,7 @@ enum
 };
 
 #define MAX_TRACK_NUMBER							(16)
-#define MAX_OSCILLATOR_NUMBER						(MAX_TRACK_NUMBER * 2)
+#define MAX_OSCILLATOR_NUMBER						(MAX_TRACK_NUMBER * 10)
 
 struct _oscillator
 {
@@ -107,6 +154,7 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 {
 	switch(number){
 	case MIDI_CC_DATA_ENTRY_MSB:
+		CHIPTUNE_PRINTF(pMidiSetup, "MIDI_CC_DATA_ENTRY_MSB :: voice = %u, value = %u\r\n", voice, value);
 		break;
 	case MIDI_CC_VOLUME:
 		do
@@ -119,6 +167,7 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 			}
 			s_track_info[voice].volume = value;
 		}while(0);
+		CHIPTUNE_PRINTF(pMidiSetup, "%s::MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
 		break;
 	case MIDI_CC_PAN:
 		do
@@ -131,6 +180,7 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 			}
 			s_track_info[voice].pan = value;
 		}while(0);
+		CHIPTUNE_PRINTF(pMidiSetup, "%s::MIDI_CC_PAN :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
 		break;
 	case MIDI_CC_EXPRESSION:
 	case MIDI_CC_DATA_ENTRY_LSB:
@@ -139,9 +189,9 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 	case MIDI_CC_EFFECT_3_DEPTH:
 	case MIDI_CC_EFFECT_4_DEPTH:
 	case MIDI_CC_EFFECT_5_DEPTH:
-		break;
 	default:
-		return 0;
+		CHIPTUNE_PRINTF(pMidiSetup, "%s :: %u :: voice = %u, value = %u\r\n", __FUNCTION__, number,
+						voice, value);
 		break;
 	}
 
@@ -152,14 +202,17 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 
 static int setup_program_change_into_track_info(uint8_t const voice, uint8_t const number)
 {
+	CHIPTUNE_PRINTF(pMidiSetup, "%s, %voice = %u, number = %u\r\n", __FUNCTION__, voice, number);
+
 	do
 	{
-		if(0 == number){
+		if(0 == voice){
 			for(int i = 0; i < MAX_TRACK_NUMBER; i++){
 				s_track_info[voice].waveform = WAVEFORM_TRIANGLE;
 			}
 			break;
 		}
+
 		s_track_info[voice].waveform = WAVEFORM_TRIANGLE;
 	}while(0);
 
@@ -175,8 +228,6 @@ static bool is_all_oscillators_completed(void)
 			continue;
 		}
 		if(false == s_oscillator[i].is_completed){
-			//printf("oscillator %d, not completed, track = %u, note = %u\r\n", i, s_oscillator[i].track_index, s_oscillator[i].note);
-
 			return false;
 		}
 	}
@@ -203,8 +254,6 @@ static bool is_all_oscillators_unused(void)
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 uint8_t const voice, uint8_t const note, uint8_t const velocity)
 {
-
-	//printf("track = %u, note %u %u\r\n", voice, note, is_note_on);
 	do
 	{
 		int ii = 0;
@@ -214,7 +263,11 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					 break;
 				 }
 			}
-			//printf("ii = %u\r\n", ii);
+
+			if(MAX_OSCILLATOR_NUMBER== ii){
+				CHIPTUNE_PRINTF(pDeveloping, "ERROR::s_oscillator full\r\n");
+				return -1;
+			}
 			s_oscillator[ii].track_index = voice;
 			s_oscillator[ii].waveform = s_track_info[voice].waveform;
 			s_oscillator[ii].duty = s_track_info[voice].duty;
@@ -225,6 +278,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			s_oscillator[ii].is_completed = false;
 			break;
 		}
+
 		for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
 			if(voice != s_oscillator[ii].track_index){
 				continue;
@@ -232,7 +286,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			if(note != s_oscillator[ii].note){
 				continue;
 			}
-
 			if(true == s_oscillator[ii].is_completed){
 				continue;
 			}
@@ -242,6 +295,11 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			}
 		}
 
+		if(MAX_OSCILLATOR_NUMBER == ii){
+			CHIPTUNE_PRINTF(pDeveloping, "ERROR::no corresponding note for off ::  track = %u,  note = %u, tick = %u\r\n",
+							voice, note, tick);
+			return -2;
+		}
 		s_oscillator[ii].end_tick = tick;
 		s_oscillator[ii].is_completed = true;
 	}while(0);
@@ -269,8 +327,6 @@ static void process_midi_message(uint32_t const message, uint32_t const tick, bo
 	case MIDI_MESSAGE_NOTE_OFF:
 	case MIDI_MESSAGE_NOTE_ON:
 		*p_is_note_message = true;
-		//p_midi_msg->note = u.data_as_bytes[1];
-		//p_midi_msg->velocity = u.data_as_bytes[2];
 		process_note_message(tick, (type == MIDI_MESSAGE_NOTE_OFF) ? false : true,
 							 voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
@@ -280,20 +336,9 @@ static void process_midi_message(uint32_t const message, uint32_t const tick, bo
 		printf("note = %u, amount = %u\r\n",  u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	case MIDI_MESSAGE_CONTROL_CHANGE:
-#if(0)
-		printf("MIDI_MESSAGE_CONTROL_CHANGE\r\n");
-		printf("voice = %u, ", voice);
-		printf("number = %u, value = %u\r\n",  u.data_as_bytes[1], u.data_as_bytes[2]);
-#endif
 		setup_control_change_into_track_info(voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	case MIDI_MESSAGE_PROGRAM_CHANGE:
-#if(0)
-		printf("MIDI_MESSAGE_PROGRAM_CHANGE\r\n");
-		printf("voice = %u, ", voice);
-		printf("number = %u\r\n",  u.data_as_bytes[1]);
-		//p_midi_msg->number = u.data_as_bytes[1];
-#endif
 		setup_program_change_into_track_info(voice, u.data_as_bytes[1]);
 		break;
 	case MIDI_MESSAGE_CHANNEL_PRESSURE:
@@ -342,17 +387,15 @@ void chiptune_initialize(uint32_t const sampling_rate)
 	}
 
 	for(int i = 0; i < MIDI_FREQUENCY_TABLE_SIZE; i++){
-		//freq = 440 * 2**((n-69)/12)
-#if(1)
-		double frequency = 440.0 * pow(2.0, (double)(i- 69)/12.0);
-		frequency = round(frequency * 100.0 + 0.5)/100.0;
-#else
-		float frequency = 440.0f * powf(2.0f, (double)(i- 69)/12.0f);
+		/*
+		 * freq = 440 * 2**((n-69)/12)
+		*/
+		float frequency = 440.0f * powf(2.0f, (float)(i- 69)/12.0f);
 		frequency = roundf(frequency * 100.0f + 0.5f)/100.0f;
-#endif
-		// sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX = + 1)/phase
+		/*
+		 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX = + 1)/phase
+		*/
 		s_phase_table[i] = (uint16_t)((UINT16_MAX + 1) * frequency / sampling_rate);
-		//printf("i = %d, freq = %f, phase = %04X\r\n", i, frequency, s_phase_table[i]);
 	}
 
 	bool is_note_message;
@@ -398,17 +441,16 @@ uint8_t chiptune_fetch_wave(void)
 
 	int16_t accumulated_value = 0;
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER;i++){
-
 		if(UNSED_OSCILLATOR == s_oscillator[i].track_index){
+			continue;
+		}
+
+		if(s_time_tick < s_oscillator[i].start_tick){
 			continue;
 		}
 
 		if(s_time_tick > s_oscillator[i].end_tick){
 			s_oscillator[i].track_index = UNSED_OSCILLATOR;
-			continue;
-		}
-
-		if(s_time_tick < s_oscillator[i].start_tick){
 			continue;
 		}
 
