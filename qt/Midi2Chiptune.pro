@@ -1,4 +1,5 @@
 QT -= gui
+QT += multimedia
 
 CONFIG += c++11 console
 CONFIG -= app_bundle
@@ -10,6 +11,9 @@ CONFIG -= app_bundle
 include(QMidi/src/QMidi.pri)
 
 SOURCES += \
+        ../chiptune.c \
+        TuneManager.cpp \
+        AudioPlayer.cpp \
         main.cpp
 
 # Default rules for deployment.
@@ -18,4 +22,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-    MidiPlayer.h
+    ../chiptune.h \
+    MidiPlayer.h \
+    TuneManager.h \
+    AudioPlayer.h

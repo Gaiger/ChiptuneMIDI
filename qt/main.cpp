@@ -24,6 +24,9 @@
 #include <QMidiFile.h>
 #include "MidiPlayer.h"
 
+#include "TuneManager.h"
+#include "AudioPlayer.h"
+
 static void ListAvailableMidiDevices(void)
 {
 	QMap<QString, QString> vals = QMidiOut::devices();
@@ -55,6 +58,7 @@ int main(int argc, char* argv[])
 
 	QString filename = "8bit(bpm185)v0727T1.mid";
 	QString midiOutName = "0";
+#if(0)
 	QMidiFile* midi_file = new QMidiFile();
 	midi_file->load(filename);
 
@@ -65,7 +69,15 @@ int main(int argc, char* argv[])
 	QObject::connect(p_player, &MidiPlayer::Finished, &a,  &QCoreApplication::quit);
 	//p_player->moveToThread(a.thread());
 	p_player->Play();
+#endif
 
+	TuneManager tune_manager;
+	QThread tune_manager_working_thread;
+	tune_manager.moveToThread(&tune_manager_working_thread);
+	tune_manager_working_thread.start(QThread::HighPriority);
+	tune_manager.SetMidiFile(filename);
+	AudioPlayer audio_player(&tune_manager, &a);
+	audio_player.Play(100);
 	return a.exec();
 }
 
