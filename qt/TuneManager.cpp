@@ -1,5 +1,6 @@
 #include <QThread>
 #include <QFileInfo>
+#include <QTimer>
 
 #include <QDebug>
 
@@ -59,11 +60,6 @@ public:
 		m_wave_bytearray += generated_bytearray;
 	}
 
-	void NotifyTuneHasEnded(void)
-	{
-		emit m_p_public->TuneEnded();
-	}
-
 public:
 	int m_sampling_rate;
 	QMidiFile *m_p_midi_file;
@@ -72,6 +68,7 @@ public:
 
 	QByteArray m_wave_bytearray;
 
+	QTimer m_inquiring_tune_ending_timer;
 	TuneManager *m_p_public;
 };
 
@@ -82,13 +79,6 @@ static TuneManagerPrivate *s_p_private = nullptr;
 extern "C" int get_next_midi_message(uint32_t * const p_message, uint32_t * const p_tick)
 {
 	return s_p_private->GetNextMidiMessage(p_message, p_tick);
-}
-
-/**********************************************************************************/
-
-extern "C" void tune_ending_notification(void)
-{
-	s_p_private->NotifyTuneHasEnded();
 }
 
 /**********************************************************************************/
@@ -104,7 +94,6 @@ TuneManager::TuneManager(int sampliing_rate, QObject *parent)
 
 	s_p_private = m_p_private;
 	chiptune_set_midi_message_callback(get_next_midi_message);
-	chiptune_set_tune_ending_notfication_callback(tune_ending_notification);
 }
 
 /**********************************************************************************/
@@ -144,6 +133,19 @@ int TuneManager::SetMidiFile(QString midi_file_name_string)
 	chiptune_set_resolution(m_p_private->m_p_midi_file->resolution());
 
 	m_p_private->m_wave_prebuffer_length = 0;
+
+	QObject::connect(&m_p_private->m_inquiring_tune_ending_timer, &QTimer::timeout, this, [&](){
+		do
+		{
+			if(false == chiptune_is_tune_ending()){
+				break;
+			}
+			m_p_private->m_inquiring_tune_ending_timer.stop();
+			emit TuneEnded();
+		}while(0);
+	}, Qt::DirectConnection);
+
+	m_p_private->m_inquiring_tune_ending_timer.start(50);
 	return 0;
 }
 

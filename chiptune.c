@@ -1,4 +1,3 @@
-#include <stdbool.h>
 #include <string.h>
 #include <math.h>
 
@@ -73,22 +72,14 @@ static chiptune_float s_delta_tick = (double)(DEFAULT_SAMPLING_RATE * 60.0/DEFAU
 										} while(0)
 
 static int(*s_handler_get_next_midi_message)(uint32_t * const p_message, uint32_t * const p_tick) = NULL;
-static void(*s_handler_tune_ending_notification)(void) = NULL;
 
-static bool s_is_tune_ending_notified = false;
+static bool s_is_tune_ending = false;
 
 /**********************************************************************************/
 
 void chiptune_set_midi_message_callback( int(*handler_get_next_midi_message)(uint32_t * const p_message, uint32_t * const p_tick) )
 {
 	s_handler_get_next_midi_message = handler_get_next_midi_message;
-}
-
-
-/**********************************************************************************/
-void chiptune_set_tune_ending_notfication_callback( void(*handler_tune_ending_notification)(void))
-{
-	s_handler_tune_ending_notification = handler_tune_ending_notification;
 }
 
 /**********************************************************************************/
@@ -411,8 +402,7 @@ inline static int process_timely_midi_message(void)
 
 void chiptune_initialize(uint32_t const sampling_rate)
 {
-	s_is_tune_ending_notified = false;
-
+	s_is_tune_ending = false;
 	s_time_tick = 0.0;
 	s_sampling_rate = sampling_rate;
 	UPDATE_DELTA_TICK();
@@ -462,12 +452,7 @@ uint8_t chiptune_fetch_wave(void)
 {
 	if(-1 == process_timely_midi_message()){
 		if(true == is_all_oscillators_unused()){
-			if(NULL != s_handler_tune_ending_notification){
-				if(false == s_is_tune_ending_notified){
-					s_handler_tune_ending_notification();
-					s_is_tune_ending_notified = true;
-				}
-			}
+			s_is_tune_ending = true;
 		}
 	}
 
@@ -516,3 +501,9 @@ uint8_t chiptune_fetch_wave(void)
 	return 128 + (accumulated_value >> 8);
 }
 
+/**********************************************************************************/
+
+bool chiptune_is_tune_ending(void)
+{
+	return s_is_tune_ending;
+}
