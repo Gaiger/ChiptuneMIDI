@@ -6,29 +6,39 @@
 
 #include "chiptune.h"
 
-#define _PRINT_MIDI_SETUP
 #define _PRINT_MIDI_DEVELOPING
+#define _PRINT_MIDI_SETUP
+#define _PRINT_MOTE_OPERATION
 
 enum
 {
-	pDeveloping = 0,
-
-	pMidiSetup = 1,
+	cDeveloping		= 0,
+	cMidiSetup		= 1,
+	cNoteOperation	= 2,
 } PrintType;
 
 void chiptune_printf(int const print_type, const char* fmt, ...)
 {
 	bool is_print_out = false;
 
-#ifdef _PRINT_MIDI_SETUP
-	if(pMidiSetup == print_type){
+#ifdef _PRINT_MIDI_DEVELOPING
+	if(cDeveloping == print_type){
 		is_print_out = true;
+		//fprintf(stdout, "cDeveloping:: ");
 	}
 #endif
 
-#ifdef _PRINT_MIDI_DEVELOPING
-	if(pDeveloping == print_type){
+#ifdef _PRINT_MIDI_SETUP
+	if(cMidiSetup == print_type){
 		is_print_out = true;
+		//fprintf(stdout, "cMidiSetup:: ");
+	}
+#endif
+
+#ifdef _PRINT_MOTE_OPERATION
+	if(cNoteOperation == print_type){
+		is_print_out = true;
+		//fprintf(stdout, "cNoteOperation:: ");
 	}
 #endif
 
@@ -149,20 +159,20 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 {
 	switch(number){
 	case MIDI_CC_DATA_ENTRY_MSB:
-		CHIPTUNE_PRINTF(pMidiSetup, "MIDI_CC_DATA_ENTRY_MSB :: voice = %u, value = %u\r\n", voice, value);
+		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_CC_DATA_ENTRY_MSB :: voice = %u, value = %u\r\n", voice, value);
 		break;
 	case MIDI_CC_VOLUME:
 		do
 		{
 			if(0 == number){
 				for(int i = 0; i < MAX_TRACK_NUMBER; i++){
-					s_track_info[i].volume = value;
+					s_track_info[i].volume = 2 * value;
 				}
 				break;
 			}
-			s_track_info[voice].volume = value;
+			s_track_info[voice].volume = 2 * value;
 		}while(0);
-		CHIPTUNE_PRINTF(pMidiSetup, "%s::MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
+		CHIPTUNE_PRINTF(cMidiSetup, "%s::MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
 		break;
 	case MIDI_CC_PAN:
 		do
@@ -175,7 +185,7 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 			}
 			s_track_info[voice].pan = value;
 		}while(0);
-		CHIPTUNE_PRINTF(pMidiSetup, "%s::MIDI_CC_PAN :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
+		CHIPTUNE_PRINTF(cMidiSetup, "%s::MIDI_CC_PAN :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
 		break;
 	case MIDI_CC_EXPRESSION:
 	case MIDI_CC_DATA_ENTRY_LSB:
@@ -185,7 +195,7 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 	case MIDI_CC_EFFECT_4_DEPTH:
 	case MIDI_CC_EFFECT_5_DEPTH:
 	default:
-		CHIPTUNE_PRINTF(pMidiSetup, "%s :: %u :: voice = %u, value = %u\r\n", __FUNCTION__, number,
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %u :: voice = %u, value = %u\r\n", __FUNCTION__, number,
 						voice, value);
 		break;
 	}
@@ -197,7 +207,7 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 
 static int setup_program_change_into_track_info(uint8_t const voice, uint8_t const number)
 {
-	CHIPTUNE_PRINTF(pMidiSetup, "%s, %voice = %u, number = %u\r\n", __FUNCTION__, voice, number);
+	CHIPTUNE_PRINTF(cMidiSetup, "%s, %voice = %u, number = %u\r\n", __FUNCTION__, voice, number);
 
 	do
 	{
@@ -235,7 +245,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 {
 #if(1)
 	if(818880 < s_time_tick){
-		CHIPTUNE_PRINTF(pDeveloping, "tick = %u, voice = %u, note = %u, is_note_on = %u\r\n", tick, voice, note, is_note_on);
+		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, voice = %u, note = %u, is_note_on = %u, velocity = %u\r\n",
+						tick, voice, note, is_note_on, velocity);
 	}
 #endif
 	do
@@ -249,13 +260,13 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			}
 
 			if(MAX_OSCILLATOR_NUMBER== ii){
-				CHIPTUNE_PRINTF(pDeveloping, "ERROR::all oscillator are used\r\n");
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillator are used\r\n");
 				return -1;
 			}
 			s_oscillator[ii].track_index = voice;
 			s_oscillator[ii].waveform = s_track_info[voice].waveform;
 			s_oscillator[ii].duty = s_track_info[voice].duty;
-			s_oscillator[ii].volume = 2 * velocity;
+			s_oscillator[ii].volume = (2 * velocity * (uint16_t)s_track_info[voice].volume) >> 8;
 			s_oscillator[ii].note = note;
 			s_oscillator[ii].phase = 0;
 			s_oscillator[ii].start_tick = tick;
@@ -281,7 +292,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}
 
 		if(MAX_OSCILLATOR_NUMBER == ii){
-			CHIPTUNE_PRINTF(pDeveloping, "ERROR::no corresponding note for off ::  track = %u,  note = %u, tick = %u\r\n",
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR::no corresponding note for off ::  track = %u,  note = %u, tick = %u\r\n",
 							voice, note, tick);
 			return -2;
 		}
