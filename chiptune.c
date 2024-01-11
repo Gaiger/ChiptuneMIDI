@@ -69,7 +69,7 @@ static chiptune_float s_time_tick = 0.0f;
 static chiptune_float s_delta_tick = (double)(DEFAULT_SAMPLING_RATE * 60.0/DEFAULT_TEMPO/DEFAULT_RESOLUTION);
 
 #define UPDATE_DELTA_TICK()				do{			\
-											s_delta_tick = (double)(1.0/(s_sampling_rate * 60.0/s_tempo/(double)s_resolution)); \
+											s_delta_tick = (chiptune_float)(s_tempo * s_resolution / (chiptune_float)s_sampling_rate/60.0); \
 										} while(0)
 
 static int(*s_handler_get_next_midi_message)(uint32_t * const p_message, uint32_t * const p_tick) = NULL;
