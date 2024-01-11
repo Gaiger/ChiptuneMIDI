@@ -500,7 +500,9 @@ uint8_t chiptune_fetch_wave(void)
 				}
 				value = 31 -  ((s_oscillator[i].phase - 0x8000) >> 9);
 			}while(0);
-
+			break;
+		case WAVEFORM_SAW:
+			value = -32 + (s_oscillator[i].phase >> 10);
 			break;
 		default:
 			break;
