@@ -367,8 +367,10 @@ static void process_midi_message(uint32_t const message, uint32_t const tick, bo
 
 /**********************************************************************************/
 
-uint32_t s_fetched_message = UINT32_MAX;
-uint32_t s_fetched_tick = UINT32_MAX;
+#define NO_FETCHED_MESSAGE							(UINT32_MAX)
+#define NO_FETCHED_TICK								(UINT32_MAX)
+uint32_t s_fetched_message = NO_FETCHED_MESSAGE;
+uint32_t s_fetched_tick = NO_FETCHED_TICK;
 
 inline static int process_timely_midi_message(void)
 {
@@ -377,7 +379,7 @@ inline static int process_timely_midi_message(void)
 
 	int ii = 0;
 	bool is_note_message;
-	if(!(UINT32_MAX == s_fetched_message && UINT32_MAX == s_fetched_tick)){
+	if(!(NO_FETCHED_MESSAGE == s_fetched_message && NO_FETCHED_TICK == s_fetched_tick)){
 		if(TICK_TO_SAMPLE_INDEX(s_fetched_tick) > (s_current_sample_index + 1)){
 			return 0;
 		}
@@ -404,8 +406,8 @@ inline static int process_timely_midi_message(void)
 	s_fetched_message = message;
 	s_fetched_tick = tick;
 	if(true == is_no_more_message){
-		s_fetched_message = UINT32_MAX;
-		s_fetched_tick = UINT32_MAX;
+		s_fetched_message = NO_FETCHED_MESSAGE;
+		s_fetched_tick = NO_FETCHED_TICK;
 	}
 
 	if(0== ii){
@@ -421,8 +423,8 @@ void chiptune_initialize(uint32_t const sampling_rate)
 {
 	s_is_tune_ending = false;
 	s_current_sample_index = 0;
-	s_fetched_message = UINT32_MAX;
-	s_fetched_tick = UINT32_MAX;
+	s_fetched_message = NO_FETCHED_MESSAGE;
+	s_fetched_tick = NO_FETCHED_TICK;
 	UPDATE_SAMPLES_TO_TICK_RATIO();
 
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
