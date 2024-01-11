@@ -34,7 +34,7 @@ public:
 	AudioPlayer(TuneManager *p_tune_manager, QObject *parent = nullptr);
 	~AudioPlayer()  Q_DECL_OVERRIDE;
 
-	void Play(void);
+	void Play(bool is_blocking = false);
 	void Stop(void);
 
 private slots:

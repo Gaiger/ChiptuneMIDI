@@ -17,6 +17,7 @@ public:
 
 	int SetMidiFile(QString midi_file_name_string);
 
+	int InitializeTune(void);
 	int GetSamplingRate(void);
 	QByteArray FetchWave(int const length);
 

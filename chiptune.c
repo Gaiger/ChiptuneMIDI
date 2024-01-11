@@ -416,6 +416,8 @@ void chiptune_initialize(uint32_t const sampling_rate)
 	s_is_tune_ending = false;
 	s_time_tick = 0.0;
 	s_sampling_rate = sampling_rate;
+	s_fetched_message = UINT32_MAX;
+	s_fetched_tick = UINT32_MAX;
 	UPDATE_DELTA_TICK();
 
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){

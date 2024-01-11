@@ -57,8 +57,8 @@ int main(int argc, char* argv[])
 	ListAvailableMidiDevices();
 
 	QString filename = "8bit(bpm185)v0727T1.mid";
-	QString midiOutName = "0";
 #if(0)
+	QString midiOutName = "0";
 	QMidiFile* midi_file = new QMidiFile();
 	midi_file->load(filename);
 

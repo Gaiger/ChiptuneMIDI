@@ -116,8 +116,7 @@ int TuneManager::SetMidiFile(QString midi_file_name_string)
 {
 	QMutexLocker locker(&m_mutex);
 	QFileInfo file_info(midi_file_name_string);
-	if(false == file_info.isFile())
-	{
+	if(false == file_info.isFile()){
 		return -1;
 	}
 
@@ -128,12 +127,23 @@ int TuneManager::SetMidiFile(QString midi_file_name_string)
 		return -2;
 	}
 
+	InitializeTune();
+	return 0;
+}
+/**********************************************************************************/
+
+int TuneManager::InitializeTune(void)
+{
+	if(nullptr == m_p_private->m_p_midi_file){
+		return -1;
+	}
+
 	m_p_private->m_current_midi_event_index = 0;
 	chiptune_initialize((uint32_t)m_p_private->m_sampling_rate);
 	chiptune_set_resolution(m_p_private->m_p_midi_file->resolution());
 
+	m_p_private->m_inquiring_tune_ending_timer.disconnect();
 	m_p_private->m_wave_prebuffer_length = 0;
-
 	QObject::connect(&m_p_private->m_inquiring_tune_ending_timer, &QTimer::timeout, this, [&](){
 		do
 		{
@@ -145,7 +155,7 @@ int TuneManager::SetMidiFile(QString midi_file_name_string)
 		}while(0);
 	}, Qt::DirectConnection);
 
-	m_p_private->m_inquiring_tune_ending_timer.start(50);
+	m_p_private->m_inquiring_tune_ending_timer.start(100);
 	return 0;
 }
 

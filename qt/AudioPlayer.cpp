@@ -1,7 +1,8 @@
-#include <QDebug>
-#include <QEventLoop>
 #include <QBuffer>
 #include <QTimer>
+#include <QEventLoop>
+
+#include <QDebug>
 
 #include "AudioPlayer.h"
 
@@ -85,6 +86,7 @@ void AudioPlayer::CleanAudioResources(void)
 void AudioPlayer::InitializeAudioResources(int filling_buffer_time_interval,
 										   int const sampling_rate, int const sampling_size, int const channel_counts)
 {
+	CleanAudioResources();
 	QAudioFormat format;
 	format.setSampleRate(sampling_rate);
 	format.setChannelCount((int)channel_counts);
@@ -133,17 +135,31 @@ void AudioPlayer::InitializeAudioResources(int filling_buffer_time_interval,
 
 	m_p_audio_io_device = new AudioIODevice();
 	m_p_audio_io_device->open(QIODevice::ReadWrite);
-	AudioPlayer::AppendWave(m_p_tune_manager->FetchWave(audio_buffer_size));
-	m_p_audio_output->start(m_p_audio_io_device);
 }
 
 /**********************************************************************************/
 
-void AudioPlayer::Play(void)
+void AudioPlayer::Play(bool is_blocking)
 {
+	m_p_tune_manager->InitializeTune();
+
 	InitializeAudioResources(100, m_p_tune_manager->GetSamplingRate(), 1, 1);
 	AudioPlayer::AppendWave(m_p_tune_manager->FetchWave(m_p_audio_output->bufferSize()));
 	m_p_audio_output->start(m_p_audio_io_device);
+
+	do
+	{
+		if(false == is_blocking){
+			break;
+		}
+
+		QEventLoop loop;
+		QObject::connect(m_p_audio_output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
+		do {
+			loop.exec();
+		} while(m_p_audio_output->state() == QAudio::ActiveState);
+	}while(0);
+
 }
 
 /**********************************************************************************/
@@ -167,8 +183,8 @@ void AudioPlayer::Stop(void)
 	}
 	AudioPlayer::CleanAudioResources();
 }
-/**********************************************************************************/
 
+/**********************************************************************************/
 
 void AudioPlayer::HandleAudioNotify(void)
 {
@@ -217,4 +233,4 @@ void AudioPlayer::HandleAudioStateChanged(QAudio::State state)
 	}
 }
 
-/**********************************************************************************/
+
