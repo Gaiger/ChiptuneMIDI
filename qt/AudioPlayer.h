@@ -34,8 +34,7 @@ public:
 	AudioPlayer(TuneManager *p_tune_manager, QObject *parent = nullptr);
 	~AudioPlayer()  Q_DECL_OVERRIDE;
 
-	void Play(int fill_audio_buffer_interval,
-			  int const sampling_rate = 16000, int const sampling_size = 1, int const channel_counts = 1);
+	void Play(void);
 	void Stop(void);
 
 private slots:
@@ -43,8 +42,10 @@ private slots:
 	void HandleAudioStateChanged(QAudio::State state);
 
 private :
+	void InitializeAudioResources(int filling_buffer_time_interval,
+								  int const sampling_rate, int const sampling_size, int const channel_counts);
 	void AppendWave(QByteArray wave_bytearray);
-	void Clean();
+	void CleanAudioResources();
 private:
 	QAudioOutput * m_p_audio_output;
 	QIODevice *m_p_audio_io_device;

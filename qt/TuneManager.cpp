@@ -185,6 +185,10 @@ void TuneManager::GenerateWave(int length, bool is_synchronized)
 
 /**********************************************************************************/
 
+int TuneManager::GetSamplingRate(void){ return m_p_private->m_sampling_rate;}
+
+/**********************************************************************************/
+
 QByteArray TuneManager::FetchWave(int const length)
 {
 	QMutexLocker locker(&m_mutex);

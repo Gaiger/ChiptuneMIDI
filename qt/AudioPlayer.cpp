@@ -60,24 +60,12 @@ AudioPlayer::AudioPlayer(TuneManager *p_tune_manager, QObject *parent)
 AudioPlayer::~AudioPlayer(void)
 {
 	AudioPlayer::Stop();
-	AudioPlayer::Clean();
-#if(0)
-	m_tune_manager_working_thread.quit();
-	do
-	{
-		if(false == m_tune_manager_working_thread.isRunning()){
-			break;
-		}
-	}while(1);
-
-	delete m_p_tune_manager;
-	m_p_tune_manager = nullptr;
-#endif
+	AudioPlayer::CleanAudioResources();
 }
 
 /**********************************************************************************/
 
-void AudioPlayer::Clean(void)
+void AudioPlayer::CleanAudioResources(void)
 {
 	if(nullptr != m_p_audio_output){
 		m_p_audio_output->stop();
@@ -92,11 +80,10 @@ void AudioPlayer::Clean(void)
 	m_p_audio_io_device = nullptr;
 }
 
-
 /**********************************************************************************/
 
-void AudioPlayer::Play(int filling_buffer_time_interval,
-					   int const sampling_rate, int const sampling_size, int const channel_counts)
+void AudioPlayer::InitializeAudioResources(int filling_buffer_time_interval,
+										   int const sampling_rate, int const sampling_size, int const channel_counts)
 {
 	QAudioFormat format;
 	format.setSampleRate(sampling_rate);
@@ -126,13 +113,17 @@ void AudioPlayer::Play(int filling_buffer_time_interval,
 	qDebug() << info.deviceName();
 	qDebug() << format;
 
-	if(nullptr == m_p_audio_output)
-	{
-		m_p_audio_output = new QAudioOutput(info, format);
-		QObject::connect(m_p_audio_output, &QAudioOutput::notify, this, &AudioPlayer::HandleAudioNotify);
-		QObject::connect(m_p_audio_output, &QAudioOutput::stateChanged, this, &AudioPlayer::HandleAudioStateChanged);
-		m_p_audio_output->setVolume(1.00);
+
+	if(nullptr != m_p_audio_output){
+		delete m_p_audio_output;
+		m_p_audio_output = nullptr;
 	}
+	m_p_audio_output = new QAudioOutput(info, format);
+	QObject::connect(m_p_audio_output, &QAudioOutput::notify, this, &AudioPlayer::HandleAudioNotify);
+	QObject::connect(m_p_audio_output, &QAudioOutput::stateChanged, this, &AudioPlayer::HandleAudioStateChanged);
+	m_p_audio_output->setVolume(1.00);
+
+
 	int audio_buffer_size = 2.0 * filling_buffer_time_interval
 			* format.sampleRate() * format.channelCount() * format.sampleSize()/8/1000;
 	m_p_audio_output->setNotifyInterval(filling_buffer_time_interval);
@@ -143,6 +134,15 @@ void AudioPlayer::Play(int filling_buffer_time_interval,
 	m_p_audio_io_device = new AudioIODevice();
 	m_p_audio_io_device->open(QIODevice::ReadWrite);
 	AudioPlayer::AppendWave(m_p_tune_manager->FetchWave(audio_buffer_size));
+	m_p_audio_output->start(m_p_audio_io_device);
+}
+
+/**********************************************************************************/
+
+void AudioPlayer::Play(void)
+{
+	InitializeAudioResources(100, m_p_tune_manager->GetSamplingRate(), 1, 1);
+	AudioPlayer::AppendWave(m_p_tune_manager->FetchWave(m_p_audio_output->bufferSize()));
 	m_p_audio_output->start(m_p_audio_io_device);
 }
 
@@ -165,7 +165,7 @@ void AudioPlayer::Stop(void)
 	if(nullptr != m_p_audio_output){
 		m_p_audio_output->stop();
 	}
-	AudioPlayer::Clean();
+	AudioPlayer::CleanAudioResources();
 }
 /**********************************************************************************/
 

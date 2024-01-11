@@ -441,7 +441,7 @@ void chiptune_set_resolution(uint32_t const resolution)
 {
 	s_resolution = resolution;
 	UPDATE_DELTA_TICK();
-#if(0)
+#if(1)
 	s_delta_tick *= 100;
 #endif
 }
