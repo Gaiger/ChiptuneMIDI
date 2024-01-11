@@ -6,6 +6,8 @@
 
 #include "chiptune.h"
 
+//#define _DEBUG_FAST_TO_ENDING
+
 #define _PRINT_MIDI_DEVELOPING
 #define _PRINT_MIDI_SETUP
 #define _PRINT_MOTE_OPERATION
@@ -52,9 +54,10 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 	va_end(args);
 }
 
-#define CHIPTUNE_PRINTF(PRINT_TYPE, FMT, ...)				do { \
-													chiptune_printf(PRINT_TYPE, FMT, ##__VA_ARGS__); \
-												}while(0)
+#define CHIPTUNE_PRINTF(PRINT_TYPE, FMT, ...)		\
+													do { \
+														chiptune_printf(PRINT_TYPE, FMT, ##__VA_ARGS__); \
+													}while(0)
 
 #if(0)
 #define CHIPTUNE_PRINTF(PRINT_TYPE, FMT, ...)				do { \
@@ -62,7 +65,7 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 												}while(0)
 #endif
 
-typedef double chiptune_float;
+typedef float chiptune_float;
 
 #define DEFAULT_TEMPO								(120.0)
 #define DEFAULT_SAMPLING_RATE						(16000)
@@ -74,12 +77,17 @@ static chiptune_float s_tempo = DEFAULT_TEMPO;
 static uint32_t s_sampling_rate = DEFAULT_SAMPLING_RATE;
 
 static uint32_t s_resolution = DEFAULT_RESOLUTION;
-static chiptune_float s_time_tick = 0.0f;
-static chiptune_float s_delta_tick = (double)(DEFAULT_SAMPLING_RATE * 60.0/DEFAULT_TEMPO/DEFAULT_RESOLUTION);
+static uint32_t s_current_sample_index = 0;
+static chiptune_float s_samples_to_tick_ratio = (chiptune_float)(DEFAULT_SAMPLING_RATE * 60.0/DEFAULT_TEMPO/DEFAULT_RESOLUTION);
 
-#define UPDATE_DELTA_TICK()				do{			\
-											s_delta_tick = (chiptune_float)(s_tempo * s_resolution / (chiptune_float)s_sampling_rate/60.0); \
-										} while(0)
+
+#define UPDATE_SAMPLES_TO_TICK_RATIO()				\
+													do{	\
+														s_samples_to_tick_ratio \
+															= (chiptune_float)(s_sampling_rate * 60.0/s_tempo/s_resolution); \
+													} while(0)
+
+#define TICK_TO_SAMPLE_INDEX(TICK)					((uint32_t)(s_samples_to_tick_ratio * (chiptune_float)(TICK) + 0.5))
 
 static int(*s_handler_get_next_midi_message)(uint32_t * const p_message, uint32_t * const p_tick) = NULL;
 
@@ -243,12 +251,16 @@ static bool is_all_oscillators_unused(void)
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 uint8_t const voice, uint8_t const note, uint8_t const velocity)
 {
-#if(1)
-	if(818880 < s_time_tick){
+#ifdef _DEBUG_FAST_TO_ENDING
+	if(TICK_TO_SAMPLE_INDEX(818880) < s_current_sample_index){
 		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, voice = %u, note = %u, is_note_on = %u, velocity = %u\r\n",
 						tick, voice, note, is_note_on, velocity);
 	}
+#else
+	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, voice = %u, note = %u, is_note_on = %u, velocity = %u\r\n",
+					tick, voice, note, is_note_on, velocity);
 #endif
+
 	do
 	{
 		int ii = 0;
@@ -366,7 +378,7 @@ inline static int process_timely_midi_message(void)
 	int ii = 0;
 	bool is_note_message;
 	if(!(UINT32_MAX == s_fetched_message && UINT32_MAX == s_fetched_tick)){
-		if(s_fetched_tick > s_time_tick + s_delta_tick){
+		if(TICK_TO_SAMPLE_INDEX(s_fetched_tick) > (s_current_sample_index + 1)){
 			return 0;
 		}
 		process_midi_message(s_fetched_message, s_fetched_tick, &is_note_message);
@@ -381,19 +393,13 @@ inline static int process_timely_midi_message(void)
 			break;
 		}
 
-		if(tick > s_time_tick + s_delta_tick){
+		if(TICK_TO_SAMPLE_INDEX(tick) > (s_current_sample_index + 1)){
 			break;
 		}
 
 		process_midi_message(message, tick, &is_note_message);
 		ii += 1;
 	}
-
-#if(1)
-	if(818880 == tick){
-		UPDATE_DELTA_TICK();
-	}
-#endif
 
 	s_fetched_message = message;
 	s_fetched_tick = tick;
@@ -414,11 +420,10 @@ inline static int process_timely_midi_message(void)
 void chiptune_initialize(uint32_t const sampling_rate)
 {
 	s_is_tune_ending = false;
-	s_time_tick = 0.0;
-	s_sampling_rate = sampling_rate;
+	s_current_sample_index = 0;
 	s_fetched_message = UINT32_MAX;
 	s_fetched_tick = UINT32_MAX;
-	UPDATE_DELTA_TICK();
+	UPDATE_SAMPLES_TO_TICK_RATIO();
 
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		s_oscillator[i].track_index = UNSED_OSCILLATOR;
@@ -445,7 +450,7 @@ void chiptune_initialize(uint32_t const sampling_rate)
 void chiptune_set_tempo(float const tempo)
 {
 	s_tempo = (chiptune_float)tempo;
-	UPDATE_DELTA_TICK();
+	UPDATE_SAMPLES_TO_TICK_RATIO();
 }
 
 /**********************************************************************************/
@@ -453,10 +458,7 @@ void chiptune_set_tempo(float const tempo)
 void chiptune_set_resolution(uint32_t const resolution)
 {
 	s_resolution = resolution;
-	UPDATE_DELTA_TICK();
-#if(1)
-	s_delta_tick *= 100;
-#endif
+	UPDATE_SAMPLES_TO_TICK_RATIO();
 }
 
 /**********************************************************************************/
@@ -475,11 +477,11 @@ uint8_t chiptune_fetch_wave(void)
 			continue;
 		}
 
-		if(s_time_tick > s_oscillator[i].end_tick){
+		if(s_current_sample_index  > TICK_TO_SAMPLE_INDEX(s_oscillator[i].end_tick)){
 			s_oscillator[i].track_index = UNSED_OSCILLATOR;
 		}
 
-		if(s_time_tick < s_oscillator[i].start_tick){
+		if(s_current_sample_index < TICK_TO_SAMPLE_INDEX(s_oscillator[i].start_tick)){
 			continue;
 		}
 
@@ -510,7 +512,13 @@ uint8_t chiptune_fetch_wave(void)
 		s_oscillator[i].phase += s_phase_table[s_oscillator[i].note];
 	}
 
-	s_time_tick += s_delta_tick;
+	s_current_sample_index += 1;
+
+#ifdef _DEBUG_FAST_TO_ENDING
+	if(TICK_TO_SAMPLE_INDEX(818880) > s_current_sample_index){
+		s_current_sample_index += 99;
+	}
+#endif
 	return 128 + (accumulated_value >> 8);
 }
 
