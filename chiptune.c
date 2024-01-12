@@ -111,12 +111,12 @@ enum
 	WAVEFORM_NOISE			= 3,
 };
 
-#define MAX_TRACK_NUMBER							(16)
-#define MAX_OSCILLATOR_NUMBER						(MAX_TRACK_NUMBER * 2)
+#define MAX_VOICE_NUMBER							(16)
+#define MAX_OSCILLATOR_NUMBER						(MAX_VOICE_NUMBER * 2)
 
 struct _oscillator
 {
-	int8_t		track_index;
+	int8_t		voice_index;
 	uint8_t		volume;
 	uint8_t		waveform;
 	uint8_t		note;
@@ -129,13 +129,13 @@ struct _oscillator
 
 #define UNSED_OSCILLATOR							(-1)
 
-struct _track_info
+struct _voice_info
 {
 	uint8_t		waveform;
 	uint16_t	duty;
 	uint8_t		volume;
 	uint8_t		pan;
-}s_track_info[MAX_OSCILLATOR_NUMBER];
+}s_voice_info[MAX_OSCILLATOR_NUMBER];
 
 #define MIDI_MESSAGE_NOTE_OFF						(0x80)
 #define MIDI_MESSAGE_NOTE_ON						(0x90)
@@ -163,14 +163,14 @@ struct _track_info
 #define MIDI_CC_RON_LSB								(100)
 #define MIDI_CC_RON_MSB								(101)
 
-inline static void set_track_volume(uint8_t const voice, uint8_t const value)
+inline static void set_voice_info_volume(uint8_t const voice, uint8_t const value)
 {
-	s_track_info[voice].volume = 2 * value;
+	s_voice_info[voice].volume = 2 * value;
 }
 
 /**********************************************************************************/
 
-static int setup_control_change_into_track_info(uint8_t const voice, uint8_t const number, uint8_t const value)
+static int setup_control_change_into_voice_info(uint8_t const voice, uint8_t const number, uint8_t const value)
 {
 	switch(number){
 	case MIDI_CC_DATA_ENTRY_MSB:
@@ -179,15 +179,15 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 		break;
 	case MIDI_CC_VOLUME:
 		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
-		set_track_volume(voice, value);
+		set_voice_info_volume(voice, value);
 		break;
 	case MIDI_CC_PAN:
-		s_track_info[voice].pan = value;
+		s_voice_info[voice].pan = value;
 		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_PAN :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
 		break;
 	case MIDI_CC_EXPRESSION:
 		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EXPRESSION :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
-		set_track_volume(voice, value);
+		set_voice_info_volume(voice, value);
 		break;
 	case MIDI_CC_DATA_ENTRY_LSB:
 		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_DATA_ENTRY_LSB :: voice = %u, value = %u %s\r\n",
@@ -232,10 +232,10 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 
 /**********************************************************************************/
 
-static void setup_program_change_into_track_info(uint8_t const voice, uint8_t const number)
+static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t const number)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "%s, %voice = %u, number = %u\r\n", __FUNCTION__, voice, number);
-	s_track_info[voice].waveform = WAVEFORM_TRIANGLE;
+	s_voice_info[voice].waveform = WAVEFORM_TRIANGLE;
 }
 
 /**********************************************************************************/
@@ -243,7 +243,7 @@ static void setup_program_change_into_track_info(uint8_t const voice, uint8_t co
 static bool is_all_oscillators_unused(void)
 {
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(UNSED_OSCILLATOR == s_oscillator[i].track_index){
+		if(UNSED_OSCILLATOR == s_oscillator[i].voice_index){
 			continue;
 		}
 		return false;
@@ -272,7 +272,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		int ii = 0;
 		if(true == is_note_on){
 			for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
-				 if(UNSED_OSCILLATOR == s_oscillator[ii].track_index){
+				 if(UNSED_OSCILLATOR == s_oscillator[ii].voice_index){
 					 break;
 				 }
 			}
@@ -281,10 +281,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillator are used\r\n");
 				return -1;
 			}
-			s_oscillator[ii].track_index = voice;
-			s_oscillator[ii].waveform = s_track_info[voice].waveform;
-			s_oscillator[ii].duty = s_track_info[voice].duty;
-			s_oscillator[ii].volume = (2 * velocity * (uint16_t)s_track_info[voice].volume) >> 8;
+			s_oscillator[ii].voice_index = voice;
+			s_oscillator[ii].waveform = s_voice_info[voice].waveform;
+			s_oscillator[ii].duty = s_voice_info[voice].duty;
+			s_oscillator[ii].volume = (2 * velocity * (uint16_t)s_voice_info[voice].volume) >> 8;
 			s_oscillator[ii].note = note;
 			s_oscillator[ii].phase = 0;
 			s_oscillator[ii].start_tick = tick;
@@ -294,7 +294,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}
 
 		for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
-			if(voice != s_oscillator[ii].track_index){
+			if(voice != s_oscillator[ii].voice_index){
 				continue;
 			}
 			if(note != s_oscillator[ii].note){
@@ -310,7 +310,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}
 
 		if(MAX_OSCILLATOR_NUMBER == ii){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR::no corresponding note for off ::  track = %u,  note = %u, tick = %u\r\n",
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR::no corresponding note for off ::  voice = %u,  note = %u, tick = %u\r\n",
 							voice, note, tick);
 			return -2;
 		}
@@ -350,10 +350,10 @@ static void process_midi_message(uint32_t const message, uint32_t const tick, bo
 		printf("note = %u, amount = %u\r\n",  u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	case MIDI_MESSAGE_CONTROL_CHANGE:
-		setup_control_change_into_track_info(voice, u.data_as_bytes[1], u.data_as_bytes[2]);
+		setup_control_change_into_voice_info(voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	case MIDI_MESSAGE_PROGRAM_CHANGE:
-		setup_program_change_into_track_info(voice, u.data_as_bytes[1]);
+		setup_program_change_into_voice_info(voice, u.data_as_bytes[1]);
 		break;
 	case MIDI_MESSAGE_CHANNEL_PRESSURE:
 		printf("MIDI_MESSAGE_CHANNEL_PRESSURE\r\n");
@@ -434,7 +434,7 @@ void chiptune_initialize(uint32_t const sampling_rate)
 	UPDATE_SAMPLES_TO_TICK_RATIO();
 
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		s_oscillator[i].track_index = UNSED_OSCILLATOR;
+		s_oscillator[i].voice_index = UNSED_OSCILLATOR;
 	}
 
 	for(int i = 0; i < MIDI_FREQUENCY_TABLE_SIZE; i++){
@@ -481,12 +481,12 @@ uint8_t chiptune_fetch_wave(void)
 
 	int32_t accumulated_value = 0;
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(UNSED_OSCILLATOR == s_oscillator[i].track_index){
+		if(UNSED_OSCILLATOR == s_oscillator[i].voice_index){
 			continue;
 		}
 
 		if(s_current_sample_index  > TICK_TO_SAMPLE_INDEX(s_oscillator[i].end_tick)){
-			s_oscillator[i].track_index = UNSED_OSCILLATOR;
+			s_oscillator[i].voice_index = UNSED_OSCILLATOR;
 		}
 
 		if(s_current_sample_index < TICK_TO_SAMPLE_INDEX(s_oscillator[i].start_tick)){
