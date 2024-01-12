@@ -6,7 +6,7 @@
 
 #include "chiptune.h"
 
-//#define _DEBUG_FAST_TO_ENDING
+#define _DEBUG_FAST_TO_ENDING
 
 #define _PRINT_MIDI_DEVELOPING
 #define _PRINT_MIDI_SETUP
@@ -165,17 +165,10 @@ struct _track_info
 
 inline static void set_track_volume(uint8_t const voice, uint8_t const value)
 {
-	do
-	{
-		if(0 == voice){
-			for(int i = 0; i < MAX_TRACK_NUMBER; i++){
-				s_track_info[i].volume = 2 * value;
-			}
-			break;
-		}
-		s_track_info[voice].volume = 2 * value;
-	}while(0);
+	s_track_info[voice].volume = 2 * value;
 }
+
+/**********************************************************************************/
 
 static int setup_control_change_into_track_info(uint8_t const voice, uint8_t const number, uint8_t const value)
 {
@@ -189,16 +182,7 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 		set_track_volume(voice, value);
 		break;
 	case MIDI_CC_PAN:
-		do
-		{
-			if(0 == number){
-				for(int i = 0; i < MAX_TRACK_NUMBER; i++){
-					s_track_info[i].pan = value;
-				}
-				break;
-			}
-			s_track_info[voice].pan = value;
-		}while(0);
+		s_track_info[voice].pan = value;
 		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_PAN :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
 		break;
 	case MIDI_CC_EXPRESSION:
@@ -248,23 +232,10 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 
 /**********************************************************************************/
 
-static int setup_program_change_into_track_info(uint8_t const voice, uint8_t const number)
+static void setup_program_change_into_track_info(uint8_t const voice, uint8_t const number)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "%s, %voice = %u, number = %u\r\n", __FUNCTION__, voice, number);
-
-	do
-	{
-		if(0 == voice){
-			for(int i = 0; i < MAX_TRACK_NUMBER; i++){
-				s_track_info[voice].waveform = WAVEFORM_TRIANGLE;
-			}
-			break;
-		}
-
-		s_track_info[voice].waveform = WAVEFORM_TRIANGLE;
-	}while(0);
-
-	return 0;
+	s_track_info[voice].waveform = WAVEFORM_TRIANGLE;
 }
 
 /**********************************************************************************/
@@ -508,7 +479,7 @@ uint8_t chiptune_fetch_wave(void)
 		}
 	}
 
-	int16_t accumulated_value = 0;
+	int32_t accumulated_value = 0;
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		if(UNSED_OSCILLATOR == s_oscillator[i].track_index){
 			continue;
@@ -535,7 +506,7 @@ uint8_t chiptune_fetch_wave(void)
 					value = -32 + (s_oscillator[i].phase >> 9);
 					break;
 				}
-				value = 31 -  ((s_oscillator[i].phase - 0x8000) >> 9);
+				value = 31 - ((s_oscillator[i].phase - 0x8000) >> 9);
 			}while(0);
 			break;
 		case WAVEFORM_SAW:
@@ -545,7 +516,7 @@ uint8_t chiptune_fetch_wave(void)
 			break;
 		}
 
-		accumulated_value += value * s_oscillator[i].volume;
+		accumulated_value += value * s_oscillator[i].volume; //rhs = [-8160,7905]
 		s_oscillator[i].phase += s_phase_table[s_oscillator[i].note];
 	}
 
@@ -556,6 +527,27 @@ uint8_t chiptune_fetch_wave(void)
 		s_current_sample_index += 99;
 	}
 #endif
+	//accumulated_value [-32640,31620]
+	do
+	{
+		if(accumulated_value > 0){
+			if(INT16_MAX < accumulated_value ){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: accumulated_value = %d, greater than INT16_MAX\r\n",
+								accumulated_value);
+				break;
+			}
+		}
+
+		if(accumulated_value < 0){
+			if(INT16_MIN > accumulated_value ){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: accumulated_value = %d, greater than INT16_MIN\r\n",
+								accumulated_value);
+				break;
+			}
+		}
+
+	}while(0);
+	// [1,251]
 	return 128 + (accumulated_value >> 8);
 }
 
