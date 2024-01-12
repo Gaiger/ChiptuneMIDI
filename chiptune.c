@@ -163,24 +163,30 @@ struct _track_info
 #define MIDI_CC_RON_LSB								(100)
 #define MIDI_CC_RON_MSB								(101)
 
+inline static void set_track_volume(uint8_t const voice, uint8_t const value)
+{
+	do
+	{
+		if(0 == voice){
+			for(int i = 0; i < MAX_TRACK_NUMBER; i++){
+				s_track_info[i].volume = 2 * value;
+			}
+			break;
+		}
+		s_track_info[voice].volume = 2 * value;
+	}while(0);
+}
+
 static int setup_control_change_into_track_info(uint8_t const voice, uint8_t const number, uint8_t const value)
 {
 	switch(number){
 	case MIDI_CC_DATA_ENTRY_MSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_CC_DATA_ENTRY_MSB :: voice = %u, value = %u\r\n", voice, value);
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_DATA_ENTRY_MSB :: voice = %u, value = %u %s\r\n",
+						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_VOLUME:
-		do
-		{
-			if(0 == number){
-				for(int i = 0; i < MAX_TRACK_NUMBER; i++){
-					s_track_info[i].volume = 2 * value;
-				}
-				break;
-			}
-			s_track_info[voice].volume = 2 * value;
-		}while(0);
-		CHIPTUNE_PRINTF(cMidiSetup, "%s::MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
+		set_track_volume(voice, value);
 		break;
 	case MIDI_CC_PAN:
 		do
@@ -193,18 +199,47 @@ static int setup_control_change_into_track_info(uint8_t const voice, uint8_t con
 			}
 			s_track_info[voice].pan = value;
 		}while(0);
-		CHIPTUNE_PRINTF(cMidiSetup, "%s::MIDI_CC_PAN :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_PAN :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
 		break;
 	case MIDI_CC_EXPRESSION:
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EXPRESSION :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
+		set_track_volume(voice, value);
+		break;
 	case MIDI_CC_DATA_ENTRY_LSB:
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_DATA_ENTRY_LSB :: voice = %u, value = %u %s\r\n",
+						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		break;
 	case MIDI_CC_EFFECT_1_DEPTH:
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_1_DEPTH :: voice = %u, value = %u %s\r\n",
+						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		break;
 	case MIDI_CC_EFFECT_2_DEPTH:
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_2_DEPTH :: voice = %u, value = %u %s\r\n",
+						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		break;
 	case MIDI_CC_EFFECT_3_DEPTH:
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_3_DEPTH :: voice = %u, value = %u %s\r\n",
+						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		break;
 	case MIDI_CC_EFFECT_4_DEPTH:
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_4_DEPTH :: voice = %u, value = %u %s\r\n",
+						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		break;
 	case MIDI_CC_EFFECT_5_DEPTH:
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_5_DEPTH :: voice = %u, value = %u %s\r\n",
+						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		break;
+	case MIDI_CC_RON_LSB:
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_RON_LSB :: voice = %u, value = %u %s\r\n",
+						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		break;
+	case MIDI_CC_RON_MSB:
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_RON_MSB :: voice = %u, value = %u %s\r\n",
+						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		break;
 	default:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %u :: voice = %u, value = %u\r\n", __FUNCTION__, number,
-						voice, value);
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: code = %u :: voice = %u, value = %u%s\r\n", __FUNCTION__, number,
+						voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	}
 
