@@ -12,7 +12,8 @@ extern "C"
 #endif
 
 
-void chiptune_set_midi_message_callback( int(*handler_get_next_midi_message)(uint32_t * const p_message, uint32_t * const p_tick) );
+void chiptune_set_midi_message_callback(
+		int(*handler_get_next_midi_message)(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick) );
 void chiptune_initialize(uint32_t const sampling_rate);
 void chiptune_set_tempo(float const tempo);
 void chiptune_set_resolution(uint32_t const resolution);

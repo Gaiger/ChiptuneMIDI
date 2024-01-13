@@ -90,15 +90,15 @@ static int32_t s_max_volume = ((127)*(64) * 8);
 
 #define TICK_TO_SAMPLE_INDEX(TICK)					((uint32_t)(s_samples_to_tick_ratio * (chiptune_float)(TICK) + 0.5 ))
 
-static int(*s_handler_get_next_midi_message)(uint32_t * const p_message, uint32_t * const p_tick) = NULL;
+static int(*s_handler_get_midi_message)(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick) = NULL;
 
 static bool s_is_tune_ending = false;
 
 /**********************************************************************************/
 
-void chiptune_set_midi_message_callback( int(*handler_get_next_midi_message)(uint32_t * const p_message, uint32_t * const p_tick) )
+void chiptune_set_midi_message_callback( int(*handler_get_next_midi_message)(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick) )
 {
-	s_handler_get_next_midi_message = handler_get_next_midi_message;
+	s_handler_get_midi_message = handler_get_next_midi_message;
 }
 
 /**********************************************************************************/
@@ -233,7 +233,18 @@ static int setup_control_change_into_voice_info(uint8_t const voice, uint8_t con
 static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t const number)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "%s, %voice = %u, number = %u\r\n", __FUNCTION__, voice, number);
-	s_voice_info[voice].waveform = WAVEFORM_TRIANGLE;
+
+	do
+	{
+		if(0 == voice || 1 == voice){
+			s_voice_info[voice].waveform = WAVEFORM_SQUARE;
+			s_voice_info[voice].duty = 0x8000;
+			break;
+		}
+
+		s_voice_info[voice].waveform = WAVEFORM_TRIANGLE;
+	}while(0);
+
 }
 
 /**********************************************************************************/
@@ -365,6 +376,7 @@ static void process_midi_message(uint32_t const message, uint32_t const tick, bo
 #define NO_FETCHED_TICK								(UINT32_MAX)
 uint32_t s_fetched_message = NO_FETCHED_MESSAGE;
 uint32_t s_fetched_tick = NO_FETCHED_TICK;
+uint32_t s_midi_messge_index = 0;
 
 inline static int process_timely_midi_message(void)
 {
@@ -384,7 +396,9 @@ inline static int process_timely_midi_message(void)
 	bool is_no_more_message = false;
 	while(1)
 	{
-		if(0 != s_handler_get_next_midi_message(&message, &tick)){
+		int ret = s_handler_get_midi_message(s_midi_messge_index, &message, &tick);
+		s_midi_messge_index++;
+		if(0 != ret){
 			is_no_more_message = true;
 			break;
 		}
@@ -533,7 +547,7 @@ uint8_t chiptune_fetch_wave(void)
 
 	}while(0);
 
-	return (int8_t)out_value;
+	return (int8_t)out_value ;
 }
 
 /**********************************************************************************/

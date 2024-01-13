@@ -14,37 +14,22 @@
 class TuneManagerPrivate
 {
 public:
-	int GetNextMidiMessage(uint32_t * const p_message, uint32_t * const p_tick)
+	int GetNextMidiMessage(int index, uint32_t * const p_message, uint32_t * const p_tick)
 	{
-		QMidiEvent *p_midi_event;
-		while(1)
-		{
-			do
-			{
-				if(m_p_midi_file->events().size() <= m_current_midi_event_index){
-					return -1;
-				}
 
-				p_midi_event = m_p_midi_file->events().at(m_current_midi_event_index);
-				m_current_midi_event_index += 1;
+		if(m_p_midi_file->events().size() <= index){
+			return -1;
+		}
 
-				if(QMidiEvent::Meta == p_midi_event->type()){
-					if(QMidiEvent::Tempo == p_midi_event->number()){
-						chiptune_set_tempo(p_midi_event->tempo());
-					}
-				}
-			}while(p_midi_event->type() == QMidiEvent::Meta || p_midi_event->type() == QMidiEvent::SysEx);
-
-			//if(0 == p_midi_event->track() || 1 == p_midi_event->track())
-			{
-				break;
+		QMidiEvent *p_midi_event = m_p_midi_file->events().at(index);
+		if(QMidiEvent::Meta == p_midi_event->type()){
+			if(QMidiEvent::Tempo == p_midi_event->number()){
+				chiptune_set_tempo(p_midi_event->tempo());
 			}
 		}
 
-		//qDebug() << "track = " << p_midi_event->track();
 		*p_message = p_midi_event->message();
 		*p_tick = (uint32_t)p_midi_event->tick();
-
 		return 0;
 	}
 
@@ -131,7 +116,6 @@ public:
 public:
 	int m_sampling_rate;
 	QMidiFile *m_p_midi_file;
-	int m_current_midi_event_index;
 	int m_wave_prebuffer_length;
 
 	QByteArray m_wave_bytearray;
@@ -144,9 +128,9 @@ public:
 
 static TuneManagerPrivate *s_p_private = nullptr;
 
-extern "C" int get_next_midi_message(uint32_t * const p_message, uint32_t * const p_tick)
+extern "C" int get_next_midi_message(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick)
 {
-	return s_p_private->GetNextMidiMessage(p_message, p_tick);
+	return s_p_private->GetNextMidiMessage((int)index, p_message, p_tick);
 }
 
 /**********************************************************************************/
@@ -208,7 +192,6 @@ int TuneManager::InitializeTune(void)
 
 	chiptune_set_max_volume(m_p_private->GetMaxVolume());
 
-	m_p_private->m_current_midi_event_index = 0;
 	chiptune_initialize((uint32_t)m_p_private->m_sampling_rate);
 	chiptune_set_resolution(m_p_private->m_p_midi_file->resolution());
 
