@@ -6,7 +6,7 @@
 
 #include "chiptune.h"
 
-#define _DEBUG_FAST_TO_ENDING
+//#define _DEBUG_FAST_TO_ENDING
 
 #define _PRINT_MIDI_DEVELOPING
 #define _PRINT_MIDI_SETUP
@@ -80,6 +80,7 @@ static uint32_t s_resolution = DEFAULT_RESOLUTION;
 static uint32_t s_current_sample_index = 0;
 static chiptune_float s_samples_to_tick_ratio = (chiptune_float)(DEFAULT_SAMPLING_RATE * 60.0/DEFAULT_TEMPO/DEFAULT_RESOLUTION);
 
+static int32_t s_max_volume = ((127)*(64) * 8);
 
 #define UPDATE_SAMPLES_TO_TICK_RATIO()				\
 													do{	\
@@ -87,7 +88,7 @@ static chiptune_float s_samples_to_tick_ratio = (chiptune_float)(DEFAULT_SAMPLIN
 															= (chiptune_float)(s_sampling_rate * 60.0/s_tempo/s_resolution); \
 													} while(0)
 
-#define TICK_TO_SAMPLE_INDEX(TICK)					((uint32_t)(s_samples_to_tick_ratio * (chiptune_float)(TICK) + 0.5))
+#define TICK_TO_SAMPLE_INDEX(TICK)					((uint32_t)(s_samples_to_tick_ratio * (chiptune_float)(TICK) + 0.5 ))
 
 static int(*s_handler_get_next_midi_message)(uint32_t * const p_message, uint32_t * const p_tick) = NULL;
 
@@ -117,24 +118,24 @@ enum
 struct _oscillator
 {
 	int8_t		voice_index;
-	uint8_t		volume;
 	uint8_t		waveform;
-	uint8_t		note;
 	uint16_t	phase;
 	uint16_t	duty;
+	uint8_t		note;
+	uint16_t	volume;
+	bool		is_completed;
 	uint32_t	start_tick;
 	uint32_t	end_tick;
-	bool		is_completed;
 } s_oscillator[MAX_OSCILLATOR_NUMBER];
 
 #define UNSED_OSCILLATOR							(-1)
 
 struct _voice_info
 {
+	uint8_t		pan;
 	uint8_t		waveform;
 	uint16_t	duty;
 	uint8_t		volume;
-	uint8_t		pan;
 }s_voice_info[MAX_OSCILLATOR_NUMBER];
 
 #define MIDI_MESSAGE_NOTE_OFF						(0x80)
@@ -165,7 +166,7 @@ struct _voice_info
 
 inline static void set_voice_info_volume(uint8_t const voice, uint8_t const value)
 {
-	s_voice_info[voice].volume = 2 * value;
+	s_voice_info[voice].volume = value;
 }
 
 /**********************************************************************************/
@@ -284,7 +285,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			s_oscillator[ii].voice_index = voice;
 			s_oscillator[ii].waveform = s_voice_info[voice].waveform;
 			s_oscillator[ii].duty = s_voice_info[voice].duty;
-			s_oscillator[ii].volume = (2 * velocity * (uint16_t)s_voice_info[voice].volume) >> 8;
+			s_oscillator[ii].volume = (uint32_t)velocity * (uint32_t)s_voice_info[voice].volume;
 			s_oscillator[ii].note = note;
 			s_oscillator[ii].phase = 0;
 			s_oscillator[ii].start_tick = tick;
@@ -386,7 +387,7 @@ inline static int process_timely_midi_message(void)
 	int ii = 0;
 	bool is_note_message;
 	if(!(NO_FETCHED_MESSAGE == s_fetched_message && NO_FETCHED_TICK == s_fetched_tick)){
-		if(TICK_TO_SAMPLE_INDEX(s_fetched_tick) > (s_current_sample_index + 1)){
+		if(TICK_TO_SAMPLE_INDEX(s_fetched_tick) > (s_current_sample_index)){
 			return 0;
 		}
 		process_midi_message(s_fetched_message, s_fetched_tick, &is_note_message);
@@ -401,7 +402,7 @@ inline static int process_timely_midi_message(void)
 			break;
 		}
 
-		if(TICK_TO_SAMPLE_INDEX(tick) > (s_current_sample_index + 1)){
+		if(TICK_TO_SAMPLE_INDEX(tick) > (s_current_sample_index)){
 			break;
 		}
 
@@ -429,6 +430,7 @@ void chiptune_initialize(uint32_t const sampling_rate)
 {
 	s_is_tune_ending = false;
 	s_current_sample_index = 0;
+	s_sampling_rate = sampling_rate;
 	s_fetched_message = NO_FETCHED_MESSAGE;
 	s_fetched_tick = NO_FETCHED_TICK;
 	UPDATE_SAMPLES_TO_TICK_RATIO();
@@ -469,6 +471,10 @@ void chiptune_set_resolution(uint32_t const resolution)
 	UPDATE_SAMPLES_TO_TICK_RATIO();
 }
 
+void chiptune_set_max_volume(uint32_t const max_volume)
+{
+	s_max_volume = (int32_t)max_volume;
+}
 /**********************************************************************************/
 
 uint8_t chiptune_fetch_wave(void)
@@ -485,38 +491,39 @@ uint8_t chiptune_fetch_wave(void)
 			continue;
 		}
 
-		if(s_current_sample_index  > TICK_TO_SAMPLE_INDEX(s_oscillator[i].end_tick)){
+		if(s_current_sample_index >= TICK_TO_SAMPLE_INDEX(s_oscillator[i].end_tick)){
 			s_oscillator[i].voice_index = UNSED_OSCILLATOR;
+			continue;
 		}
 
 		if(s_current_sample_index < TICK_TO_SAMPLE_INDEX(s_oscillator[i].start_tick)){
 			continue;
 		}
 
-		int8_t value = 0;
+		int32_t value = 0;
 		switch(s_oscillator[i].waveform)
 		{
 		case WAVEFORM_SQUARE:
-			value = (s_oscillator[i].phase > s_oscillator[i].duty) ? -32 : 31;
+			value = (s_oscillator[i].phase > s_oscillator[i].duty) ? -128 : 127;
 			break;
 		case WAVEFORM_TRIANGLE:
 			do
 			{
 				if(s_oscillator[i].phase < 0x8000){
-					value = -32 + (s_oscillator[i].phase >> 9);
+					value = -128 + (s_oscillator[i].phase >> 8 << 1);
 					break;
 				}
-				value = 31 - ((s_oscillator[i].phase - 0x8000) >> 9);
+				value = 127 - ((s_oscillator[i].phase - 0x8000) >> 8 << 1 );
 			}while(0);
 			break;
 		case WAVEFORM_SAW:
-			value = -32 + (s_oscillator[i].phase >> 10);
+			value = -128 + (s_oscillator[i].phase >> 8);
 			break;
 		default:
 			break;
 		}
+		accumulated_value += (value * s_oscillator[i].volume );
 
-		accumulated_value += value * s_oscillator[i].volume; //rhs = [-8160,7905]
 		s_oscillator[i].phase += s_phase_table[s_oscillator[i].note];
 	}
 
@@ -527,28 +534,28 @@ uint8_t chiptune_fetch_wave(void)
 		s_current_sample_index += 99;
 	}
 #endif
-	//accumulated_value [-32640,31620]
+	int32_t out_value = accumulated_value/s_max_volume + 128;
 	do
 	{
-		if(accumulated_value > 0){
-			if(INT16_MAX < accumulated_value ){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: accumulated_value = %d, greater than INT16_MAX\r\n",
-								accumulated_value);
+		if(out_value > 0){
+			if(UINT8_MAX < out_value ){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: accumulated_value = %d, greater than UINT8_MAX\r\n",
+								out_value);
 				break;
 			}
 		}
 
-		if(accumulated_value < 0){
-			if(INT16_MIN > accumulated_value ){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: accumulated_value = %d, greater than INT16_MIN\r\n",
-								accumulated_value);
+		if(out_value < 0){
+			if(0 > out_value ){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, less than 0\r\n",
+								out_value);
 				break;
 			}
 		}
 
 	}while(0);
-	// [1,251]
-	return 128 + (accumulated_value >> 8);
+
+	return (int8_t)out_value;
 }
 
 /**********************************************************************************/

@@ -16,7 +16,7 @@ void chiptune_set_midi_message_callback( int(*handler_get_next_midi_message)(uin
 void chiptune_initialize(uint32_t const sampling_rate);
 void chiptune_set_tempo(float const tempo);
 void chiptune_set_resolution(uint32_t const resolution);
-
+void chiptune_set_max_volume(uint32_t const max_volume);
 uint8_t chiptune_fetch_wave(void);
 
 bool chiptune_is_tune_ending(void)
