@@ -123,9 +123,6 @@ struct _oscillator
 	uint16_t	duty;
 	uint8_t		note;
 	uint16_t	volume;
-	bool		is_completed;
-	uint32_t	start_tick;
-	uint32_t	end_tick;
 } s_oscillator[MAX_OSCILLATOR_NUMBER];
 
 #define UNSED_OSCILLATOR							(-1)
@@ -278,7 +275,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				 }
 			}
 
-			if(MAX_OSCILLATOR_NUMBER== ii){
+			if(MAX_OSCILLATOR_NUMBER == ii){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillator are used\r\n");
 				return -1;
 			}
@@ -288,25 +285,14 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			s_oscillator[ii].volume = (uint32_t)velocity * (uint32_t)s_voice_info[voice].volume;
 			s_oscillator[ii].note = note;
 			s_oscillator[ii].phase = 0;
-			s_oscillator[ii].start_tick = tick;
-			s_oscillator[ii].end_tick = UINT32_MAX;
-			s_oscillator[ii].is_completed = false;
 			break;
 		}
 
 		for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
-			if(voice != s_oscillator[ii].voice_index){
-				continue;
-			}
-			if(note != s_oscillator[ii].note){
-				continue;
-			}
-			if(true == s_oscillator[ii].is_completed){
-				continue;
-			}
-
-			if(tick > s_oscillator[ii].start_tick){
-				break;
+			if(voice == s_oscillator[ii].voice_index){
+				if(note == s_oscillator[ii].note){
+					break;
+				}
 			}
 		}
 
@@ -315,8 +301,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 							voice, note, tick);
 			return -2;
 		}
-		s_oscillator[ii].end_tick = tick;
-		s_oscillator[ii].is_completed = true;
+		s_oscillator[ii].voice_index = UNSED_OSCILLATOR;
 	}while(0);
 
 	return 0;
@@ -333,7 +318,7 @@ static void process_midi_message(uint32_t const message, uint32_t const tick, bo
 
 	u.data_as_uint32 = message;
 
-	uint8_t type =  u.data_as_bytes[0]  & 0xF0;
+	uint8_t type =  u.data_as_bytes[0] & 0xF0;
 	uint8_t voice = u.data_as_bytes[0] & 0x0F;
 
 	*p_is_note_message = false;
@@ -346,9 +331,9 @@ static void process_midi_message(uint32_t const message, uint32_t const tick, bo
 							 voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	case MIDI_MESSAGE_KEY_PRESSURE:
-		printf("MIDI_MESSAGE_KEY_PRESSURE\r\n");
-		printf("voice = %u, ", voice);
-		printf("note = %u, amount = %u\r\n",  u.data_as_bytes[1], u.data_as_bytes[2]);
+		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_KEY_PRESSURE\r\n");
+		CHIPTUNE_PRINTF(cMidiSetup, "voice = %u, ", voice);
+		CHIPTUNE_PRINTF(cMidiSetup, "note = %u, amount = %u\r\n",  u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	case MIDI_MESSAGE_CONTROL_CHANGE:
 		setup_control_change_into_voice_info(voice, u.data_as_bytes[1], u.data_as_bytes[2]);
@@ -357,19 +342,21 @@ static void process_midi_message(uint32_t const message, uint32_t const tick, bo
 		setup_program_change_into_voice_info(voice, u.data_as_bytes[1]);
 		break;
 	case MIDI_MESSAGE_CHANNEL_PRESSURE:
-		printf("MIDI_MESSAGE_CHANNEL_PRESSURE\r\n");
-		printf("voice = %u, ", voice);
-		printf("amount = %u\r\n",  u.data_as_bytes[1]);
+		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_CHANNEL_PRESSURE\r\n");
+		CHIPTUNE_PRINTF(cMidiSetup, "voice = %u, ", voice);
+		CHIPTUNE_PRINTF(cMidiSetup, "amount = %u\r\n",  u.data_as_bytes[1]);
 		break;
 	case MIDI_MESSAGE_PITCH_WHEEL:
-		printf("MIDI_MESSAGE_PITCH_WHEEL\r\n");
-		printf("voice = %u, ", voice);
-		printf("value = 0x%04X\r\n", (u.data_as_bytes[2] << 7) | u.data_as_bytes[1]);
+		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_PITCH_WHEEL\r\n");
+		CHIPTUNE_PRINTF(cMidiSetup, "voice = %u, ", voice);
+		CHIPTUNE_PRINTF(cMidiSetup, "value = 0x%04X\r\n", (u.data_as_bytes[2] << 7) | u.data_as_bytes[1]);
 		break;
 	default:
+		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE UKNOWN :: %u\r\n", type);
+		CHIPTUNE_PRINTF(cMidiSetup, "voice = %u, ", voice);
+		CHIPTUNE_PRINTF(cMidiSetup, "byte 1 = %u, byte 2 = %u\r\n",  u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	}
-
 }
 
 /**********************************************************************************/
@@ -488,15 +475,6 @@ uint8_t chiptune_fetch_wave(void)
 	int32_t accumulated_value = 0;
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		if(UNSED_OSCILLATOR == s_oscillator[i].voice_index){
-			continue;
-		}
-
-		if(s_current_sample_index >= TICK_TO_SAMPLE_INDEX(s_oscillator[i].end_tick)){
-			s_oscillator[i].voice_index = UNSED_OSCILLATOR;
-			continue;
-		}
-
-		if(s_current_sample_index < TICK_TO_SAMPLE_INDEX(s_oscillator[i].start_tick)){
 			continue;
 		}
 
