@@ -192,9 +192,8 @@ int TuneManager::InitializeTune(void)
 
 	chiptune_set_max_volume(m_p_private->GetMaxVolume());
 
-	chiptune_initialize((uint32_t)m_p_private->m_sampling_rate);
-	chiptune_set_resolution(m_p_private->m_p_midi_file->resolution());
-
+	chiptune_initialize((uint32_t)m_p_private->m_sampling_rate,
+						m_p_private->m_p_midi_file->resolution(), m_p_private->m_p_midi_file->events().size());
 
 	m_p_private->m_inquiring_tune_ending_timer.disconnect();
 	m_p_private->m_wave_prebuffer_length = 0;
