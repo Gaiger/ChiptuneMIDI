@@ -606,7 +606,7 @@ uint8_t chiptune_fetch_wave(void)
 		switch(s_oscillator[i].waveform)
 		{
 		case WAVEFORM_SQUARE:
-			value = (s_oscillator[i].phase > s_oscillator[i].duty) ? ABSOLUE_NEGATIVE_VALUE_MAX : ABSOLUE_POSITIVE_VALUE_MAX;
+			value = (s_oscillator[i].phase > s_oscillator[i].duty) ? -ABSOLUE_NEGATIVE_VALUE_MAX : ABSOLUE_POSITIVE_VALUE_MAX;
 			break;
 		case WAVEFORM_TRIANGLE:
 			do
