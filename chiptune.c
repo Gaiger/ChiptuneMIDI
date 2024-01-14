@@ -235,17 +235,46 @@ static int setup_control_change_into_voice_info(uint8_t const voice, uint8_t con
 
 static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t const number)
 {
-	CHIPTUNE_PRINTF(cMidiSetup, "%s, %voice = %u, number = %u\r\n", __FUNCTION__, voice, number);
-	do
+	switch(number)
 	{
-		if(0 == voice || 1 == voice){
-			s_voice_info[voice].waveform = WAVEFORM_SQUARE;
-			s_voice_info[voice].duty = 0x8000;
-			break;
-		}
-
+#define MIDI_INSTRUMENT_OVERDRIVE_GUITAR			(29)
+	case MIDI_INSTRUMENT_OVERDRIVE_GUITAR:
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_SQUARE, duty = 50%%\r\n", __FUNCTION__, voice);
+		s_voice_info[voice].waveform = WAVEFORM_SQUARE;
+		s_voice_info[voice].duty = 0x8000;
+		break;
+#define MIDI_INSTRUMENT_DISTORTION_GUITAR			(30)
+	case MIDI_INSTRUMENT_DISTORTION_GUITAR:
+		s_voice_info[voice].waveform = WAVEFORM_SQUARE;
+		s_voice_info[voice].duty = 0x4000;
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_SQUARE, duty = 25%%\r\n", __FUNCTION__, voice);
+		break;
+#define MIDI_INSTRUMENT_ACOUSTIC_BASS				(32)
+#define MIDI_INSTRUMENT_ELECTRIC_BASS_FINGER		(33)
+#define MIDI_INSTRUMENT_ELECTRIC_BASS_PICK			(34)
+#define MIDI_INSTRUMENT_FRETLESS_BASS				(35)
+#define MIDI_INSTRUMENT_SLAP_BASS_1					(36)
+#define MIDI_INSTRUMENT_SLAP_BASS_2					(37)
+#define MIDI_INSTRUMENT_SYNTH_BASS_1				(38)
+#define MIDI_INSTRUMENT_SYNTH_BASS_2				(39)
+	case MIDI_INSTRUMENT_ACOUSTIC_BASS:
+	case MIDI_INSTRUMENT_ELECTRIC_BASS_FINGER:
+	case MIDI_INSTRUMENT_ELECTRIC_BASS_PICK:
+	case MIDI_INSTRUMENT_FRETLESS_BASS:
+	case MIDI_INSTRUMENT_SLAP_BASS_1:
+	case MIDI_INSTRUMENT_SLAP_BASS_2:
+	case MIDI_INSTRUMENT_SYNTH_BASS_1:
+	case MIDI_INSTRUMENT_SYNTH_BASS_2:
+#define MIDI_INSTRUMENT_STRING_ENSEMBLE_1			(48)
+#define MIDI_INSTRUMENT_STRING_ENSEMBLE_2			(49) //slow string
+	case MIDI_INSTRUMENT_STRING_ENSEMBLE_1:
+	case MIDI_INSTRUMENT_STRING_ENSEMBLE_2:
+	default:
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_TRIANGLE\r\n", __FUNCTION__, voice);
 		s_voice_info[voice].waveform = WAVEFORM_TRIANGLE;
-	}while(0);
+		break;
+	}
+
 }
 
 /**********************************************************************************/
