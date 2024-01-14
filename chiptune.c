@@ -239,7 +239,7 @@ static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t co
 	{
 #define MIDI_INSTRUMENT_OVERDRIVE_GUITAR			(29)
 	case MIDI_INSTRUMENT_OVERDRIVE_GUITAR:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_SQUARE, duty = 50%%\r\n", __FUNCTION__, voice);
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_SQUARE with duty = 50%% (instrument = %u)\r\n", __FUNCTION__, voice, number);
 		s_voice_info[voice].waveform = WAVEFORM_SQUARE;
 		s_voice_info[voice].duty = 0x8000;
 		break;
@@ -247,7 +247,7 @@ static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t co
 	case MIDI_INSTRUMENT_DISTORTION_GUITAR:
 		s_voice_info[voice].waveform = WAVEFORM_SQUARE;
 		s_voice_info[voice].duty = 0x4000;
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_SQUARE, duty = 25%%\r\n", __FUNCTION__, voice);
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_SQUARE with duty = 25%% (instrument = %u)\r\n", __FUNCTION__, voice, number);
 		break;
 #define MIDI_INSTRUMENT_ACOUSTIC_BASS				(32)
 #define MIDI_INSTRUMENT_ELECTRIC_BASS_FINGER		(33)
@@ -270,7 +270,7 @@ static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t co
 	case MIDI_INSTRUMENT_STRING_ENSEMBLE_1:
 	case MIDI_INSTRUMENT_STRING_ENSEMBLE_2:
 	default:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_TRIANGLE\r\n", __FUNCTION__, voice);
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_TRIANGLE (instrument = %u)\r\n", __FUNCTION__, voice, number);
 		s_voice_info[voice].waveform = WAVEFORM_TRIANGLE;
 		break;
 	}
