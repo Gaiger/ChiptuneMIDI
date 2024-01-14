@@ -14,7 +14,7 @@
 class TuneManagerPrivate
 {
 public:
-	int GetNextMidiMessage(int index, uint32_t * const p_message, uint32_t * const p_tick)
+	int GetMidiMessage(int index, uint32_t * const p_message, uint32_t * const p_tick)
 	{
 
 		if(m_p_midi_file->events().size() <= index){
@@ -128,9 +128,9 @@ public:
 
 static TuneManagerPrivate *s_p_private = nullptr;
 
-extern "C" int get_next_midi_message(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick)
+extern "C" int get_midi_message(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick)
 {
-	return s_p_private->GetNextMidiMessage((int)index, p_message, p_tick);
+	return s_p_private->GetMidiMessage((int)index, p_message, p_tick);
 }
 
 /**********************************************************************************/
@@ -145,7 +145,7 @@ TuneManager::TuneManager(int sampliing_rate, QObject *parent)
 	m_p_private->m_p_public = this;
 
 	s_p_private = m_p_private;
-	chiptune_set_midi_message_callback(get_next_midi_message);
+	chiptune_set_midi_message_callback(get_midi_message);
 }
 
 /**********************************************************************************/

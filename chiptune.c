@@ -96,9 +96,9 @@ static bool s_is_tune_ending = false;
 
 /**********************************************************************************/
 
-void chiptune_set_midi_message_callback( int(*handler_get_next_midi_message)(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick) )
+void chiptune_set_midi_message_callback( int(*handler_get_midi_message)(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick) )
 {
-	s_handler_get_midi_message = handler_get_next_midi_message;
+	s_handler_get_midi_message = handler_get_midi_message;
 }
 
 /**********************************************************************************/
@@ -433,6 +433,7 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 
 	s_is_tune_ending = false;
 	s_current_sample_index = 0;
+	s_midi_messge_index = 0;
 	s_fetched_message = NO_FETCHED_MESSAGE;
 	s_fetched_tick = NO_FETCHED_TICK;
 	UPDATE_SAMPLES_TO_TICK_RATIO();

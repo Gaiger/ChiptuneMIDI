@@ -13,7 +13,7 @@ extern "C"
 
 
 void chiptune_set_midi_message_callback(
-		int(*handler_get_next_midi_message)(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick) );
+		int(*handler_get_midi_message)(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick) );
 void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number);
 void chiptune_set_tempo(float const tempo);
 void chiptune_set_max_volume(uint32_t const max_volume);
