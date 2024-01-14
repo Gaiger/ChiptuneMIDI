@@ -600,25 +600,26 @@ uint8_t chiptune_fetch_wave(void)
 		if(UNUSED_OSCILLATOR == s_oscillator[i].voice_index){
 			continue;
 		}
-
+#define ABSOLUE_POSITIVE_VALUE_MAX					(INT8_MAX)
+#define ABSOLUE_NEGATIVE_VALUE_MAX					(-INT8_MIN)
 		int32_t value = 0;
 		switch(s_oscillator[i].waveform)
 		{
 		case WAVEFORM_SQUARE:
-			value = (s_oscillator[i].phase > s_oscillator[i].duty) ? INT8_MIN : INT8_MAX;
+			value = (s_oscillator[i].phase > s_oscillator[i].duty) ? ABSOLUE_NEGATIVE_VALUE_MAX : ABSOLUE_POSITIVE_VALUE_MAX;
 			break;
 		case WAVEFORM_TRIANGLE:
 			do
 			{
 				if(s_oscillator[i].phase < 0x8000){
-					value = INT8_MIN + (s_oscillator[i].phase >> 8 << 1);
+					value = -ABSOLUE_NEGATIVE_VALUE_MAX + (s_oscillator[i].phase >> 8 << 1);
 					break;
 				}
-				value = INT8_MAX - ((s_oscillator[i].phase - 0x8000) >> 8 << 1 );
+				value = ABSOLUE_POSITIVE_VALUE_MAX - ((s_oscillator[i].phase - 0x8000) >> 8 << 1 );
 			}while(0);
 			break;
 		case WAVEFORM_SAW:
-			value = INT8_MIN + (s_oscillator[i].phase >> 8);
+			value = -ABSOLUE_NEGATIVE_VALUE_MAX + (s_oscillator[i].phase >> 8);
 			break;
 		default:
 			break;
@@ -635,7 +636,7 @@ uint8_t chiptune_fetch_wave(void)
 	}
 #endif
 
-	int32_t out_value = (accumulated_value >> g_volume_nomalization_right_shift) + INT8_MAX;
+	int32_t out_value = (accumulated_value >> g_volume_nomalization_right_shift) + (ABSOLUE_NEGATIVE_VALUE_MAX);
 	do
 	{
 		if(out_value > 0){
