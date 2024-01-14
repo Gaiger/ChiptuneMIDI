@@ -8,6 +8,8 @@
 
 //#define _DEBUG_FAST_TO_ENDING
 
+static bool s_enable_print_out = true;
+
 #define _PRINT_MIDI_DEVELOPING
 #define _PRINT_MIDI_SETUP
 #define _PRINT_MOTE_OPERATION
@@ -56,6 +58,9 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 
 #define CHIPTUNE_PRINTF(PRINT_TYPE, FMT, ...)		\
 													do { \
+														if(false == s_enable_print_out){ \
+															break;\
+														} \
 														chiptune_printf(PRINT_TYPE, FMT, ##__VA_ARGS__); \
 													}while(0)
 
@@ -79,8 +84,6 @@ static uint32_t s_sampling_rate = DEFAULT_SAMPLING_RATE;
 static uint32_t s_resolution = DEFAULT_RESOLUTION;
 static uint32_t s_current_sample_index = 0;
 static chiptune_float s_samples_to_tick_ratio = (chiptune_float)(DEFAULT_SAMPLING_RATE * 60.0/DEFAULT_TEMPO/DEFAULT_RESOLUTION);
-
-static int32_t s_max_volume = ((127)*(64) * 8);
 
 #define UPDATE_SAMPLES_TO_TICK_RATIO()				\
 													do{	\
@@ -125,7 +128,7 @@ struct _oscillator
 	uint16_t	volume;
 } s_oscillator[MAX_OSCILLATOR_NUMBER];
 
-#define UNSED_OSCILLATOR							(-1)
+#define UNUSED_OSCILLATOR							(-1)
 
 struct _voice_info
 {
@@ -250,7 +253,7 @@ static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t co
 static bool is_all_oscillators_unused(void)
 {
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(UNSED_OSCILLATOR == s_oscillator[i].voice_index){
+		if(UNUSED_OSCILLATOR == s_oscillator[i].voice_index){
 			continue;
 		}
 		return false;
@@ -279,7 +282,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		int ii = 0;
 		if(true == is_note_on){
 			for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
-				 if(UNSED_OSCILLATOR == s_oscillator[ii].voice_index){
+				 if(UNUSED_OSCILLATOR == s_oscillator[ii].voice_index){
 					 break;
 				 }
 			}
@@ -310,7 +313,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 							voice, note, tick);
 			return -2;
 		}
-		s_oscillator[ii].voice_index = UNSED_OSCILLATOR;
+		s_oscillator[ii].voice_index = UNUSED_OSCILLATOR;
 	}while(0);
 
 	return 0;
@@ -425,28 +428,114 @@ inline static int process_timely_midi_message(void)
 
 /**********************************************************************************/
 
+static uint32_t get_max_simultaneous_volume(void)
+{
+	s_enable_print_out = false;
+
+	uint32_t message;
+	uint32_t previous_tick;
+	bool is_note_message;
+	uint32_t midi_messge_index = 0;
+	uint32_t max_volume = 0;
+
+	s_handler_get_midi_message(midi_messge_index, &message, &previous_tick);
+	midi_messge_index += 1;
+	process_midi_message(message, previous_tick, &is_note_message);
+
+	while(midi_messge_index < s_total_message_number){
+		uint32_t tick;
+		int ret = s_handler_get_midi_message(midi_messge_index, &message, &tick);
+		if(0 != ret){
+			break;
+		}
+		midi_messge_index += 1;
+
+		do
+		{
+			if(previous_tick == tick){
+				break;
+			}
+			previous_tick = tick;
+
+			uint32_t sum_volume = 0;
+			for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+				if(UNUSED_OSCILLATOR == s_oscillator[i].voice_index){
+					continue;
+				}
+				sum_volume += s_oscillator[i].volume;
+			}
+			if(sum_volume > max_volume){
+				max_volume = sum_volume;
+			}
+		}while(0);
+
+		process_midi_message(message, tick, &is_note_message);
+	}
+
+	s_enable_print_out = true;
+	return max_volume;
+}
+
+/**********************************************************************************/
+
+uint32_t roundup_to_power2(uint32_t const value)
+{
+	unsigned int v = value; // compute the next highest power of 2 of 32-bit v
+
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+	v++;
+
+	return v;
+}
+
+/**********************************************************************************/
+
+static uint32_t get_max_simultaneous_volume_roundup_to_power2_right_shift(void)
+{
+	uint32_t max_volume = get_max_simultaneous_volume();
+	uint32_t max_volume_roundup_to_power2 = roundup_to_power2(max_volume);
+
+	uint32_t i = 0;
+	for(i = 0; i < sizeof(uint32_t) * 8; i++){
+		if(0x01 & (max_volume_roundup_to_power2 >> i)){
+			break;
+		}
+	}
+
+	return  i;
+}
+
+/**********************************************************************************/
+
+uint32_t g_volume_nomalization_right_shift = 16;
+
 void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
 {
-	s_sampling_rate = sampling_rate;
-	s_resolution = resolution;
-	s_total_message_number = total_message_number;
 
 	s_is_tune_ending = false;
 	s_current_sample_index = 0;
 	s_midi_messge_index = 0;
 	s_fetched_message = NO_FETCHED_MESSAGE;
 	s_fetched_tick = NO_FETCHED_TICK;
-	UPDATE_SAMPLES_TO_TICK_RATIO();
-
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		s_oscillator[i].voice_index = UNSED_OSCILLATOR;
+		s_oscillator[i].voice_index = UNUSED_OSCILLATOR;
 	}
+
+	s_sampling_rate = sampling_rate;
+	s_resolution = resolution;
+	s_total_message_number = total_message_number;
+	UPDATE_SAMPLES_TO_TICK_RATIO();
 
 	for(int i = 0; i < MIDI_FREQUENCY_TABLE_SIZE; i++){
 		/*
 		 * freq = 440 * 2**((n-69)/12)
 		*/
-		double frequency = 440.0 * pow(2.0, (float)(i- 69)/12.0);
+		double frequency = 440.0 * pow(2.0, (float)(i - 69)/12.0);
 		frequency = round(frequency * 100.0 + 0.5)/100.0;
 		/*
 		 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX = + 1)/phase
@@ -454,6 +543,7 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 		s_phase_table[i] = (uint16_t)((UINT16_MAX + 1) * frequency / sampling_rate);
 	}
 
+	g_volume_nomalization_right_shift = get_max_simultaneous_volume_roundup_to_power2_right_shift();
 	process_timely_midi_message();
 	return ;
 }
@@ -468,13 +558,6 @@ void chiptune_set_tempo(float const tempo)
 
 /**********************************************************************************/
 
-void chiptune_set_max_volume(uint32_t const max_volume)
-{
-	s_max_volume = (int32_t)max_volume;
-}
-
-/**********************************************************************************/
-
 uint8_t chiptune_fetch_wave(void)
 {
 	if(-1 == process_timely_midi_message()){
@@ -485,7 +568,7 @@ uint8_t chiptune_fetch_wave(void)
 
 	int32_t accumulated_value = 0;
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(UNSED_OSCILLATOR == s_oscillator[i].voice_index){
+		if(UNUSED_OSCILLATOR == s_oscillator[i].voice_index){
 			continue;
 		}
 
@@ -493,20 +576,20 @@ uint8_t chiptune_fetch_wave(void)
 		switch(s_oscillator[i].waveform)
 		{
 		case WAVEFORM_SQUARE:
-			value = (s_oscillator[i].phase > s_oscillator[i].duty) ? -128 : 127;
+			value = (s_oscillator[i].phase > s_oscillator[i].duty) ? INT8_MIN : INT8_MAX;
 			break;
 		case WAVEFORM_TRIANGLE:
 			do
 			{
 				if(s_oscillator[i].phase < 0x8000){
-					value = -128 + (s_oscillator[i].phase >> 8 << 1);
+					value = INT8_MIN + (s_oscillator[i].phase >> 8 << 1);
 					break;
 				}
-				value = 127 - ((s_oscillator[i].phase - 0x8000) >> 8 << 1 );
+				value = INT8_MAX - ((s_oscillator[i].phase - 0x8000) >> 8 << 1 );
 			}while(0);
 			break;
 		case WAVEFORM_SAW:
-			value = -128 + (s_oscillator[i].phase >> 8);
+			value = INT8_MIN + (s_oscillator[i].phase >> 8);
 			break;
 		default:
 			break;
@@ -523,7 +606,7 @@ uint8_t chiptune_fetch_wave(void)
 	}
 #endif
 
-	int32_t out_value = accumulated_value/s_max_volume + 128;
+	int32_t out_value = (accumulated_value >> g_volume_nomalization_right_shift) + INT8_MAX;
 	do
 	{
 		if(out_value > 0){

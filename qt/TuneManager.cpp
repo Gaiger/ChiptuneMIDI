@@ -45,74 +45,6 @@ public:
 		m_wave_bytearray += generated_bytearray;
 	}
 
-	int GetMaxVolume(void)
-	{
-		int max_volume = 0;
-		QList<std::pair<int, int>> voice_volume_pair_list;
-		QList<QMidiEvent*> event_list = m_p_midi_file->events();
-		QList<std::pair<int, int>> note_volume_pair_list;
-
-		//int compute_count = 0;
-		for(int k = 0; k < event_list.size(); k++){
-			QMidiEvent* p_midi_event = event_list.at(k);
-			if (QMidiEvent::Meta == p_midi_event->type() ){
-				continue;
-			}
-
-			if(QMidiEvent::ControlChange == p_midi_event->type()){
-#define MIDI_CC_VOLUME								(7)
-				if(MIDI_CC_VOLUME == p_midi_event->number()){
-					voice_volume_pair_list.append(std::make_pair(p_midi_event->track(), p_midi_event->value()));
-				}
-				continue;
-			}
-#if(0)
-			if(633600 == p_midi_event->tick()){
-				qDebug() << p_midi_event->track() << p_midi_event->note() << p_midi_event->type() ;
-			}
-#endif
-			if(QMidiEvent::NoteOn == p_midi_event->type()){
-				for(int i = 0; i < voice_volume_pair_list.size(); i++){
-					if(p_midi_event->track() == voice_volume_pair_list.at(i).first){
-						int voice_volume = voice_volume_pair_list.at(i).second;
-						note_volume_pair_list.append(std::make_pair(p_midi_event->track() * 128 + p_midi_event->note(),
-																	p_midi_event->velocity() * voice_volume));
-						break;
-					}
-				}
-#if(0)
-				if(k + 1 ==  event_list.size()){
-					break;
-				}
-#endif
-				if( p_midi_event->tick() == event_list.at(k + 1)->tick() ){
-					continue;
-				}
-
-				int sum_volume = 0;
-				for(std::pair<int, int> note_volume_pair : note_volume_pair_list){
-					sum_volume += note_volume_pair.second;
-				}
-
-				if(sum_volume > max_volume){
-					max_volume = sum_volume;
-				}
-				//compute_count += 1;
-			}
-
-			if(QMidiEvent::NoteOff == p_midi_event->type()){
-				for(int i = 0; i < note_volume_pair_list.size(); i++){
-					if(p_midi_event->track() * 128 + p_midi_event->note() == note_volume_pair_list.at(i).first){
-						note_volume_pair_list.removeAt(i);
-						break;
-					}
-				}
-			}
-		}
-		//qDebug() << compute_count ;
-		return max_volume;
-	}
-
 public:
 	int m_sampling_rate;
 	QMidiFile *m_p_midi_file;
@@ -179,7 +111,7 @@ int TuneManager::SetMidiFile(QString midi_file_name_string)
 		return -2;
 	}
 
-	InitializeTune();
+	//InitializeTune();
 	return 0;
 }
 /**********************************************************************************/
@@ -189,8 +121,6 @@ int TuneManager::InitializeTune(void)
 	if(nullptr == m_p_private->m_p_midi_file){
 		return -1;
 	}
-
-	chiptune_set_max_volume(m_p_private->GetMaxVolume());
 
 	chiptune_initialize((uint32_t)m_p_private->m_sampling_rate,
 						m_p_private->m_p_midi_file->resolution(), m_p_private->m_p_midi_file->events().size());
