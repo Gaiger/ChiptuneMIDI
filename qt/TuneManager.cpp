@@ -14,7 +14,7 @@
 class TuneManagerPrivate
 {
 public:
-	int GetMidiMessage(int index, uint32_t * const p_message, uint32_t * const p_tick)
+	int GetMidiMessage(int const index, uint32_t * const p_message, uint32_t * const p_tick)
 	{
 
 		if(m_p_midi_file->events().size() <= index){
@@ -38,18 +38,26 @@ public:
 		QByteArray generated_bytearray;
 		generated_bytearray.reserve(length);
 		for(int i = 0; i < length; i++) {
-			uint8_t value = chiptune_fetch_wave();
-			generated_bytearray += value;
+			do
+			{
+				if(TuneManager::SamplingSize16Bit == m_sampling_size){
+					int16_t value = chiptune_fetch_16bit_wave();
+					generated_bytearray += QByteArray((char*)&value, 2);
+					break;
+				}
+				generated_bytearray += chiptune_fetch_8bit_wave();
+			}while(0);
 		}
 
 		m_wave_bytearray += generated_bytearray;
 	}
 
 public:
-	int m_sampling_rate;
 	QMidiFile *m_p_midi_file;
-	int m_wave_prebuffer_length;
+	int m_sampling_rate;
+	int m_sampling_size;
 
+	int m_wave_prebuffer_length;
 	QByteArray m_wave_bytearray;
 
 	QTimer m_inquiring_tune_ending_timer;
@@ -67,12 +75,24 @@ extern "C" int get_midi_message(uint32_t index, uint32_t * const p_message, uint
 
 /**********************************************************************************/
 
-TuneManager::TuneManager(int sampliing_rate, QObject *parent)
+TuneManager::TuneManager(int const sampling_rate, int const sampling_size, QObject *parent)
 	: QObject(parent)
 {
 	QMutexLocker locker(&m_mutex);
+	if( QMetaType::UnknownType == QMetaType::type("SamplingSize")){
+			qRegisterMetaType<TuneManager::SamplingSize>("SamplingSize");
+	}
+
 	m_p_private = new TuneManagerPrivate();
-	m_p_private->m_sampling_rate = sampliing_rate;
+	m_p_private->m_sampling_rate = sampling_rate;
+	do{
+		if(SamplingSize16Bit == sampling_size){
+			m_p_private->m_sampling_size = SamplingSize16Bit;
+			break;
+		}
+		m_p_private->m_sampling_size = SamplingSize8Bit;
+	}while(0);
+
 	m_p_private->m_p_midi_file = nullptr;
 	m_p_private->m_p_public = this;
 
@@ -96,7 +116,7 @@ TuneManager::~TuneManager(void)
 
 /**********************************************************************************/
 
-int TuneManager::SetMidiFile(QString midi_file_name_string)
+int TuneManager::SetMidiFile(QString const midi_file_name_string)
 {
 	QMutexLocker locker(&m_mutex);
 	QFileInfo file_info(midi_file_name_string);
@@ -144,14 +164,14 @@ int TuneManager::InitializeTune(void)
 
 /**********************************************************************************/
 
-void TuneManager::HandleGenerateWaveRequested(int length)
+void TuneManager::HandleGenerateWaveRequested(int const length)
 {
 	m_p_private->GenerateWave(length);
 }
 
 /**********************************************************************************/
 
-void TuneManager::GenerateWave(int length, bool is_synchronized)
+void TuneManager::GenerateWave(int const length, bool const is_synchronized)
 {
 	QObject::disconnect(this, &TuneManager::GenerateWaveRequested,
 						this, &TuneManager::HandleGenerateWaveRequested);
@@ -178,7 +198,11 @@ void TuneManager::GenerateWave(int length, bool is_synchronized)
 
 /**********************************************************************************/
 
-int TuneManager::GetSamplingRate(void){ return m_p_private->m_sampling_rate;}
+int TuneManager::GetSamplingRate(void){ return m_p_private->m_sampling_rate; }
+
+/**********************************************************************************/
+
+int TuneManager::GetSamplingSize(void){ return m_p_private->m_sampling_size; }
 
 /**********************************************************************************/
 

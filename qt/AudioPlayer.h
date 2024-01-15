@@ -15,14 +15,6 @@ class AudioPlayer : public QObject
 {
 	Q_OBJECT
 public:
-	enum SAMPLING_SIZE
-	{
-		SAMPLING_SIZE_1			= 1,
-		SAMPLING_SIZE_2			= 2,
-
-		SAMPLING_SIZE_MAX		= 255,
-	}; Q_ENUM(SAMPLING_SIZE)
-
 	enum CHANNEL_COUNTS
 	{
 		CHANNEL_COUNTS_1		= 1,
@@ -34,7 +26,7 @@ public:
 	AudioPlayer(TuneManager *p_tune_manager, QObject *parent = nullptr);
 	~AudioPlayer()  Q_DECL_OVERRIDE;
 
-	void Play(bool is_blocking = false);
+	void Play(bool const is_blocking = false);
 	void Stop(void);
 
 private slots:
@@ -42,7 +34,7 @@ private slots:
 	void HandleAudioStateChanged(QAudio::State state);
 
 private :
-	void InitializeAudioResources(int filling_buffer_time_interval,
+	void InitializeAudioResources(int const filling_buffer_time_interval,
 								  int const sampling_rate, int const sampling_size, int const channel_counts);
 	void AppendWave(QByteArray wave_bytearray);
 	void CleanAudioResources();

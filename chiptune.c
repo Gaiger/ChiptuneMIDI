@@ -262,6 +262,7 @@ static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t co
 		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_SQUARE with duty = 50%% (instrument = %u)\r\n", __FUNCTION__, voice, number);
 		s_voice_info[voice].waveform = WAVEFORM_SQUARE;
 		s_voice_info[voice].duty = 0x8000;
+		s_voice_info[voice].waveform = WAVEFORM_TRIANGLE;
 		break;
 #define MIDI_INSTRUMENT_DISTORTION_GUITAR			(30)
 	case MIDI_INSTRUMENT_DISTORTION_GUITAR:
@@ -433,7 +434,7 @@ uint32_t s_midi_messge_index = 0;
 uint32_t s_total_message_number = 0;
 
 #ifdef _INCREMENTAL_SAMPLE_INDEX
-#define	IS_AFTER_CURRENT_TIME(TICK)					((TICK_TO_SAMPLE_INDEX(TICK) > s_current_tick) ? true : false)
+#define	IS_AFTER_CURRENT_TIME(TICK)					((TICK_TO_SAMPLE_INDEX(TICK) > s_current_sample_index) ? true : false)
 #else
 #define	IS_AFTER_CURRENT_TIME(TICK)					(((TICK) > s_current_tick) ? true : false)
 #endif
@@ -450,7 +451,6 @@ inline static int process_timely_midi_message(void)
 		if(true == IS_AFTER_CURRENT_TIME(s_fetched_tick)){
 			return 0;
 		}
-		//CHIPTUNE_PRINTF(cDeveloping, "s_current_tick = %f\r\n", s_current_tick);
 		process_midi_message(s_fetched_message, s_fetched_tick, &is_note_message);
 		s_fetched_message = NO_FETCHED_MESSAGE;
 		s_fetched_tick = NO_FETCHED_TICK;
@@ -635,9 +635,6 @@ void chiptune_set_tempo(float const tempo)
 	UPDATE_TIME_BASE_UNIT();
 }
 
-
-
-
 /**********************************************************************************/
 
 #ifdef _INCREMENTAL_SAMPLE_INDEX
@@ -672,13 +669,15 @@ inline static void increase_time_base_for_fast_to_ending(void)
 #endif
 
 #ifdef _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
-#define NORMALIZE_AMPLITUDE(VALUE)				((VALUE) >> g_amplitude_nomalization_right_shift)
+#define NORMALIZE_AMPLITUDE(VALUE)				((int32_t)((VALUE) >> g_amplitude_nomalization_right_shift))
 #else
-#define NORMALIZE_AMPLITUDE(VALUE)				((VALUE)/(int32_t)g_max_amplitude)
+#define NORMALIZE_AMPLITUDE(VALUE)				((int32_t)((VALUE)/(int32_t)g_max_amplitude))
 #endif
 
 
-uint8_t chiptune_fetch_wave(void)
+/**********************************************************************************/
+
+int16_t chiptune_fetch_16bit_wave(void)
 {
 	if(-1 == process_timely_midi_message()){
 		if(true == is_all_oscillators_unused()){
@@ -686,31 +685,30 @@ uint8_t chiptune_fetch_wave(void)
 		}
 	}
 
-	int32_t accumulated_value = 0;
+	int64_t accumulated_value = 0;
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		if(UNUSED_OSCILLATOR == s_oscillator[i].voice_index){
 			continue;
 		}
-#define ABSOLUE_POSITIVE_VALUE_MAX					(INT8_MAX)
-#define ABSOLUE_NEGATIVE_VALUE_MAX					(-INT8_MIN)
-		int32_t value = 0;
+
+		int16_t value = 0;
 		switch(s_oscillator[i].waveform)
 		{
 		case WAVEFORM_SQUARE:
-			value = (s_oscillator[i].phase > s_oscillator[i].duty) ? -ABSOLUE_NEGATIVE_VALUE_MAX : ABSOLUE_POSITIVE_VALUE_MAX;
+			value = (s_oscillator[i].phase > s_oscillator[i].duty) ? -(INT16_MAX + 1) : INT16_MAX;
 			break;
 		case WAVEFORM_TRIANGLE:
 			do
 			{
 				if(s_oscillator[i].phase < 0x8000){
-					value = -ABSOLUE_NEGATIVE_VALUE_MAX + (s_oscillator[i].phase >> 8 << 1);
+					value = -(INT16_MAX + 1) + (s_oscillator[i].phase << 1);
 					break;
 				}
-				value = ABSOLUE_POSITIVE_VALUE_MAX - ((s_oscillator[i].phase - 0x8000) >> 8 << 1 );
+				value = INT16_MAX - ((s_oscillator[i].phase - 0x8000) << 1 );
 			}while(0);
 			break;
 		case WAVEFORM_SAW:
-			value = -ABSOLUE_NEGATIVE_VALUE_MAX + (s_oscillator[i].phase >> 8);
+			value =  -(INT16_MAX + 1) + s_oscillator[i].phase;
 			break;
 		default:
 			break;
@@ -725,7 +723,77 @@ uint8_t chiptune_fetch_wave(void)
 	increase_time_base_for_fast_to_ending();
 #endif
 
-	int32_t out_value = NORMALIZE_AMPLITUDE(accumulated_value) + ABSOLUE_NEGATIVE_VALUE_MAX;
+	int32_t out_value = NORMALIZE_AMPLITUDE(accumulated_value);
+	do
+	{
+		if(INT16_MAX < out_value ){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, greater than UINT8_MAX\r\n",
+							out_value);
+			break;
+		}
+
+
+		if(-(INT16_MAX + 1) > out_value ){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, less than 0\r\n",
+							out_value);
+			break;
+		}
+
+	}while(0);
+
+	return (int16_t)out_value;
+}
+
+/**********************************************************************************/
+
+#if(0)
+uint8_t chiptune_fetch_8bit_wave(void)
+{
+	if(-1 == process_timely_midi_message()){
+		if(true == is_all_oscillators_unused()){
+			s_is_tune_ending = true;
+		}
+	}
+
+	int32_t accumulated_value = 0;
+	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+		if(UNUSED_OSCILLATOR == s_oscillator[i].voice_index){
+			continue;
+		}
+
+		int32_t value = 0;
+		switch(s_oscillator[i].waveform)
+		{
+		case WAVEFORM_SQUARE:
+			value = (s_oscillator[i].phase > s_oscillator[i].duty) ? -(INT8_MAX + 1) : INT8_MAX;
+			break;
+		case WAVEFORM_TRIANGLE:
+			do
+			{
+				if(s_oscillator[i].phase < 0x8000){
+					value = -(INT8_MAX + 1) + (s_oscillator[i].phase >> 8 << 1);
+					break;
+				}
+				value = INT8_MAX - ((s_oscillator[i].phase - 0x8000) >> 8 << 1);
+			}while(0);
+			break;
+		case WAVEFORM_SAW:
+			value = -(INT8_MAX + 1) + (s_oscillator[i].phase >> 8);
+			break;
+		default:
+			break;
+		}
+		accumulated_value += (value * s_oscillator[i].volume);
+
+		s_oscillator[i].phase += s_phase_table[s_oscillator[i].note];
+	}
+
+	INCREMENT_TIME_BASE();
+#ifdef _DEBUG_FAST_TO_ENDING
+	increase_time_base_for_fast_to_ending();
+#endif
+
+	int32_t out_value = NORMALIZE_AMPLITUDE(accumulated_value) + (INT8_MAX + 1);
 	do
 	{
 		if(out_value > 0){
@@ -737,17 +805,22 @@ uint8_t chiptune_fetch_wave(void)
 		}
 
 		if(out_value < 0){
-			if(0 > out_value ){
+			if(0 > out_value){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, less than 0\r\n",
 								out_value);
 				break;
 			}
 		}
-
 	}while(0);
 
 	return (int8_t)out_value;
 }
+#else
+uint8_t chiptune_fetch_8bit_wave(void)
+{
+	return (uint8_t)((chiptune_fetch_16bit_wave() >> 8) + (INT8_MAX + 1));
+}
+#endif
 
 /**********************************************************************************/
 

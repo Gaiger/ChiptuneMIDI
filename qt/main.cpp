@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
 	p_player->Play();
 #endif
 #if(1)
-	TuneManager tune_manager(44100);
+	TuneManager tune_manager(16000, 16);
 	QThread tune_manager_working_thread;
 	tune_manager.moveToThread(&tune_manager_working_thread);
 	tune_manager_working_thread.start(QThread::HighPriority);

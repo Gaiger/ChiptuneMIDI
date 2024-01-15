@@ -83,7 +83,7 @@ void AudioPlayer::CleanAudioResources(void)
 
 /**********************************************************************************/
 
-void AudioPlayer::InitializeAudioResources(int filling_buffer_time_interval,
+void AudioPlayer::InitializeAudioResources(int const filling_buffer_time_interval,
 										   int const sampling_rate, int const sampling_size, int const channel_counts)
 {
 	CleanAudioResources();
@@ -93,19 +93,17 @@ void AudioPlayer::InitializeAudioResources(int filling_buffer_time_interval,
 	format.setCodec("audio/pcm");
 	format.setByteOrder(QAudioFormat::LittleEndian);
 
-	switch(sampling_size)
+	do
 	{
-	case SAMPLING_SIZE_1:
+		if(16 == sampling_size){
+			format.setSampleSize(16);
+			format.setSampleType(QAudioFormat::SignedInt);
+			break;
+		}
+
 		format.setSampleSize(8);
 		format.setSampleType(QAudioFormat::UnSignedInt);
-		break;
-
-	case SAMPLING_SIZE_2:
-	default:
-		format.setSampleSize(16);
-		format.setSampleType(QAudioFormat::SignedInt);
-		break;
-	}
+	} while(0);
 
 	QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
 	qDebug() << info.supportedSampleRates();
@@ -139,11 +137,11 @@ void AudioPlayer::InitializeAudioResources(int filling_buffer_time_interval,
 
 /**********************************************************************************/
 
-void AudioPlayer::Play(bool is_blocking)
+void AudioPlayer::Play(bool const is_blocking)
 {
 	m_p_tune_manager->InitializeTune();
 
-	InitializeAudioResources(100, m_p_tune_manager->GetSamplingRate(), 1, 1);
+	InitializeAudioResources(100, m_p_tune_manager->GetSamplingRate(), m_p_tune_manager->GetSamplingSize(), 1);
 	AudioPlayer::AppendWave(m_p_tune_manager->FetchWave(m_p_audio_output->bufferSize()));
 	m_p_audio_output->start(m_p_audio_io_device);
 

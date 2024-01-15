@@ -12,27 +12,36 @@ class TuneManager : public QObject
 {
 	Q_OBJECT
 public:
-	explicit TuneManager(int sampliing_rate = 16000, QObject *parent = nullptr);
+	enum SamplingSize
+	{
+		SamplingSize8Bit			= 8,
+		SamplingSize16Bit			= 16,
+
+		SamplingSizeMax				= 255,
+	}; Q_ENUM(SamplingSize)
+
+	explicit TuneManager(int const sampling_rate = 16000, int const sampling_size = SamplingSize8Bit, QObject * parent = nullptr);
 	~TuneManager(void);
 
-	int SetMidiFile(QString midi_file_name_string);
+	int SetMidiFile(QString const midi_file_name_string);
 
 	int InitializeTune(void);
 	int GetSamplingRate(void);
-	QByteArray FetchWave(int const length);
+	int GetSamplingSize(void);
 
+	QByteArray FetchWave(int const length);
 public:
 	signals:
 	void TuneEnded(void);
-	void WaveFetched(QByteArray wave_bytearray);
+	void WaveFetched(QByteArray const wave_bytearray);
 
 private:
 	signals:
-	void GenerateWaveRequested(int length);
+	void GenerateWaveRequested(int const length);
 private slots:
-	void HandleGenerateWaveRequested(int length);
+	void HandleGenerateWaveRequested(int const length);
 private:
-	void GenerateWave(int length, bool is_synchronized = true);
+	void GenerateWave(int const length, bool const is_synchronized = true);
 private:
 	TuneManagerPrivate *m_p_private;
 	QMutex m_mutex;
