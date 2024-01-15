@@ -629,7 +629,7 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 
 void chiptune_set_tempo(float const tempo)
 {
-	CHIPTUNE_PRINTF(cMidiSetup, "set tempo as %3.1f\r\n", tempo);
+	CHIPTUNE_PRINTF(cMidiSetup, "%s :: tempo = %3.1f\r\n", __FUNCTION__,tempo);
 	CORRECT_TIME_BASE();
 	s_tempo = (chiptune_float)tempo;
 	UPDATE_TIME_BASE_UNIT();
@@ -673,7 +673,6 @@ inline static void increase_time_base_for_fast_to_ending(void)
 #else
 #define NORMALIZE_AMPLITUDE(VALUE)				((int32_t)((VALUE)/(int32_t)g_max_amplitude))
 #endif
-
 
 /**********************************************************************************/
 
@@ -732,13 +731,11 @@ int16_t chiptune_fetch_16bit_wave(void)
 			break;
 		}
 
-
 		if(-(INT16_MAX + 1) > out_value ){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, less than 0\r\n",
 							out_value);
 			break;
 		}
-
 	}while(0);
 
 	return (int16_t)out_value;

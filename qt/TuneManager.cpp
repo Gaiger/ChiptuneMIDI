@@ -228,4 +228,3 @@ QByteArray TuneManager::FetchWave(int const length)
 	emit WaveFetched(fetched_wave_bytearray);
 	return fetched_wave_bytearray;
 }
-

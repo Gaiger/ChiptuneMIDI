@@ -100,7 +100,6 @@ void AudioPlayer::InitializeAudioResources(int const filling_buffer_time_interva
 			format.setSampleType(QAudioFormat::SignedInt);
 			break;
 		}
-
 		format.setSampleSize(8);
 		format.setSampleType(QAudioFormat::UnSignedInt);
 	} while(0);
@@ -230,5 +229,3 @@ void AudioPlayer::HandleAudioStateChanged(QAudio::State state)
 		break;
 	}
 }
-
-
