@@ -432,20 +432,11 @@ uint32_t s_fetched_tick = NO_FETCHED_TICK;
 uint32_t s_midi_messge_index = 0;
 uint32_t s_total_message_number = 0;
 
-inline static bool is_after_current_time(uint32_t tick)
-{
 #ifdef _INCREMENTAL_SAMPLE_INDEX
-		if(TICK_TO_SAMPLE_INDEX(tick) > s_current_sample_index){
-			return true;
-		}
+#define	IS_AFTER_CURRENT_TIME(TICK)					((TICK_TO_SAMPLE_INDEX(TICK) > s_current_tick) ? true : false)
 #else
-		if(s_fetched_tick > s_current_tick){
-			return true;
-		}
+#define	IS_AFTER_CURRENT_TIME(TICK)					(((TICK) > s_current_tick) ? true : false)
 #endif
-	return false;
-}
-
 /**********************************************************************************/
 
 inline static int process_timely_midi_message(void)
@@ -456,7 +447,7 @@ inline static int process_timely_midi_message(void)
 	int ii = 0;
 	bool is_note_message;
 	if(!(NO_FETCHED_MESSAGE == s_fetched_message && NO_FETCHED_TICK == s_fetched_tick)){
-		if(true == is_after_current_time(s_fetched_tick)){
+		if(true == IS_AFTER_CURRENT_TIME(s_fetched_tick)){
 			return 0;
 		}
 		//CHIPTUNE_PRINTF(cDeveloping, "s_current_tick = %f\r\n", s_current_tick);
@@ -478,7 +469,7 @@ inline static int process_timely_midi_message(void)
 		}
 		s_midi_messge_index += 1;
 
-		if(true == is_after_current_time(tick)){
+		if(true == IS_AFTER_CURRENT_TIME(tick)){
 			s_fetched_message = message;
 			s_fetched_tick = tick;
 			break;
