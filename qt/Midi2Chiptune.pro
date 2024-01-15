@@ -23,6 +23,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     ../chiptune.h \
-#    MidiPlayer.h \
+    MidiPlayer.h \
     TuneManager.h \
     AudioPlayer.h

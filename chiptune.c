@@ -8,6 +8,9 @@
 
 //#define _DEBUG_FAST_TO_ENDING
 
+//#define _INCREMENTAL_SAMPLE_INDEX
+//#define _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
+
 static bool s_enable_print_out = true;
 
 #define _PRINT_MIDI_DEVELOPING
@@ -70,7 +73,11 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 												}while(0)
 #endif
 
+#ifdef _INCREMENTAL_SAMPLE_INDEX
 typedef float chiptune_float;
+#else
+typedef double chiptune_float;
+#endif
 
 #define DEFAULT_TEMPO								(120.0)
 #define DEFAULT_SAMPLING_RATE						(16000)
@@ -80,18 +87,31 @@ uint16_t s_phase_table[MIDI_FREQUENCY_TABLE_SIZE] = {0};
 
 static chiptune_float s_tempo = DEFAULT_TEMPO;
 static uint32_t s_sampling_rate = DEFAULT_SAMPLING_RATE;
-
 static uint32_t s_resolution = DEFAULT_RESOLUTION;
-static uint32_t s_current_sample_index = 0;
-static chiptune_float s_samples_to_tick_ratio = (chiptune_float)(DEFAULT_SAMPLING_RATE * 60.0/DEFAULT_TEMPO/DEFAULT_RESOLUTION);
 
+#ifdef _INCREMENTAL_SAMPLE_INDEX
+static uint32_t s_current_sample_index = 0;
+static chiptune_float s_tick_to_sample_index_ratio = (chiptune_float)(DEFAULT_SAMPLING_RATE * 1.0/(DEFAULT_TEMPO/60.0)/DEFAULT_RESOLUTION);
 #define UPDATE_SAMPLES_TO_TICK_RATIO()				\
-													do{	\
-														s_samples_to_tick_ratio \
-															= (chiptune_float)(s_sampling_rate * 60.0/s_tempo/s_resolution); \
+													do { \
+														s_tick_to_sample_index_ratio \
+														= (chiptune_float)(s_sampling_rate * 60.0/s_tempo/s_resolution); \
 													} while(0)
 
-#define TICK_TO_SAMPLE_INDEX(TICK)					((uint32_t)(s_samples_to_tick_ratio * (chiptune_float)(TICK) + 0.5 ))
+#define UPDATE_TIME_BASE_UNIT()						UPDATE_SAMPLES_TO_TICK_RATIO()
+
+#define TICK_TO_SAMPLE_INDEX(TICK)					((uint32_t)(s_tick_to_sample_index_ratio * (chiptune_float)(TICK) + 0.5 ))
+#else
+static chiptune_float s_current_tick = 0.0;
+static chiptune_float s_delta_tick_per_sample = ( DEFAULT_RESOLUTION / ( (chiptune_float)DEFAULT_SAMPLING_RATE/(DEFAULT_TEMPO /60.0) ) );
+
+#define	UPDATE_DELTA_TICK_PER_SAMPLE()				\
+													do { \
+														s_delta_tick_per_sample = ( s_resolution * s_tempo / (chiptune_float)s_sampling_rate/ 60.0 ); \
+													} while(0)
+
+#define UPDATE_TIME_BASE_UNIT()						UPDATE_DELTA_TICK_PER_SAMPLE()
+#endif
 
 static int(*s_handler_get_midi_message)(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick) = NULL;
 
@@ -223,7 +243,7 @@ static int setup_control_change_into_voice_info(uint8_t const voice, uint8_t con
 						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	default:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: code = %u :: voice = %u, value = %u%s\r\n", __FUNCTION__, number,
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: code = %u :: voice = %u, value = %u %s\r\n", __FUNCTION__, number,
 						voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	}
@@ -297,10 +317,17 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 uint8_t const voice, uint8_t const note, uint8_t const velocity)
 {
 #ifdef _DEBUG_FAST_TO_ENDING
+	#ifdef _INCREMENTAL_SAMPLE_INDEX
 	if(TICK_TO_SAMPLE_INDEX(818880) < s_current_sample_index){
 		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, voice = %u, note = %u, is_note_on = %u, velocity = %u\r\n",
 						tick, voice, note, is_note_on, velocity);
 	}
+	#else
+	if(818880 < s_current_tick){
+		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, voice = %u, note = %u, is_note_on = %u, velocity = %u\r\n",
+						tick, voice, note, is_note_on, velocity);
+	}
+	#endif
 #else
 	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, voice = %u, note = %u, is_note_on = %u, velocity = %u\r\n",
 					tick, voice, note, is_note_on, velocity);
@@ -338,8 +365,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}
 
 		if(MAX_OSCILLATOR_NUMBER == ii){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR::no corresponding note for off ::  voice = %u,  note = %u, tick = %u\r\n",
-							voice, note, tick);
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR::no corresponding note for off :: tick = %u, voice = %u,  note = %u\r\n",
+							tick, voice, note);
 			return -2;
 		}
 		s_oscillator[ii].voice_index = UNUSED_OSCILLATOR;
@@ -372,9 +399,8 @@ static void process_midi_message(uint32_t const message, uint32_t const tick, bo
 							 voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	case MIDI_MESSAGE_KEY_PRESSURE:
-		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_KEY_PRESSURE\r\n");
-		CHIPTUNE_PRINTF(cMidiSetup, "voice = %u, ", voice);
-		CHIPTUNE_PRINTF(cMidiSetup, "note = %u, amount = %u\r\n",  u.data_as_bytes[1], u.data_as_bytes[2]);
+		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_CHANNEL_PRESSURE :: note = %u, amount = %u %s\r\n",
+						voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_CONTROL_CHANGE:
 		setup_control_change_into_voice_info(voice, u.data_as_bytes[1], u.data_as_bytes[2]);
@@ -383,19 +409,16 @@ static void process_midi_message(uint32_t const message, uint32_t const tick, bo
 		setup_program_change_into_voice_info(voice, u.data_as_bytes[1]);
 		break;
 	case MIDI_MESSAGE_CHANNEL_PRESSURE:
-		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_CHANNEL_PRESSURE\r\n");
-		CHIPTUNE_PRINTF(cMidiSetup, "voice = %u, ", voice);
-		CHIPTUNE_PRINTF(cMidiSetup, "amount = %u\r\n",  u.data_as_bytes[1]);
+		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %u, amount = %u %s\r\n",
+						voice,  u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_PITCH_WHEEL:
-		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_PITCH_WHEEL\r\n");
-		CHIPTUNE_PRINTF(cMidiSetup, "voice = %u, ", voice);
-		CHIPTUNE_PRINTF(cMidiSetup, "value = 0x%04X\r\n", (u.data_as_bytes[2] << 7) | u.data_as_bytes[1]);
+		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_PITCH_WHEEL :: voice = %u, value = %u %s\r\n",
+						voice,  (u.data_as_bytes[2] << 7) | u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	default:
-		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE UKNOWN :: %u\r\n", type);
-		CHIPTUNE_PRINTF(cMidiSetup, "voice = %u, ", voice);
-		CHIPTUNE_PRINTF(cMidiSetup, "byte 1 = %u, byte 2 = %u\r\n",  u.data_as_bytes[1], u.data_as_bytes[2]);
+		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE UKNOWN :: %u, voice = %u,byte 1 = %u, byte 2 = %u \r\n", type,
+						voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	}
 }
@@ -409,6 +432,22 @@ uint32_t s_fetched_tick = NO_FETCHED_TICK;
 uint32_t s_midi_messge_index = 0;
 uint32_t s_total_message_number = 0;
 
+inline static bool is_after_current_time(uint32_t tick)
+{
+#ifdef _INCREMENTAL_SAMPLE_INDEX
+		if(TICK_TO_SAMPLE_INDEX(tick) > s_current_sample_index){
+			return true;
+		}
+#else
+		if(s_fetched_tick > s_current_tick){
+			return true;
+		}
+#endif
+	return false;
+}
+
+/**********************************************************************************/
+
 inline static int process_timely_midi_message(void)
 {
 	uint32_t message;
@@ -417,9 +456,10 @@ inline static int process_timely_midi_message(void)
 	int ii = 0;
 	bool is_note_message;
 	if(!(NO_FETCHED_MESSAGE == s_fetched_message && NO_FETCHED_TICK == s_fetched_tick)){
-		if(TICK_TO_SAMPLE_INDEX(s_fetched_tick) > (s_current_sample_index)){
+		if(true == is_after_current_time(s_fetched_tick)){
 			return 0;
 		}
+		//CHIPTUNE_PRINTF(cDeveloping, "s_current_tick = %f\r\n", s_current_tick);
 		process_midi_message(s_fetched_message, s_fetched_tick, &is_note_message);
 		s_fetched_message = NO_FETCHED_MESSAGE;
 		s_fetched_tick = NO_FETCHED_TICK;
@@ -438,7 +478,7 @@ inline static int process_timely_midi_message(void)
 		}
 		s_midi_messge_index += 1;
 
-		if(TICK_TO_SAMPLE_INDEX(tick) > (s_current_sample_index)){
+		if(true == is_after_current_time(tick)){
 			s_fetched_message = message;
 			s_fetched_tick = tick;
 			break;
@@ -457,7 +497,7 @@ inline static int process_timely_midi_message(void)
 
 /**********************************************************************************/
 
-static uint32_t get_max_simultaneous_volume(void)
+static uint32_t get_max_simultaneous_amplitude(void)
 {
 	s_enable_print_out = false;
 
@@ -465,7 +505,7 @@ static uint32_t get_max_simultaneous_volume(void)
 	uint32_t previous_tick;
 	bool is_note_message;
 	uint32_t midi_messge_index = 0;
-	uint32_t max_volume = 0;
+	uint32_t max_amplitude = 0;
 
 	s_handler_get_midi_message(midi_messge_index, &message, &previous_tick);
 	midi_messge_index += 1;
@@ -486,15 +526,15 @@ static uint32_t get_max_simultaneous_volume(void)
 			}
 			previous_tick = tick;
 
-			uint32_t sum_volume = 0;
+			uint32_t sum_amplitude = 0;
 			for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 				if(UNUSED_OSCILLATOR == s_oscillator[i].voice_index){
 					continue;
 				}
-				sum_volume += s_oscillator[i].volume;
+				sum_amplitude += s_oscillator[i].volume;
 			}
-			if(sum_volume > max_volume){
-				max_volume = sum_volume;
+			if(sum_amplitude > max_amplitude){
+				max_amplitude = sum_amplitude;
 			}
 		}while(0);
 
@@ -502,12 +542,14 @@ static uint32_t get_max_simultaneous_volume(void)
 	}
 
 	s_enable_print_out = true;
-	return max_volume;
+	return max_amplitude;
 }
+
+#ifdef _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
 
 /**********************************************************************************/
 
-uint32_t roundup_to_power2(uint32_t const value)
+uint32_t number_of_roundup_to_power2_left_shift_bits(uint32_t const value)
 {
 	unsigned int v = value; // compute the next highest power of 2 of 32-bit v
 
@@ -519,35 +561,41 @@ uint32_t roundup_to_power2(uint32_t const value)
 	v |= v >> 16;
 	v++;
 
-	return v;
-}
-
-/**********************************************************************************/
-
-static uint32_t get_max_simultaneous_volume_roundup_to_power2_right_shift(void)
-{
-	uint32_t max_volume = get_max_simultaneous_volume();
-	uint32_t max_volume_roundup_to_power2 = roundup_to_power2(max_volume);
-
 	uint32_t i = 0;
 	for(i = 0; i < sizeof(uint32_t) * 8; i++){
-		if(0x01 & (max_volume_roundup_to_power2 >> i)){
+		if(0x01 & (v >> i)){
 			break;
 		}
 	}
 
-	return  i;
+	return i;
 }
+
+uint32_t g_amplitude_nomalization_right_shift = 16;
+#define UPDATE_AMPLITUDE_NORMALIZER()				\
+													do { \
+														uint32_t max_amplitude = get_max_simultaneous_amplitude(); \
+														g_amplitude_nomalization_right_shift \
+															= number_of_roundup_to_power2_left_shift_bits(max_amplitude);\
+													} while(0)
+#else
+uint32_t g_max_amplitude = 1 << 16;
+#define UPDATE_AMPLITUDE_NORMALIZER()				\
+													do { \
+														g_max_amplitude = get_max_simultaneous_amplitude(); \
+													} while(0)
+#endif
 
 /**********************************************************************************/
 
-uint32_t g_volume_nomalization_right_shift = 16;
-
 void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
 {
-
-	s_is_tune_ending = false;
+#ifdef _INCREMENTAL_SAMPLE_INDEX
 	s_current_sample_index = 0;
+#else
+	s_current_tick = 0;
+#endif
+	s_is_tune_ending = false;
 	s_midi_messge_index = 0;
 	s_fetched_message = NO_FETCHED_MESSAGE;
 	s_fetched_tick = NO_FETCHED_TICK;
@@ -558,8 +606,7 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	s_sampling_rate = sampling_rate;
 	s_resolution = resolution;
 	s_total_message_number = total_message_number;
-	UPDATE_SAMPLES_TO_TICK_RATIO();
-
+	UPDATE_TIME_BASE_UNIT();
 	for(int i = 0; i < MIDI_FREQUENCY_TABLE_SIZE; i++){
 		/*
 		 * freq = 440 * 2**((n-69)/12)
@@ -572,20 +619,73 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 		s_phase_table[i] = (uint16_t)((UINT16_MAX + 1) * frequency / sampling_rate);
 	}
 
-	g_volume_nomalization_right_shift = get_max_simultaneous_volume_roundup_to_power2_right_shift();
+	UPDATE_AMPLITUDE_NORMALIZER();
 	process_timely_midi_message();
 	return ;
 }
 
 /**********************************************************************************/
 
+#ifdef _INCREMENTAL_SAMPLE_INDEX
+#define CORRECT_TIME_BASE()							do { \
+														s_current_sample_index = (uint32_t)(s_current_sample_index * s_tempo/tempo); \
+													} while(0)
+#else
+#define CORRECT_TIME_BASE()							do { \
+														(void)0; \
+													} while(0)
+#endif
+
 void chiptune_set_tempo(float const tempo)
 {
+	CHIPTUNE_PRINTF(cMidiSetup, "set tempo as %3.1f\r\n", tempo);
+	CORRECT_TIME_BASE();
 	s_tempo = (chiptune_float)tempo;
-	UPDATE_SAMPLES_TO_TICK_RATIO();
+	UPDATE_TIME_BASE_UNIT();
 }
 
+
+
+
 /**********************************************************************************/
+
+#ifdef _INCREMENTAL_SAMPLE_INDEX
+#define INCREMENT_TIME_BASE()						\
+													do { \
+														s_current_sample_index += 1; \
+													} while(0)
+#else
+#define INCREMENT_TIME_BASE()						\
+													do { \
+														s_current_tick += s_delta_tick_per_sample; \
+													} while(0)
+#endif
+
+#ifdef _DEBUG_FAST_TO_ENDING
+
+/**********************************************************************************/
+
+inline static void increase_time_base_for_fast_to_ending(void)
+{
+#ifdef _INCREMENTAL_SAMPLE_INDEX
+	if(TICK_TO_SAMPLE_INDEX(818880) > s_current_sample_index){
+		s_current_sample_index += 99;
+	}
+#else
+	if(818880 > s_current_tick){
+		s_current_tick += 99.0 * s_delta_tick_per_sample;
+	}
+#endif
+}
+
+#endif
+
+#ifdef _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
+#define NORMALIZE_AMPLITUDE(VALUE)				((VALUE) >> g_amplitude_nomalization_right_shift)
+#else
+#define NORMALIZE_AMPLITUDE(VALUE)				((VALUE)/(int32_t)g_max_amplitude)
+#endif
+
 
 uint8_t chiptune_fetch_wave(void)
 {
@@ -629,19 +729,17 @@ uint8_t chiptune_fetch_wave(void)
 		s_oscillator[i].phase += s_phase_table[s_oscillator[i].note];
 	}
 
-	s_current_sample_index += 1;
+	INCREMENT_TIME_BASE();
 #ifdef _DEBUG_FAST_TO_ENDING
-	if(TICK_TO_SAMPLE_INDEX(818880) > s_current_sample_index){
-		s_current_sample_index += 99;
-	}
+	increase_time_base_for_fast_to_ending();
 #endif
 
-	int32_t out_value = (accumulated_value >> g_volume_nomalization_right_shift) + (ABSOLUE_NEGATIVE_VALUE_MAX);
+	int32_t out_value = NORMALIZE_AMPLITUDE(accumulated_value) + ABSOLUE_NEGATIVE_VALUE_MAX;
 	do
 	{
 		if(out_value > 0){
 			if(UINT8_MAX < out_value ){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: accumulated_value = %d, greater than UINT8_MAX\r\n",
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, greater than UINT8_MAX\r\n",
 								out_value);
 				break;
 			}

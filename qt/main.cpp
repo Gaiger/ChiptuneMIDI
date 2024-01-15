@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 	//p_player->moveToThread(a.thread());
 	p_player->Play();
 #endif
-
+#if(1)
 	TuneManager tune_manager(44100);
 	QThread tune_manager_working_thread;
 	tune_manager.moveToThread(&tune_manager_working_thread);
@@ -78,6 +78,7 @@ int main(int argc, char* argv[])
 	tune_manager.SetMidiFile(filename);
 	AudioPlayer audio_player(&tune_manager, &a);
 	audio_player.Play();
+#endif
 	return a.exec();
 }
 
