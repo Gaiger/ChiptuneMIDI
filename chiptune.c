@@ -262,7 +262,6 @@ static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t co
 		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_SQUARE with duty = 50%% (instrument = %u)\r\n", __FUNCTION__, voice, number);
 		s_voice_info[voice].waveform = WAVEFORM_SQUARE;
 		s_voice_info[voice].duty = 0x8000;
-		s_voice_info[voice].waveform = WAVEFORM_TRIANGLE;
 		break;
 #define MIDI_INSTRUMENT_DISTORTION_GUITAR			(30)
 	case MIDI_INSTRUMENT_DISTORTION_GUITAR:
