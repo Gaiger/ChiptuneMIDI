@@ -83,7 +83,7 @@ typedef double chiptune_float;
 #define DEFAULT_SAMPLING_RATE						(16000)
 #define DEFAULT_RESOLUTION							(960)
 
-uint16_t s_phase_table[MIDI_FREQUENCY_TABLE_SIZE] = {0};
+uint16_t s_current_phase_table[MIDI_FREQUENCY_TABLE_SIZE] = {0};
 
 static chiptune_float s_tempo = DEFAULT_TEMPO;
 static uint32_t s_sampling_rate = DEFAULT_SAMPLING_RATE;
@@ -135,28 +135,38 @@ enum
 	WAVEFORM_NOISE			= 3,
 };
 
-#define MAX_VOICE_NUMBER							(16)
-#define MAX_OSCILLATOR_NUMBER						(MAX_VOICE_NUMBER * 2)
-
-struct _oscillator
+enum
 {
-	int8_t		voice_index;
-	uint8_t		waveform;
-	uint16_t	phase;
-	uint16_t	duty;
-	uint8_t		note;
-	uint16_t	volume;
-} s_oscillator[MAX_OSCILLATOR_NUMBER];
+	DUTY_CYLCE_125_CRITICAL_PHASE	= (UINT16_MAX + 1) >> 3,
+	DUTY_CYLCE_25_CRITICAL_PHASE	= (UINT16_MAX + 1) >> 2,
+	DUTY_CYLCE_50_CRITICAL_PHASE	= (UINT16_MAX + 1) >> 1,
+	DUTY_CYLCE_75_CRITICAL_PHASE	= (UINT16_MAX + 1) - ((UINT16_MAX + 1) >> 2),
+};
 
-#define UNUSED_OSCILLATOR							(-1)
+#define MAX_VOICE_NUMBER							(16)
 
 struct _voice_info
 {
 	uint8_t		pan;
-	uint8_t		waveform;
-	uint16_t	duty;
 	uint8_t		volume;
-}s_voice_info[MAX_OSCILLATOR_NUMBER];
+	uint8_t		waveform;
+	uint16_t	duty_cycle_critical_phase;
+}s_voice_info[MAX_VOICE_NUMBER];
+
+#define MAX_OSCILLATOR_NUMBER						(MAX_VOICE_NUMBER * 2)
+
+struct _oscillator
+{
+	int8_t		voice;
+	uint8_t		note;
+	uint16_t	volume;
+	uint8_t		waveform;
+	uint16_t	duty_cycle_critical_phase;
+	uint16_t	current_phase;
+} s_oscillator[MAX_OSCILLATOR_NUMBER];
+
+#define UNUSED_OSCILLATOR							(-1)
+
 
 #define MIDI_MESSAGE_NOTE_OFF						(0x80)
 #define MIDI_MESSAGE_NOTE_ON						(0x90)
@@ -261,12 +271,12 @@ static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t co
 	case MIDI_INSTRUMENT_OVERDRIVE_GUITAR:
 		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_SQUARE with duty = 50%% (instrument = %u)\r\n", __FUNCTION__, voice, number);
 		s_voice_info[voice].waveform = WAVEFORM_SQUARE;
-		s_voice_info[voice].duty = 0x8000;
+		s_voice_info[voice].duty_cycle_critical_phase = DUTY_CYLCE_50_CRITICAL_PHASE;
 		break;
 #define MIDI_INSTRUMENT_DISTORTION_GUITAR			(30)
 	case MIDI_INSTRUMENT_DISTORTION_GUITAR:
 		s_voice_info[voice].waveform = WAVEFORM_SQUARE;
-		s_voice_info[voice].duty = 0x4000;
+		s_voice_info[voice].duty_cycle_critical_phase = DUTY_CYLCE_25_CRITICAL_PHASE;
 		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_SQUARE with duty = 25%% (instrument = %u)\r\n", __FUNCTION__, voice, number);
 		break;
 #define MIDI_INSTRUMENT_ACOUSTIC_BASS				(32)
@@ -302,7 +312,7 @@ static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t co
 static bool is_all_oscillators_unused(void)
 {
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(UNUSED_OSCILLATOR == s_oscillator[i].voice_index){
+		if(UNUSED_OSCILLATOR == s_oscillator[i].voice){
 			continue;
 		}
 		return false;
@@ -338,7 +348,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		int ii = 0;
 		if(true == is_note_on){
 			for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
-				 if(UNUSED_OSCILLATOR == s_oscillator[ii].voice_index){
+				 if(UNUSED_OSCILLATOR == s_oscillator[ii].voice){
 					 break;
 				 }
 			}
@@ -347,17 +357,17 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillator are used\r\n");
 				return -1;
 			}
-			s_oscillator[ii].voice_index = voice;
+			s_oscillator[ii].voice = voice;
 			s_oscillator[ii].waveform = s_voice_info[voice].waveform;
-			s_oscillator[ii].duty = s_voice_info[voice].duty;
+			s_oscillator[ii].duty_cycle_critical_phase = s_voice_info[voice].duty_cycle_critical_phase;
 			s_oscillator[ii].volume = (uint32_t)velocity * (uint32_t)s_voice_info[voice].volume;
 			s_oscillator[ii].note = note;
-			s_oscillator[ii].phase = 0;
+			s_oscillator[ii].current_phase = 0;
 			break;
 		}
 
 		for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
-			if(voice == s_oscillator[ii].voice_index){
+			if(voice == s_oscillator[ii].voice){
 				if(note == s_oscillator[ii].note){
 					break;
 				}
@@ -369,7 +379,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 							tick, voice, note);
 			return -2;
 		}
-		s_oscillator[ii].voice_index = UNUSED_OSCILLATOR;
+		s_oscillator[ii].voice = UNUSED_OSCILLATOR;
 	}while(0);
 
 	return 0;
@@ -519,7 +529,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 
 			uint32_t sum_amplitude = 0;
 			for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-				if(UNUSED_OSCILLATOR == s_oscillator[i].voice_index){
+				if(UNUSED_OSCILLATOR == s_oscillator[i].voice){
 					continue;
 				}
 				sum_amplitude += s_oscillator[i].volume;
@@ -591,7 +601,7 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	s_fetched_message = NO_FETCHED_MESSAGE;
 	s_fetched_tick = NO_FETCHED_TICK;
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		s_oscillator[i].voice_index = UNUSED_OSCILLATOR;
+		s_oscillator[i].voice = UNUSED_OSCILLATOR;
 	}
 
 	s_sampling_rate = sampling_rate;
@@ -605,9 +615,9 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 		double frequency = 440.0 * pow(2.0, (float)(i - 69)/12.0);
 		frequency = round(frequency * 100.0 + 0.5)/100.0;
 		/*
-		 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX = + 1)/phase
+		 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX = + 1)/current_phase
 		*/
-		s_phase_table[i] = (uint16_t)((UINT16_MAX + 1) * frequency / sampling_rate);
+		s_current_phase_table[i] = (uint16_t)((UINT16_MAX + 1) * frequency / sampling_rate);
 	}
 
 	UPDATE_AMPLITUDE_NORMALIZER();
@@ -688,7 +698,7 @@ uint8_t chiptune_fetch_wave(void)
 
 	int32_t accumulated_value = 0;
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(UNUSED_OSCILLATOR == s_oscillator[i].voice_index){
+		if(UNUSED_OSCILLATOR == s_oscillator[i].voice){
 			continue;
 		}
 #define ABSOLUE_POSITIVE_VALUE_MAX					(INT8_MAX)
@@ -697,27 +707,27 @@ uint8_t chiptune_fetch_wave(void)
 		switch(s_oscillator[i].waveform)
 		{
 		case WAVEFORM_SQUARE:
-			value = (s_oscillator[i].phase > s_oscillator[i].duty) ? -ABSOLUE_NEGATIVE_VALUE_MAX : ABSOLUE_POSITIVE_VALUE_MAX;
+			value = (s_oscillator[i].current_phase > s_oscillator[i].duty_cycle_critical_phase) ? -ABSOLUE_NEGATIVE_VALUE_MAX : ABSOLUE_POSITIVE_VALUE_MAX;
 			break;
 		case WAVEFORM_TRIANGLE:
 			do
 			{
-				if(s_oscillator[i].phase < 0x8000){
-					value = -ABSOLUE_NEGATIVE_VALUE_MAX + (s_oscillator[i].phase >> 8 << 1);
+				if(s_oscillator[i].current_phase < 0x8000){
+					value = -ABSOLUE_NEGATIVE_VALUE_MAX + (s_oscillator[i].current_phase >> 8 << 1);
 					break;
 				}
-				value = ABSOLUE_POSITIVE_VALUE_MAX - ((s_oscillator[i].phase - 0x8000) >> 8 << 1 );
+				value = ABSOLUE_POSITIVE_VALUE_MAX - ((s_oscillator[i].current_phase - 0x8000) >> 8 << 1 );
 			}while(0);
 			break;
 		case WAVEFORM_SAW:
-			value = -ABSOLUE_NEGATIVE_VALUE_MAX + (s_oscillator[i].phase >> 8);
+			value = -ABSOLUE_NEGATIVE_VALUE_MAX + (s_oscillator[i].current_phase >> 8);
 			break;
 		default:
 			break;
 		}
 		accumulated_value += (value * s_oscillator[i].volume);
 
-		s_oscillator[i].phase += s_phase_table[s_oscillator[i].note];
+		s_oscillator[i].current_phase += s_current_phase_table[s_oscillator[i].note];
 	}
 
 	INCREMENT_TIME_BASE();
