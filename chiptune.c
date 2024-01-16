@@ -433,7 +433,7 @@ uint32_t s_midi_messge_index = 0;
 uint32_t s_total_message_number = 0;
 
 #ifdef _INCREMENTAL_SAMPLE_INDEX
-#define	IS_AFTER_CURRENT_TIME(TICK)					((TICK_TO_SAMPLE_INDEX(TICK) > s_current_tick) ? true : false)
+#define	IS_AFTER_CURRENT_TIME(TICK)					((TICK_TO_SAMPLE_INDEX(TICK) > s_current_sample_index) ? true : false)
 #else
 #define	IS_AFTER_CURRENT_TIME(TICK)					(((TICK) > s_current_tick) ? true : false)
 #endif
