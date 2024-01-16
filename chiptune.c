@@ -83,8 +83,6 @@ typedef double chiptune_float;
 #define DEFAULT_SAMPLING_RATE						(16000)
 #define DEFAULT_RESOLUTION							(960)
 
-uint16_t s_phase_table[MIDI_FREQUENCY_TABLE_SIZE] = {0};
-
 static chiptune_float s_tempo = DEFAULT_TEMPO;
 static uint32_t s_sampling_rate = DEFAULT_SAMPLING_RATE;
 static uint32_t s_resolution = DEFAULT_RESOLUTION;
@@ -159,10 +157,11 @@ struct _oscillator
 {
 	int8_t		voice;
 	uint8_t		note;
+	uint16_t	delta_phase;
+	uint16_t	current_phase;
 	uint16_t	volume;
 	uint8_t		waveform;
 	uint16_t	duty_cycle_critical_phase;
-	uint16_t	current_phase;
 } s_oscillator[MAX_OSCILLATOR_NUMBER];
 
 #define UNUSED_OSCILLATOR							(-1)
@@ -358,11 +357,23 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				return -1;
 			}
 			s_oscillator[ii].voice = voice;
+			s_oscillator[ii].note = note;
+			do
+			{
+				/*
+				 * freq = 440 * 2**((n-69)/12)
+				*/
+				chiptune_float frequency = 440.0 * pow(2.0, (float)(note - 69)/12.0);
+				frequency = round(frequency * 100.0 + 0.5)/100.0;
+				/*
+				 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX = + 1)/phase
+				*/
+				s_oscillator[ii].delta_phase = (uint16_t)((UINT16_MAX + 1) * frequency / s_sampling_rate);
+			} while(0);
+			s_oscillator[ii].current_phase = 0;
+			s_oscillator[ii].volume = (uint32_t)velocity * (uint32_t)s_voice_info[voice].volume;
 			s_oscillator[ii].waveform = s_voice_info[voice].waveform;
 			s_oscillator[ii].duty_cycle_critical_phase = s_voice_info[voice].duty_cycle_critical_phase;
-			s_oscillator[ii].volume = (uint32_t)velocity * (uint32_t)s_voice_info[voice].volume;
-			s_oscillator[ii].note = note;
-			s_oscillator[ii].current_phase = 0;
 			break;
 		}
 
@@ -607,17 +618,6 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	s_resolution = resolution;
 	s_total_message_number = total_message_number;
 	UPDATE_TIME_BASE_UNIT();
-	for(int i = 0; i < MIDI_FREQUENCY_TABLE_SIZE; i++){
-		/*
-		 * freq = 440 * 2**((n-69)/12)
-		*/
-		double frequency = 440.0 * pow(2.0, (float)(i - 69)/12.0);
-		frequency = round(frequency * 100.0 + 0.5)/100.0;
-		/*
-		 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX = + 1)/phase
-		*/
-		s_phase_table[i] = (uint16_t)((UINT16_MAX + 1) * frequency / sampling_rate);
-	}
 
 	UPDATE_AMPLITUDE_NORMALIZER();
 	process_timely_midi_message();
@@ -726,7 +726,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 		}
 		accumulated_value += (value * s_oscillator[i].volume);
 
-		s_oscillator[i].current_phase += s_phase_table[s_oscillator[i].note];
+		s_oscillator[i].current_phase += s_oscillator[i].delta_phase;
 	}
 
 	INCREMENT_TIME_BASE();
@@ -797,7 +797,7 @@ uint8_t chiptune_fetch_8bit_wave(void)
 		}
 		accumulated_value += (value * s_oscillator[i].volume);
 
-		s_oscillator[i].current_phase += s_phase_table[s_oscillator[i].note];
+		s_oscillator[i].current_phase += s_oscillator[i].delta_phase;
 	}
 
 	INCREMENT_TIME_BASE();
