@@ -685,7 +685,8 @@ inline static void increase_time_base_for_fast_to_ending(void)
 #define NORMALIZE_AMPLITUDE(VALUE)				((int32_t)((VALUE)/(int32_t)g_max_amplitude))
 #endif
 
-#define ABS_UINT16_MAX							(INT16_MAX + 1)
+#define INT16_MAX_PLUS_1						(INT16_MAX + 1)
+#define MULTIPLY2(VALUE)						((VALUE) << 1)
 
 int16_t chiptune_fetch_16bit_wave(void)
 {
@@ -705,20 +706,20 @@ int16_t chiptune_fetch_16bit_wave(void)
 		switch(s_oscillator[i].waveform)
 		{
 		case WAVEFORM_SQUARE:
-			value = (s_oscillator[i].current_phase > s_oscillator[i].duty_cycle_critical_phase) ? -ABS_UINT16_MAX : INT16_MAX;
+			value = (s_oscillator[i].current_phase > s_oscillator[i].duty_cycle_critical_phase) ? -INT16_MAX_PLUS_1 : INT16_MAX;
 			break;
 		case WAVEFORM_TRIANGLE:
 			do
 			{
-				if(s_oscillator[i].current_phase < ABS_UINT16_MAX){
-					value = -ABS_UINT16_MAX + (s_oscillator[i].current_phase << 1);
+				if(s_oscillator[i].current_phase < INT16_MAX_PLUS_1){
+					value = -INT16_MAX_PLUS_1 + MULTIPLY2(s_oscillator[i].current_phase);
 					break;
 				}
-				value = INT16_MAX - ((s_oscillator[i].current_phase - ABS_UINT16_MAX) << 1);
+				value = INT16_MAX - MULTIPLY2(s_oscillator[i].current_phase - INT16_MAX_PLUS_1);
 			}while(0);
 			break;
 		case WAVEFORM_SAW:
-			value =  -ABS_UINT16_MAX + s_oscillator[i].current_phase;
+			value =  -INT16_MAX_PLUS_1 + s_oscillator[i].current_phase;
 			break;
 		default:
 			break;
@@ -754,7 +755,9 @@ int16_t chiptune_fetch_16bit_wave(void)
 
 /**********************************************************************************/
 
-#if(0)
+#define INT8_MAX_PLUS_1								(INT8_MAX + 1)
+#define REDUCE_INT16_PRECISION_TO_INT8(VALUE)		((VALUE) >> 8)
+#if(1)
 
 uint8_t chiptune_fetch_8bit_wave(void)
 {
@@ -769,25 +772,25 @@ uint8_t chiptune_fetch_8bit_wave(void)
 		if(UNUSED_OSCILLATOR == s_oscillator[i].voice){
 			continue;
 		}
-#define ABS_UINT8_MAX								(INT8_MAX + 1)
+
 		int32_t value = 0;
 		switch(s_oscillator[i].waveform)
 		{
 		case WAVEFORM_SQUARE:
-			value = (s_oscillator[i].current_phase > s_oscillator[i].duty_cycle_critical_phase) ? -ABS_UINT8_MAX : INT8_MAX;
+			value = (s_oscillator[i].current_phase > s_oscillator[i].duty_cycle_critical_phase) ? -INT8_MAX_PLUS_1 : INT8_MAX;
 			break;
 		case WAVEFORM_TRIANGLE:
 			do
 			{
-				if(s_oscillator[i].current_phase < ABS_UINT16_MAX){
-					value = -ABS_UINT8_MAX + ((s_oscillator[i].current_phase >> 8) << 1);
+				if(s_oscillator[i].current_phase < INT16_MAX_PLUS_1){
+					value = -INT8_MAX_PLUS_1 + REDUCE_INT16_PRECISION_TO_INT8(MULTIPLY2(s_oscillator[i].current_phase));
 					break;
 				}
-				value = INT8_MAX - (((s_oscillator[i].current_phase - 0x8000) >> 8) << 1);
+				value = INT8_MAX - REDUCE_INT16_PRECISION_TO_INT8(MULTIPLY2((s_oscillator[i].current_phase - INT16_MAX_PLUS_1)));
 			}while(0);
 			break;
 		case WAVEFORM_SAW:
-			value = -ABS_UINT8_MAX + (s_oscillator[i].current_phase >> 8);
+			value = -INT8_MAX_PLUS_1 + REDUCE_INT16_PRECISION_TO_INT8(s_oscillator[i].current_phase);
 			break;
 		default:
 			break;
@@ -825,9 +828,10 @@ uint8_t chiptune_fetch_8bit_wave(void)
 	return (int8_t)out_value;
 }
 #else
+
 uint8_t chiptune_fetch_8bit_wave(void)
 {
-	return (uint8_t)((chiptune_fetch_16bit_wave() >> 8) + (INT8_MAX + 1));
+	return (uint8_t)(REDUCE_INT16_PRECISION_TO_INT8(chiptune_fetch_16bit_wave()) + INT8_MAX_PLUS_1);
 }
 #endif
 
