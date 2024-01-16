@@ -151,6 +151,7 @@ struct _voice_info
 	uint8_t		volume;
 	uint8_t		waveform;
 	uint16_t	duty_cycle_critical_phase;
+	bool		is_damping_pedal_on;
 }s_voice_info[MAX_VOICE_NUMBER];
 
 #define MAX_OSCILLATOR_NUMBER						(MAX_VOICE_NUMBER * 2)
@@ -184,6 +185,8 @@ struct _oscillator
 
 #define MIDI_CC_DATA_ENTRY_LSB						(32 + MIDI_CC_DATA_ENTRY_MSB)
 
+#define MIDI_CC_DAMPER_PEDAL						(64)
+
 #define MIDI_CC_EFFECT_1_DEPTH						(91)
 #define MIDI_CC_EFFECT_2_DEPTH						(92)
 #define MIDI_CC_EFFECT_3_DEPTH						(93)
@@ -197,6 +200,29 @@ struct _oscillator
 inline static void set_voice_info_volume(uint8_t const voice, uint8_t const value)
 {
 	s_voice_info[voice].volume = value;
+}
+
+/**********************************************************************************/
+
+inline static void set_voice_info_damping_pedal(uint8_t const voice, uint8_t const value)
+{
+	bool is_damping_pedal_on = (value > 63) ?  true : false;
+	CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_DAMPER_PEDAL :: voice = %u, value = %u (%s)\r\n",
+					__FUNCTION__, voice, value, is_damping_pedal_on ? "on":"off");
+
+	s_voice_info[voice].is_damping_pedal_on = is_damping_pedal_on;
+
+	do{
+		if(true == is_damping_pedal_on){
+			break;
+		}
+
+		for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+			if( voice == s_oscillator[i].voice){
+				s_oscillator[i].voice = UNUSED_OSCILLATOR;
+			}
+		}
+	}while(0);
 }
 
 /**********************************************************************************/
@@ -223,6 +249,9 @@ static int setup_control_change_into_voice_info(uint8_t const voice, uint8_t con
 	case MIDI_CC_DATA_ENTRY_LSB:
 		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_DATA_ENTRY_LSB :: voice = %u, value = %u %s\r\n",
 						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		break;
+	case MIDI_CC_DAMPER_PEDAL:
+		set_voice_info_damping_pedal(voice, value);
 		break;
 	case MIDI_CC_EFFECT_1_DEPTH:
 		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_1_DEPTH :: voice = %u, value = %u %s\r\n",
@@ -379,7 +408,18 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 							tick, voice, note);
 			return -2;
 		}
-		s_oscillator[ii].voice = UNUSED_OSCILLATOR;
+
+		do
+		{
+#define REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(VALUE) \
+													((VALUE) >> 2)
+			if(s_voice_info[s_oscillator[ii].voice].is_damping_pedal_on){
+				s_oscillator[ii].volume
+						= REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(s_oscillator[ii].volume);
+				break;
+			}
+			s_oscillator[ii].voice = UNUSED_OSCILLATOR;
+		}while(0);
 	}while(0);
 
 	return 0;
@@ -420,7 +460,7 @@ static void process_midi_message(uint32_t const message, uint32_t const tick, bo
 		break;
 	case MIDI_MESSAGE_CHANNEL_PRESSURE:
 		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %u, amount = %u %s\r\n",
-						voice,  u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
+						voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_PITCH_WHEEL:
 		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_PITCH_WHEEL :: voice = %u, value = %u %s\r\n",
@@ -757,7 +797,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 
 #define INT8_MAX_PLUS_1								(INT8_MAX + 1)
 #define REDUCE_INT16_PRECISION_TO_INT8(VALUE)		((VALUE) >> 8)
-#if(1)
+#if(0)
 
 uint8_t chiptune_fetch_8bit_wave(void)
 {
