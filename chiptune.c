@@ -427,7 +427,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 /**********************************************************************************/
 
-static void process_midi_message(uint32_t const tick, uint32_t const message, bool * const p_is_note_message)
+static void process_midi_message(uint32_t const tick, uint32_t const message)
 {
 	union {
 		uint32_t data_as_uint32;
@@ -439,12 +439,10 @@ static void process_midi_message(uint32_t const tick, uint32_t const message, bo
 	uint8_t type =  u.data_as_bytes[0] & 0xF0;
 	uint8_t voice = u.data_as_bytes[0] & 0x0F;
 
-	*p_is_note_message = false;
 	switch(type)
 	{
 	case MIDI_MESSAGE_NOTE_OFF:
 	case MIDI_MESSAGE_NOTE_ON:
-		*p_is_note_message = true;
 		process_note_message(tick, (type == MIDI_MESSAGE_NOTE_OFF) ? false : true,
 							 voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
@@ -495,12 +493,11 @@ inline static int process_timely_midi_message(void)
 	uint32_t message;
 
 	int ii = 0;
-	bool is_note_message;
 	if(!(NO_FETCHED_TICK == s_fetched_tick && NO_FETCHED_MESSAGE == s_fetched_message)){
 		if(true == IS_AFTER_CURRENT_TIME(s_fetched_tick)){
 			return 0;
 		}
-		process_midi_message(s_fetched_tick, s_fetched_message, &is_note_message);
+		process_midi_message(s_fetched_tick, s_fetched_message);
 		s_fetched_message = NO_FETCHED_MESSAGE;
 		s_fetched_tick = NO_FETCHED_TICK;
 		ii += 1;
@@ -524,7 +521,7 @@ inline static int process_timely_midi_message(void)
 			break;
 		}
 
-		process_midi_message(tick, message, &is_note_message);
+		process_midi_message(tick, message);
 		ii += 1;
 	}
 
@@ -541,15 +538,14 @@ static uint32_t get_max_simultaneous_amplitude(void)
 {
 	s_enable_print_out = false;
 
-	uint32_t message;
 	uint32_t previous_tick;
-	bool is_note_message;
+	uint32_t message;
 	uint32_t midi_messge_index = 0;
 	uint32_t max_amplitude = 0;
 
 	s_handler_get_midi_message(midi_messge_index, &message, &previous_tick);
 	midi_messge_index += 1;
-	process_midi_message(previous_tick, message, &is_note_message);
+	process_midi_message(previous_tick, message);
 
 	while(midi_messge_index < s_total_message_number){
 		uint32_t tick;
@@ -578,7 +574,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 			}
 		}while(0);
 
-		process_midi_message(tick, message, &is_note_message);
+		process_midi_message(tick, message);
 	}
 
 	s_enable_print_out = true;
