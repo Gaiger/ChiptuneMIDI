@@ -147,8 +147,8 @@ enum
 
 struct _voice_info
 {
-	uint8_t		pan;
 	uint8_t		volume;
+	uint8_t		pan;
 	bool		is_damping_pedal_on;
 	uint8_t		waveform;
 	uint16_t	duty_cycle_critical_phase;
@@ -640,6 +640,12 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	s_midi_messge_index = 0;
 	s_fetched_message = NO_FETCHED_MESSAGE;
 	s_fetched_tick = NO_FETCHED_TICK;
+	for(int i = 0; i< MAX_VOICE_NUMBER; i++){
+		s_voice_info[i].volume = 64;
+		s_voice_info[i].pan = 64;
+		s_voice_info[i].is_damping_pedal_on = false;
+		s_voice_info[i].waveform = WAVEFORM_TRIANGLE;
+	}
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		s_oscillator[i].voice = UNUSED_OSCILLATOR;
 	}
