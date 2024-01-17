@@ -103,7 +103,7 @@ static chiptune_float s_tick_to_sample_index_ratio = (chiptune_float)(DEFAULT_SA
 #define TICK_TO_SAMPLE_INDEX(TICK)					((uint32_t)(s_tick_to_sample_index_ratio * (chiptune_float)(TICK) + 0.5 ))
 #else
 static chiptune_float s_current_tick = 0.0;
-static chiptune_float s_delta_tick_per_sample = ( DEFAULT_RESOLUTION / ( (chiptune_float)DEFAULT_SAMPLING_RATE/(DEFAULT_TEMPO /60.0) ) );
+static chiptune_float s_delta_tick_per_sample = (DEFAULT_RESOLUTION / ( (chiptune_float)DEFAULT_SAMPLING_RATE/(DEFAULT_TEMPO /60.0) ) );
 
 #define	UPDATE_DELTA_TICK_PER_SAMPLE()				\
 													do { \
@@ -149,9 +149,9 @@ struct _voice_info
 {
 	uint8_t		pan;
 	uint8_t		volume;
+	bool		is_damping_pedal_on;
 	uint8_t		waveform;
 	uint16_t	duty_cycle_critical_phase;
-	bool		is_damping_pedal_on;
 }s_voice_info[MAX_VOICE_NUMBER];
 
 #define MAX_OSCILLATOR_NUMBER						(MAX_VOICE_NUMBER * 2)
@@ -352,6 +352,9 @@ static bool is_all_oscillators_unused(void)
 
 /**********************************************************************************/
 
+#define DIVIDE_BY_4(VALUE)							((VALUE) >> 2)
+#define REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(VALUE)	DIVIDE_BY_4(VALUE)
+
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 uint8_t const voice, uint8_t const note, uint8_t const velocity)
 {
@@ -411,8 +414,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 		do
 		{
-#define REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(VALUE) \
-													((VALUE) >> 2)
 			if(s_voice_info[s_oscillator[ii].voice].is_damping_pedal_on){
 				s_oscillator[ii].volume
 						= REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(s_oscillator[ii].volume);
@@ -720,13 +721,13 @@ inline static void increase_time_base_for_fast_to_ending(void)
 /**********************************************************************************/
 
 #ifdef _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
-#define NORMALIZE_AMPLITUDE(VALUE)				((int32_t)((VALUE) >> g_amplitude_nomalization_right_shift))
+#define NORMALIZE_AMPLITUDE(VALUE)					((int32_t)((VALUE) >> g_amplitude_nomalization_right_shift))
 #else
-#define NORMALIZE_AMPLITUDE(VALUE)				((int32_t)((VALUE)/(int32_t)g_max_amplitude))
+#define NORMALIZE_AMPLITUDE(VALUE)					((int32_t)((VALUE)/(int32_t)g_max_amplitude))
 #endif
 
-#define INT16_MAX_PLUS_1						(INT16_MAX + 1)
-#define MULTIPLY2(VALUE)						((VALUE) << 1)
+#define INT16_MAX_PLUS_1							(INT16_MAX + 1)
+#define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
 
 int16_t chiptune_fetch_16bit_wave(void)
 {
@@ -752,10 +753,10 @@ int16_t chiptune_fetch_16bit_wave(void)
 			do
 			{
 				if(s_oscillator[i].current_phase < INT16_MAX_PLUS_1){
-					value = -INT16_MAX_PLUS_1 + MULTIPLY2(s_oscillator[i].current_phase);
+					value = -INT16_MAX_PLUS_1 + MULTIPLY_BY_2(s_oscillator[i].current_phase);
 					break;
 				}
-				value = INT16_MAX - MULTIPLY2(s_oscillator[i].current_phase - INT16_MAX_PLUS_1);
+				value = INT16_MAX - MULTIPLY_BY_2(s_oscillator[i].current_phase - INT16_MAX_PLUS_1);
 			}while(0);
 			break;
 		case WAVEFORM_SAW:
@@ -823,10 +824,10 @@ uint8_t chiptune_fetch_8bit_wave(void)
 			do
 			{
 				if(s_oscillator[i].current_phase < INT16_MAX_PLUS_1){
-					value = -INT8_MAX_PLUS_1 + REDUCE_INT16_PRECISION_TO_INT8(MULTIPLY2(s_oscillator[i].current_phase));
+					value = -INT8_MAX_PLUS_1 + REDUCE_INT16_PRECISION_TO_INT8(MULTIPLY_BY_2(s_oscillator[i].current_phase));
 					break;
 				}
-				value = INT8_MAX - REDUCE_INT16_PRECISION_TO_INT8(MULTIPLY2((s_oscillator[i].current_phase - INT16_MAX_PLUS_1)));
+				value = INT8_MAX - REDUCE_INT16_PRECISION_TO_INT8(MULTIPLY_BY_2((s_oscillator[i].current_phase - INT16_MAX_PLUS_1)));
 			}while(0);
 			break;
 		case WAVEFORM_SAW:
