@@ -352,8 +352,8 @@ static bool is_all_oscillators_unused(void)
 
 /**********************************************************************************/
 
-#define DIVIDE_BY_4(VALUE)							((VALUE) >> 2)
-#define REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(VALUE)	DIVIDE_BY_4(VALUE)
+#define DIVIDE_BY_8(VALUE)							((VALUE) >> 3)
+#define REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(VALUE)	DIVIDE_BY_8(VALUE)
 
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 uint8_t const voice, uint8_t const note, uint8_t const velocity)
