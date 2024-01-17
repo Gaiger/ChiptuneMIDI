@@ -113,13 +113,13 @@ static chiptune_float s_delta_tick_per_sample = (DEFAULT_RESOLUTION / ( (chiptun
 #define UPDATE_TIME_BASE_UNIT()						UPDATE_DELTA_TICK_PER_SAMPLE()
 #endif
 
-static int(*s_handler_get_midi_message)(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick) = NULL;
+static int(*s_handler_get_midi_message)(uint32_t index,uint32_t * const p_tick, uint32_t * const p_message) = NULL;
 
 static bool s_is_tune_ending = false;
 
 /**********************************************************************************/
 
-void chiptune_set_midi_message_callback( int(*handler_get_midi_message)(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick) )
+void chiptune_set_midi_message_callback( int(*handler_get_midi_message)(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message) )
 {
 	s_handler_get_midi_message = handler_get_midi_message;
 }
@@ -427,7 +427,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 /**********************************************************************************/
 
-static void process_midi_message(uint32_t const message, uint32_t const tick, bool * const p_is_note_message)
+static void process_midi_message(uint32_t const tick, uint32_t const message, bool * const p_is_note_message)
 {
 	union {
 		uint32_t data_as_uint32;
@@ -477,8 +477,8 @@ static void process_midi_message(uint32_t const message, uint32_t const tick, bo
 
 #define NO_FETCHED_MESSAGE							(UINT32_MAX)
 #define NO_FETCHED_TICK								(UINT32_MAX)
-uint32_t s_fetched_message = NO_FETCHED_MESSAGE;
 uint32_t s_fetched_tick = NO_FETCHED_TICK;
+uint32_t s_fetched_message = NO_FETCHED_MESSAGE;
 uint32_t s_midi_messge_index = 0;
 uint32_t s_total_message_number = 0;
 
@@ -491,16 +491,16 @@ uint32_t s_total_message_number = 0;
 
 inline static int process_timely_midi_message(void)
 {
-	uint32_t message;
 	uint32_t tick;
+	uint32_t message;
 
 	int ii = 0;
 	bool is_note_message;
-	if(!(NO_FETCHED_MESSAGE == s_fetched_message && NO_FETCHED_TICK == s_fetched_tick)){
+	if(!(NO_FETCHED_TICK == s_fetched_tick && NO_FETCHED_MESSAGE == s_fetched_message)){
 		if(true == IS_AFTER_CURRENT_TIME(s_fetched_tick)){
 			return 0;
 		}
-		process_midi_message(s_fetched_message, s_fetched_tick, &is_note_message);
+		process_midi_message(s_fetched_tick, s_fetched_message, &is_note_message);
 		s_fetched_message = NO_FETCHED_MESSAGE;
 		s_fetched_tick = NO_FETCHED_TICK;
 		ii += 1;
@@ -512,7 +512,7 @@ inline static int process_timely_midi_message(void)
 			break;
 		}
 
-		int ret = s_handler_get_midi_message(s_midi_messge_index, &message, &tick);
+		int ret = s_handler_get_midi_message(s_midi_messge_index, &tick, &message);
 		if(0 != ret){
 			break;
 		}
@@ -524,7 +524,7 @@ inline static int process_timely_midi_message(void)
 			break;
 		}
 
-		process_midi_message(message, tick, &is_note_message);
+		process_midi_message(tick, message, &is_note_message);
 		ii += 1;
 	}
 
@@ -549,11 +549,11 @@ static uint32_t get_max_simultaneous_amplitude(void)
 
 	s_handler_get_midi_message(midi_messge_index, &message, &previous_tick);
 	midi_messge_index += 1;
-	process_midi_message(message, previous_tick, &is_note_message);
+	process_midi_message(previous_tick, message, &is_note_message);
 
 	while(midi_messge_index < s_total_message_number){
 		uint32_t tick;
-		int ret = s_handler_get_midi_message(midi_messge_index, &message, &tick);
+		int ret = s_handler_get_midi_message(midi_messge_index, &tick, &message);
 		if(0 != ret){
 			break;
 		}
@@ -578,7 +578,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 			}
 		}while(0);
 
-		process_midi_message(message, tick, &is_note_message);
+		process_midi_message(tick, message, &is_note_message);
 	}
 
 	s_enable_print_out = true;

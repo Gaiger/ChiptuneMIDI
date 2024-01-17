@@ -14,7 +14,7 @@
 class TuneManagerPrivate
 {
 public:
-	int GetMidiMessage(int const index, uint32_t * const p_message, uint32_t * const p_tick)
+	int GetMidiMessage(int const index, uint32_t * const p_tick, uint32_t * const p_message)
 	{
 
 		if(m_p_midi_file->events().size() <= index){
@@ -28,8 +28,8 @@ public:
 			}
 		}
 
-		*p_message = p_midi_event->message();
 		*p_tick = (uint32_t)p_midi_event->tick();
+		*p_message = p_midi_event->message();
 		return 0;
 	}
 
@@ -68,9 +68,9 @@ public:
 
 static TuneManagerPrivate *s_p_private = nullptr;
 
-extern "C" int get_midi_message(uint32_t index, uint32_t * const p_message, uint32_t * const p_tick)
+extern "C" int get_midi_message(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message)
 {
-	return s_p_private->GetMidiMessage((int)index, p_message, p_tick);
+	return s_p_private->GetMidiMessage((int)index, p_tick, p_message);
 }
 
 /**********************************************************************************/
