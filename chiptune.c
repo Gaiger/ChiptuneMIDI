@@ -199,9 +199,12 @@ struct _oscillator
 #define MIDI_CC_EFFECT_4_DEPTH						(94)
 #define MIDI_CC_EFFECT_5_DEPTH						(95)
 
+#define MIDI_CC_NON_NRPN_LSB						(98)
+#define MIDI_CC_NON_NRPN_MSB						(99)
+
 //https://zh.wikipedia.org/zh-tw/General_MIDI
-#define MIDI_CC_RON_LSB								(100)
-#define MIDI_CC_RON_MSB								(101)
+#define MIDI_CC_RPN_LSB								(100)
+#define MIDI_CC_RPN_MSB								(101)
 
 inline static void set_voice_info_volume(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
@@ -245,57 +248,66 @@ static int setup_control_change_into_voice_info(uint32_t const tick, uint8_t con
 {
 	switch(number){
 	case MIDI_CC_DATA_ENTRY_MSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u,  MIDI_CC_DATA_ENTRY_MSB :: voice = %u, value = %u %s\r\n",
-						tick, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DATA_ENTRY_MSB(%u) :: voice = %u, value = %u %s\r\n",
+						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_VOLUME:
 		set_voice_info_volume(tick, voice, value);
 		break;
 	case MIDI_CC_PAN:
 		s_voice_info[voice].pan = value;
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_PAN :: voice = %u, value = %u\r\n", tick, voice, value);
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_PAN(%u) :: voice = %u, value = %u %s\r\n",
+						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_EXPRESSION:
 		set_voice_info_expression(tick, voice, value);
 		break;
 	case MIDI_CC_DATA_ENTRY_LSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DATA_ENTRY_LSB :: voice = %u, value = %u %s\r\n",
-						tick, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DATA_ENTRY_LSB(%u) :: voice = %u, value = %u %s\r\n",
+						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_DAMPER_PEDAL:
 		set_voice_info_damping_pedal(tick, voice, value);
 		break;
 	case MIDI_CC_EFFECT_1_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_1_DEPTH :: voice = %u, value = %u %s\r\n",
-						tick, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_1_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
+						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_EFFECT_2_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_2_DEPTH :: voice = %u, value = %u %s\r\n",
-						tick, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_2_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
+						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_EFFECT_3_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_3_DEPTH :: voice = %u, value = %u %s\r\n",
-						tick, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_3_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
+						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_EFFECT_4_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_4_DEPTH :: voice = %u, value = %u %s\r\n",
-						tick, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_4_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
+						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_EFFECT_5_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_5_DEPTH :: voice = %u, value = %u %s\r\n",
-						tick, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_5_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
+						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
-	case MIDI_CC_RON_LSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RON_LSB :: voice = %u, value = %u %s\r\n",
-						tick, voice, value, "(NOT IMPLEMENTED YET)");
+	case MIDI_CC_NON_NRPN_LSB:
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_NON_NRPN_LSB(%u) :: voice = %u, value = %u %s\r\n",
+						tick, voice, number, value, "(NOT IMPLEMENTED YET)");
 		break;
-	case MIDI_CC_RON_MSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RON_MSB :: voice = %u, value = %u %s\r\n",
-						tick, voice, value, "(NOT IMPLEMENTED YET)");
+	case MIDI_CC_NON_NRPN_MSB:
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_NON_NRPN_MSB(%u) :: voice = %u, value = %u %s\r\n",
+						tick, voice, number, value, "(NOT IMPLEMENTED YET)");
+		break;
+	case MIDI_CC_RPN_LSB:
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RPN_LSB(%u) :: voice = %u, value = %u %s\r\n",
+						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
+		break;
+	case MIDI_CC_RPN_MSB:
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RPN_MSB(%u) :: voice = %u, value = %u %s\r\n",
+						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	default:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, code = %u :: voice = %u, value = %u %s\r\n",
-						tick, number,voice, value, "(NOT IMPLEMENTED YET)");
+						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	}
 
