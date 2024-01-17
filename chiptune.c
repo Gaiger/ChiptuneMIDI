@@ -6,7 +6,7 @@
 
 #include "chiptune.h"
 
-//#define _DEBUG_FAST_TO_ENDING
+//#define _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 
 //#define _INCREMENTAL_SAMPLE_INDEX
 //#define _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
@@ -152,7 +152,8 @@ enum
 
 struct _voice_info
 {
-	uint8_t		volume;
+	uint8_t		max_volume;
+	uint8_t		playing_volume;
 	uint8_t		pan;
 	bool		is_damping_pedal_on;
 	uint8_t		waveform;
@@ -202,18 +203,27 @@ struct _oscillator
 #define MIDI_CC_RON_LSB								(100)
 #define MIDI_CC_RON_MSB								(101)
 
-inline static void set_voice_info_volume(uint8_t const voice, uint8_t const value)
+inline static void set_voice_info_volume(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
-	s_voice_info[voice].volume = value;
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", tick, voice, value);
+	s_voice_info[voice].max_volume = value;
 }
 
 /**********************************************************************************/
 
-inline static void set_voice_info_damping_pedal(uint8_t const voice, uint8_t const value)
+inline static void set_voice_info_expression(uint32_t const tick, uint8_t const voice, uint8_t const value)
+{
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EXPRESSION :: voice = %u, value = %u\r\n", tick, voice, value);
+	s_voice_info[voice].playing_volume = (value * s_voice_info[voice].max_volume)/INT8_MAX;
+}
+
+/**********************************************************************************/
+
+inline static void set_voice_info_damping_pedal(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
 	bool is_damping_pedal_on = (value > 63) ?  true : false;
-	CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_DAMPER_PEDAL :: voice = %u, is_damping_pedal_on = %u\r\n",
-					__FUNCTION__, voice, is_damping_pedal_on);
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %u, is_damping_pedal_on = %u\r\n",
+					tick, voice, is_damping_pedal_on);
 
 	s_voice_info[voice].is_damping_pedal_on = is_damping_pedal_on;
 	do{
@@ -231,63 +241,61 @@ inline static void set_voice_info_damping_pedal(uint8_t const voice, uint8_t con
 
 /**********************************************************************************/
 
-static int setup_control_change_into_voice_info(uint8_t const voice, uint8_t const number, uint8_t const value)
+static int setup_control_change_into_voice_info(uint32_t const tick, uint8_t const voice, uint8_t const number, uint8_t const value)
 {
 	switch(number){
 	case MIDI_CC_DATA_ENTRY_MSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_DATA_ENTRY_MSB :: voice = %u, value = %u %s\r\n",
-						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u,  MIDI_CC_DATA_ENTRY_MSB :: voice = %u, value = %u %s\r\n",
+						tick, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_VOLUME:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
-		set_voice_info_volume(voice, value);
+		set_voice_info_volume(tick, voice, value);
 		break;
 	case MIDI_CC_PAN:
 		s_voice_info[voice].pan = value;
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_PAN :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_PAN :: voice = %u, value = %u\r\n", tick, voice, value);
 		break;
 	case MIDI_CC_EXPRESSION:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EXPRESSION :: voice = %u, value = %u\r\n", __FUNCTION__, voice, value);
-		set_voice_info_volume(voice, value);
+		set_voice_info_expression(tick, voice, value);
 		break;
 	case MIDI_CC_DATA_ENTRY_LSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_DATA_ENTRY_LSB :: voice = %u, value = %u %s\r\n",
-						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DATA_ENTRY_LSB :: voice = %u, value = %u %s\r\n",
+						tick, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_DAMPER_PEDAL:
-		set_voice_info_damping_pedal(voice, value);
+		set_voice_info_damping_pedal(tick, voice, value);
 		break;
 	case MIDI_CC_EFFECT_1_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_1_DEPTH :: voice = %u, value = %u %s\r\n",
-						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_1_DEPTH :: voice = %u, value = %u %s\r\n",
+						tick, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_EFFECT_2_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_2_DEPTH :: voice = %u, value = %u %s\r\n",
-						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_2_DEPTH :: voice = %u, value = %u %s\r\n",
+						tick, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_EFFECT_3_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_3_DEPTH :: voice = %u, value = %u %s\r\n",
-						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_3_DEPTH :: voice = %u, value = %u %s\r\n",
+						tick, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_EFFECT_4_DEPTH:
 		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_4_DEPTH :: voice = %u, value = %u %s\r\n",
-						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+						tick, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_EFFECT_5_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_5_DEPTH :: voice = %u, value = %u %s\r\n",
-						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_5_DEPTH :: voice = %u, value = %u %s\r\n",
+						tick, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_RON_LSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_RON_LSB :: voice = %u, value = %u %s\r\n",
-						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RON_LSB :: voice = %u, value = %u %s\r\n",
+						tick, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_RON_MSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_RON_MSB :: voice = %u, value = %u %s\r\n",
-						__FUNCTION__, voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RON_MSB :: voice = %u, value = %u %s\r\n",
+						tick, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	default:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: code = %u :: voice = %u, value = %u %s\r\n", __FUNCTION__, number,
-						voice, value, "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, code = %u :: voice = %u, value = %u %s\r\n",
+						tick, number,voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	}
 
@@ -296,13 +304,14 @@ static int setup_control_change_into_voice_info(uint8_t const voice, uint8_t con
 
 /**********************************************************************************/
 
-static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t const number)
+static void setup_program_change_into_voice_info(uint32_t const tick, uint8_t const voice, uint8_t const number)
 {
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: ", tick);
 	switch(number)
 	{
 #define MIDI_INSTRUMENT_OVERDRIVE_GUITAR			(29)
 	case MIDI_INSTRUMENT_OVERDRIVE_GUITAR:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_SQUARE with duty = 50%% (instrument = %u)\r\n", __FUNCTION__, voice, number);
+		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, as WAVEFORM_SQUARE with duty = 50%%\r\n", voice, number);
 		s_voice_info[voice].waveform = WAVEFORM_SQUARE;
 		s_voice_info[voice].duty_cycle_critical_phase = DUTY_CYLCE_50_CRITICAL_PHASE;
 		break;
@@ -310,7 +319,7 @@ static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t co
 	case MIDI_INSTRUMENT_DISTORTION_GUITAR:
 		s_voice_info[voice].waveform = WAVEFORM_SQUARE;
 		s_voice_info[voice].duty_cycle_critical_phase = DUTY_CYLCE_25_CRITICAL_PHASE;
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_SQUARE with duty = 25%% (instrument = %u)\r\n", __FUNCTION__, voice, number);
+		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, as WAVEFORM_SQUARE with duty = 25%%\r\n", voice, number);
 		break;
 #define MIDI_INSTRUMENT_ACOUSTIC_BASS				(32)
 #define MIDI_INSTRUMENT_ELECTRIC_BASS_FINGER		(33)
@@ -333,7 +342,7 @@ static void setup_program_change_into_voice_info(uint8_t const voice, uint8_t co
 	case MIDI_INSTRUMENT_STRING_ENSEMBLE_1:
 	case MIDI_INSTRUMENT_STRING_ENSEMBLE_2:
 	default:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: %voice = %u as WAVEFORM_TRIANGLE (instrument = %u)\r\n", __FUNCTION__, voice, number);
+		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, as WAVEFORM_TRIANGLE\r\n", voice, number);
 		s_voice_info[voice].waveform = WAVEFORM_TRIANGLE;
 		break;
 	}
@@ -362,21 +371,20 @@ static bool is_all_oscillators_unused(void)
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 uint8_t const voice, uint8_t const note, uint8_t const velocity)
 {
-#ifdef _DEBUG_FAST_TO_ENDING
+#ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 	#ifdef _INCREMENTAL_SAMPLE_INDEX
 	if(TICK_TO_SAMPLE_INDEX(818880) < s_current_sample_index){
-		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, voice = %u, note = %u, is_note_on = %u, velocity = %u\r\n",
-						tick, voice, note, is_note_on, velocity);
-	}
+		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u\r\n",
+						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
 	#else
 	if(818880 < s_current_tick){
-		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, voice = %u, note = %u, is_note_on = %u, velocity = %u\r\n",
-						tick, voice, note, is_note_on, velocity);
+		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u\r\n",
+						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
 	}
 	#endif
 #else
-	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, voice = %u, note = %u, is_note_on = %u, velocity = %u\r\n",
-					tick, voice, note, is_note_on, velocity);
+	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u\r\n",
+					tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
 #endif
 
 	do
@@ -396,7 +404,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			s_oscillator[ii].voice = voice;
 			s_oscillator[ii].waveform = s_voice_info[voice].waveform;
 			s_oscillator[ii].duty_cycle_critical_phase = s_voice_info[voice].duty_cycle_critical_phase;
-			s_oscillator[ii].volume = (uint32_t)velocity * (uint32_t)s_voice_info[voice].volume;
+			s_oscillator[ii].volume = (uint32_t)velocity * (uint32_t)s_voice_info[voice].playing_volume;
 			s_oscillator[ii].note = note;
 			s_oscillator[ii].current_phase = 0;
 			break;
@@ -452,26 +460,26 @@ static void process_midi_message(uint32_t const tick, uint32_t const message)
 							 voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	case MIDI_MESSAGE_KEY_PRESSURE:
-		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_CHANNEL_PRESSURE :: note = %u, amount = %u %s\r\n",
-						voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: note = %u, amount = %u %s\r\n",
+						tick, voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_CONTROL_CHANGE:
-		setup_control_change_into_voice_info(voice, u.data_as_bytes[1], u.data_as_bytes[2]);
+		setup_control_change_into_voice_info(tick, voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	case MIDI_MESSAGE_PROGRAM_CHANGE:
-		setup_program_change_into_voice_info(voice, u.data_as_bytes[1]);
+		setup_program_change_into_voice_info(tick, voice, u.data_as_bytes[1]);
 		break;
 	case MIDI_MESSAGE_CHANNEL_PRESSURE:
-		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %u, amount = %u %s\r\n",
-						voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %u, amount = %u %s\r\n",
+						tick, voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_PITCH_WHEEL:
-		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE_PITCH_WHEEL :: voice = %u, value = %u %s\r\n",
-						voice,  (u.data_as_bytes[2] << 7) | u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %u, value = %u %s\r\n",
+						tick, voice,  (u.data_as_bytes[2] << 7) | u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	default:
-		CHIPTUNE_PRINTF(cMidiSetup, "MIDI_MESSAGE UKNOWN :: %u, voice = %u,byte 1 = %u, byte 2 = %u \r\n", type,
-						voice, u.data_as_bytes[1], u.data_as_bytes[2]);
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE UKNOWN :: %u, voice = %u,byte 1 = %u, byte 2 = %u \r\n",
+						tick, type, voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	}
 }
@@ -641,7 +649,8 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	s_fetched_message = NO_FETCHED_MESSAGE;
 	s_fetched_tick = NO_FETCHED_TICK;
 	for(int i = 0; i< MAX_VOICE_NUMBER; i++){
-		s_voice_info[i].volume = 64;
+		s_voice_info[i].max_volume = (INT8_MAX + 1)/2;
+		s_voice_info[i].playing_volume = (s_voice_info[i].max_volume * INT8_MAX)/INT8_MAX;
 		s_voice_info[i].pan = 64;
 		s_voice_info[i].is_damping_pedal_on = false;
 		s_voice_info[i].waveform = WAVEFORM_TRIANGLE;
@@ -705,7 +714,7 @@ void chiptune_set_tempo(float const tempo)
 													} while(0)
 #endif
 
-#ifdef _DEBUG_FAST_TO_ENDING
+#ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 
 /**********************************************************************************/
 
@@ -777,7 +786,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 	}
 
 	INCREMENT_TIME_BASE();
-#ifdef _DEBUG_FAST_TO_ENDING
+#ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 	increase_time_base_for_fast_to_ending();
 #endif
 
@@ -848,7 +857,7 @@ uint8_t chiptune_fetch_8bit_wave(void)
 	}
 
 	INCREMENT_TIME_BASE();
-#ifdef _DEBUG_FAST_TO_ENDING
+#ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 	increase_time_base_for_fast_to_ending();
 #endif
 
