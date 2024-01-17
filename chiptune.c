@@ -158,7 +158,7 @@ struct _voice_info
 	bool		is_damping_pedal_on;
 	uint8_t		waveform;
 	uint16_t	duty_cycle_critical_phase;
-	uint16_t	pitch_bend_in_semitones;
+	uint16_t	pitch_bend_range_in_semitones;
 	uint16_t	registered_parameter_number;
 	uint16_t	registered_parameter_value;
 }s_voice_info[MAX_VOICE_NUMBER];
@@ -210,7 +210,7 @@ struct _oscillator
 #define MIDI_CC_RPN_MSB								(101)
 
 
-inline static void set_voice_registered_parameter(uint32_t const tick, uint8_t const voice)
+inline static void set_voice_info_registered_parameter(uint32_t const tick, uint8_t const voice)
 {
 	(void)tick;
 #define MIDI_CC_RPN_PITCH_BEND_SENSITIVY			(0)
@@ -225,7 +225,7 @@ inline static void set_voice_registered_parameter(uint32_t const tick, uint8_t c
 	case MIDI_CC_RPN_PITCH_BEND_SENSITIVY:
 		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %u, semitones = %u\r\n",
 						voice, s_voice_info[voice].registered_parameter_value >> 8);
-		s_voice_info[voice].pitch_bend_in_semitones = s_voice_info[voice].registered_parameter_value >> 8;
+		s_voice_info[voice].pitch_bend_range_in_semitones = s_voice_info[voice].registered_parameter_value >> 8;
 		if(0 != (s_voice_info[voice].registered_parameter_value & 0xFF)){
 			CHIPTUNE_PRINTF(cMidiSetup, "----  MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %u, cents = %u (%s)\r\n",
 						voice, s_voice_info[voice].registered_parameter_number & 0xFF, "(NOT IMPLEMENTED YET)");
@@ -331,7 +331,7 @@ static int setup_control_change_into_voice_info(uint32_t const tick, uint8_t con
 		s_voice_info[voice].registered_parameter_value
 				= s_voice_info[voice].registered_parameter_value | ((value & 0xFF) << 0);
 
-		set_voice_registered_parameter(tick, voice);
+		set_voice_info_registered_parameter(tick, voice);
 		break;
 	case MIDI_CC_DAMPER_PEDAL:
 		set_voice_info_damping_pedal(tick, voice, value);
@@ -561,8 +561,8 @@ static void process_midi_message(uint32_t const tick, uint32_t const message)
 						tick, voice,  (u.data_as_bytes[2] << 7) | u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	default:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE UKNOWN :: %u, voice = %u,byte 1 = %u, byte 2 = %u \r\n",
-						tick, type, voice, u.data_as_bytes[1], u.data_as_bytes[2]);
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE code = %u :: voice = %u, byte 1 = %u, byte 2 = %u %s\r\n",
+						tick, type, voice, u.data_as_bytes[1], u.data_as_bytes[2], "(NOT IMPLEMENTED YET)");
 		break;
 	}
 }
