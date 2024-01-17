@@ -73,6 +73,11 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 												}while(0)
 #endif
 
+#define SET_CHIPTUNE_PRINTF_ENABLED(IS_ENABLED)		\
+													do { \
+														s_enable_print_out = (IS_ENABLED); \
+													} while(0)
+
 #ifdef _INCREMENTAL_SAMPLE_INDEX
 typedef float chiptune_float;
 #else
@@ -493,7 +498,7 @@ inline static int process_timely_midi_message(void)
 	uint32_t message;
 
 	int ii = 0;
-	if(!(NO_FETCHED_TICK == s_fetched_tick && NO_FETCHED_MESSAGE == s_fetched_message)){
+	if(false == (NO_FETCHED_TICK == s_fetched_tick && NO_FETCHED_MESSAGE == s_fetched_message)){
 		if(true == IS_AFTER_CURRENT_TIME(s_fetched_tick)){
 			return 0;
 		}
@@ -536,7 +541,7 @@ inline static int process_timely_midi_message(void)
 
 static uint32_t get_max_simultaneous_amplitude(void)
 {
-	s_enable_print_out = false;
+	SET_CHIPTUNE_PRINTF_ENABLED(false);
 
 	uint32_t previous_tick;
 	uint32_t message;
@@ -577,7 +582,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 		process_midi_message(tick, message);
 	}
 
-	s_enable_print_out = true;
+	SET_CHIPTUNE_PRINTF_ENABLED(true);
 	return max_amplitude;
 }
 
