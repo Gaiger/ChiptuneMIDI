@@ -207,11 +207,10 @@ inline static void set_voice_info_volume(uint8_t const voice, uint8_t const valu
 inline static void set_voice_info_damping_pedal(uint8_t const voice, uint8_t const value)
 {
 	bool is_damping_pedal_on = (value > 63) ?  true : false;
-	CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_DAMPER_PEDAL :: voice = %u, value = %u (%s)\r\n",
-					__FUNCTION__, voice, value, is_damping_pedal_on ? "on":"off");
+	CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_DAMPER_PEDAL :: voice = %u, is_damping_pedal_on = %u\r\n",
+					__FUNCTION__, voice, is_damping_pedal_on);
 
 	s_voice_info[voice].is_damping_pedal_on = is_damping_pedal_on;
-
 	do{
 		if(true == is_damping_pedal_on){
 			break;
