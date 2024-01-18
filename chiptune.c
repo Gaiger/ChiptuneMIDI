@@ -153,14 +153,19 @@ enum
 
 struct _voice_info
 {
+	int8_t		tuning_in_semitones;
+
 	uint8_t		max_volume;
 	uint8_t		playing_volume;
 	uint8_t		pan;
 	bool		is_damping_pedal_on;
+
 	uint8_t		waveform;
 	uint16_t	duty_cycle_critical_phase;
+
 	uint16_t	pitch_bend_range_in_semitones;
 	uint16_t	pitch_wheel;
+
 	uint16_t	registered_parameter_number;
 	uint16_t	registered_parameter_value;
 }s_voice_info[MAX_VOICE_NUMBER];
@@ -180,7 +185,6 @@ struct _oscillator
 
 #define UNUSED_OSCILLATOR							(-1)
 
-
 #define MIDI_MESSAGE_NOTE_OFF						(0x80)
 #define MIDI_MESSAGE_NOTE_ON						(0x90)
 #define MIDI_MESSAGE_KEY_PRESSURE					(0xA0)
@@ -190,6 +194,9 @@ struct _oscillator
 #define MIDI_MESSAGE_PITCH_WHEEL					(0xE0)
 
 //https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
+
+#define MIDI_CC_CENTER_VALUE						(64)
+
 #define MIDI_CC_DATA_ENTRY_MSB						(6)
 #define MIDI_CC_VOLUME								(7)
 #define MIDI_CC_PAN									(10)
@@ -212,7 +219,6 @@ struct _oscillator
 #define MIDI_CC_RPN_LSB								(100)
 #define MIDI_CC_RPN_MSB								(101)
 
-
 inline static void process_cc_registered_parameter(uint32_t const tick, uint8_t const voice)
 {
 	(void)tick;
@@ -226,9 +232,9 @@ inline static void process_cc_registered_parameter(uint32_t const tick, uint8_t 
 	switch(s_voice_info[voice].registered_parameter_number)
 	{
 	case MIDI_CC_RPN_PITCH_BEND_SENSITIVY:
-		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %u, semitones = %u\r\n",
-						voice, s_voice_info[voice].registered_parameter_value >> 8);
 		s_voice_info[voice].pitch_bend_range_in_semitones = s_voice_info[voice].registered_parameter_value >> 8;
+		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %u, semitones = %u\r\n",
+						voice, s_voice_info[voice].pitch_bend_range_in_semitones);
 		if(0 != (s_voice_info[voice].registered_parameter_value & 0xFF)){
 			CHIPTUNE_PRINTF(cMidiSetup, "----  MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %u, cents = %u (%s)\r\n",
 						voice, s_voice_info[voice].registered_parameter_number & 0xFF, "(NOT IMPLEMENTED YET)");
@@ -240,9 +246,9 @@ inline static void process_cc_registered_parameter(uint32_t const tick, uint8_t 
 						"(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_RPN_CHANNEL_COARSE_TUNING:
-		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_CHANNEL_COARSE_TUNING(%u) :: voice = %u, value = %u %s\r\n",
-						voice, s_voice_info[voice].registered_parameter_number, s_voice_info[voice].registered_parameter_value,
-						"(NOT IMPLEMENTED YET)");
+		s_voice_info[voice].tuning_in_semitones = 0x7F & (s_voice_info[voice].registered_parameter_value >> 8) - MIDI_CC_CENTER_VALUE;
+		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_CHANNEL_COARSE_TUNING(%u) :: voice = %u, tuning in semitones = %+d\r\n",
+						voice, s_voice_info[voice].registered_parameter_number, s_voice_info[voice].tuning_in_semitones);
 		break;
 	case MIDI_CC_RPN_TURNING_PROGRAM_CHANGE:
 		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_TURNING_PROGRAM_CHANGE(%u) :: voice = %u, value = %u, value = %u %s\r\n",
@@ -316,6 +322,7 @@ static int process_control_change_message(uint32_t const tick, uint8_t const voi
 						tick, voice, value);
 		s_voice_info[voice].registered_parameter_value
 				= ((value & 0xFF) << 8) | s_voice_info[voice].registered_parameter_value;
+		process_cc_registered_parameter(tick, voice);
 		break;
 	case MIDI_CC_VOLUME:
 		process_cc_volume(tick, voice, value);
@@ -333,7 +340,6 @@ static int process_control_change_message(uint32_t const tick, uint8_t const voi
 						tick, voice, value);
 		s_voice_info[voice].registered_parameter_value
 				= s_voice_info[voice].registered_parameter_value | ((value & 0xFF) << 0);
-
 		process_cc_registered_parameter(tick, voice);
 		break;
 	case MIDI_CC_DAMPER_PEDAL:
@@ -380,8 +386,8 @@ static int process_control_change_message(uint32_t const tick, uint8_t const voi
 				= ((value & 0xFF) << 8) | s_voice_info[voice].registered_parameter_number;
 		break;
 	default:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC code = %u :: voice = %u, value = %u\r\n",
-						tick, number, voice, value);
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC code = %u :: voice = %u, value = %u %s\r\n",
+						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	}
 
@@ -452,13 +458,15 @@ static bool is_all_oscillators_unused(void)
 /**********************************************************************************/
 
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
-#define PITCH_WHEEL_CENTER							(0x2000)
+#define MIDI_PITCH_WHEEL_CENTER						(0x2000)
 
-static inline uint16_t calculate_delta_phase(uint8_t const note, uint16_t const pitch_bend_range_in_semitones, uint16_t const pitch_wheel,
+static inline uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semitones,
+											 uint16_t const pitch_bend_range_in_semitones, uint16_t const pitch_wheel,
 											 float *p_pitch_bend_in_semitone)
 {
-	float pitch_bend_in_semitone = (((int16_t)pitch_wheel - PITCH_WHEEL_CENTER)/(float)PITCH_WHEEL_CENTER) * DIVIDE_BY_2(pitch_bend_range_in_semitones);
-	float corrected_note = (float)note + pitch_bend_in_semitone;
+	// TO DO : too many float variable
+	float pitch_bend_in_semitone = (((int16_t)pitch_wheel - MIDI_PITCH_WHEEL_CENTER)/(float)MIDI_PITCH_WHEEL_CENTER) * DIVIDE_BY_2(pitch_bend_range_in_semitones);
+	float corrected_note = (float)((int16_t)note + (int16_t)tuning_in_semitones) + pitch_bend_in_semitone;
 	/*
 	 * freq = 440 * 2**((note - 69)/12)
 	*/
@@ -498,7 +506,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			}
 			s_oscillator[ii].voice = voice;
 			s_oscillator[ii].note = note;
-			s_oscillator[ii].delta_phase = calculate_delta_phase(s_oscillator[ii].note,
+			s_oscillator[ii].delta_phase = calculate_delta_phase(s_oscillator[ii].note, s_voice_info[voice].tuning_in_semitones,
 															   s_voice_info[voice].pitch_bend_range_in_semitones,
 															   s_voice_info[voice].pitch_wheel, &pitch_bend_in_semitone);
 			s_oscillator[ii].current_phase = 0;
@@ -576,7 +584,7 @@ static void process_pitch_wheel_message(uint32_t const tick, uint32_t const voic
 			continue;
 		}
 		float pitch_bend_in_semitone;
-		s_oscillator[i].delta_phase = calculate_delta_phase(s_oscillator[i].note,
+		s_oscillator[i].delta_phase = calculate_delta_phase(s_oscillator[i].note, s_voice_info[voice].tuning_in_semitones,
 														   s_voice_info[voice].pitch_bend_range_in_semitones,
 														   s_voice_info[voice].pitch_wheel, &pitch_bend_in_semitone);
 
@@ -796,13 +804,20 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	s_fetched_message = NO_FETCHED_MESSAGE;
 	s_fetched_tick = NO_FETCHED_TICK;
 	for(int i = 0; i< MAX_VOICE_NUMBER; i++){
-		s_voice_info[i].max_volume = (INT8_MAX + 1)/2;
+		s_voice_info[i].tuning_in_semitones = 0;
+
+		s_voice_info[i].max_volume = MIDI_CC_CENTER_VALUE;
 		s_voice_info[i].playing_volume = (s_voice_info[i].max_volume * INT8_MAX)/INT8_MAX;
-		s_voice_info[i].pan = 64;
+		s_voice_info[i].pan = MIDI_CC_CENTER_VALUE;
 		s_voice_info[i].is_damping_pedal_on = false;
+
 		s_voice_info[i].waveform = WAVEFORM_TRIANGLE;
+
 		s_voice_info[i].pitch_bend_range_in_semitones = DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES;
-		s_voice_info[i].pitch_wheel = PITCH_WHEEL_CENTER;
+		s_voice_info[i].pitch_wheel = MIDI_PITCH_WHEEL_CENTER;
+
+		s_voice_info[i].registered_parameter_number = MIDI_CC_RPN_NULL;
+		s_voice_info[i].registered_parameter_value = 0;
 	}
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		s_oscillator[i].voice = UNUSED_OSCILLATOR;
