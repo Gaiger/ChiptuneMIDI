@@ -11,7 +11,7 @@
 //#define _INCREMENTAL_SAMPLE_INDEX
 //#define _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
 
-static bool s_enable_print_out = true;
+static bool s_enable_processing_print_out = true;
 
 #define _PRINT_MIDI_DEVELOPING
 #define _PRINT_MIDI_SETUP
@@ -34,6 +34,12 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 		//fprintf(stdout, "cDeveloping:: ");
 	}
 #endif
+
+	if(false == is_print_out){
+		if(false == s_enable_processing_print_out){
+			return ;
+		}
+	}
 
 #ifdef _PRINT_MIDI_SETUP
 	if(cMidiSetup == print_type){
@@ -61,9 +67,6 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 
 #define CHIPTUNE_PRINTF(PRINT_TYPE, FMT, ...)		\
 													do { \
-														if(false == s_enable_print_out){ \
-															break;\
-														} \
 														chiptune_printf(PRINT_TYPE, FMT, ##__VA_ARGS__); \
 													}while(0)
 
@@ -73,9 +76,9 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 												}while(0)
 #endif
 
-#define SET_CHIPTUNE_PRINTF_ENABLED(IS_ENABLED)		\
+#define SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(IS_ENABLED)		\
 													do { \
-														s_enable_print_out = (IS_ENABLED); \
+														s_enable_processing_print_out = (IS_ENABLED); \
 													} while(0)
 
 #ifdef _INCREMENTAL_SAMPLE_INDEX
@@ -157,6 +160,7 @@ struct _voice_info
 	uint8_t		waveform;
 	uint16_t	duty_cycle_critical_phase;
 	uint16_t	pitch_bend_range_in_semitones;
+	uint16_t	pitch_wheel;
 	uint16_t	registered_parameter_number;
 	uint16_t	registered_parameter_value;
 }s_voice_info[MAX_VOICE_NUMBER];
@@ -447,27 +451,36 @@ static bool is_all_oscillators_unused(void)
 
 /**********************************************************************************/
 
+#define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
+#define PITCH_WHEEL_CENTER							(0x2000)
+
+static inline uint16_t calculate_delta_phase(uint8_t const note, uint16_t const pitch_bend_range_in_semitones, uint16_t const pitch_wheel,
+											 float *p_pitch_bend_in_semitone)
+{
+	float pitch_bend_in_semitone = (((int16_t)pitch_wheel - PITCH_WHEEL_CENTER)/(float)PITCH_WHEEL_CENTER) * DIVIDE_BY_2(pitch_bend_range_in_semitones);
+	float corrected_note = (float)note + pitch_bend_in_semitone;
+	/*
+	 * freq = 440 * 2**((note - 69)/12)
+	*/
+	float frequency = 440.0f * powf(2.0f, (corrected_note - 69.0f)/12.0f);
+	frequency = roundf(frequency * 100.0f + 0.5f)/100.0f;
+	/*
+	 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX + 1)/phase
+	*/
+	uint16_t delta_phase = (uint16_t)((UINT16_MAX + 1) * frequency / s_sampling_rate);
+	*p_pitch_bend_in_semitone = pitch_bend_in_semitone;
+	return delta_phase;
+}
+
+/**********************************************************************************/
+
 #define DIVIDE_BY_8(VALUE)							((VALUE) >> 3)
 #define REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(VALUE)	DIVIDE_BY_8(VALUE)
 
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 uint8_t const voice, uint8_t const note, uint8_t const velocity)
 {
-#ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
-	#ifdef _INCREMENTAL_SAMPLE_INDEX
-	if(TICK_TO_SAMPLE_INDEX(818880) < s_current_sample_index){
-		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u\r\n",
-						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
-	#else
-	if(818880 < s_current_tick){
-		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u\r\n",
-						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
-	}
-	#endif
-#else
-	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u\r\n",
-					tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
-#endif
+	float pitch_bend_in_semitone;
 
 	do
 	{
@@ -485,18 +498,9 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			}
 			s_oscillator[ii].voice = voice;
 			s_oscillator[ii].note = note;
-			do
-			{
-				/*
-				 * freq = 440 * 2**((n-69)/12)
-				*/
-				chiptune_float frequency = 440.0 * pow(2.0, (float)(note - 69)/12.0);
-				frequency = round(frequency * 100.0 + 0.5)/100.0;
-				/*
-				 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX = + 1)/phase
-				*/
-				s_oscillator[ii].delta_phase = (uint16_t)((UINT16_MAX + 1) * frequency / s_sampling_rate);
-			} while(0);
+			s_oscillator[ii].delta_phase = calculate_delta_phase(s_oscillator[ii].note,
+															   s_voice_info[voice].pitch_bend_range_in_semitones,
+															   s_voice_info[voice].pitch_wheel, &pitch_bend_in_semitone);
 			s_oscillator[ii].current_phase = 0;
 			s_oscillator[ii].volume = (uint32_t)velocity * (uint32_t)s_voice_info[voice].playing_volume;
 			s_oscillator[ii].waveform = s_voice_info[voice].waveform;
@@ -529,7 +533,55 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}while(0);
 	}while(0);
 
+
+
+#ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
+	#ifdef _INCREMENTAL_SAMPLE_INDEX
+	if(TICK_TO_SAMPLE_INDEX(818880) < s_current_sample_index){
+		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u\r\n",
+						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
+	#else
+	if(818880 < s_current_tick){
+		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u\r\n",
+						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
+	}
+	#endif
+#else
+	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u",
+					tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
+	do
+	{
+		if(false == is_note_on){
+			break;
+		}
+		if(0.0f == pitch_bend_in_semitone){
+			break;
+		}
+		CHIPTUNE_PRINTF(cNoteOperation, ", pitch bend = %+3.2f", pitch_bend_in_semitone);
+	}while(0);
+	CHIPTUNE_PRINTF(cNoteOperation, "\r\n");
+#endif
 	return 0;
+}
+
+/**********************************************************************************/
+
+static void process_pitch_wheel(uint32_t const tick, uint32_t const voice, uint16_t const value)
+{
+	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %u, value = %u\r\n",
+					tick, voice, value);
+	s_voice_info[voice].pitch_wheel = value;
+	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+		if(voice != s_oscillator[i].voice){
+			continue;
+		}
+		float pitch_bend_in_semitone;
+		s_oscillator[i].delta_phase = calculate_delta_phase(s_oscillator[i].note,
+														   s_voice_info[voice].pitch_bend_range_in_semitones,
+														   s_voice_info[voice].pitch_wheel, &pitch_bend_in_semitone);
+
+		CHIPTUNE_PRINTF(cNoteOperation, "---- voice = %u, note = %u, pitch bend = %+3.2f\r\n",voice, s_oscillator[i].note, pitch_bend_in_semitone);
+	}
 }
 
 /**********************************************************************************/
@@ -550,7 +602,7 @@ static void process_midi_message(uint32_t const tick, uint32_t const message)
 	{
 	case MIDI_MESSAGE_NOTE_OFF:
 	case MIDI_MESSAGE_NOTE_ON:
-		process_note_message(tick, (type == MIDI_MESSAGE_NOTE_OFF) ? false : true,
+		process_note_message(tick, (MIDI_MESSAGE_NOTE_OFF == type) ? false : true,
 							 voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	case MIDI_MESSAGE_KEY_PRESSURE:
@@ -568,8 +620,7 @@ static void process_midi_message(uint32_t const tick, uint32_t const message)
 						tick, voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_PITCH_WHEEL:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %u, value = %u %s\r\n",
-						tick, voice,  (u.data_as_bytes[2] << 7) | u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
+		process_pitch_wheel(tick, voice, (u.data_as_bytes[2] << 7) | u.data_as_bytes[1]);
 		break;
 	default:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE code = %u :: voice = %u, byte 1 = %u, byte 2 = %u %s\r\n",
@@ -643,7 +694,7 @@ inline static int process_timely_midi_message(void)
 
 static uint32_t get_max_simultaneous_amplitude(void)
 {
-	SET_CHIPTUNE_PRINTF_ENABLED(false);
+	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(false);
 
 	uint32_t previous_tick;
 	uint32_t message;
@@ -684,7 +735,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 		process_midi_message(tick, message);
 	}
 
-	SET_CHIPTUNE_PRINTF_ENABLED(true);
+	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
 	return max_amplitude;
 }
 
@@ -731,6 +782,8 @@ uint32_t g_max_amplitude = 1 << 16;
 
 /**********************************************************************************/
 
+#define DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES		(2 * 2)
+
 void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
 {
 #ifdef _INCREMENTAL_SAMPLE_INDEX
@@ -748,6 +801,8 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 		s_voice_info[i].pan = 64;
 		s_voice_info[i].is_damping_pedal_on = false;
 		s_voice_info[i].waveform = WAVEFORM_TRIANGLE;
+		s_voice_info[i].pitch_bend_range_in_semitones = DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES;
+		s_voice_info[i].pitch_wheel = PITCH_WHEEL_CENTER;
 	}
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		s_oscillator[i].voice = UNUSED_OSCILLATOR;
