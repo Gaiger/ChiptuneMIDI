@@ -213,7 +213,7 @@ struct _oscillator
 #define MIDI_CC_RPN_MSB								(101)
 
 
-inline static void set_voice_info_registered_parameter(uint32_t const tick, uint8_t const voice)
+inline static void process_cc_registered_parameter(uint32_t const tick, uint8_t const voice)
 {
 	(void)tick;
 #define MIDI_CC_RPN_PITCH_BEND_SENSITIVY			(0)
@@ -270,7 +270,7 @@ inline static void set_voice_info_registered_parameter(uint32_t const tick, uint
 	}
 }
 
-inline static void set_voice_info_volume(uint32_t const tick, uint8_t const voice, uint8_t const value)
+inline static void process_cc_volume(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", tick, voice, value);
 	s_voice_info[voice].max_volume = value;
@@ -278,7 +278,7 @@ inline static void set_voice_info_volume(uint32_t const tick, uint8_t const voic
 
 /**********************************************************************************/
 
-inline static void set_voice_info_expression(uint32_t const tick, uint8_t const voice, uint8_t const value)
+inline static void process_cc_expression(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EXPRESSION :: voice = %u, value = %u\r\n", tick, voice, value);
 	s_voice_info[voice].playing_volume = (value * s_voice_info[voice].max_volume)/INT8_MAX;
@@ -286,7 +286,7 @@ inline static void set_voice_info_expression(uint32_t const tick, uint8_t const 
 
 /**********************************************************************************/
 
-inline static void set_voice_info_damping_pedal(uint32_t const tick, uint8_t const voice, uint8_t const value)
+inline static void process_cc_damping_pedal(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
 	bool is_damping_pedal_on = (value > 63) ?  true : false;
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %u, is_damping_pedal_on = %u\r\n",
@@ -308,7 +308,7 @@ inline static void set_voice_info_damping_pedal(uint32_t const tick, uint8_t con
 
 /**********************************************************************************/
 
-static int setup_control_change_into_voice_info(uint32_t const tick, uint8_t const voice, uint8_t const number, uint8_t const value)
+static int process_control_change_message(uint32_t const tick, uint8_t const voice, uint8_t const number, uint8_t const value)
 {
 	switch(number){
 	case MIDI_CC_DATA_ENTRY_MSB:
@@ -318,7 +318,7 @@ static int setup_control_change_into_voice_info(uint32_t const tick, uint8_t con
 				= ((value & 0xFF) << 8) | s_voice_info[voice].registered_parameter_value;
 		break;
 	case MIDI_CC_VOLUME:
-		set_voice_info_volume(tick, voice, value);
+		process_cc_volume(tick, voice, value);
 		break;
 	case MIDI_CC_PAN:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_PAN(%u) :: voice = %u, value = %u %s\r\n",
@@ -326,7 +326,7 @@ static int setup_control_change_into_voice_info(uint32_t const tick, uint8_t con
 		s_voice_info[voice].pan = value;
 		break;
 	case MIDI_CC_EXPRESSION:
-		set_voice_info_expression(tick, voice, value);
+		process_cc_expression(tick, voice, value);
 		break;
 	case MIDI_CC_DATA_ENTRY_LSB:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DATA_ENTRY_LSB :: voice = %u, value = %u\r\n",
@@ -334,10 +334,10 @@ static int setup_control_change_into_voice_info(uint32_t const tick, uint8_t con
 		s_voice_info[voice].registered_parameter_value
 				= s_voice_info[voice].registered_parameter_value | ((value & 0xFF) << 0);
 
-		set_voice_info_registered_parameter(tick, voice);
+		process_cc_registered_parameter(tick, voice);
 		break;
 	case MIDI_CC_DAMPER_PEDAL:
-		set_voice_info_damping_pedal(tick, voice, value);
+		process_cc_damping_pedal(tick, voice, value);
 		break;
 	case MIDI_CC_EFFECT_1_DEPTH:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_1_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
@@ -390,7 +390,7 @@ static int setup_control_change_into_voice_info(uint32_t const tick, uint8_t con
 
 /**********************************************************************************/
 
-static void setup_program_change_into_voice_info(uint32_t const tick, uint8_t const voice, uint8_t const number)
+static void process_program_change_message(uint32_t const tick, uint8_t const voice, uint8_t const number)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: ", tick);
 	switch(number)
@@ -566,7 +566,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 /**********************************************************************************/
 
-static void process_pitch_wheel(uint32_t const tick, uint32_t const voice, uint16_t const value)
+static void process_pitch_wheel_message(uint32_t const tick, uint32_t const voice, uint16_t const value)
 {
 	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %u, value = %u\r\n",
 					tick, voice, value);
@@ -610,17 +610,17 @@ static void process_midi_message(uint32_t const tick, uint32_t const message)
 						tick, voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_CONTROL_CHANGE:
-		setup_control_change_into_voice_info(tick, voice, u.data_as_bytes[1], u.data_as_bytes[2]);
+		process_control_change_message(tick, voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	case MIDI_MESSAGE_PROGRAM_CHANGE:
-		setup_program_change_into_voice_info(tick, voice, u.data_as_bytes[1]);
+		process_program_change_message(tick, voice, u.data_as_bytes[1]);
 		break;
 	case MIDI_MESSAGE_CHANNEL_PRESSURE:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %u, amount = %u %s\r\n",
 						tick, voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_PITCH_WHEEL:
-		process_pitch_wheel(tick, voice, (u.data_as_bytes[2] << 7) | u.data_as_bytes[1]);
+		process_pitch_wheel_message(tick, voice, (u.data_as_bytes[2] << 7) | u.data_as_bytes[1]);
 		break;
 	default:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE code = %u :: voice = %u, byte 1 = %u, byte 2 = %u %s\r\n",
