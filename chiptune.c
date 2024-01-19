@@ -159,30 +159,51 @@ struct _voice_info
 	uint8_t		max_volume;
 	uint8_t		playing_volume;
 	uint8_t		pan;
-	bool		is_damping_pedal_on;
 
 	uint8_t		waveform;
+	uint8_t		: 8;
 	uint16_t	duty_cycle_critical_phase;
 
 	uint16_t	pitch_bend_range_in_semitones;
 	uint16_t	pitch_wheel;
 
 	int8_t		modulation_wheel;
+	uint8_t		: 8;
+
 	uint16_t	registered_parameter_number;
 	uint16_t	registered_parameter_value;
 }s_voice_info[MAX_VOICE_NUMBER];
 
 #define MAX_OSCILLATOR_NUMBER						(MAX_VOICE_NUMBER * 2)
 
+#define RESET_STATE_BITES(STATE_BITES)				(STATE_BITES = 0)
+
+#define SET_NOTE_ON(STATE_BITS)						(STATE_BITS |= (0x01 << 0) )
+#define SET_NOTE_OFF(STATE_BITS)					(STATE_BITS &= (~(0x01 << 0)) )
+#define IS_NOTE_ON(STATE_BITS)						(((0x01 << 0) & STATE_BITS) ? true : false)
+
+#define SET_DAMPER_PEDAL_ON(STATE_BITS)				(STATE_BITS |= ((0x01)<< 1) )
+#define SET_DAMPER_PEDAL_OFF(STATE_BITS)			(STATE_BITS &= (~((0x01)<< 1)))
+#define IS_DAMPER_PEDAL_ON(STATE_BITS)				(((0x01 << 1) & STATE_BITS) ? true : false)
+
+
 struct _oscillator
 {
+	uint8_t		state_bits;
+	uint8_t		: 8;
+
 	int8_t		voice;
+
 	uint8_t		note;
 	uint16_t	delta_phase;
 	uint16_t	current_phase;
+
 	uint16_t	volume;
+
 	uint8_t		waveform;
+	uint8_t		: 8;
 	uint16_t	duty_cycle_critical_phase;
+
 	uint16_t	delta_vibration_phase;
 	uint16_t	vibration_table_index;
 	uint32_t	vibration_same_index_count;
@@ -280,24 +301,21 @@ inline static void process_cc_expression(uint32_t const tick, uint8_t const voic
 
 /**********************************************************************************/
 
-static void process_cc_damping_pedal(uint32_t const tick, uint8_t const voice, uint8_t const value)
+inline static void process_cc_damper_pedal(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
-	bool is_damping_pedal_on = (value > 63) ?  true : false;
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %u, is_damping_pedal_on = %u\r\n",
-					tick, voice, is_damping_pedal_on);
-
-	s_voice_info[voice].is_damping_pedal_on = is_damping_pedal_on;
-	do{
-		if(true == is_damping_pedal_on){
-			break;
-		}
-
-		for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-			if( voice == s_oscillator[i].voice){
+	bool is_damper_pedal_on = (value > 63) ?  true : false;
+	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %u, %s\r\n",
+					tick, voice, is_damper_pedal_on? "on" : "off");
+	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+		if( voice == s_oscillator[i].voice){
+			if(false == IS_NOTE_ON(s_oscillator[i].state_bits)){
 				s_oscillator[i].voice = UNUSED_OSCILLATOR;
+				continue;
 			}
+
+			SET_DAMPER_PEDAL_OFF(s_oscillator[i].state_bits);
 		}
-	}while(0);
+	}
 }
 
 /**********************************************************************************/
@@ -360,7 +378,7 @@ static int process_control_change_message(uint32_t const tick, uint8_t const voi
 		process_cc_registered_parameter(tick, voice);
 		break;
 	case MIDI_CC_DAMPER_PEDAL:
-		process_cc_damping_pedal(tick, voice, value);
+		process_cc_damper_pedal(tick, voice, value);
 		break;
 	case MIDI_CC_EFFECT_1_DEPTH:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_1_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
@@ -528,6 +546,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 															   s_voice_info[voice].pitch_wheel, &pitch_bend_in_semitone);
 			s_oscillator[ii].current_phase = 0;
 			s_oscillator[ii].volume = (uint32_t)velocity * (uint32_t)s_voice_info[voice].playing_volume;
+			RESET_STATE_BITES(s_oscillator[ii].state_bits);
+			SET_NOTE_ON(s_oscillator[ii].state_bits);
 			s_oscillator[ii].waveform = s_voice_info[voice].waveform;
 			s_oscillator[ii].duty_cycle_critical_phase = s_voice_info[voice].duty_cycle_critical_phase;
 
@@ -555,7 +575,9 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 		do
 		{
-			if(s_voice_info[s_oscillator[ii].voice].is_damping_pedal_on){
+			if(true == IS_DAMPER_PEDAL_ON(s_oscillator[ii].state_bits))
+			{
+				SET_NOTE_OFF(s_oscillator[ii].state_bits);
 				s_oscillator[ii].volume
 						= REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(s_oscillator[ii].volume);
 				break;
@@ -844,7 +866,6 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 		s_voice_info[i].max_volume = MIDI_CC_CENTER_VALUE;
 		s_voice_info[i].playing_volume = (s_voice_info[i].max_volume * INT8_MAX)/INT8_MAX;
 		s_voice_info[i].pan = MIDI_CC_CENTER_VALUE;
-		s_voice_info[i].is_damping_pedal_on = false;
 
 		s_voice_info[i].waveform = WAVEFORM_TRIANGLE;
 
