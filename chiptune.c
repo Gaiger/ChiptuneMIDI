@@ -1,4 +1,5 @@
 #include <string.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include<stdarg.h>
@@ -166,6 +167,7 @@ struct _voice_info
 	uint16_t	pitch_bend_range_in_semitones;
 	uint16_t	pitch_wheel;
 
+	int8_t		modulation_wheel;
 	uint16_t	registered_parameter_number;
 	uint16_t	registered_parameter_value;
 }s_voice_info[MAX_VOICE_NUMBER];
@@ -181,47 +183,31 @@ struct _oscillator
 	uint16_t	volume;
 	uint8_t		waveform;
 	uint16_t	duty_cycle_critical_phase;
+	uint16_t	delta_vibration_phase;
+	uint16_t	vibration_table_index;
+	uint32_t	vibration_same_index_count;
 } s_oscillator[MAX_OSCILLATOR_NUMBER];
 
 #define UNUSED_OSCILLATOR							(-1)
 
-#define MIDI_MESSAGE_NOTE_OFF						(0x80)
-#define MIDI_MESSAGE_NOTE_ON						(0x90)
-#define MIDI_MESSAGE_KEY_PRESSURE					(0xA0)
-#define MIDI_MESSAGE_CONTROL_CHANGE					(0xB0)
-#define MIDI_MESSAGE_PROGRAM_CHANGE					(0xC0)
-#define MIDI_MESSAGE_CHANNEL_PRESSURE				(0xD0)
-#define MIDI_MESSAGE_PITCH_WHEEL					(0xE0)
-
 //https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
-
 #define MIDI_CC_CENTER_VALUE						(64)
 
-#define MIDI_CC_DATA_ENTRY_MSB						(6)
-#define MIDI_CC_VOLUME								(7)
-#define MIDI_CC_PAN									(10)
-#define MIDI_CC_EXPRESSION							(11)
+/**********************************************************************************/
 
-#define MIDI_CC_DATA_ENTRY_LSB						(32 + MIDI_CC_DATA_ENTRY_MSB)
+static void process_modulation_wheel(uint32_t const tick, uint8_t const voice, uint8_t const value)
+{
+	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC_MODULATION_WHEEL :: voice = %u, value = %u\r\n",
+					tick, voice, value);
+	s_voice_info[voice].modulation_wheel = value;
+}
 
-#define MIDI_CC_DAMPER_PEDAL						(64)
-
-#define MIDI_CC_EFFECT_1_DEPTH						(91)
-#define MIDI_CC_EFFECT_2_DEPTH						(92)
-#define MIDI_CC_EFFECT_3_DEPTH						(93)
-#define MIDI_CC_EFFECT_4_DEPTH						(94)
-#define MIDI_CC_EFFECT_5_DEPTH						(95)
-
-#define MIDI_CC_NON_NRPN_LSB						(98)
-#define MIDI_CC_NON_NRPN_MSB						(99)
-
-//https://zh.wikipedia.org/zh-tw/General_MIDI
-#define MIDI_CC_RPN_LSB								(100)
-#define MIDI_CC_RPN_MSB								(101)
+/**********************************************************************************/
 
 inline static void process_cc_registered_parameter(uint32_t const tick, uint8_t const voice)
 {
 	(void)tick;
+//http://www.philrees.co.uk/nrpnq.htm
 #define MIDI_CC_RPN_PITCH_BEND_SENSITIVY			(0)
 #define MIDI_CC_RPN_CHANNEL_FINE_TUNING				(1)
 #define MIDI_CC_RPN_CHANNEL_COARSE_TUNING			(2)
@@ -276,6 +262,8 @@ inline static void process_cc_registered_parameter(uint32_t const tick, uint8_t 
 	}
 }
 
+/**********************************************************************************/
+
 inline static void process_cc_volume(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", tick, voice, value);
@@ -292,7 +280,7 @@ inline static void process_cc_expression(uint32_t const tick, uint8_t const voic
 
 /**********************************************************************************/
 
-inline static void process_cc_damping_pedal(uint32_t const tick, uint8_t const voice, uint8_t const value)
+static void process_cc_damping_pedal(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
 	bool is_damping_pedal_on = (value > 63) ?  true : false;
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %u, is_damping_pedal_on = %u\r\n",
@@ -316,7 +304,36 @@ inline static void process_cc_damping_pedal(uint32_t const tick, uint8_t const v
 
 static int process_control_change_message(uint32_t const tick, uint8_t const voice, uint8_t const number, uint8_t const value)
 {
-	switch(number){
+#define MIDI_CC_MODULATION_WHEEL					(1)
+
+#define MIDI_CC_DATA_ENTRY_MSB						(6)
+#define MIDI_CC_VOLUME								(7)
+#define MIDI_CC_PAN									(10)
+#define MIDI_CC_EXPRESSION							(11)
+
+#define MIDI_CC_DATA_ENTRY_LSB						(32 + MIDI_CC_DATA_ENTRY_MSB)
+
+#define MIDI_CC_DAMPER_PEDAL						(64)
+
+#define MIDI_CC_EFFECT_1_DEPTH						(91)
+#define MIDI_CC_EFFECT_2_DEPTH						(92)
+#define MIDI_CC_EFFECT_3_DEPTH						(93)
+#define MIDI_CC_EFFECT_4_DEPTH						(94)
+#define MIDI_CC_EFFECT_5_DEPTH						(95)
+
+#define MIDI_CC_NRPN_LSB							(98)
+#define MIDI_CC_NRPN_MSB							(99)
+
+//https://zh.wikipedia.org/zh-tw/General_MIDI
+#define MIDI_CC_RPN_LSB								(100)
+#define MIDI_CC_RPN_MSB								(101)
+	switch(number)
+	{
+	case MIDI_CC_MODULATION_WHEEL:
+		process_modulation_wheel(tick, voice, value);
+		//CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC_MODULATION_WHEEL(%u) :: voice = %u, value = %u %s\r\n",
+		//				tick, number, voice, value, "(NOT IMPLEMENTED YET)");
+		break;
 	case MIDI_CC_DATA_ENTRY_MSB:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DATA_ENTRY_MSB :: voice = %u, value = %u\r\n",
 						tick, voice, value);
@@ -365,12 +382,12 @@ static int process_control_change_message(uint32_t const tick, uint8_t const voi
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_5_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
 						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
-	case MIDI_CC_NON_NRPN_LSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_NON_NRPN_LSB(%u) :: voice = %u, value = %u %s\r\n",
+	case MIDI_CC_NRPN_LSB:
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_NRPN_LSB(%u) :: voice = %u, value = %u %s\r\n",
 						tick, voice, number, value, "(NOT IMPLEMENTED YET)");
 		break;
-	case MIDI_CC_NON_NRPN_MSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_NON_NRPN_MSB(%u) :: voice = %u, value = %u %s\r\n",
+	case MIDI_CC_NRPN_MSB:
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_NRPN_MSB(%u) :: voice = %u, value = %u %s\r\n",
 						tick, voice, number, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_RPN_LSB:
@@ -513,6 +530,12 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			s_oscillator[ii].volume = (uint32_t)velocity * (uint32_t)s_voice_info[voice].playing_volume;
 			s_oscillator[ii].waveform = s_voice_info[voice].waveform;
 			s_oscillator[ii].duty_cycle_critical_phase = s_voice_info[voice].duty_cycle_critical_phase;
+
+			s_oscillator[ii].delta_vibration_phase = calculate_delta_phase(s_oscillator[ii].note + 1, s_voice_info[voice].tuning_in_semitones,
+																	   s_voice_info[voice].pitch_bend_range_in_semitones,
+																	   s_voice_info[voice].pitch_wheel, &pitch_bend_in_semitone) - s_oscillator[ii].delta_phase;
+			s_oscillator[ii].vibration_table_index = 0;
+			s_oscillator[ii].vibration_same_index_count = 0;
 			break;
 		}
 
@@ -605,7 +628,13 @@ static void process_midi_message(uint32_t const tick, uint32_t const message)
 
 	uint8_t type =  u.data_as_bytes[0] & 0xF0;
 	uint8_t voice = u.data_as_bytes[0] & 0x0F;
-
+#define MIDI_MESSAGE_NOTE_OFF						(0x80)
+#define MIDI_MESSAGE_NOTE_ON						(0x90)
+#define MIDI_MESSAGE_KEY_PRESSURE					(0xA0)
+#define MIDI_MESSAGE_CONTROL_CHANGE					(0xB0)
+#define MIDI_MESSAGE_PROGRAM_CHANGE					(0xC0)
+#define MIDI_MESSAGE_CHANNEL_PRESSURE				(0xD0)
+#define MIDI_MESSAGE_PITCH_WHEEL					(0xE0)
 	switch(type)
 	{
 	case MIDI_MESSAGE_NOTE_OFF:
@@ -790,6 +819,12 @@ uint32_t g_max_amplitude = 1 << 16;
 
 /**********************************************************************************/
 
+#define VIBRATION_PHASE_TABLE_LENGTH				(64)
+static int8_t s_vibration_phase_table[VIBRATION_PHASE_TABLE_LENGTH] = {0};
+
+#define VIBRATION_FREQUENCY							(4.0)
+static uint32_t  s_vibration_same_index_count_number = (uint32_t)(DEFAULT_SAMPLING_RATE/VIBRATION_PHASE_TABLE_LENGTH/(float)VIBRATION_FREQUENCY);
+
 #define DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES		(2 * 2)
 
 void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
@@ -815,7 +850,7 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 
 		s_voice_info[i].pitch_bend_range_in_semitones = DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES;
 		s_voice_info[i].pitch_wheel = MIDI_PITCH_WHEEL_CENTER;
-
+		s_voice_info[i].modulation_wheel = 0;
 		s_voice_info[i].registered_parameter_number = MIDI_CC_RPN_NULL;
 		s_voice_info[i].registered_parameter_value = 0;
 	}
@@ -826,6 +861,11 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	s_sampling_rate = sampling_rate;
 	s_resolution = resolution;
 	s_total_message_number = total_message_number;
+	for(int i = 0; i < VIBRATION_PHASE_TABLE_LENGTH; i++){
+		s_vibration_phase_table[i] = (int8_t)(INT8_MAX *  sinf( 2.0f * (float)M_PI * i / (float)VIBRATION_PHASE_TABLE_LENGTH));
+	}
+	s_vibration_same_index_count_number = (uint32_t)(s_sampling_rate/(VIBRATION_PHASE_TABLE_LENGTH * (float)VIBRATION_FREQUENCY));
+
 	UPDATE_TIME_BASE_UNIT();
 	UPDATE_AMPLITUDE_NORMALIZER();
 	process_timely_midi_message();
@@ -911,6 +951,31 @@ int16_t chiptune_fetch_16bit_wave(void)
 		}
 
 		int16_t value = 0;
+		do
+		{
+			if(0 ==  s_voice_info[s_oscillator[i].voice].modulation_wheel){
+				break;
+			}
+#define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
+#define NORMALIZE_VIBRAION_DELTA_PHASE_AMPLITUDE(VALUE)	\
+													DIVIDE_BY_128(DIVIDE_BY_128(VALUE))
+#define REGULATE_MODULATION_WHEEL(VALUE)			(VALUE + 1)
+
+			uint16_t delta_vibration_phase = s_oscillator[i].delta_vibration_phase;
+
+			uint32_t vibration_amplitude = REGULATE_MODULATION_WHEEL(s_voice_info[s_oscillator[i].voice].modulation_wheel)
+					* s_vibration_phase_table[s_oscillator[i].vibration_table_index];
+
+			delta_vibration_phase = NORMALIZE_VIBRAION_DELTA_PHASE_AMPLITUDE(vibration_amplitude * delta_vibration_phase);
+			s_oscillator[i].current_phase += delta_vibration_phase;
+
+			s_oscillator[i].vibration_same_index_count += 1;
+			if(s_vibration_same_index_count_number == s_oscillator[i].vibration_same_index_count){
+				s_oscillator[i].vibration_same_index_count = 0;
+				s_oscillator[i].vibration_table_index = (s_oscillator[i].vibration_table_index  + 1) % VIBRATION_PHASE_TABLE_LENGTH;
+			}
+		}while(0);
+
 		switch(s_oscillator[i].waveform)
 		{
 		case WAVEFORM_SQUARE:
@@ -965,83 +1030,11 @@ int16_t chiptune_fetch_16bit_wave(void)
 
 #define INT8_MAX_PLUS_1								(INT8_MAX + 1)
 #define REDUCE_INT16_PRECISION_TO_INT8(VALUE)		((VALUE) >> 8)
-#if(0)
-
-uint8_t chiptune_fetch_8bit_wave(void)
-{
-	if(-1 == process_timely_midi_message()){
-		if(true == is_all_oscillators_unused()){
-			s_is_tune_ending = true;
-		}
-	}
-
-	int32_t accumulated_value = 0;
-	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(UNUSED_OSCILLATOR == s_oscillator[i].voice){
-			continue;
-		}
-
-		int32_t value = 0;
-		switch(s_oscillator[i].waveform)
-		{
-		case WAVEFORM_SQUARE:
-			value = (s_oscillator[i].current_phase > s_oscillator[i].duty_cycle_critical_phase) ? -INT8_MAX_PLUS_1 : INT8_MAX;
-			break;
-		case WAVEFORM_TRIANGLE:
-			do
-			{
-				if(s_oscillator[i].current_phase < INT16_MAX_PLUS_1){
-					value = -INT8_MAX_PLUS_1 + REDUCE_INT16_PRECISION_TO_INT8(MULTIPLY_BY_2(s_oscillator[i].current_phase));
-					break;
-				}
-				value = INT8_MAX - REDUCE_INT16_PRECISION_TO_INT8(MULTIPLY_BY_2((s_oscillator[i].current_phase - INT16_MAX_PLUS_1)));
-			}while(0);
-			break;
-		case WAVEFORM_SAW:
-			value = -INT8_MAX_PLUS_1 + REDUCE_INT16_PRECISION_TO_INT8(s_oscillator[i].current_phase);
-			break;
-		default:
-			break;
-		}
-		accumulated_value += (value * s_oscillator[i].volume);
-
-		s_oscillator[i].current_phase += s_oscillator[i].delta_phase;
-	}
-
-	INCREMENT_TIME_BASE();
-#ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
-	increase_time_base_for_fast_to_ending();
-#endif
-
-	int32_t out_value = NORMALIZE_AMPLITUDE(accumulated_value) + (INT8_MAX + 1);
-	do
-	{
-		if(out_value > 0){
-			if(UINT8_MAX < out_value ){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, greater than UINT8_MAX\r\n",
-								out_value);
-				break;
-			}
-		}
-
-		if(out_value < 0){
-			if(0 > out_value){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, less than 0\r\n",
-								out_value);
-				break;
-			}
-		}
-	}while(0);
-
-	return (int8_t)out_value;
-}
-#else
 
 uint8_t chiptune_fetch_8bit_wave(void)
 {
 	return (uint8_t)(REDUCE_INT16_PRECISION_TO_INT8(chiptune_fetch_16bit_wave()) + INT8_MAX_PLUS_1);
 }
-#endif
 
 /**********************************************************************************/
 
