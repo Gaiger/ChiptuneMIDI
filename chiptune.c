@@ -216,7 +216,7 @@ struct _oscillator
 
 /**********************************************************************************/
 
-static void process_modulation_wheel(uint32_t const tick, uint8_t const voice, uint8_t const value)
+static inline void process_modulation_wheel(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
 	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC_MODULATION_WHEEL :: voice = %u, value = %u\r\n",
 					tick, voice, value);
@@ -225,7 +225,7 @@ static void process_modulation_wheel(uint32_t const tick, uint8_t const voice, u
 
 /**********************************************************************************/
 
-inline static void process_cc_registered_parameter(uint32_t const tick, uint8_t const voice)
+static void process_cc_registered_parameter(uint32_t const tick, uint8_t const voice)
 {
 	(void)tick;
 //http://www.philrees.co.uk/nrpnq.htm
@@ -285,7 +285,7 @@ inline static void process_cc_registered_parameter(uint32_t const tick, uint8_t 
 
 /**********************************************************************************/
 
-inline static void process_cc_volume(uint32_t const tick, uint8_t const voice, uint8_t const value)
+static inline void process_cc_volume(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", tick, voice, value);
 	s_voice_info[voice].max_volume = value;
@@ -293,7 +293,7 @@ inline static void process_cc_volume(uint32_t const tick, uint8_t const voice, u
 
 /**********************************************************************************/
 
-inline static void process_cc_expression(uint32_t const tick, uint8_t const voice, uint8_t const value)
+static inline void process_cc_expression(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EXPRESSION :: voice = %u, value = %u\r\n", tick, voice, value);
 	s_voice_info[voice].playing_volume = (value * s_voice_info[voice].max_volume)/INT8_MAX;
@@ -301,7 +301,7 @@ inline static void process_cc_expression(uint32_t const tick, uint8_t const voic
 
 /**********************************************************************************/
 
-inline static void process_cc_damper_pedal(uint32_t const tick, uint8_t const voice, uint8_t const value)
+static void process_cc_damper_pedal(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
 	bool is_damper_pedal_on = (value > 63) ?  true : false;
 	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %u, %s\r\n",
@@ -478,24 +478,10 @@ static void process_program_change_message(uint32_t const tick, uint8_t const vo
 
 /**********************************************************************************/
 
-static bool is_all_oscillators_unused(void)
-{
-	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(UNUSED_OSCILLATOR == s_oscillator[i].voice){
-			continue;
-		}
-		return false;
-	}
-
-	return true;
-}
-
-/**********************************************************************************/
-
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 #define MIDI_PITCH_WHEEL_CENTER						(0x2000)
 
-static inline uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semitones,
+static  uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semitones,
 											 uint16_t const pitch_bend_range_in_semitones, uint16_t const pitch_wheel,
 											 float *p_pitch_bend_in_semitone)
 {
@@ -704,7 +690,7 @@ uint32_t s_total_message_number = 0;
 #endif
 /**********************************************************************************/
 
-inline static int process_timely_midi_message(void)
+static int process_timely_midi_message(void)
 {
 	uint32_t tick;
 	uint32_t message;
@@ -945,6 +931,20 @@ inline static void increase_time_base_for_fast_to_ending(void)
 }
 
 #endif
+
+/**********************************************************************************/
+
+static inline bool is_all_oscillators_unused(void)
+{
+	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+		if(UNUSED_OSCILLATOR == s_oscillator[i].voice){
+			continue;
+		}
+		return false;
+	}
+
+	return true;
+}
 
 /**********************************************************************************/
 
