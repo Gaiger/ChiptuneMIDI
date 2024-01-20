@@ -467,46 +467,25 @@ static int process_control_change_message(uint32_t const tick, uint8_t const voi
 static void process_program_change_message(uint32_t const tick, uint8_t const voice, uint8_t const number)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: ", tick);
-	switch(number)
-	{
-#define MIDI_INSTRUMENT_OVERDRIVE_GUITAR			(29)
-	case MIDI_INSTRUMENT_OVERDRIVE_GUITAR:
-		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, as WAVEFORM_SQUARE with duty = 50%%\r\n", voice, number);
-		s_voice_info[voice].waveform = WAVEFORM_SQUARE;
-		s_voice_info[voice].duty_cycle_critical_phase = DUTY_CYLCE_50_CRITICAL_PHASE;
-		break;
-#define MIDI_INSTRUMENT_DISTORTION_GUITAR			(30)
-	case MIDI_INSTRUMENT_DISTORTION_GUITAR:
-		s_voice_info[voice].waveform = WAVEFORM_SQUARE;
-		s_voice_info[voice].duty_cycle_critical_phase = DUTY_CYLCE_25_CRITICAL_PHASE;
-		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, as WAVEFORM_SQUARE with duty = 25%%\r\n", voice, number);
-		break;
-#define MIDI_INSTRUMENT_ACOUSTIC_BASS				(32)
-#define MIDI_INSTRUMENT_ELECTRIC_BASS_FINGER		(33)
-#define MIDI_INSTRUMENT_ELECTRIC_BASS_PICK			(34)
-#define MIDI_INSTRUMENT_FRETLESS_BASS				(35)
-#define MIDI_INSTRUMENT_SLAP_BASS_1					(36)
-#define MIDI_INSTRUMENT_SLAP_BASS_2					(37)
-#define MIDI_INSTRUMENT_SYNTH_BASS_1				(38)
-#define MIDI_INSTRUMENT_SYNTH_BASS_2				(39)
-	case MIDI_INSTRUMENT_ACOUSTIC_BASS:
-	case MIDI_INSTRUMENT_ELECTRIC_BASS_FINGER:
-	case MIDI_INSTRUMENT_ELECTRIC_BASS_PICK:
-	case MIDI_INSTRUMENT_FRETLESS_BASS:
-	case MIDI_INSTRUMENT_SLAP_BASS_1:
-	case MIDI_INSTRUMENT_SLAP_BASS_2:
-	case MIDI_INSTRUMENT_SYNTH_BASS_1:
-	case MIDI_INSTRUMENT_SYNTH_BASS_2:
-#define MIDI_INSTRUMENT_STRING_ENSEMBLE_1			(48)
-#define MIDI_INSTRUMENT_STRING_ENSEMBLE_2			(49) //slow string
-	case MIDI_INSTRUMENT_STRING_ENSEMBLE_1:
-	case MIDI_INSTRUMENT_STRING_ENSEMBLE_2:
-	default:
-		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, as WAVEFORM_TRIANGLE\r\n", voice, number);
-		s_voice_info[voice].waveform = WAVEFORM_TRIANGLE;
-		break;
-	}
 
+	switch(s_voice_info[voice].waveform)
+	{
+	case WAVEFORM_SQUARE:
+		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, is WAVEFORM_SQUARE\r\n", voice, number);
+		break;
+	case WAVEFORM_TRIANGLE:
+		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, is WAVEFORM_TRIANGLE\r\n", voice, number);
+		break;
+	case WAVEFORM_SAW:
+		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, is WAVEFORM_SAW\r\n", voice, number);
+		break;
+	case WAVEFORM_NOISE:
+		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, is WAVEFORM_NOISE\r\n", voice, number);
+		break;
+	default:
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: "
+									 " %voice = %u instrument = %u, is WAVEFORM_UNKOWN\r\n", voice, number);
+	}
 }
 
 /**********************************************************************************/
