@@ -172,7 +172,7 @@ struct _voice_info
 	uint16_t	pitch_bend_range_in_semitones;
 	uint16_t	pitch_wheel;
 
-	int8_t		modulation_wheel;
+	uint8_t		modulation_wheel;
 	uint8_t		: 8;
 
 	uint16_t	registered_parameter_number;
@@ -305,7 +305,7 @@ static inline void process_cc_expression(uint32_t const tick, uint8_t const voic
 
 static void process_cc_damper_pedal(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
-	bool is_damper_pedal_on = (value > 63) ?  true : false;
+	bool is_damper_pedal_on = (value < MIDI_CC_CENTER_VALUE) ? false : true;
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %u, %s\r\n",
 					tick, voice, is_damper_pedal_on? "on" : "off");
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
@@ -551,7 +551,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 															   s_voice_info[voice].pitch_bend_range_in_semitones,
 															   s_voice_info[voice].pitch_wheel, &pitch_bend_in_semitone);
 			s_oscillator[ii].current_phase = 0;
-			s_oscillator[ii].volume = (uint32_t)velocity * (uint32_t)s_voice_info[voice].playing_volume;
+			s_oscillator[ii].volume = (uint16_t)velocity * (uint16_t)s_voice_info[voice].playing_volume;
 			RESET_STATE_BITES(s_oscillator[ii].state_bits);
 			SET_NOTE_ON(s_oscillator[ii].state_bits);
 			s_oscillator[ii].waveform = s_voice_info[voice].waveform;
@@ -625,7 +625,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 /**********************************************************************************/
 
-static void process_pitch_wheel_message(uint32_t const tick, uint32_t const voice, uint16_t const value)
+static void process_pitch_wheel_message(uint32_t const tick, uint8_t const voice, uint16_t const value)
 {
 	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %u, value = %u\r\n",
 					tick, voice, value);
@@ -685,7 +685,9 @@ static void process_midi_message(uint32_t const tick, uint32_t const message)
 						tick, voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_PITCH_WHEEL:
-		process_pitch_wheel_message(tick, voice, (u.data_as_bytes[2] << 7) | u.data_as_bytes[1]);
+#define COMBINE_AS_PITCH_WHEEL_14BITS(BYTE1, BYTE2)	\
+													((0x7F & (BYTE2)) << 7) | (0x7F & (BYTE1))
+		process_pitch_wheel_message(tick, voice, COMBINE_AS_PITCH_WHEEL_14BITS(u.data_as_bytes[1], u.data_as_bytes[2]) );
 		break;
 	default:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE code = %u :: voice = %u, byte 1 = %u, byte 2 = %u %s\r\n",
@@ -849,6 +851,8 @@ uint32_t g_max_amplitude = 1 << 16;
 
 #define VIBRATION_PHASE_TABLE_LENGTH				(64)
 static int8_t s_vibration_phase_table[VIBRATION_PHASE_TABLE_LENGTH] = {0};
+#define CALCULATE_VIBRATION_TABLE_INDEX_REMAINDER(INDEX) \
+													((INDEX) & (VIBRATION_PHASE_TABLE_LENGTH - 1))
 
 #define VIBRATION_FREQUENCY							(4.0)
 static uint32_t  s_vibration_same_index_count_number = (uint32_t)(DEFAULT_SAMPLING_RATE/VIBRATION_PHASE_TABLE_LENGTH/(float)VIBRATION_FREQUENCY);
