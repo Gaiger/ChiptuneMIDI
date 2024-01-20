@@ -152,6 +152,11 @@ enum
 
 #define MAX_VOICE_NUMBER							(16)
 
+//https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
+#define MIDI_CC_CENTER_VALUE						(64)
+#define MIDI_DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES	(2 * 2)
+#define MIDI_PITCH_WHEEL_CENTER						(0x2000)
+
 struct _voice_info
 {
 	int8_t		tuning_in_semitones;
@@ -174,6 +179,7 @@ struct _voice_info
 	uint16_t	registered_parameter_value;
 }s_voice_info[MAX_VOICE_NUMBER];
 
+
 #define MAX_OSCILLATOR_NUMBER						(MAX_VOICE_NUMBER * 2)
 
 #define RESET_STATE_BITES(STATE_BITES)				(STATE_BITES = 0)
@@ -185,7 +191,6 @@ struct _voice_info
 #define SET_DAMPER_PEDAL_ON(STATE_BITS)				(STATE_BITS |= ((0x01)<< 1) )
 #define SET_DAMPER_PEDAL_OFF(STATE_BITS)			(STATE_BITS &= (~((0x01)<< 1)))
 #define IS_DAMPER_PEDAL_ON(STATE_BITS)				(((0x01 << 1) & STATE_BITS) ? true : false)
-
 
 struct _oscillator
 {
@@ -210,9 +215,6 @@ struct _oscillator
 } s_oscillator[MAX_OSCILLATOR_NUMBER];
 
 #define UNUSED_OSCILLATOR							(-1)
-
-//https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
-#define MIDI_CC_CENTER_VALUE						(64)
 
 /**********************************************************************************/
 
@@ -304,7 +306,7 @@ static inline void process_cc_expression(uint32_t const tick, uint8_t const voic
 static void process_cc_damper_pedal(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
 	bool is_damper_pedal_on = (value > 63) ?  true : false;
-	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %u, %s\r\n",
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %u, %s\r\n",
 					tick, voice, is_damper_pedal_on? "on" : "off");
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		if( voice == s_oscillator[i].voice){
@@ -314,6 +316,34 @@ static void process_cc_damper_pedal(uint32_t const tick, uint8_t const voice, ui
 			}
 
 			SET_DAMPER_PEDAL_OFF(s_oscillator[i].state_bits);
+		}
+	}
+}
+
+/**********************************************************************************/
+
+static void process_cc_reset_all_controllers(uint32_t const tick, uint8_t const voice, uint8_t const value)
+{
+	(void)voice;
+	(void)value;
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RESET_ALL_CONTROLLERS :: voices = %u \r\n", tick, voice);
+	s_voice_info[voice].tuning_in_semitones = 0;
+
+	s_voice_info[voice].max_volume = MIDI_CC_CENTER_VALUE;
+	s_voice_info[voice].playing_volume = (s_voice_info[voice].max_volume * INT8_MAX)/INT8_MAX;
+	s_voice_info[voice].pan = MIDI_CC_CENTER_VALUE;
+
+	s_voice_info[voice].waveform = WAVEFORM_TRIANGLE;
+
+	s_voice_info[voice].pitch_bend_range_in_semitones = MIDI_DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES;
+	s_voice_info[voice].pitch_wheel = MIDI_PITCH_WHEEL_CENTER;
+	s_voice_info[voice].modulation_wheel = 0;
+	s_voice_info[voice].registered_parameter_number = 127;
+	s_voice_info[voice].registered_parameter_value = 0;
+
+	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+		if( voice == s_oscillator[i].voice){
+			s_oscillator[i].voice = UNUSED_OSCILLATOR;
 		}
 	}
 }
@@ -345,12 +375,12 @@ static int process_control_change_message(uint32_t const tick, uint8_t const voi
 //https://zh.wikipedia.org/zh-tw/General_MIDI
 #define MIDI_CC_RPN_LSB								(100)
 #define MIDI_CC_RPN_MSB								(101)
+
+#define MIDI_CC_RESET_ALL_CONTROLLERS				(121)
 	switch(number)
 	{
 	case MIDI_CC_MODULATION_WHEEL:
 		process_modulation_wheel(tick, voice, value);
-		//CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC_MODULATION_WHEEL(%u) :: voice = %u, value = %u %s\r\n",
-		//				tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_DATA_ENTRY_MSB:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DATA_ENTRY_MSB :: voice = %u, value = %u\r\n",
@@ -420,6 +450,9 @@ static int process_control_change_message(uint32_t const tick, uint8_t const voi
 		s_voice_info[voice].registered_parameter_number
 				= ((value & 0xFF) << 8) | s_voice_info[voice].registered_parameter_number;
 		break;
+	case MIDI_CC_RESET_ALL_CONTROLLERS:
+		process_cc_reset_all_controllers(tick, voice, value);
+		break;
 	default:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC code = %u :: voice = %u, value = %u %s\r\n",
 						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
@@ -479,7 +512,6 @@ static void process_program_change_message(uint32_t const tick, uint8_t const vo
 /**********************************************************************************/
 
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
-#define MIDI_PITCH_WHEEL_CENTER						(0x2000)
 
 static  uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semitones,
 											 uint16_t const pitch_bend_range_in_semitones, uint16_t const pitch_wheel,
@@ -833,8 +865,6 @@ static int8_t s_vibration_phase_table[VIBRATION_PHASE_TABLE_LENGTH] = {0};
 #define VIBRATION_FREQUENCY							(4.0)
 static uint32_t  s_vibration_same_index_count_number = (uint32_t)(DEFAULT_SAMPLING_RATE/VIBRATION_PHASE_TABLE_LENGTH/(float)VIBRATION_FREQUENCY);
 
-#define DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES		(2 * 2)
-
 void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
 {
 #ifdef _INCREMENTAL_SAMPLE_INDEX
@@ -855,7 +885,7 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 
 		s_voice_info[i].waveform = WAVEFORM_TRIANGLE;
 
-		s_voice_info[i].pitch_bend_range_in_semitones = DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES;
+		s_voice_info[i].pitch_bend_range_in_semitones = MIDI_DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES;
 		s_voice_info[i].pitch_wheel = MIDI_PITCH_WHEEL_CENTER;
 		s_voice_info[i].modulation_wheel = 0;
 		s_voice_info[i].registered_parameter_number = MIDI_CC_RPN_NULL;
