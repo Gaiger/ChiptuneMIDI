@@ -467,6 +467,15 @@ static int process_control_change_message(uint32_t const tick, uint8_t const voi
 static void process_program_change_message(uint32_t const tick, uint8_t const voice, uint8_t const number)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: ", tick);
+#define MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0		(9)
+#define MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1		(10)
+	do
+	{
+		if(false == (MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice || MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice)){
+			break;
+		}
+		s_voice_info[voice].waveform = WAVEFORM_NOISE;
+	}while(0);
 
 	switch(s_voice_info[voice].waveform)
 	{
@@ -1023,6 +1032,8 @@ int16_t chiptune_fetch_16bit_wave(void)
 			break;
 		case WAVEFORM_SAW:
 			value =  -INT16_MAX_PLUS_1 + s_oscillator[i].current_phase;
+			break;
+		case WAVEFORM_NOISE:
 			break;
 		default:
 			break;
