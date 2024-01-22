@@ -5,7 +5,7 @@
 #include <stdint.h>
 //#define _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 
-//#define _INCREMENTAL_SAMPLE_INDEX
+#define _INCREMENTAL_SAMPLE_INDEX
 //#define _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
 
 
@@ -77,6 +77,11 @@ struct _oscillator
 	uint32_t	vibration_same_index_count;
 };
 
+#define MAX_VOICE_NUMBER							(16)
+#define MAX_OSCILLATOR_NUMBER						(MAX_VOICE_NUMBER * 2)
+
+#define UNUSED_OSCILLATOR							(-1)
+
 #define RESET_STATE_BITES(STATE_BITES)				(STATE_BITES = 0)
 
 #define STATE_NOTE_BIT								(0)
@@ -88,5 +93,10 @@ struct _oscillator
 #define SET_DAMPER_PEDAL_ON(STATE_BITS)				(STATE_BITS |= ((0x01)<< STATE_DAMPER_PEDAL_BIT) )
 #define SET_DAMPER_PEDAL_OFF(STATE_BITS)			(STATE_BITS &= (~((0x01)<< STATE_DAMPER_PEDAL_BIT)))
 #define IS_DAMPER_PEDAL_ON(STATE_BITS)				(((0x01 << 1) & STATE_BITS) ? true : false)
+
+
+#define MIDI_CC_CENTER_VALUE						(64)
+#define MIDI_PITCH_WHEEL_CENTER						(0x2000)
+#define MIDI_DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES	(2 * 2)
 
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_
