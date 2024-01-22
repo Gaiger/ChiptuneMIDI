@@ -12,6 +12,7 @@ static inline void process_modulation_wheel(struct _channel_controller * const p
 											struct _oscillator * const p_oscillators,
 											uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
+	(void)p_oscillators;
 	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC_MODULATION_WHEEL :: voice = %u, value = %u\r\n",
 					tick, voice, value);
 	p_channel_controllers[voice].modulation_wheel = value;
@@ -23,6 +24,7 @@ static void process_cc_registered_parameter(struct _channel_controller * const p
 											struct _oscillator * const p_oscillators,
 											uint32_t const tick, uint8_t const voice)
 {
+	(void)p_oscillators;
 	(void)tick;
 //http://www.philrees.co.uk/nrpnq.htm
 #define MIDI_CC_RPN_PITCH_BEND_SENSITIVY			(0)
@@ -85,6 +87,7 @@ static inline void process_cc_volume(struct _channel_controller * const p_channe
 									 struct _oscillator * const p_oscillators,
 									 uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
+	(void)p_oscillators;
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", tick, voice, value);
 	p_channel_controllers[voice].max_volume = value;
 }
@@ -95,6 +98,7 @@ static inline void process_cc_expression(struct _channel_controller * const p_ch
 										 struct _oscillator * const p_oscillators,
 										 uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
+	(void)p_oscillators;
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EXPRESSION :: voice = %u, value = %u\r\n", tick, voice, value);
 	p_channel_controllers[voice].playing_volume = (value * p_channel_controllers[voice].max_volume)/INT8_MAX;
 }
