@@ -134,11 +134,24 @@ static  uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semi
 
 /**********************************************************************************/
 
+#define NULL_MESSAGE							(0)
+#define NULL_TICK								(UINT32_MAX)
+
+#define MAX_ILLUSION_TICK_MESSAGE_NUMBER		(MAX_OSCILLATOR_NUMBER)
+
+struct _tick_message
+{
+	uint32_t tick;
+	uint32_t message;
+} s_illusion_tick_message[MAX_ILLUSION_TICK_MESSAGE_NUMBER];
+
+
 #define DIVIDE_BY_8(VALUE)							((VALUE) >> 3)
 #define REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(VALUE)	DIVIDE_BY_8(VALUE)
 
 static int process_note_message(uint32_t const tick, bool const is_note_on,
-						 uint8_t const voice, uint8_t const note, uint8_t const velocity)
+						 uint8_t const voice, uint8_t const note, uint8_t const velocity, bool is_illusion_enabed,
+								bool is_illusion)
 {
 	float pitch_bend_in_semitone;
 
@@ -156,6 +169,9 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillator are used\r\n");
 				return -1;
 			}
+
+			RESET_STATE_BITES(s_oscillator[ii].state_bits);
+			SET_NOTE_ON(s_oscillator[ii].state_bits);
 			s_oscillator[ii].voice = voice;
 			s_oscillator[ii].note = note;
 			s_oscillator[ii].delta_phase = calculate_delta_phase(s_oscillator[ii].note, s_channel_controller[voice].tuning_in_semitones,
@@ -163,8 +179,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 															   s_channel_controller[voice].pitch_wheel, &pitch_bend_in_semitone);
 			s_oscillator[ii].current_phase = 0;
 			s_oscillator[ii].volume = (uint16_t)velocity * (uint16_t)s_channel_controller[voice].playing_volume;
-			RESET_STATE_BITES(s_oscillator[ii].state_bits);
-			SET_NOTE_ON(s_oscillator[ii].state_bits);
 			s_oscillator[ii].waveform = s_channel_controller[voice].waveform;
 			s_oscillator[ii].duty_cycle_critical_phase = s_channel_controller[voice].duty_cycle_critical_phase;
 
@@ -173,6 +187,14 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 																	   s_channel_controller[voice].pitch_wheel, &pitch_bend_in_semitone) - s_oscillator[ii].delta_phase;
 			s_oscillator[ii].vibration_table_index = 0;
 			s_oscillator[ii].vibration_same_index_count = 0;
+
+			if(false == is_illusion_enabed){
+				break;
+			}
+			if(0 == s_channel_controller[voice].chorus){
+				break;
+			}
+			s_oscillator[ii].volume >>= 1;
 			break;
 		}
 
@@ -229,6 +251,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}
 		CHIPTUNE_PRINTF(cNoteOperation, ", pitch bend = %+3.2f", pitch_bend_in_semitone);
 	}while(0);
+
+	if(true == is_illusion){
+		CHIPTUNE_PRINTF(cNoteOperation, " (chorus)");
+	}
 	CHIPTUNE_PRINTF(cNoteOperation, "\r\n");
 #endif
 	return 0;
@@ -256,17 +282,7 @@ static void process_pitch_wheel_message(uint32_t const tick, uint8_t const voice
 
 /**********************************************************************************/
 
-#define NULL_MESSAGE							(0)
-#define NULL_TICK								(UINT32_MAX)
-
-struct _tick_message
-{
-	uint32_t tick;
-	uint32_t message;
-}illusion_tick_message[16 * 8];
-
-
-static void process_midi_message(uint32_t const tick, uint32_t const message)
+static void process_midi_message(uint32_t const tick, uint32_t const message, bool is_illusion_enabed, bool is_illusion)
 {
 	union {
 		uint32_t data_as_uint32;
@@ -288,9 +304,33 @@ static void process_midi_message(uint32_t const tick, uint32_t const message)
 	{
 	case MIDI_MESSAGE_NOTE_OFF:
 	case MIDI_MESSAGE_NOTE_ON:
+	{
 		process_note_message(tick, (MIDI_MESSAGE_NOTE_OFF == type) ? false : true,
-							 voice, u.data_as_bytes[1], u.data_as_bytes[2]);
-		break;
+							 voice, u.data_as_bytes[1], u.data_as_bytes[2], is_illusion_enabed, is_illusion);
+		if(false == is_illusion_enabed){
+			break;
+		}
+
+		if(false == is_illusion){
+			break;
+		}
+
+		int kk;
+		for(kk = 0; kk < MAX_ILLUSION_TICK_MESSAGE_NUMBER; kk++){
+			if(NULL_TICK == s_illusion_tick_message[kk].tick
+					&& NULL_MESSAGE == s_illusion_tick_message[kk].message){
+				break;
+			}
+		}
+
+		if(MAX_ILLUSION_TICK_MESSAGE_NUMBER == kk){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR::all illusion_tick_message are used\r\n");
+			break;
+		}
+#define CHORUS_DELAY_TIME_IN_MS						(0.030)
+		s_illusion_tick_message[kk].tick = tick + (uint32_t)(CHORUS_DELAY_TIME_IN_MS * s_tempo * s_resolution/ (60.0));
+		s_illusion_tick_message[kk].message = message;
+	} break;
 	case MIDI_MESSAGE_KEY_PRESSURE:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: note = %u, amount = %u %s\r\n",
 						tick, voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
@@ -336,12 +376,26 @@ static int process_timely_midi_message(void)
 	uint32_t tick;
 	uint32_t message;
 
+	for(int k = 0; k < MAX_ILLUSION_TICK_MESSAGE_NUMBER; k++){
+		if(NULL_TICK == s_illusion_tick_message[k].tick
+				&& NULL_MESSAGE == s_illusion_tick_message[k].message){
+			continue ;
+		}
+
+		if(true == IS_AFTER_CURRENT_TIME(s_illusion_tick_message[k].tick)){
+			continue ;
+		}
+		process_midi_message(s_illusion_tick_message[k].tick, s_illusion_tick_message[k].message, true, true);
+		s_illusion_tick_message[k].tick = NULL_TICK;
+		s_illusion_tick_message[k].message = NULL_MESSAGE;
+	}
+
 	int ii = 0;
 	if(false == (NULL_TICK == s_fetched_tick_message.tick && NULL_MESSAGE == s_fetched_tick_message.message)){
 		if(true == IS_AFTER_CURRENT_TIME(s_fetched_tick_message.tick)){
 			return 0;
 		}
-		process_midi_message(s_fetched_tick_message.tick, s_fetched_tick_message.message);
+		process_midi_message(s_fetched_tick_message.tick, s_fetched_tick_message.message, true, false);
 		s_fetched_tick_message.tick = NULL_TICK;
 		s_fetched_tick_message.message = NULL_MESSAGE;
 		ii += 1;
@@ -365,7 +419,7 @@ static int process_timely_midi_message(void)
 			break;
 		}
 
-		process_midi_message(tick, message);
+		process_midi_message(tick, message, true, false);
 		ii += 1;
 	}
 
@@ -389,7 +443,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 
 	s_handler_get_midi_message(midi_messge_index, &message, &previous_tick);
 	midi_messge_index += 1;
-	process_midi_message(previous_tick, message);
+	process_midi_message(previous_tick, message, false, false);
 
 	while(midi_messge_index < s_total_message_number){
 		uint32_t tick;
@@ -418,7 +472,8 @@ static uint32_t get_max_simultaneous_amplitude(void)
 			}
 		}while(0);
 
-		process_midi_message(tick, message);
+		process_midi_message(tick, message, false, false);
+
 	}
 
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
@@ -487,6 +542,11 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	s_midi_messge_index = 0;
 	s_fetched_tick_message.tick = NULL_TICK;
 	s_fetched_tick_message.message = NULL_MESSAGE;
+
+	for(int i = 0; i < MAX_ILLUSION_TICK_MESSAGE_NUMBER; i++){
+		s_illusion_tick_message[i].tick = NULL_TICK;
+		s_illusion_tick_message[i].message = NULL_MESSAGE;
+	}
 
 	for(int i = 0; i < MAX_VOICE_NUMBER; i++){
 		reset_channel_controller(&s_channel_controller[i]);
