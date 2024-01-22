@@ -5,82 +5,14 @@
 #include<stdarg.h>
 #include <stdio.h>
 
+#include "chiptune_common_internal.h"
+#include "chiptune_printf_internal.h"
+
 #include "chiptune.h"
 
-//#define _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 
-//#define _INCREMENTAL_SAMPLE_INDEX
-//#define _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
 
-static bool s_enable_processing_print_out = true;
 
-#define _PRINT_MIDI_DEVELOPING
-#define _PRINT_MIDI_SETUP
-#define _PRINT_MOTE_OPERATION
-
-enum
-{
-	cDeveloping		= 0,
-	cMidiSetup		= 1,
-	cNoteOperation	= 2,
-} PrintType;
-
-void chiptune_printf(int const print_type, const char* fmt, ...)
-{
-	bool is_print_out = false;
-
-#ifdef _PRINT_MIDI_DEVELOPING
-	if(cDeveloping == print_type){
-		is_print_out = true;
-		//fprintf(stdout, "cDeveloping:: ");
-	}
-#endif
-
-	if(false == is_print_out){
-		if(false == s_enable_processing_print_out){
-			return ;
-		}
-	}
-
-#ifdef _PRINT_MIDI_SETUP
-	if(cMidiSetup == print_type){
-		is_print_out = true;
-		//fprintf(stdout, "cMidiSetup:: ");
-	}
-#endif
-
-#ifdef _PRINT_MOTE_OPERATION
-	if(cNoteOperation == print_type){
-		is_print_out = true;
-		//fprintf(stdout, "cNoteOperation:: ");
-	}
-#endif
-
-	if (false == is_print_out){
-			return;
-	}
-
-	va_list args;
-	va_start(args, fmt);
-	vfprintf(stdout, fmt, args);
-	va_end(args);
-}
-
-#define CHIPTUNE_PRINTF(PRINT_TYPE, FMT, ...)		\
-													do { \
-														chiptune_printf(PRINT_TYPE, FMT, ##__VA_ARGS__); \
-													}while(0)
-
-#if(0)
-#define CHIPTUNE_PRINTF(PRINT_TYPE, FMT, ...)				do { \
-													(void)0; \
-												}while(0)
-#endif
-
-#define SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(IS_ENABLED)		\
-													do { \
-														s_enable_processing_print_out = (IS_ENABLED); \
-													} while(0)
 
 #ifdef _INCREMENTAL_SAMPLE_INDEX
 typedef float chiptune_float;
@@ -157,62 +89,25 @@ enum
 #define MIDI_DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES	(2 * 2)
 #define MIDI_PITCH_WHEEL_CENTER						(0x2000)
 
-struct _voice_info
-{
-	int8_t		tuning_in_semitones;
-
-	uint8_t		max_volume;
-	uint8_t		playing_volume;
-	uint8_t		pan;
-
-	uint8_t		waveform;
-	uint8_t		: 8;
-	uint16_t	duty_cycle_critical_phase;
-
-	uint16_t	pitch_bend_range_in_semitones;
-	uint16_t	pitch_wheel;
-
-	uint8_t		modulation_wheel;
-	uint8_t		: 8;
-
-	uint16_t	registered_parameter_number;
-	uint16_t	registered_parameter_value;
-}s_voice_info[MAX_VOICE_NUMBER];
+struct _voice_info s_voice_info[MAX_VOICE_NUMBER];
 
 
 #define MAX_OSCILLATOR_NUMBER						(MAX_VOICE_NUMBER * 2)
 
+
 #define RESET_STATE_BITES(STATE_BITES)				(STATE_BITES = 0)
 
-#define SET_NOTE_ON(STATE_BITS)						(STATE_BITS |= (0x01 << 0) )
-#define SET_NOTE_OFF(STATE_BITS)					(STATE_BITS &= (~(0x01 << 0)) )
+#define STATE_NOTE_BIT								(0)
+#define SET_NOTE_ON(STATE_BITS)						(STATE_BITS |= (0x01 << STATE_NOTE_BIT) )
+#define SET_NOTE_OFF(STATE_BITS)					(STATE_BITS &= (~(0x01 << STATE_NOTE_BIT)) )
 #define IS_NOTE_ON(STATE_BITS)						(((0x01 << 0) & STATE_BITS) ? true : false)
 
-#define SET_DAMPER_PEDAL_ON(STATE_BITS)				(STATE_BITS |= ((0x01)<< 1) )
-#define SET_DAMPER_PEDAL_OFF(STATE_BITS)			(STATE_BITS &= (~((0x01)<< 1)))
+#define STATE_DAMPER_PEDAL_BIT						(1)
+#define SET_DAMPER_PEDAL_ON(STATE_BITS)				(STATE_BITS |= ((0x01)<< STATE_DAMPER_PEDAL_BIT) )
+#define SET_DAMPER_PEDAL_OFF(STATE_BITS)			(STATE_BITS &= (~((0x01)<< STATE_DAMPER_PEDAL_BIT)))
 #define IS_DAMPER_PEDAL_ON(STATE_BITS)				(((0x01 << 1) & STATE_BITS) ? true : false)
 
-struct _oscillator
-{
-	uint8_t		state_bits;
-	uint8_t		: 8;
-
-	int8_t		voice;
-
-	uint8_t		note;
-	uint16_t	delta_phase;
-	uint16_t	current_phase;
-
-	uint16_t	volume;
-
-	uint8_t		waveform;
-	uint8_t		: 8;
-	uint16_t	duty_cycle_critical_phase;
-
-	uint16_t	delta_vibration_phase;
-	uint16_t	vibration_table_index;
-	uint32_t	vibration_same_index_count;
-} s_oscillator[MAX_OSCILLATOR_NUMBER];
+struct _oscillator s_oscillator[MAX_OSCILLATOR_NUMBER];
 
 #define UNUSED_OSCILLATOR							(-1)
 
