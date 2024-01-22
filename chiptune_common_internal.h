@@ -14,7 +14,26 @@
 #define _PRINT_MOTE_OPERATION
 
 
-struct _voice_info
+
+enum
+{
+	WAVEFORM_SILENCE		= -1,
+	WAVEFORM_SQUARE			= 0,
+	WAVEFORM_TRIANGLE		= 1,
+	WAVEFORM_SAW			= 2,
+	WAVEFORM_NOISE			= 3,
+};
+
+enum
+{
+	DUTY_CYLCE_125_CRITICAL_PHASE	= (UINT16_MAX + 1) >> 3,
+	DUTY_CYLCE_25_CRITICAL_PHASE	= (UINT16_MAX + 1) >> 2,
+	DUTY_CYLCE_50_CRITICAL_PHASE	= (UINT16_MAX + 1) >> 1,
+	DUTY_CYLCE_75_CRITICAL_PHASE	= (UINT16_MAX + 1) - ((UINT16_MAX + 1) >> 2),
+};
+
+
+struct _channel_controller
 {
 	int8_t		tuning_in_semitones;
 
@@ -35,7 +54,6 @@ struct _voice_info
 	uint16_t	registered_parameter_number;
 	uint16_t	registered_parameter_value;
 };
-
 
 struct _oscillator
 {
@@ -58,5 +76,17 @@ struct _oscillator
 	uint16_t	vibration_table_index;
 	uint32_t	vibration_same_index_count;
 };
+
+#define RESET_STATE_BITES(STATE_BITES)				(STATE_BITES = 0)
+
+#define STATE_NOTE_BIT								(0)
+#define SET_NOTE_ON(STATE_BITS)						(STATE_BITS |= (0x01 << STATE_NOTE_BIT) )
+#define SET_NOTE_OFF(STATE_BITS)					(STATE_BITS &= (~(0x01 << STATE_NOTE_BIT)) )
+#define IS_NOTE_ON(STATE_BITS)						(((0x01 << 0) & STATE_BITS) ? true : false)
+
+#define STATE_DAMPER_PEDAL_BIT						(1)
+#define SET_DAMPER_PEDAL_ON(STATE_BITS)				(STATE_BITS |= ((0x01)<< STATE_DAMPER_PEDAL_BIT) )
+#define SET_DAMPER_PEDAL_OFF(STATE_BITS)			(STATE_BITS &= (~((0x01)<< STATE_DAMPER_PEDAL_BIT)))
+#define IS_DAMPER_PEDAL_ON(STATE_BITS)				(((0x01 << 1) & STATE_BITS) ? true : false)
 
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_
