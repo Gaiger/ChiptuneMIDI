@@ -6,6 +6,26 @@
 
 //https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
 
+#define MIDI_CC_RPN_NULL							((127 << 8) + 127)
+
+void reset_channel_controller(struct _channel_controller * const p_channel_controller)
+{
+	p_channel_controller->tuning_in_semitones = 0;
+
+	p_channel_controller->max_volume = MIDI_CC_CENTER_VALUE;
+	p_channel_controller->playing_volume = (p_channel_controller->max_volume * INT8_MAX)/INT8_MAX;
+	p_channel_controller->pan = MIDI_CC_CENTER_VALUE;
+
+	p_channel_controller->waveform = WAVEFORM_TRIANGLE;
+
+	p_channel_controller->pitch_bend_range_in_semitones = MIDI_DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES;
+	p_channel_controller->pitch_wheel = MIDI_PITCH_WHEEL_CENTER;
+	p_channel_controller->modulation_wheel = 0;
+	p_channel_controller->chorus = 0;
+	p_channel_controller->registered_parameter_number = MIDI_CC_RPN_NULL;
+	p_channel_controller->registered_parameter_value = 0;
+}
+
 /**********************************************************************************/
 
 static inline void process_modulation_wheel(struct _channel_controller * const p_channel_controllers,
@@ -33,7 +53,9 @@ static void process_cc_registered_parameter(struct _channel_controller * const p
 #define MIDI_CC_RPN_TURNING_PROGRAM_CHANGE			(3)
 #define MIDI_CC_RPN_TURNING_BANK_SELECT				(4)
 #define MIDI_CC_RPN_MODULATION_DEPTH_RANGE			(5)
-#define MIDI_CC_RPN_NULL							((127 << 8) + 127)
+#ifndef MIDI_CC_RPN_NULL
+	#define MIDI_CC_RPN_NULL						((127 << 8) + 127)
+#endif
 	switch(p_channel_controllers[voice].registered_parameter_number)
 	{
 	case MIDI_CC_RPN_PITCH_BEND_SENSITIVY:
@@ -124,23 +146,12 @@ static void process_cc_damper_pedal(struct _channel_controller * const p_channel
 	}
 }
 
-/**********************************************************************************/
-
-void reset_channel_controller(struct _channel_controller * const p_channel_controller)
+static void process_cc_chorus_effect(struct _channel_controller * const p_channel_controllers,
+											struct _oscillator * const p_oscillators,
+											 uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
-	p_channel_controller->tuning_in_semitones = 0;
-
-	p_channel_controller->max_volume = MIDI_CC_CENTER_VALUE;
-	p_channel_controller->playing_volume = (p_channel_controller->max_volume * INT8_MAX)/INT8_MAX;
-	p_channel_controller->pan = MIDI_CC_CENTER_VALUE;
-
-	p_channel_controller->waveform = WAVEFORM_TRIANGLE;
-
-	p_channel_controller->pitch_bend_range_in_semitones = MIDI_DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES;
-	p_channel_controller->pitch_wheel = MIDI_PITCH_WHEEL_CENTER;
-	p_channel_controller->modulation_wheel = 0;
-	p_channel_controller->registered_parameter_number = MIDI_CC_RPN_NULL;
-	p_channel_controller->registered_parameter_value = 0;
+	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC_CHORUS_EFFECT :: voice = %u, value = %u\r\n", tick, voice, value);
+	p_channel_controllers[voice].chorus = value;
 }
 
 /**********************************************************************************/
@@ -181,6 +192,7 @@ int process_control_change_message(struct _channel_controller * const p_channel_
 #define MIDI_CC_EFFECT_1_DEPTH						(91)
 #define MIDI_CC_EFFECT_2_DEPTH						(92)
 #define MIDI_CC_EFFECT_3_DEPTH						(93)
+#define MIDI_CC_CHORUS_EFFECT						(MIDI_CC_EFFECT_3_DEPTH)
 #define MIDI_CC_EFFECT_4_DEPTH						(94)
 #define MIDI_CC_EFFECT_5_DEPTH						(95)
 
@@ -233,12 +245,10 @@ int process_control_change_message(struct _channel_controller * const p_channel_
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_2_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
 						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
-	case MIDI_CC_EFFECT_3_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_3_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
-						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
-		break;
+	case MIDI_CC_CHORUS_EFFECT:
+		process_cc_chorus_effect(p_channel_controllers, p_oscillators, tick, voice, value);
 	case MIDI_CC_EFFECT_4_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "%s :: MIDI_CC_EFFECT_4_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_4_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
 						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_EFFECT_5_DEPTH:

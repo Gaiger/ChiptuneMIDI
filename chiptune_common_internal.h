@@ -5,9 +5,8 @@
 #include <stdint.h>
 //#define _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 
-#define _INCREMENTAL_SAMPLE_INDEX
+//#define _INCREMENTAL_SAMPLE_INDEX
 //#define _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
-
 
 #define _PRINT_MIDI_DEVELOPING
 #define _PRINT_MIDI_SETUP
@@ -49,7 +48,8 @@ struct _channel_controller
 	uint16_t	pitch_wheel;
 
 	uint8_t		modulation_wheel;
-	uint8_t		: 8;
+
+	uint8_t		chorus;
 
 	uint16_t	registered_parameter_number;
 	uint16_t	registered_parameter_value;
@@ -87,13 +87,17 @@ struct _oscillator
 #define STATE_NOTE_BIT								(0)
 #define SET_NOTE_ON(STATE_BITS)						(STATE_BITS |= (0x01 << STATE_NOTE_BIT) )
 #define SET_NOTE_OFF(STATE_BITS)					(STATE_BITS &= (~(0x01 << STATE_NOTE_BIT)) )
-#define IS_NOTE_ON(STATE_BITS)						(((0x01 << 0) & STATE_BITS) ? true : false)
+#define IS_NOTE_ON(STATE_BITS)						(((0x01 << STATE_NOTE_BIT) & STATE_BITS) ? true : false)
 
 #define STATE_DAMPER_PEDAL_BIT						(1)
 #define SET_DAMPER_PEDAL_ON(STATE_BITS)				(STATE_BITS |= ((0x01)<< STATE_DAMPER_PEDAL_BIT) )
 #define SET_DAMPER_PEDAL_OFF(STATE_BITS)			(STATE_BITS &= (~((0x01)<< STATE_DAMPER_PEDAL_BIT)))
-#define IS_DAMPER_PEDAL_ON(STATE_BITS)				(((0x01 << 1) & STATE_BITS) ? true : false)
+#define IS_DAMPER_PEDAL_ON(STATE_BITS)				(((0x01 << STATE_DAMPER_PEDAL_BIT) & STATE_BITS) ? true : false)
 
+#define STATE_CHURUS_OSCILLATOR_BIT					(2)
+#define SET_CHURUS_OSCILLATOR(STATE_BITS)			(STATE_BITS |= ((0x01)<< STATE_CHURUS_OSCILLATOR_BIT))
+#define RESET_CHURUS_OSCILLATOR(STATE_BITS)			(STATE_BITS &= (~((0x01)<< STATE_CHURUS_OSCILLATOR_BIT)))
+#define IS_CHURUS_OSCILLATOR(STATE_BITS)			(((0x01 << STATE_CHURUS_OSCILLATOR_BIT) & STATE_BITS) ? true : false)
 
 #define MIDI_CC_CENTER_VALUE						(64)
 #define MIDI_PITCH_WHEEL_CENTER						(0x2000)

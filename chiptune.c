@@ -256,6 +256,16 @@ static void process_pitch_wheel_message(uint32_t const tick, uint8_t const voice
 
 /**********************************************************************************/
 
+#define NULL_MESSAGE							(0)
+#define NULL_TICK								(UINT32_MAX)
+
+struct _tick_message
+{
+	uint32_t tick;
+	uint32_t message;
+}illusion_tick_message[16 * 8];
+
+
 static void process_midi_message(uint32_t const tick, uint32_t const message)
 {
 	union {
@@ -310,10 +320,7 @@ static void process_midi_message(uint32_t const tick, uint32_t const message)
 
 /**********************************************************************************/
 
-#define NO_FETCHED_MESSAGE							(UINT32_MAX)
-#define NO_FETCHED_TICK								(UINT32_MAX)
-uint32_t s_fetched_tick = NO_FETCHED_TICK;
-uint32_t s_fetched_message = NO_FETCHED_MESSAGE;
+struct _tick_message s_fetched_tick_message;
 uint32_t s_midi_messge_index = 0;
 uint32_t s_total_message_number = 0;
 
@@ -330,13 +337,13 @@ static int process_timely_midi_message(void)
 	uint32_t message;
 
 	int ii = 0;
-	if(false == (NO_FETCHED_TICK == s_fetched_tick && NO_FETCHED_MESSAGE == s_fetched_message)){
-		if(true == IS_AFTER_CURRENT_TIME(s_fetched_tick)){
+	if(false == (NULL_TICK == s_fetched_tick_message.tick && NULL_MESSAGE == s_fetched_tick_message.message)){
+		if(true == IS_AFTER_CURRENT_TIME(s_fetched_tick_message.tick)){
 			return 0;
 		}
-		process_midi_message(s_fetched_tick, s_fetched_message);
-		s_fetched_message = NO_FETCHED_MESSAGE;
-		s_fetched_tick = NO_FETCHED_TICK;
+		process_midi_message(s_fetched_tick_message.tick, s_fetched_tick_message.message);
+		s_fetched_tick_message.tick = NULL_TICK;
+		s_fetched_tick_message.message = NULL_MESSAGE;
 		ii += 1;
 	}
 
@@ -353,8 +360,8 @@ static int process_timely_midi_message(void)
 		s_midi_messge_index += 1;
 
 		if(true == IS_AFTER_CURRENT_TIME(tick)){
-			s_fetched_message = message;
-			s_fetched_tick = tick;
+			s_fetched_tick_message.tick = tick;
+			s_fetched_tick_message.message = message;
 			break;
 		}
 
@@ -478,8 +485,9 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 #endif
 	s_is_tune_ending = false;
 	s_midi_messge_index = 0;
-	s_fetched_message = NO_FETCHED_MESSAGE;
-	s_fetched_tick = NO_FETCHED_TICK;
+	s_fetched_tick_message.tick = NULL_TICK;
+	s_fetched_tick_message.message = NULL_MESSAGE;
+
 	for(int i = 0; i < MAX_VOICE_NUMBER; i++){
 		reset_channel_controller(&s_channel_controller[i]);
 	}
