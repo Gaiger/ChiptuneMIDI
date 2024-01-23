@@ -145,6 +145,16 @@ struct _tick_message
 	uint32_t message;
 } s_illusion_tick_message[MAX_ILLUSION_TICK_MESSAGE_NUMBER];
 
+/**********************************************************************************/
+#define MIDI_MESSAGE_NOTE_OFF						(0x80)
+#define MIDI_MESSAGE_NOTE_ON						(0x90)
+
+#define MAKE_NOTE_MESSAGE(IS_NOTE_ON, VOICE, NOTE, VELOCITY)	( \
+								( (( (IS_NOTE_ON) ? MIDI_MESSAGE_NOTE_ON : MIDI_MESSAGE_NOTE_OFF )) | (VOICE) ) \
+								| ( (NOTE) << 8) | ( (VELOCITY) << 16) \
+								)
+
+/**********************************************************************************/
 
 #define DIVIDE_BY_8(VALUE)							((VALUE) >> 3)
 #define REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(VALUE)	DIVIDE_BY_8(VALUE)
@@ -155,9 +165,9 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 {
 	float pitch_bend_in_semitone;
 
+	int ii = 0;
 	do
 	{
-		int ii = 0;
 		if(true == is_note_on){
 			for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
 				 if(UNUSED_OSCILLATOR == s_oscillator[ii].voice){
@@ -225,8 +235,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}while(0);
 	}while(0);
 
-
-
 #ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 	#ifdef _INCREMENTAL_SAMPLE_INDEX
 	if(TICK_TO_SAMPLE_INDEX(818880) < s_current_sample_index){
@@ -257,6 +265,39 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	}
 	CHIPTUNE_PRINTF(cNoteOperation, "\r\n");
 #endif
+
+	do
+	{
+		if(0 == s_channel_controller[voice].chorus){
+			break;
+		}
+
+		if(false == is_illusion_enabed){
+			break;
+		}
+		s_oscillator[ii].volume >>= 1;
+		if(true == is_illusion){
+			break;
+		}
+
+		int kk;
+		for(kk = 0; kk < MAX_ILLUSION_TICK_MESSAGE_NUMBER; kk++){
+			if(NULL_TICK == s_illusion_tick_message[kk].tick
+					&& NULL_MESSAGE == s_illusion_tick_message[kk].message){
+				break;
+			}
+		}
+
+		if(MAX_ILLUSION_TICK_MESSAGE_NUMBER == kk){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR::all illusion_tick_message are used\r\n");
+			return -3;
+		}
+
+#define CHORUS_DELAY_TIME_IN_SECOND						(0.05)
+		s_illusion_tick_message[kk].tick = tick + (uint32_t)(CHORUS_DELAY_TIME_IN_SECOND * s_tempo * s_resolution/ (60.0));
+		s_illusion_tick_message[kk].message = MAKE_NOTE_MESSAGE(is_note_on, voice, note, velocity);
+	}while(0);
+
 	return 0;
 }
 
@@ -293,8 +334,12 @@ static void process_midi_message(uint32_t const tick, uint32_t const message, bo
 
 	uint8_t type =  u.data_as_bytes[0] & 0xF0;
 	uint8_t voice = u.data_as_bytes[0] & 0x0F;
-#define MIDI_MESSAGE_NOTE_OFF						(0x80)
-#define MIDI_MESSAGE_NOTE_ON						(0x90)
+#ifndef MIDI_MESSAGE_NOTE_OFF
+	#define MIDI_MESSAGE_NOTE_OFF						(0x80)
+#endif
+#ifndef MIDI_MESSAGE_NOTE_ON
+	#define MIDI_MESSAGE_NOTE_ON						(0x90)
+#endif
 #define MIDI_MESSAGE_KEY_PRESSURE					(0xA0)
 #define MIDI_MESSAGE_CONTROL_CHANGE					(0xB0)
 #define MIDI_MESSAGE_PROGRAM_CHANGE					(0xC0)
@@ -304,33 +349,9 @@ static void process_midi_message(uint32_t const tick, uint32_t const message, bo
 	{
 	case MIDI_MESSAGE_NOTE_OFF:
 	case MIDI_MESSAGE_NOTE_ON:
-	{
 		process_note_message(tick, (MIDI_MESSAGE_NOTE_OFF == type) ? false : true,
-							 voice, u.data_as_bytes[1], u.data_as_bytes[2], is_illusion_enabed, is_illusion);
-		if(false == is_illusion_enabed){
-			break;
-		}
-
-		if(false == is_illusion){
-			break;
-		}
-
-		int kk;
-		for(kk = 0; kk < MAX_ILLUSION_TICK_MESSAGE_NUMBER; kk++){
-			if(NULL_TICK == s_illusion_tick_message[kk].tick
-					&& NULL_MESSAGE == s_illusion_tick_message[kk].message){
-				break;
-			}
-		}
-
-		if(MAX_ILLUSION_TICK_MESSAGE_NUMBER == kk){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR::all illusion_tick_message are used\r\n");
-			break;
-		}
-#define CHORUS_DELAY_TIME_IN_MS						(0.030)
-		s_illusion_tick_message[kk].tick = tick + (uint32_t)(CHORUS_DELAY_TIME_IN_MS * s_tempo * s_resolution/ (60.0));
-		s_illusion_tick_message[kk].message = message;
-	} break;
+			voice, u.data_as_bytes[1], u.data_as_bytes[2], is_illusion_enabed, is_illusion);
+	 break;
 	case MIDI_MESSAGE_KEY_PRESSURE:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: note = %u, amount = %u %s\r\n",
 						tick, voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
