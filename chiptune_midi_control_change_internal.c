@@ -100,6 +100,7 @@ static void process_cc_registered_parameter(struct _channel_controller * const p
 		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN code = %d :: voice = %u, value = %u \r\n",
 						p_channel_controllers[voice].registered_parameter_number, voice, p_channel_controllers[voice].registered_parameter_value);
 		p_channel_controllers[voice].registered_parameter_value = 0;
+		break;
 	}
 }
 
@@ -215,7 +216,7 @@ int process_control_change_message(struct _channel_controller * const p_channel_
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DATA_ENTRY_MSB :: voice = %u, value = %u\r\n",
 						tick, voice, value);
 		p_channel_controllers[voice].registered_parameter_value
-				= ((value & 0xFF) << 8) | p_channel_controllers[voice].registered_parameter_value;
+				= ((value & 0xFF) << 8) | (p_channel_controllers[voice].registered_parameter_value & (0xFF << 0));
 		process_cc_registered_parameter(p_channel_controllers, p_oscillators, tick, voice);
 		break;
 	case MIDI_CC_VOLUME:
@@ -233,7 +234,7 @@ int process_control_change_message(struct _channel_controller * const p_channel_
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DATA_ENTRY_LSB :: voice = %u, value = %u\r\n",
 						tick, voice, value);
 		p_channel_controllers[voice].registered_parameter_value
-				= p_channel_controllers[voice].registered_parameter_value | ((value & 0xFF) << 0);
+				= (p_channel_controllers[voice].registered_parameter_value & (0xFF << 8)) | ((value & 0xFF) << 0);
 		process_cc_registered_parameter(p_channel_controllers, p_oscillators, tick, voice);
 		break;
 	case MIDI_CC_DAMPER_PEDAL:
@@ -249,6 +250,7 @@ int process_control_change_message(struct _channel_controller * const p_channel_
 		break;
 	case MIDI_CC_CHORUS_EFFECT:
 		process_cc_chorus_effect(p_channel_controllers, p_oscillators, tick, voice, value);
+		break;
 	case MIDI_CC_EFFECT_4_DEPTH:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_4_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
 						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
@@ -269,13 +271,13 @@ int process_control_change_message(struct _channel_controller * const p_channel_
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RPN_LSB :: voice = %u, value = %u\r\n",
 						tick, voice, value);
 		p_channel_controllers[voice].registered_parameter_number
-				= p_channel_controllers[voice].registered_parameter_number | ((value & 0xFF) << 0);
+				= (p_channel_controllers[voice].registered_parameter_number & (0xFF << 8)) | ((value & 0xFF) << 0);
 		break;
 	case MIDI_CC_RPN_MSB:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RPN_MSB :: voice = %u, value = %u\r\n",
 						tick, voice, value);
 		p_channel_controllers[voice].registered_parameter_number
-				= ((value & 0xFF) << 8) | p_channel_controllers[voice].registered_parameter_number;
+				= ((value & 0xFF) << 8) | (p_channel_controllers[voice].registered_parameter_number & (0xFF << 0));
 		break;
 	case MIDI_CC_RESET_ALL_CONTROLLERS:
 		process_cc_reset_all_controllers(p_channel_controllers, p_oscillators, tick, voice, value);
