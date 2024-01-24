@@ -150,7 +150,7 @@ static void process_cc_chorus_effect(struct _channel_controller * const p_channe
 											struct _oscillator * const p_oscillators,
 											 uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
-	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC_CHORUS_EFFECT :: voice = %u, value = %u\r\n", tick, voice, value);
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_CHORUS_EFFECT :: voice = %u, value = %u\r\n", tick, voice, value);
 	p_channel_controllers[voice].chorus = value;
 }
 

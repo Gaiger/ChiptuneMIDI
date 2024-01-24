@@ -15,7 +15,7 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 {
 	bool is_print_out = false;
 
-#ifdef _PRINT_MIDI_DEVELOPING
+#ifdef _PRINT_DEVELOPING
 	if(cDeveloping == print_type){
 		is_print_out = true;
 		//fprintf(stdout, "cDeveloping:: ");
@@ -35,8 +35,15 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 	}
 #endif
 
-#ifdef _PRINT_MOTE_OPERATION
+#ifdef _PRINT_NOTE_OPERATION
 	if(cNoteOperation == print_type){
+		is_print_out = true;
+		//fprintf(stdout, "cNoteOperation:: ");
+	}
+#endif
+
+#ifdef _PRINT_OSCILLATOR_TRANSITION
+	if(cOscillatorTransition == print_type){
 		is_print_out = true;
 		//fprintf(stdout, "cNoteOperation:: ");
 	}

@@ -76,12 +76,8 @@ void chiptune_set_midi_message_callback( int(*handler_get_midi_message)(uint32_t
 
 /**********************************************************************************/
 
-
-
 struct _channel_controller s_channel_controller[MAX_VOICE_NUMBER];
-
 struct _oscillator s_oscillator[MAX_OSCILLATOR_NUMBER];
-
 
 /**********************************************************************************/
 
@@ -319,7 +315,7 @@ static int append_chorus_illusion_message(uint32_t const tick, bool const is_not
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 uint8_t const voice, uint8_t const note, uint8_t const velocity, bool is_reality_message)
 {
-	float pitch_bend_in_semitone;
+	float pitch_bend_in_semitone = 0.0f;
 
 	int ii = 0;
 	do
@@ -408,23 +404,32 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	}
 	#endif
 #else
-	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u",
-					tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
+
+	char pitch_bend_string[32] = "";
+	if(true == is_note_on && 0.0f != pitch_bend_in_semitone){
+		snprintf(&pitch_bend_string[0], sizeof(pitch_bend_string),
+			", pitch bend = %+3.2f", pitch_bend_in_semitone);
+	}
+
 	do
 	{
-		if(false == is_note_on){
+		if(true == is_reality_message){
+#ifdef _PRINT_OSCILLATOR_TRANSITION
+			if(0 == s_channel_controller[voice].chorus){
+#endif
+				CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u%s\r\n",
+							tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" ,
+							voice, note, velocity, &pitch_bend_string[0]);
+#ifdef _PRINT_OSCILLATOR_TRANSITION
+			}
+#endif
 			break;
 		}
-		if(0.0f == pitch_bend_in_semitone){
-			break;
-		}
-		CHIPTUNE_PRINTF(cNoteOperation, ", pitch bend = %+3.2f", pitch_bend_in_semitone);
+		CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, %s :: voice = %u, note = %u, velocity = %u (chorus)%s\r\n",
+						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" ,
+						voice, note, velocity, &pitch_bend_string[0]);
 	}while(0);
 
-	if(false == is_reality_message){
-		//CHIPTUNE_PRINTF(cNoteOperation, " (chorus)");
-	}
-	CHIPTUNE_PRINTF(cNoteOperation, "\r\n");
 #endif
 
 	do
@@ -440,6 +445,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		if(0 > append_chorus_illusion_message(tick, is_note_on, voice, note, velocity, ii)){
 			return -3;
 		}
+		CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, %s :: voice = %u, note = %u, velocity = %u -> %u(chorus)%s\r\n",
+						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" ,
+						voice, note, velocity, s_oscillator[ii].volume/s_channel_controller[voice].playing_volume,
+						&pitch_bend_string[0]);
 	}while(0);
 
 	return 0;
