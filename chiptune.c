@@ -119,12 +119,12 @@ static void process_program_change_message(uint32_t const tick, uint8_t const vo
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 
 static  uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semitones,
-											 uint16_t const pitch_bend_range_in_semitones, uint16_t const pitch_wheel,
-											float additional_pitch_bend_in_semitones, float *p_pitch_bend_in_semitone)
+											 uint16_t const pitch_wheel_bend_range_in_semitones, uint16_t const pitch_wheel,
+											float pitch_chorus_bend_in_semitones, float *p_pitch_wheel_bend_in_semitone)
 {
 	// TO DO : too many float variable
-	float pitch_bend_in_semitone = (((int16_t)pitch_wheel - MIDI_PITCH_WHEEL_CENTER)/(float)MIDI_PITCH_WHEEL_CENTER) * DIVIDE_BY_2(pitch_bend_range_in_semitones);
-	float corrected_note = (float)((int16_t)note + (int16_t)tuning_in_semitones) + pitch_bend_in_semitone + additional_pitch_bend_in_semitones;
+	float pitch_wheel_bend_in_semitone = (((int16_t)pitch_wheel - MIDI_PITCH_WHEEL_CENTER)/(float)MIDI_PITCH_WHEEL_CENTER) * DIVIDE_BY_2(pitch_wheel_bend_range_in_semitones);
+	float corrected_note = (float)((int16_t)note + (int16_t)tuning_in_semitones) + pitch_wheel_bend_in_semitone + pitch_chorus_bend_in_semitones;
 	/*
 	 * freq = 440 * 2**((note - 69)/12)
 	*/
@@ -134,7 +134,7 @@ static  uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semi
 	 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX + 1)/phase
 	*/
 	uint16_t delta_phase = (uint16_t)((UINT16_MAX + 1) * frequency / s_sampling_rate);
-	*p_pitch_bend_in_semitone = pitch_bend_in_semitone;
+	*p_pitch_wheel_bend_in_semitone = pitch_wheel_bend_in_semitone;
 	return delta_phase;
 }
 
@@ -225,7 +225,7 @@ int fetch_midi_message(uint32_t index, uint32_t * const p_tick, uint32_t * const
 
 #include <stdlib.h>
 
-static float additional_chorus_pitch_bend_in_semitones(uint8_t const voice, bool is_reality_message)
+static float pitch_chorus_bend_in_semitone(uint8_t const voice, bool is_reality_message)
 {
 	if(0 == s_channel_controller[voice].chorus){
 		return 0.0;
@@ -237,14 +237,14 @@ static float additional_chorus_pitch_bend_in_semitones(uint8_t const voice, bool
 
 	//TODO :: too complex
 	int random = rand();
-	float additional_pitch_bend_in_semitones;
+	float pitch_chorus_bend_in_semitone;
 #define	MAX_CHORUS_PITCH_BEND_IN_SEMITONE			(0.25f)
 #define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
-												(((RAND_MAX >> 1) - (VALUE))/(float)(RAND_MAX >> 1))
-	additional_pitch_bend_in_semitones = RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) * MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
-	additional_pitch_bend_in_semitones *= s_channel_controller[voice].chorus/127.0f;
-	//CHIPTUNE_PRINTF(cDeveloping, "additional_pitch_bend_in_semitones = %3.2f\r\n", additional_pitch_bend_in_semitones);
-	return additional_pitch_bend_in_semitones;
+												((((RAND_MAX >> 1) + 1)- (VALUE))/(float)((RAND_MAX >> 1) + 1))
+	pitch_chorus_bend_in_semitone = RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) * MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
+	pitch_chorus_bend_in_semitone *= s_channel_controller[voice].chorus/127.0f;
+	//CHIPTUNE_PRINTF(cDeveloping, "pitch_chorus_bend_in_semitone = %3.2f\r\n", pitch_chorus_bend_in_semitone);
+	return pitch_chorus_bend_in_semitone;
 }
 
 /**********************************************************************************/
@@ -311,11 +311,10 @@ static int append_chorus_illusion_message(uint32_t const tick, bool const is_not
 
 /**********************************************************************************/
 
-
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 uint8_t const voice, uint8_t const note, uint8_t const velocity, bool is_reality_message)
 {
-	float pitch_bend_in_semitone = 0.0f;
+	float pitch_wheel_bend_in_semitone = 0.0f;
 
 	int ii = 0;
 	do
@@ -341,23 +340,25 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			s_oscillator[ii].voice = voice;
 			s_oscillator[ii].note = note;
 			s_oscillator[ii].delta_phase = calculate_delta_phase(s_oscillator[ii].note, s_channel_controller[voice].tuning_in_semitones,
-															   s_channel_controller[voice].pitch_bend_range_in_semitones,
+															   s_channel_controller[voice].pitch_wheel_bend_range_in_semitones,
 															   s_channel_controller[voice].pitch_wheel,
-																 s_oscillator[ii].additional_pitch_bend_in_semitone,
-																 &pitch_bend_in_semitone);
+																 s_oscillator[ii].pitch_chorus_bend_in_semitone,
+																 &pitch_wheel_bend_in_semitone);
 			s_oscillator[ii].current_phase = 0;
 			s_oscillator[ii].volume = (uint16_t)velocity * (uint16_t)s_channel_controller[voice].playing_volume;
 			s_oscillator[ii].waveform = s_channel_controller[voice].waveform;
 			s_oscillator[ii].duty_cycle_critical_phase = s_channel_controller[voice].duty_cycle_critical_phase;
 
-			s_oscillator[ii].additional_pitch_bend_in_semitone
-					= additional_chorus_pitch_bend_in_semitones(voice, is_reality_message);
-
-			s_oscillator[ii].delta_vibration_phase = calculate_delta_phase(s_oscillator[ii].note + 1, s_channel_controller[voice].tuning_in_semitones,
-																	   s_channel_controller[voice].pitch_bend_range_in_semitones,
+			s_oscillator[ii].pitch_chorus_bend_in_semitone
+					= pitch_chorus_bend_in_semitone(voice, is_reality_message);
+#define	VIBRATION_DELTA_IN_SEMITINE					(1)
+			s_oscillator[ii].delta_vibration_phase = calculate_delta_phase(s_oscillator[ii].note + VIBRATION_DELTA_IN_SEMITINE,
+																		   s_channel_controller[voice].tuning_in_semitones,
+																	   s_channel_controller[voice].pitch_wheel_bend_range_in_semitones,
 																	   s_channel_controller[voice].pitch_wheel,
-																		   s_oscillator[ii].additional_pitch_bend_in_semitone,
-																		   &pitch_bend_in_semitone) - s_oscillator[ii].delta_phase;
+																		   s_oscillator[ii].pitch_chorus_bend_in_semitone,
+																		   &pitch_wheel_bend_in_semitone);
+			s_oscillator[ii].delta_vibration_phase -= s_oscillator[ii].delta_phase;
 			s_oscillator[ii].vibration_table_index = 0;
 			s_oscillator[ii].vibration_same_index_count = 0;
 			break;
@@ -405,10 +406,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	#endif
 #else
 
-	char pitch_bend_string[32] = "";
-	if(true == is_note_on && 0.0f != pitch_bend_in_semitone){
-		snprintf(&pitch_bend_string[0], sizeof(pitch_bend_string),
-			", pitch bend = %+3.2f", pitch_bend_in_semitone);
+	char pitch_wheel_bend_string[32] = "";
+	if(true == is_note_on && 0.0f != pitch_wheel_bend_in_semitone){
+		snprintf(&pitch_wheel_bend_string[0], sizeof(pitch_wheel_bend_string),
+			", pitch wheel bend = %+3.2f", pitch_wheel_bend_in_semitone);
 	}
 
 	do
@@ -419,7 +420,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 #endif
 				CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u%s\r\n",
 							tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" ,
-							voice, note, velocity, &pitch_bend_string[0]);
+							voice, note, velocity, &pitch_wheel_bend_string[0]);
 #ifdef _PRINT_OSCILLATOR_TRANSITION
 			}
 #endif
@@ -427,7 +428,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}
 		CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, %s :: voice = %u, note = %u, velocity = %u (chorus)%s\r\n",
 						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" ,
-						voice, note, velocity, &pitch_bend_string[0]);
+						voice, note, velocity, &pitch_wheel_bend_string[0]);
 	}while(0);
 
 #endif
@@ -448,7 +449,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, %s :: voice = %u, note = %u, velocity = %u -> %u(chorus)%s\r\n",
 						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" ,
 						voice, note, velocity, s_oscillator[ii].volume/s_channel_controller[voice].playing_volume,
-						&pitch_bend_string[0]);
+						&pitch_wheel_bend_string[0]);
 	}while(0);
 
 	return 0;
@@ -467,8 +468,8 @@ static void process_pitch_wheel_message(uint32_t const tick, uint8_t const voice
 		}
 		float pitch_bend_in_semitone;
 		s_oscillator[i].delta_phase = calculate_delta_phase(s_oscillator[i].note, s_channel_controller[voice].tuning_in_semitones,
-														   s_channel_controller[voice].pitch_bend_range_in_semitones,
-														   s_channel_controller[voice].pitch_wheel, s_oscillator[i].additional_pitch_bend_in_semitone, &pitch_bend_in_semitone);
+														   s_channel_controller[voice].pitch_wheel_bend_range_in_semitones,
+														   s_channel_controller[voice].pitch_wheel, s_oscillator[i].pitch_chorus_bend_in_semitone, &pitch_bend_in_semitone);
 
 		CHIPTUNE_PRINTF(cNoteOperation, "---- voice = %u, note = %u, pitch bend = %+3.2f\r\n",voice, s_oscillator[i].note, pitch_bend_in_semitone);
 	}

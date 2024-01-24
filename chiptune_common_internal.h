@@ -44,7 +44,7 @@ struct _channel_controller
 	uint8_t		: 8;
 	uint16_t	duty_cycle_critical_phase;
 
-	uint16_t	pitch_bend_range_in_semitones;
+	uint16_t	pitch_wheel_bend_range_in_semitones;
 	uint16_t	pitch_wheel;
 
 	uint8_t		modulation_wheel;
@@ -71,7 +71,7 @@ struct _oscillator
 	uint8_t		waveform;
 	uint8_t		: 8;
 	uint16_t	duty_cycle_critical_phase;
-	float		additional_pitch_bend_in_semitone;
+	float		pitch_chorus_bend_in_semitone;
 	uint16_t	delta_vibration_phase;
 	uint16_t	vibration_table_index;
 	uint32_t	vibration_same_index_count;
@@ -101,6 +101,6 @@ struct _oscillator
 
 #define MIDI_CC_CENTER_VALUE						(64)
 #define MIDI_PITCH_WHEEL_CENTER						(0x2000)
-#define MIDI_DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES	(2 * 2)
+#define MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES	(2 * 2)
 
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_

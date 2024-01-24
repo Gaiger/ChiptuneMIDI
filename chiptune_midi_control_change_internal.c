@@ -18,7 +18,7 @@ void reset_channel_controller(struct _channel_controller * const p_channel_contr
 
 	p_channel_controller->waveform = WAVEFORM_TRIANGLE;
 
-	p_channel_controller->pitch_bend_range_in_semitones = MIDI_DEFAULT_PITCH_BEND_RANGE_IN_SEMITONES;
+	p_channel_controller->pitch_wheel_bend_range_in_semitones = MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES;
 	p_channel_controller->pitch_wheel = MIDI_PITCH_WHEEL_CENTER;
 	p_channel_controller->modulation_wheel = 0;
 	p_channel_controller->chorus = 0;
@@ -59,9 +59,9 @@ static void process_cc_registered_parameter(struct _channel_controller * const p
 	switch(p_channel_controllers[voice].registered_parameter_number)
 	{
 	case MIDI_CC_RPN_PITCH_BEND_SENSITIVY:
-		p_channel_controllers[voice].pitch_bend_range_in_semitones = p_channel_controllers[voice].registered_parameter_value >> 8;
+		p_channel_controllers[voice].pitch_wheel_bend_range_in_semitones = p_channel_controllers[voice].registered_parameter_value >> 8;
 		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %u, semitones = %u\r\n",
-						voice, p_channel_controllers[voice].pitch_bend_range_in_semitones);
+						voice, p_channel_controllers[voice].pitch_wheel_bend_range_in_semitones);
 		if(0 != (p_channel_controllers[voice].registered_parameter_value & 0xFF)){
 			CHIPTUNE_PRINTF(cMidiSetup, "----  MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %u, cents = %u (%s)\r\n",
 						voice, p_channel_controllers[voice].registered_parameter_number & 0xFF, "(NOT IMPLEMENTED YET)");
@@ -145,6 +145,8 @@ static void process_cc_damper_pedal(struct _channel_controller * const p_channel
 		}
 	}
 }
+
+/**********************************************************************************/
 
 static void process_cc_chorus_effect(struct _channel_controller * const p_channel_controllers,
 											struct _oscillator * const p_oscillators,
