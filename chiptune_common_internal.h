@@ -71,7 +71,9 @@ struct _oscillator
 	uint8_t		waveform;
 	uint8_t		: 8;
 	uint16_t	duty_cycle_critical_phase;
+
 	float		pitch_chorus_bend_in_semitone;
+
 	uint16_t	delta_vibration_phase;
 	uint16_t	vibration_table_index;
 	uint32_t	vibration_same_index_count;

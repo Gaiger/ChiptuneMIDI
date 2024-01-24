@@ -76,9 +76,10 @@ void chiptune_set_midi_message_callback( int(*handler_get_midi_message)(uint32_t
 
 /**********************************************************************************/
 
-struct _channel_controller s_channel_controller[MAX_VOICE_NUMBER];
-struct _oscillator s_oscillator[MAX_OSCILLATOR_NUMBER];
+static struct _channel_controller s_channel_controller[MAX_VOICE_NUMBER];
 
+static struct _oscillator s_oscillator[MAX_OSCILLATOR_NUMBER];
+static uint32_t s_occupied_oscillator_number = 0;
 /**********************************************************************************/
 
 static void process_program_change_message(uint32_t const tick, uint8_t const voice, uint8_t const number)
@@ -116,6 +117,102 @@ static void process_program_change_message(uint32_t const tick, uint8_t const vo
 
 /**********************************************************************************/
 
+#define NULL_TICK								(UINT32_MAX)
+#define NULL_MESSAGE							(0)
+
+#define MAX_ILLUSION_TICK_MESSAGE_NUMBER		(MAX_OSCILLATOR_NUMBER)
+
+struct _tick_message
+{
+	uint32_t tick;
+	uint32_t message;
+} s_illusion_tick_message[MAX_ILLUSION_TICK_MESSAGE_NUMBER];
+
+static uint32_t s_occupied_illusion_tick_message_number = 0;
+
+#define IS_NULL_TICK_MESSAGE(MESSAGE_TICK)			\
+								(((NULL_TICK == (MESSAGE_TICK).tick) && (NULL_MESSAGE == (MESSAGE_TICK).message) ) ? true : false)
+
+#define SET_TICK_MESSAGE_NULL(MESSAGE_TICK)			\
+								do { \
+									(MESSAGE_TICK).tick = NULL_TICK; \
+									(MESSAGE_TICK).message = NULL_MESSAGE; \
+								} while(0)
+
+
+static struct _tick_message s_reality_tick_message = { NULL_MESSAGE, NULL_TICK};
+
+int fetch_midi_message(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message)
+{
+	do
+	{
+		if(false == IS_NULL_TICK_MESSAGE(s_reality_tick_message)){
+			break;
+		}
+
+		if(0 > s_handler_get_midi_message(index, p_tick, p_message)){
+			break;
+		}
+
+		s_reality_tick_message.tick = *p_tick;
+		s_reality_tick_message.message = *p_message;
+	}while(0);
+
+	struct _tick_message *p_tick_message;
+	p_tick_message = &s_reality_tick_message;
+	do
+	{
+		if(0 == s_occupied_illusion_tick_message_number){
+			break;
+		}
+
+		for(int i = 0; i < MAX_ILLUSION_TICK_MESSAGE_NUMBER; i++){
+			if(true == IS_NULL_TICK_MESSAGE(s_illusion_tick_message[i])){
+				continue;
+			}
+			do
+			{
+				if(true == IS_NULL_TICK_MESSAGE(*p_tick_message)){
+					p_tick_message = &s_illusion_tick_message[i];
+					break;
+				}
+
+				if(s_illusion_tick_message[i].tick < p_tick_message->tick){
+					p_tick_message = &s_illusion_tick_message[i];
+				}
+			}while(0);
+		}
+	}while(0);
+
+	int ret = 0;
+	do
+	{
+		if(true == IS_NULL_TICK_MESSAGE(*p_tick_message)){
+			ret = -1;
+			break;
+		}
+
+		*p_tick = p_tick_message->tick;
+		*p_message = p_tick_message->message;
+		SET_TICK_MESSAGE_NULL(*p_tick_message);
+		do{
+			if(p_tick_message == &s_reality_tick_message){
+				ret = 1;
+				break;
+			}
+			s_occupied_illusion_tick_message_number -= 1;
+		}while(0);
+
+		if(true == IS_NULL_TICK_MESSAGE(s_reality_tick_message)){
+			s_handler_get_midi_message(index, p_tick, p_message);
+		}
+	}while(0);
+
+	return ret;
+}
+
+/**********************************************************************************/
+
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 
 static  uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semitones,
@@ -140,91 +237,10 @@ static  uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semi
 
 /**********************************************************************************/
 
-#define NULL_TICK								(UINT32_MAX)
-#define NULL_MESSAGE							(0)
-
-#define MAX_ILLUSION_TICK_MESSAGE_NUMBER		(MAX_OSCILLATOR_NUMBER)
-
-struct _tick_message
-{
-	uint32_t tick;
-	uint32_t message;
-} s_illusion_tick_message[MAX_ILLUSION_TICK_MESSAGE_NUMBER];
-
-#define IS_NULL_TICK_MESSAGE(MESSAGE_TICK)			\
-								(((NULL_TICK == (MESSAGE_TICK).tick) && (NULL_MESSAGE == (MESSAGE_TICK).message) ) ? true : false)
-
-#define SET_TICK_MESSAGE_NULL(MESSAGE_TICK)			\
-								do { \
-									(MESSAGE_TICK).tick = NULL_TICK; \
-									(MESSAGE_TICK).message = NULL_MESSAGE; \
-								} while(0)
-
-
-static struct _tick_message s_reality_tick_message = { NULL_MESSAGE, NULL_TICK};
-
-int fetch_midi_message(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message)
-{
-	if(true == IS_NULL_TICK_MESSAGE(s_reality_tick_message))
-	{
-		do
-		{
-			if(0 > s_handler_get_midi_message(index, p_tick, p_message)){
-				break;
-			}
-
-			s_reality_tick_message.tick = *p_tick;
-			s_reality_tick_message.message = *p_message;
-		}while(0);
-	}
-
-	struct _tick_message *p_tick_message;
-	p_tick_message = &s_reality_tick_message;
-	for(int i = 0; i < MAX_ILLUSION_TICK_MESSAGE_NUMBER; i++){
-		if(true == IS_NULL_TICK_MESSAGE(s_illusion_tick_message[i])){
-			continue;
-		}
-		do
-		{
-			if(true == IS_NULL_TICK_MESSAGE(*p_tick_message)){
-				p_tick_message = &s_illusion_tick_message[i];
-				break;
-			}
-
-			if(s_illusion_tick_message[i].tick < p_tick_message->tick){
-				p_tick_message = &s_illusion_tick_message[i];
-			}
-		}while(0);
-	}
-
-	int ret = 0;
-	do
-	{
-		if(true == IS_NULL_TICK_MESSAGE(*p_tick_message)){
-			ret = -1;
-			break;
-		}
-
-		*p_tick = p_tick_message->tick;
-		*p_message = p_tick_message->message;
-		if(p_tick_message == &s_reality_tick_message){
-			ret = 1;
-		}
-
-		SET_TICK_MESSAGE_NULL((*p_tick_message));
-
-		if(true == IS_NULL_TICK_MESSAGE(s_reality_tick_message)){
-			s_handler_get_midi_message(index, p_tick, p_message);
-		}
-	}while(0);
-
-	return ret;
-}
-
-/**********************************************************************************/
-
 #include <stdlib.h>
 
+#define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
+												(((DIVIDE_BY_2(RAND_MAX) + 1)- (VALUE))/(float)(DIVIDE_BY_2(RAND_MAX) + 1))
 static float pitch_chorus_bend_in_semitone(uint8_t const voice, bool is_reality_message)
 {
 	if(0 == s_channel_controller[voice].chorus){
@@ -239,8 +255,6 @@ static float pitch_chorus_bend_in_semitone(uint8_t const voice, bool is_reality_
 	int random = rand();
 	float pitch_chorus_bend_in_semitone;
 #define	MAX_CHORUS_PITCH_BEND_IN_SEMITONE			(0.25f)
-#define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
-												((((RAND_MAX >> 1) + 1)- (VALUE))/(float)((RAND_MAX >> 1) + 1))
 	pitch_chorus_bend_in_semitone = RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) * MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
 	pitch_chorus_bend_in_semitone *= s_channel_controller[voice].chorus/127.0f;
 	//CHIPTUNE_PRINTF(cDeveloping, "pitch_chorus_bend_in_semitone = %3.2f\r\n", pitch_chorus_bend_in_semitone);
@@ -263,16 +277,18 @@ static int append_chorus_illusion_message(uint32_t const tick, bool const is_not
 										  uint8_t const voice, uint8_t const note, uint8_t const velocity,
 										  int const original_oscillator_index)
 {
-
 	if(0 == s_channel_controller[voice].chorus){
 		return 1;
 	}
 
+#define CHORUS_OSCILLATOR_NUMBER					(4)
+	if(MAX_ILLUSION_TICK_MESSAGE_NUMBER  < s_occupied_illusion_tick_message_number + (CHORUS_OSCILLATOR_NUMBER - 1)){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR::available illusion_tick_message is not enough\r\n");
+		return -1;
+	}
+
 #define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
 #define OSCILLATOR_NUMBER_FOR_CHORUS(VALUE)			(DIVIDE_BY_16(((VALUE) + 15)))
-
-	//int oscillator_number_for_chorus = OSCILLATOR_NUMBER_FOR_CHORUS(s_channel_controller[voice].chorus);
-#define CHORUS_OSCILLATOR_NUMBER					(4)
 
 	uint8_t averaged_velocity = DIVIDE_BY_16(velocity);
 	// oscillator 1 : 4 * averaged_velocity
@@ -294,22 +310,22 @@ static int append_chorus_illusion_message(uint32_t const tick, bool const is_not
 		s_illusion_tick_message[i].message = MAKE_NOTE_MESSAGE(is_note_on, voice, note,
 															   oscillator_velocity);
 		kk += 1;
+
 		//CHIPTUNE_PRINTF(cDeveloping, "oscillator_velocity = %u\r\n", oscillator_velocity);
 		if(CHORUS_OSCILLATOR_NUMBER == kk){
 			break;
 		}
 		oscillator_velocity += averaged_velocity;
 	}
-
-	if(CHORUS_OSCILLATOR_NUMBER != kk){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR::all illusion_tick_message are used\r\n");
-		return -1;
-	}
-
+	s_occupied_illusion_tick_message_number += (CHORUS_OSCILLATOR_NUMBER - 1);
 	return 0;
 }
 
 /**********************************************************************************/
+
+#define DIVIDE_BY_8(VALUE)							((VALUE) >> 3)
+#define REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(VALUE)	\
+													DIVIDE_BY_8(VALUE)
 
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 uint8_t const voice, uint8_t const note, uint8_t const velocity, bool is_reality_message)
@@ -320,15 +336,16 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	do
 	{
 		if(true == is_note_on){
+
+			if(MAX_OSCILLATOR_NUMBER == s_occupied_oscillator_number){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillator are used\r\n");
+				return -1;
+			}
+
 			for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
 				 if(UNUSED_OSCILLATOR == s_oscillator[ii].voice){
 					 break;
 				 }
-			}
-
-			if(MAX_OSCILLATOR_NUMBER == ii){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillator are used\r\n");
-				return -1;
 			}
 
 			RESET_STATE_BITES(s_oscillator[ii].state_bits);
@@ -351,8 +368,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 			s_oscillator[ii].pitch_chorus_bend_in_semitone
 					= pitch_chorus_bend_in_semitone(voice, is_reality_message);
-#define	VIBRATION_DELTA_IN_SEMITINE					(1)
-			s_oscillator[ii].delta_vibration_phase = calculate_delta_phase(s_oscillator[ii].note + VIBRATION_DELTA_IN_SEMITINE,
+#define	VIBRATION_AMPLITUDE_IN_SEMITINE				(1)
+			s_oscillator[ii].delta_vibration_phase = calculate_delta_phase(s_oscillator[ii].note + VIBRATION_AMPLITUDE_IN_SEMITINE,
 																		   s_channel_controller[voice].tuning_in_semitones,
 																	   s_channel_controller[voice].pitch_wheel_bend_range_in_semitones,
 																	   s_channel_controller[voice].pitch_wheel,
@@ -361,6 +378,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			s_oscillator[ii].delta_vibration_phase -= s_oscillator[ii].delta_phase;
 			s_oscillator[ii].vibration_table_index = 0;
 			s_oscillator[ii].vibration_same_index_count = 0;
+
+			s_occupied_oscillator_number += 1;
 			break;
 		}
 
@@ -382,16 +401,22 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		{
 			if(true == IS_DAMPER_PEDAL_ON(s_oscillator[ii].state_bits))
 			{
-#define DIVIDE_BY_8(VALUE)							((VALUE) >> 3)
-#define REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(VALUE)	DIVIDE_BY_8(VALUE)
 				SET_NOTE_OFF(s_oscillator[ii].state_bits);
 				s_oscillator[ii].volume
 						= REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_RELEASED(s_oscillator[ii].volume);
 				break;
 			}
 			s_oscillator[ii].voice = UNUSED_OSCILLATOR;
+			s_occupied_oscillator_number -= 1;
 		}while(0);
+
 	}while(0);
+
+	char pitch_wheel_bend_string[32] = "";
+	if(true == is_note_on && 0.0f != pitch_wheel_bend_in_semitone){
+		snprintf(&pitch_wheel_bend_string[0], sizeof(pitch_wheel_bend_string),
+			", pitch wheel bend = %+3.2f", pitch_wheel_bend_in_semitone);
+	}
 
 #ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 	#ifdef _INCREMENTAL_SAMPLE_INDEX
@@ -405,12 +430,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	}
 	#endif
 #else
-
-	char pitch_wheel_bend_string[32] = "";
-	if(true == is_note_on && 0.0f != pitch_wheel_bend_in_semitone){
-		snprintf(&pitch_wheel_bend_string[0], sizeof(pitch_wheel_bend_string),
-			", pitch wheel bend = %+3.2f", pitch_wheel_bend_in_semitone);
-	}
 
 	do
 	{
@@ -432,7 +451,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	}while(0);
 
 #endif
-
 	do
 	{
 		if(false == is_reality_message){
@@ -462,17 +480,24 @@ static void process_pitch_wheel_message(uint32_t const tick, uint8_t const voice
 	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %u, value = %u\r\n",
 					tick, voice, value);
 	s_channel_controller[voice].pitch_wheel = value;
-	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(voice != s_oscillator[i].voice){
-			continue;
+	do
+	{
+		if( 0 == s_occupied_oscillator_number){
+			break;
 		}
-		float pitch_bend_in_semitone;
-		s_oscillator[i].delta_phase = calculate_delta_phase(s_oscillator[i].note, s_channel_controller[voice].tuning_in_semitones,
-														   s_channel_controller[voice].pitch_wheel_bend_range_in_semitones,
-														   s_channel_controller[voice].pitch_wheel, s_oscillator[i].pitch_chorus_bend_in_semitone, &pitch_bend_in_semitone);
 
-		CHIPTUNE_PRINTF(cNoteOperation, "---- voice = %u, note = %u, pitch bend = %+3.2f\r\n",voice, s_oscillator[i].note, pitch_bend_in_semitone);
-	}
+		for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+			if(voice != s_oscillator[i].voice){
+				continue;
+			}
+			float pitch_bend_in_semitone;
+			s_oscillator[i].delta_phase = calculate_delta_phase(s_oscillator[i].note, s_channel_controller[voice].tuning_in_semitones,
+															   s_channel_controller[voice].pitch_wheel_bend_range_in_semitones,
+															   s_channel_controller[voice].pitch_wheel, s_oscillator[i].pitch_chorus_bend_in_semitone, &pitch_bend_in_semitone);
+
+			CHIPTUNE_PRINTF(cNoteOperation, "---- voice = %u, note = %u, pitch bend = %+3.2f\r\n",voice, s_oscillator[i].note, pitch_bend_in_semitone);
+		}
+	}while(0);
 }
 
 /**********************************************************************************/
@@ -527,8 +552,8 @@ static void process_midi_message(uint32_t const tick, uint32_t const message, bo
 		process_pitch_wheel_message(tick, voice, COMBINE_AS_PITCH_WHEEL_14BITS(u.data_as_bytes[1], u.data_as_bytes[2]) );
 		break;
 	default:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE code = %u :: voice = %u, byte 1 = %u, byte 2 = %u %s\r\n",
-						tick, type, voice, u.data_as_bytes[1], u.data_as_bytes[2], "(NOT IMPLEMENTED YET)");
+		//CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE code = %u :: voice = %u, byte 1 = %u, byte 2 = %u %s\r\n",
+		//				tick, type, voice, u.data_as_bytes[1], u.data_as_bytes[2], "(NOT IMPLEMENTED YET)");
 		break;
 	}
 }
@@ -565,12 +590,16 @@ static int process_timely_midi_message(void)
 
 	while(1)
 	{
+#if(0)
 		if(s_total_message_number <= s_midi_messge_index){
-			break;
+			return -1;
 		}
-
+#endif
 		int consumed_reailty_message_number = fetch_midi_message(s_midi_messge_index, &tick, &message);
 		if(0 > consumed_reailty_message_number){
+			if(true == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)){
+				return -1;
+			}
 			break;
 		}
 		s_midi_messge_index += consumed_reailty_message_number;
@@ -586,25 +615,7 @@ static int process_timely_midi_message(void)
 		ii += 1;
 	}
 
-	if(0 == ii){
-		return -1;
-	}
-
 	return ii;
-}
-
-/**********************************************************************************/
-
-static inline bool is_all_oscillators_unused(void)
-{
-	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(UNUSED_OSCILLATOR == s_oscillator[i].voice){
-			continue;
-		}
-		return false;
-	}
-
-	return true;
 }
 
 /**********************************************************************************/
@@ -622,7 +633,12 @@ static uint32_t get_max_simultaneous_amplitude(void)
 	midi_messge_index += 1;
 	process_midi_message(previous_tick, message, false);
 
-	while(midi_messge_index < s_total_message_number){
+#if(0)
+	//while(midi_messge_index < s_total_message_number)
+#else
+	while(1)
+#endif
+	{
 		uint32_t tick;
 		int consumed_reailty_message_number = fetch_midi_message(midi_messge_index, &tick, &message);
 		if(0 > consumed_reailty_message_number){
@@ -653,9 +669,10 @@ static uint32_t get_max_simultaneous_amplitude(void)
 
 	}
 
-	if(false == is_all_oscillators_unused()){
+	if(0 != s_occupied_oscillator_number){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: not all oscillators released\r\n");
 	}
+
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
 	return max_amplitude;
 }
@@ -802,7 +819,6 @@ inline static void increase_time_base_for_fast_to_ending(void)
 
 #endif
 
-
 /**********************************************************************************/
 
 #ifdef _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
@@ -814,10 +830,15 @@ inline static void increase_time_base_for_fast_to_ending(void)
 #define INT16_MAX_PLUS_1							(INT16_MAX + 1)
 #define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
 
+#define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
+#define NORMALIZE_VIBRAION_DELTA_PHASE_AMPLITUDE(VALUE)	\
+													DIVIDE_BY_128(DIVIDE_BY_128(VALUE))
+#define REGULATE_MODULATION_WHEEL(VALUE)			(VALUE + 1)
+
 int16_t chiptune_fetch_16bit_wave(void)
 {
 	if(-1 == process_timely_midi_message()){
-		if(true == is_all_oscillators_unused()){
+		if(0 == s_occupied_oscillator_number){
 			s_is_tune_ending = true;
 		}
 	}
@@ -834,15 +855,11 @@ int16_t chiptune_fetch_16bit_wave(void)
 			if(0 ==  s_channel_controller[s_oscillator[i].voice].modulation_wheel){
 				break;
 			}
-#define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
-#define NORMALIZE_VIBRAION_DELTA_PHASE_AMPLITUDE(VALUE)	\
-													DIVIDE_BY_128(DIVIDE_BY_128(VALUE))
-#define REGULATE_MODULATION_WHEEL(VALUE)			(VALUE + 1)
 
 			uint16_t delta_vibration_phase = s_oscillator[i].delta_vibration_phase;
-
-			uint32_t vibration_amplitude = REGULATE_MODULATION_WHEEL(s_channel_controller[s_oscillator[i].voice].modulation_wheel)
-					* s_vibration_phase_table[s_oscillator[i].vibration_table_index];
+			uint32_t vibration_amplitude
+					= REGULATE_MODULATION_WHEEL(s_channel_controller[s_oscillator[i].voice].modulation_wheel)
+						* s_vibration_phase_table[s_oscillator[i].vibration_table_index];
 
 			delta_vibration_phase = NORMALIZE_VIBRAION_DELTA_PHASE_AMPLITUDE(vibration_amplitude * delta_vibration_phase);
 			s_oscillator[i].current_phase += delta_vibration_phase;
