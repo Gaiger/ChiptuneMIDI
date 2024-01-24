@@ -356,12 +356,11 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 #define CHORUS_UNAVERGAE_WEIGHT(VALUE)				MULTIPLY_BY_2(VALUE)
 
 		int oscillator_number_for_chorus = OSCILLATOR_NUMBER_FOR_CHORUS(s_channel_controller[voice].chorus);
-		oscillator_number_for_chorus = 8;
-		uint8_t working_velocity = 128; //=  velocity;
+		//oscillator_number_for_chorus = 8;
+		uint8_t working_velocity =  velocity;
 		uint8_t averaged_velocity = working_velocity/oscillator_number_for_chorus;
 		uint8_t oscillator_velocity = averaged_velocity;
 		s_oscillator[ii].volume = oscillator_velocity * s_channel_controller[voice].playing_volume;
-		int16_t remain_velocity = working_velocity - oscillator_velocity;
 
 #define EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND				(0.006)
 		uint32_t chorus_delta_tick = (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ (60.0) + 0.5);
