@@ -53,6 +53,16 @@ static chiptune_float s_delta_tick_per_sample = (DEFAULT_RESOLUTION / ( (chiptun
 #define UPDATE_TIME_BASE_UNIT()						UPDATE_DELTA_TICK_PER_SAMPLE()
 #endif
 
+#define EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND				(0.006)
+
+uint32_t s_chorus_delta_tick = (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND * DEFAULT_TEMPO * DEFAULT_RESOLUTION / (60.0) + 0.5);
+
+#define	UPDATE_CHORUS_DELTA_TICK()					\
+													do { \
+														 s_chorus_delta_tick \
+															= (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ 60.0 + 0.5); \
+													} while(0);
+
 static int(*s_handler_get_midi_message)(uint32_t index,uint32_t * const p_tick, uint32_t * const p_message) = NULL;
 
 static bool s_is_tune_ending = false;
@@ -255,10 +265,16 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			SET_NOTE_ON(s_oscillator[ii].state_bits);
 			float additional_pitch_bend_in_semitones = 0.0;
 #if(1)		//TODO :: too complex
-			if(0 < s_channel_controller[voice].chorus){
+			do
+			{
+				if(true == is_reality_message){
+					break;
+				}
+				if(0 == s_channel_controller[voice].chorus){
+					break;
+				}
 				SET_CHURUS_OSCILLATOR(s_oscillator[ii].state_bits);
 				int random = rand();
-
 #define	MAX_CHORUS_PITCH_BEND_IN_SEMITONE			(0.25f)
 #define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
 							(((RAND_MAX >> 1) - (VALUE))/(float)(RAND_MAX >> 1))
@@ -266,7 +282,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				additional_pitch_bend_in_semitones *= s_channel_controller[voice].chorus/127.0f;
 				//CHIPTUNE_PRINTF(cDeveloping, "additional_pitch_bend_in_semitones = %3.2f\r\n", additional_pitch_bend_in_semitones);
 				s_oscillator[ii].additional_pitch_bend_in_semitone = additional_pitch_bend_in_semitones;
-			}
+			} while(0);
 #endif
 
 			s_oscillator[ii].voice = voice;
@@ -368,8 +384,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		uint8_t oscillator_velocity = velocity - (4 + 5  + 6) * averaged_velocity;
 		//CHIPTUNE_PRINTF(cDeveloping, "oscillator_velocity = %u\r\n", oscillator_velocity);
 		s_oscillator[ii].volume = oscillator_velocity * s_channel_controller[voice].playing_volume;
-#define EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND				(0.006)
-		uint32_t chorus_delta_tick = (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ (60.0) + 0.5);
+
 		int kk = 1;
 		oscillator_velocity = 4 * averaged_velocity;
 		for(int i = 0; i < MAX_ILLUSION_TICK_MESSAGE_NUMBER; i++){
@@ -377,7 +392,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				continue;
 			}
 
-			s_illusion_tick_message[i].tick  =  tick + (kk * chorus_delta_tick);
+			s_illusion_tick_message[i].tick  =  tick + (kk * s_chorus_delta_tick);
 			s_illusion_tick_message[i].message = MAKE_NOTE_MESSAGE(is_note_on, voice, note,
 																   oscillator_velocity);
 			kk += 1;
@@ -708,6 +723,7 @@ void chiptune_set_tempo(float const tempo)
 	CORRECT_TIME_BASE();
 	s_tempo = (chiptune_float)tempo;
 	UPDATE_TIME_BASE_UNIT();
+	UPDATE_CHORUS_DELTA_TICK();
 }
 
 /**********************************************************************************/
