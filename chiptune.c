@@ -343,96 +343,40 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 	do
 	{
-		if(0 == s_channel_controller[voice].chorus){
-			break;
-		}
-
 		if(false == is_reality_message){
 			break;
 		}
 
+		if(0 == s_channel_controller[voice].chorus){
+			break;
+		}
 #define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
-#define OSCILLATOR_NUMBER_FOR_CHORUS(VALUE)			(DIVIDE_BY_16(((VALUE) + 15) + 1))
+#define OSCILLATOR_NUMBER_FOR_CHORUS(VALUE)			(DIVIDE_BY_16(((VALUE) + 15)))
+#define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
+#define CHORUS_UNAVERGAE_WEIGHT(VALUE)				MULTIPLY_BY_2(VALUE)
+
 		int oscillator_number_for_chorus = OSCILLATOR_NUMBER_FOR_CHORUS(s_channel_controller[voice].chorus);
-		//oscillator_number_for_chorus = 1;
-		uint8_t remain_velocity = velocity;
-		uint8_t min_velocity = 1;
-		uint8_t oscillator_velocity = 1;
-		//CHIPTUNE_PRINTF(cDeveloping, "remain_velocity = %u, oscillator_number_for_chorus = %d\r\n",
-		//				remain_velocity, oscillator_number_for_chorus);
-		do
-		{
-			if(oscillator_number_for_chorus > 4){
-				min_velocity = (remain_velocity + 15)/ 16;
-				oscillator_velocity = 3 * min_velocity;
-				break;
-			}
+		oscillator_number_for_chorus = 8;
+		uint8_t working_velocity = 128; //=  velocity;
+		uint8_t averaged_velocity = working_velocity/oscillator_number_for_chorus;
+		uint8_t oscillator_velocity = averaged_velocity;
+		s_oscillator[ii].volume = oscillator_velocity * s_channel_controller[voice].playing_volume;
+		int16_t remain_velocity = working_velocity - oscillator_velocity;
 
-			if(oscillator_number_for_chorus > 2){
-				min_velocity = (remain_velocity + 7)/ 8;
-				oscillator_velocity = 2 * min_velocity;
-				break;
-			}
-
-			min_velocity = (remain_velocity + 3)/ 4;
-			oscillator_velocity = 1 * min_velocity;
-		} while(0);
-
-		//CHIPTUNE_PRINTF(cDeveloping, "kk = %d, velocity = %u\r\n", 0, oscillator_velocity);
-		s_oscillator[ii].volume = oscillator_velocity * (uint16_t)s_channel_controller[voice].playing_volume;
-		remain_velocity -= oscillator_velocity;
+#define EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND				(0.006)
+		uint32_t chorus_delta_tick = (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ (60.0) + 0.5);
 		int kk = 1;
-#define EACH_CHORUS_DELAY_TIME_IN_SECOND				(0.0025)
-		uint32_t chorus_delta_tick = (uint32_t)(EACH_CHORUS_DELAY_TIME_IN_SECOND * s_tempo * s_resolution/ (60.0) );
 		for(int i = 0; i < MAX_ILLUSION_TICK_MESSAGE_NUMBER; i++){
 			if(false == IS_NULL_TICK_MESSAGE( s_illusion_tick_message[i])){
 				continue;
 			}
 
-			oscillator_velocity =  remain_velocity / (kk + 1);
-			//CHIPTUNE_PRINTF(cDeveloping, "oscillator_velocity = %u\r\n", oscillator_velocity );
+			oscillator_velocity = averaged_velocity;
+			s_illusion_tick_message[i].tick  =  tick + (kk * chorus_delta_tick);
+			s_illusion_tick_message[i].message = MAKE_NOTE_MESSAGE(is_note_on, voice, note,
+																   oscillator_velocity);
 			kk += 1;
-
 			if(oscillator_number_for_chorus == kk){
-				//CHIPTUNE_PRINTF(cDeveloping, "kk = %d, velocity = %u\r\n", kk - 1, remain_velocity);
-				s_illusion_tick_message[i].tick  =  tick + chorus_delta_tick;
-				s_illusion_tick_message[i].message = MAKE_NOTE_MESSAGE(is_note_on, voice, note, remain_velocity);
-				break;
-			}
-
-			bool is_end = false;
-			do
-			{
-				if(remain_velocity > oscillator_velocity && oscillator_velocity > 0){
-					s_illusion_tick_message[i].tick = tick + chorus_delta_tick * (kk + 1);
-					s_illusion_tick_message[i].message = MAKE_NOTE_MESSAGE(is_note_on, voice, note, oscillator_velocity);
-					remain_velocity -= oscillator_velocity;
-					//CHIPTUNE_PRINTF(cDeveloping, "kk = %d, velocity = %u, remain_velocity = %u\r\n", kk - 1,
-					//				oscillator_velocity, remain_velocity);
-					if(0 < remain_velocity){
-						break;
-					}
-				}
-
-				if( 0 < oscillator_velocity && 0 < remain_velocity){
-					s_illusion_tick_message[i].tick = tick + chorus_delta_tick * (kk + 1);
-					s_illusion_tick_message[i].message = MAKE_NOTE_MESSAGE(is_note_on, voice, note, remain_velocity);
-					//CHIPTUNE_PRINTF(cDeveloping, "kk = %d, velocity = %u, remain_velocity = %u\r\n", kk - 1,
-					//				oscillator_velocity, remain_velocity);
-					remain_velocity = 0;
-
-				}
-
-				if(oscillator_number_for_chorus == kk){
-					break;
-				}
-
-				is_end = true;
-				oscillator_number_for_chorus = kk;
-			}while(0);
-
-			if(true == is_end){
-				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: velocity too small to enable full chorus\r\n");
 				break;
 			}
 		}
