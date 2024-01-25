@@ -843,6 +843,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 		}
 	}
 
+	uint32_t kk = 0;
 	int64_t accumulated_value = 0;
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		if(UNUSED_OSCILLATOR == s_oscillator[i].voice){
@@ -897,6 +898,11 @@ int16_t chiptune_fetch_16bit_wave(void)
 		accumulated_value += (value * s_oscillator[i].volume);
 
 		s_oscillator[i].current_phase += s_oscillator[i].delta_phase;
+
+		kk += 1;
+		if(kk == s_occupied_oscillator_number){
+			break;
+		}
 	}
 
 	INCREMENT_TIME_BASE();
