@@ -11,10 +11,6 @@
 
 #include "chiptune.h"
 
-
-
-
-
 #ifdef _INCREMENTAL_SAMPLE_INDEX
 typedef float chiptune_float;
 #else
@@ -80,6 +76,7 @@ static struct _channel_controller s_channel_controller[MAX_VOICE_NUMBER];
 
 static struct _oscillator s_oscillator[MAX_OSCILLATOR_NUMBER];
 static uint32_t s_occupied_oscillator_number = 0;
+
 /**********************************************************************************/
 
 static void process_program_change_message(uint32_t const tick, uint8_t const voice, uint8_t const number)
@@ -241,6 +238,7 @@ static  uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semi
 
 #define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
 												(((DIVIDE_BY_2(RAND_MAX) + 1)- (VALUE))/(float)(DIVIDE_BY_2(RAND_MAX) + 1))
+
 static float pitch_chorus_bend_in_semitone(uint8_t const voice, bool is_reality_message)
 {
 	if(0 == s_channel_controller[voice].chorus){
@@ -378,7 +376,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			s_oscillator[ii].delta_vibration_phase -= s_oscillator[ii].delta_phase;
 			s_oscillator[ii].vibration_table_index = 0;
 			s_oscillator[ii].vibration_same_index_count = 0;
-
+			SET_ACTIVATED_ON(s_oscillator[ii].state_bits);
 			s_occupied_oscillator_number += 1;
 			break;
 		}
@@ -849,6 +847,9 @@ int16_t chiptune_fetch_16bit_wave(void)
 		if(UNUSED_OSCILLATOR == s_oscillator[i].voice){
 			continue;
 		}
+		if(false == IS_ACTIVATED(s_oscillator[i].state_bits)){
+			goto Flag_oscillator_take_effect_end;
+		}
 
 		int16_t value = 0;
 		do
@@ -899,6 +900,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 
 		s_oscillator[i].current_phase += s_oscillator[i].delta_phase;
 
+Flag_oscillator_take_effect_end:
 		kk += 1;
 		if(kk == s_occupied_oscillator_number){
 			break;
