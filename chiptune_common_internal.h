@@ -11,8 +11,7 @@
 #define _PRINT_DEVELOPING
 #define _PRINT_MIDI_SETUP
 #define _PRINT_NOTE_OPERATION
-#define _PRINT_OSCILLATOR_TRANSITION
-
+//#define _PRINT_OSCILLATOR_TRANSITION
 
 enum
 {
@@ -47,8 +46,9 @@ struct _channel_controller
 	uint16_t	pitch_wheel_bend_range_in_semitones;
 	uint16_t	pitch_wheel;
 
+	bool		is_damper_pedal_on;
+	uint8_t		: 8;
 	uint8_t		modulation_wheel;
-
 	uint8_t		chorus;
 
 	uint16_t	registered_parameter_number;
@@ -77,6 +77,8 @@ struct _oscillator
 	uint16_t	delta_vibration_phase;
 	uint16_t	vibration_table_index;
 	uint32_t	vibration_same_index_count;
+
+	int16_t		native_oscillator;
 };
 
 #define MAX_VOICE_NUMBER							(16)
@@ -96,15 +98,10 @@ struct _oscillator
 #define SET_NOTE_OFF(STATE_BITS)					( (STATE_BITS) &= (~(0x01 << STATE_NOTE_BIT)) )
 #define IS_NOTE_ON(STATE_BITS)						(((0x01 << STATE_NOTE_BIT) & (STATE_BITS) ) ? true : false)
 
-#define STATE_DAMPER_PEDAL_BIT						(2)
-#define SET_DAMPER_PEDAL_ON(STATE_BITS)				( (STATE_BITS) |= ((0x01)<< STATE_DAMPER_PEDAL_BIT) )
-#define SET_DAMPER_PEDAL_OFF(STATE_BITS)			( (STATE_BITS) &= (~((0x01)<< STATE_DAMPER_PEDAL_BIT)))
-#define IS_DAMPER_PEDAL_ON(STATE_BITS)				(((0x01 << STATE_DAMPER_PEDAL_BIT) & (STATE_BITS)) ? true : false)
-
-#define STATE_CHURUS_BIT							(3)
-#define SET_CHORUS(STATE_BITS)						( (STATE_BITS) |= ((0x01)<< STATE_CHURUS_BIT))
-#define RESET_CHORUS(STATE_BITS)					( (STATE_BITS) &= (~((0x01)<< STATE_CHURUS_BIT)))
-#define IS_CHURUS_OSCILLATOR(STATE_BITS)			(((0x01 << STATE_CHURUS_OSCILLATOR_BIT) & (STATE_BITS)) ? true : false)
+#define STATE_CHORUS_OSCILLATOR_BIT					(2)
+#define SET_CHORUS_OSCILLATOR(STATE_BITS)			( (STATE_BITS) |= ((0x01)<< STATE_CHORUS_OSCILLATOR_BIT))
+//#define RESET_CHORUS_OSCILLATOR(STATE_BITS)			( (STATE_BITS) &= (~((0x01)<< STATE_CHORUS_OSCILLATOR_BIT)))
+#define IS_CHORUS_OSCILLATOR(STATE_BITS)			(((0x01 << STATE_CHORUS_OSCILLATOR_BIT) & (STATE_BITS)) ? true : false)
 
 #define MIDI_CC_CENTER_VALUE						(64)
 #define MIDI_PITCH_WHEEL_CENTER						(0x2000)

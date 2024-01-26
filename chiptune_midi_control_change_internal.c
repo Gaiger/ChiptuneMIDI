@@ -20,8 +20,13 @@ void reset_channel_controller(struct _channel_controller * const p_channel_contr
 
 	p_channel_controller->pitch_wheel_bend_range_in_semitones = MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES;
 	p_channel_controller->pitch_wheel = MIDI_PITCH_WHEEL_CENTER;
+
+	p_channel_controller->is_damper_pedal_on = false;
+
 	p_channel_controller->modulation_wheel = 0;
+
 	p_channel_controller->chorus = 0;
+
 	p_channel_controller->registered_parameter_number = MIDI_CC_RPN_NULL;
 	p_channel_controller->registered_parameter_value = 0;
 }
@@ -128,6 +133,10 @@ static inline void process_cc_expression(struct _channel_controller * const p_ch
 
 /**********************************************************************************/
 
+int process_chorus_effect(uint32_t const tick, bool const is_note_on,
+						   uint8_t const voice, uint8_t const note, uint8_t const velocity,
+						   int const original_oscillator_index);
+
 static void process_cc_damper_pedal(struct _channel_controller * const p_channel_controllers,
 									 struct _oscillator * const p_oscillators,
 									 uint32_t const tick, uint8_t const voice, uint8_t const value)
@@ -135,14 +144,20 @@ static void process_cc_damper_pedal(struct _channel_controller * const p_channel
 	bool is_damper_pedal_on = (value < MIDI_CC_CENTER_VALUE) ? false : true;
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %u, %s\r\n",
 					tick, voice, is_damper_pedal_on? "on" : "off");
+
+	p_channel_controllers->is_damper_pedal_on = is_damper_pedal_on;
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		if( voice == p_oscillators[i].voice){
 			if(false == IS_NOTE_ON(p_oscillators[i].state_bits)){
-				p_oscillators[i].voice = UNUSED_OSCILLATOR;
+				do {
+					if(p_channel_controllers[voice].chorus > 0){
+						process_chorus_effect(tick, is_damper_pedal_on, voice, p_oscillators[i].note,
+										  p_oscillators->volume/p_channel_controllers->playing_volume, i);
+					}
+					p_oscillators[i].voice = UNUSED_OSCILLATOR;
+				} while(0);
 				continue;
 			}
-
-			SET_DAMPER_PEDAL_OFF(p_oscillators[i].state_bits);
 		}
 	}
 }
