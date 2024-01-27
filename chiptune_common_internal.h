@@ -11,7 +11,7 @@
 #define _PRINT_DEVELOPING
 #define _PRINT_MIDI_SETUP
 #define _PRINT_NOTE_OPERATION
-//#define _PRINT_OSCILLATOR_TRANSITION
+#define _PRINT_OSCILLATOR_TRANSITION
 
 enum
 {
@@ -85,7 +85,6 @@ struct _oscillator
 #define MAX_OSCILLATOR_NUMBER						(MAX_VOICE_NUMBER * 4)
 
 #define UNUSED_OSCILLATOR							(-1)
-#define NO_EVENT									(-1)
 #define RESET_STATE_BITES(STATE_BITES)				((STATE_BITES) = 0)
 
 #define STATE_ACTIVATED_BIT							(0)
@@ -103,9 +102,13 @@ struct _oscillator
 //#define RESET_CHORUS_OSCILLATOR(STATE_BITS)			( (STATE_BITS) &= (~((0x01)<< STATE_CHORUS_OSCILLATOR_BIT)))
 #define IS_CHORUS_OSCILLATOR(STATE_BITS)			(((0x01 << STATE_CHORUS_OSCILLATOR_BIT) & (STATE_BITS)) ? true : false)
 
+#define NULL_TICK									(UINT32_MAX)
+
+
 #define MIDI_CC_CENTER_VALUE						(64)
 #define MIDI_PITCH_WHEEL_CENTER						(0x2000)
 #define MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES	\
 													(2 * 2)
+
 
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_
