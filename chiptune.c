@@ -580,14 +580,37 @@ static void process_pitch_wheel_message(uint32_t const tick, uint8_t const voice
 
 /**********************************************************************************/
 
-static void process_midi_message(uint32_t const tick, uint32_t const message)
+struct _tick_message
 {
+	uint32_t tick;
+	uint32_t message;
+};
+
+#define NULL_TICK								(UINT32_MAX)
+#define NULL_MESSAGE							(0)
+
+#define IS_NULL_TICK_MESSAGE(MESSAGE_TICK)			\
+								(((NULL_TICK == (MESSAGE_TICK).tick) && (NULL_MESSAGE == (MESSAGE_TICK).message) ) ? true : false)
+
+#define SET_TICK_MESSAGE_NULL(MESSAGE_TICK)			\
+								do { \
+									(MESSAGE_TICK).tick = NULL_TICK; \
+									(MESSAGE_TICK).message = NULL_MESSAGE; \
+								} while(0)
+
+static void process_midi_message(struct _tick_message const tick_message)
+{
+	if(true == IS_NULL_TICK_MESSAGE(tick_message)){
+		return ;
+	}
+
 	union {
 		uint32_t data_as_uint32;
 		unsigned char data_as_bytes[4];
 	} u;
 
-	u.data_as_uint32 = message;
+	const uint32_t tick = tick_message.tick;
+	u.data_as_uint32 = tick_message.message;
 
 	uint8_t type =  u.data_as_bytes[0] & 0xF0;
 	uint8_t voice = u.data_as_bytes[0] & 0x0F;
@@ -635,25 +658,6 @@ static void process_midi_message(uint32_t const tick, uint32_t const message)
 
 /**********************************************************************************/
 
-
-struct _tick_message
-{
-	uint32_t tick;
-	uint32_t message;
-};
-
-#define NULL_TICK								(UINT32_MAX)
-#define NULL_MESSAGE							(0)
-
-#define IS_NULL_TICK_MESSAGE(MESSAGE_TICK)			\
-								(((NULL_TICK == (MESSAGE_TICK).tick) && (NULL_MESSAGE == (MESSAGE_TICK).message) ) ? true : false)
-
-#define SET_TICK_MESSAGE_NULL(MESSAGE_TICK)			\
-								do { \
-									(MESSAGE_TICK).tick = NULL_TICK; \
-									(MESSAGE_TICK).message = NULL_MESSAGE; \
-								} while(0)
-
 uint32_t s_midi_messge_index = 0;
 uint32_t s_total_message_number = 0;
 
@@ -677,7 +681,6 @@ int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_message
 
 /**********************************************************************************/
 
-struct _tick_message s_previous_tick_message = {NULL_TICK, NULL_MESSAGE};
 struct _tick_message s_fetched_tick_message = {NULL_TICK, NULL_MESSAGE};
 uint32_t s_fetched_event_tick = NULL_TICK;
 
@@ -691,26 +694,8 @@ static int process_timely_midi_message(void)
 				break;
 			}
 
-			while(1)
-			{
-				int ret = fetch_midi_tick_message(s_midi_messge_index, &s_fetched_tick_message);
-				if(0 > ret){
-					break;
-				}
-				bool is_stop_fetching = true;
-#if(0)
-				if(s_previous_tick_message.message == s_fetched_tick_message.message){
-					is_stop_fetching = false;
-					CHIPTUNE_PRINTF(cDeveloping,"INFO :: message %u is duplicate, tick = %u & %uignore\r\n",
-									s_midi_messge_index, s_previous_tick_message.tick, s_fetched_tick_message.message);
-				}
-#endif
-				s_midi_messge_index += 1;
-
-				if(true == is_stop_fetching){
-					break;
-				}
-			}
+			fetch_midi_tick_message(s_midi_messge_index, &s_fetched_tick_message);
+			s_midi_messge_index += 1;
 		} while(0);
 
 
@@ -727,10 +712,11 @@ static int process_timely_midi_message(void)
 		bool is_both_after_current_tick = true;
 
 		if(false == IS_AFTER_CURRENT_TIME(s_fetched_tick_message.tick)){
-			process_midi_message(s_fetched_tick_message.tick, s_fetched_tick_message.message);
-			s_previous_tick_message = s_fetched_tick_message;
+			process_midi_message(s_fetched_tick_message);
 			SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
 			is_both_after_current_tick = false;
+
+			s_fetched_event_tick = get_closest_time_event_tick();
 		}
 
 		do {
@@ -760,60 +746,36 @@ static uint32_t get_max_simultaneous_amplitude(void)
 	uint32_t max_amplitude = 0;
 	uint32_t previous_tick;
 
-	struct _tick_message current_tick_message;
+	struct _tick_message tick_message;
 	uint32_t event_tick = NULL_TICK;
 
-	fetch_midi_tick_message(midi_messge_index, &current_tick_message);
+	fetch_midi_tick_message(midi_messge_index, &tick_message);
 	midi_messge_index += 1;
-	process_midi_message(current_tick_message.tick, current_tick_message.message);
-	previous_tick = current_tick_message.tick;
-	SET_TICK_MESSAGE_NULL(current_tick_message);
+	process_midi_message(tick_message);
+	previous_tick = tick_message.tick;
+	SET_TICK_MESSAGE_NULL(tick_message);
 
 	while(1)
 	{
 		do {
-			if(false == IS_NULL_TICK_MESSAGE(current_tick_message)){
+			if(false == IS_NULL_TICK_MESSAGE(tick_message)){
 				break;
 			}
 
-			while(1)
-			{
-				int ret = fetch_midi_tick_message(midi_messge_index, &current_tick_message);
-				if(0 > ret){
-					break;
-				}
-				if(true == IS_NULL_TICK_MESSAGE( s_previous_tick_message)){
-					break;
-				}
-				bool is_stop_fetching = true;
-#if(0)
-				if(s_previous_tick_message.message == current_tick_message.message){
-					is_stop_fetching = false;
-					CHIPTUNE_PRINTF(cDeveloping,"INFO :: message %u is duplicate, tick = %u & %u, message = 0x%08x"
-												" ignore\r\n",
-									midi_messge_index, s_previous_tick_message.tick, current_tick_message.tick,
-									current_tick_message.message);
-					is_stop_fetching = false;
-				}
-#endif
-				midi_messge_index += 1;
-				if(true == is_stop_fetching){
-					break;
-				}
-			}
+			fetch_midi_tick_message(midi_messge_index, &tick_message);
+			midi_messge_index += 1;
 		} while(0);
 
 		if(NULL_TICK == event_tick){
 			event_tick = get_closest_time_event_tick();
 		}
 
-
-		if(true == IS_NULL_TICK_MESSAGE(current_tick_message)
+		if(true == IS_NULL_TICK_MESSAGE(tick_message)
 				&& NULL_TICK == event_tick){
 			break;
 		}
 
-		int const tick = (current_tick_message.tick < event_tick) ? current_tick_message.tick : event_tick;
+		int const tick = (tick_message.tick < event_tick) ? tick_message.tick : event_tick;
 
 		do
 		{
@@ -834,16 +796,11 @@ static uint32_t get_max_simultaneous_amplitude(void)
 			}
 		}while(0);
 
+		if(tick == tick_message.tick){
+			process_midi_message(tick_message);
+			SET_TICK_MESSAGE_NULL(tick_message);
 
-		if(tick == current_tick_message.tick){
-			if(792 == midi_messge_index - 1){
-				printf("midi_messge_index  = %u: message = %08x\r\n", midi_messge_index - 1,  current_tick_message.message);
-
-			}
-			process_midi_message(current_tick_message.tick, current_tick_message.message);
-			s_previous_tick_message = current_tick_message;
-
-			SET_TICK_MESSAGE_NULL(current_tick_message);
+			event_tick = get_closest_time_event_tick();
 		}
 
 		if(tick == event_tick){
@@ -939,16 +896,18 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		s_oscillators[i].voice = UNUSED_OSCILLATOR;
 	}
+	s_occupied_oscillator_number = 0;
 
 	for(int i = 0; i < MAX_TIME_EVENT_NUMBER; i++){
 		s_events[i].type = UNUSED_EVENT;
 	}
+	s_occupied_event_number = 0;
 
 	s_sampling_rate = sampling_rate;
 	s_resolution = resolution;
 	s_total_message_number = total_message_number;
 	for(int i = 0; i < VIBRATION_PHASE_TABLE_LENGTH; i++){
-		s_vibration_phase_table[i] = (int8_t)(INT8_MAX *  sinf( 2.0f * (float)M_PI * i / (float)VIBRATION_PHASE_TABLE_LENGTH));
+		s_vibration_phase_table[i] = (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)VIBRATION_PHASE_TABLE_LENGTH));
 	}
 	s_vibration_same_index_count_number = (uint32_t)(s_sampling_rate/(VIBRATION_PHASE_TABLE_LENGTH * (float)VIBRATION_FREQUENCY));
 
