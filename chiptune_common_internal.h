@@ -85,7 +85,7 @@ struct _oscillator
 #define MAX_OSCILLATOR_NUMBER						(MAX_VOICE_NUMBER * 4)
 
 #define UNUSED_OSCILLATOR							(-1)
-
+#define NO_EVENT									(-1)
 #define RESET_STATE_BITES(STATE_BITES)				((STATE_BITES) = 0)
 
 #define STATE_ACTIVATED_BIT							(0)

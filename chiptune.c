@@ -127,7 +127,7 @@ static void process_program_change_message(uint32_t const tick, uint8_t const vo
 
 /**********************************************************************************/
 
-#define MAX_TIME_EVENT_NUMBER					(4 * MAX_OSCILLATOR_NUMBER)
+#define MAX_EVENT_NUMBER							(4 * MAX_OSCILLATOR_NUMBER)
 
 enum TImeEventType
 {
@@ -143,102 +143,168 @@ struct _event
 	int8_t	type;
 	uint8_t : 8;
 	int16_t oscillator;
-	uint32_t created_tick;
 	uint32_t triggerring_tick;
+	int16_t next_event;
+}s_events[MAX_EVENT_NUMBER];
 
-	uint16_t native_oscillatoer;
-}s_events[MAX_TIME_EVENT_NUMBER];
+uint32_t s_waiting_event_number = 0;
+int16_t s_event_head_index = NO_EVENT;
 
-uint32_t s_occupied_event_number = 0;
+/**********************************************************************************/
+
+void check_waiting_events(uint32_t const tick)
+{
+	int16_t index = s_event_head_index;
+	bool is_error_occur = false;
+	uint32_t previous_tick = 0;
+	for(uint32_t i = 0; i < s_waiting_event_number; i++){
+
+		if(UNUSED_EVENT == s_events[index].type){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event element type error\r\n");
+			is_error_occur = true;
+		}
+
+		if(previous_tick > s_events[index].triggerring_tick){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event is not in time order\r\n");
+			is_error_occur = true;
+		}
+
+		previous_tick = s_events[index].triggerring_tick;
+		index = s_events[index].next_event;
+	}
+
+	do {
+		if(false == is_error_occur){
+			break;
+		}
+
+		CHIPTUNE_PRINTF(cDeveloping, "tick = %u\r\n", tick);
+		index = s_event_head_index;
+		for(uint32_t i = 0; i < s_waiting_event_number; i++){
+
+			CHIPTUNE_PRINTF(cDeveloping, "type = %d, oscillator = %u, triggerring_tick = %u\r\n",
+							s_events[index].type, s_events[index].oscillator, s_events[index].triggerring_tick);
+			index = s_events[index].next_event;
+		}
+
+		CHIPTUNE_PRINTF(cDeveloping, "-------------------------------------------------\r\n");
+		CHIPTUNE_PRINTF(cDeveloping, "-------------------------------------------------\r\n");
+	} while(0);
+	return ;
+}
+
+/**********************************************************************************/
+
+int put_event(int8_t type, int16_t oscillator, uint32_t triggerring_tick)
+{
+	if(MAX_EVENT_NUMBER == s_waiting_event_number){
+		CHIPTUNE_PRINTF(cDeveloping, "No event are available\r\n");
+		return -1;
+	}
+
+	do {
+		int current_index;
+		for(current_index = 0; current_index < MAX_EVENT_NUMBER; current_index++){
+			if(UNUSED_EVENT == s_events[current_index].type){
+				break;
+			}
+		}
+		s_events[current_index].type = type;
+		s_events[current_index].oscillator = oscillator;
+		s_events[current_index].triggerring_tick = triggerring_tick;
+		s_events[current_index].next_event = NO_EVENT;
+
+		if(0 == s_waiting_event_number){
+			s_event_head_index = current_index;
+			break;
+		}
+
+		if(MAX_EVENT_NUMBER == current_index){
+			CHIPTUNE_PRINTF(cDeveloping, "No available event is found\r\n");
+			return -2;
+		}
+
+		if(s_events[current_index].triggerring_tick <= s_events[s_event_head_index].triggerring_tick){
+			s_events[current_index].next_event = s_event_head_index;
+			s_event_head_index = current_index;
+			break;
+		}
+
+		int previous_index = s_event_head_index;
+		uint32_t kk;
+		for(kk = 1; kk < s_waiting_event_number; kk++){
+			int next_index = s_events[previous_index].next_event;
+			if(s_events[current_index].triggerring_tick <= s_events[next_index].triggerring_tick){
+				s_events[previous_index].next_event = current_index;
+				s_events[current_index].next_event = next_index;
+				break;
+			}
+			previous_index = next_index;
+		}
+
+		if(s_waiting_event_number == kk){
+			s_events[previous_index].next_event = current_index;
+		}
+	} while(0);
+	s_waiting_event_number += 1;
+
+	check_waiting_events(s_events[s_event_head_index].triggerring_tick);
+	return 0;
+}
 
 /**********************************************************************************/
 
 void process_events(uint32_t const tick)
 {
-	if(0 == s_occupied_event_number){
-		return ;
-	}
-
-	int kk = 0;
 	int timely_event_number = 0;
-	for(int i = 0; i < MAX_TIME_EVENT_NUMBER; i++){
-		if(UNUSED_EVENT == s_events[i].type){
-			continue;
-		}
 
-		do {
-			if(s_events[i].triggerring_tick > tick){
-				break;
-			}
-
-			struct _oscillator *p_oscillator = &s_oscillators[s_events[i].oscillator];
-			if(UNUSED_OSCILLATOR == p_oscillator->voice){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: event = %u, oscillator = %u is not ready\r\n",
-								i, s_events[i].oscillator);
-				//s_events[i].type = UNUSED_EVENT;
-				//timely_event_number += 1;
-				break;
-			}
-			char addition_string[16] = "";
-			if(IS_CHORUS_OSCILLATOR(p_oscillator->state_bits)){
-				snprintf(&addition_string[0], sizeof(addition_string), "(chorus)");
-			}
-			switch(s_events[i].type)
-			{
-			case ACTIVATE_EVENT:
-				CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, %s oscillator = %u ACTIVATED\r\n",
-								tick, &addition_string[0], s_events[i].oscillator);
-				SET_ACTIVATED_ON(p_oscillator->state_bits);
-				break;
-
-			case RELEASE_EVENT:
-				CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, %s oscillator = %u RELEASED\r\n",
-								tick, &addition_string[0], s_events[i].oscillator);
-				p_oscillator->voice = UNUSED_OSCILLATOR;
-				s_occupied_oscillator_number -= 1;
-				break;
-			default:
-				break;
-			}
-			s_events[i].type = UNUSED_EVENT;
-			timely_event_number += 1;
-		} while(0);
-
-		kk += 1;
-		if(s_occupied_event_number == kk){
+	for(uint32_t i = 0; i < s_waiting_event_number; i++){
+		if(s_events[s_event_head_index].triggerring_tick > tick){
 			break;
 		}
+
+		struct _oscillator *p_oscillator = &s_oscillators[s_events[s_event_head_index].oscillator];
+		char addition_string[16] = "";
+		if(IS_CHORUS_OSCILLATOR(p_oscillator->state_bits)){
+			snprintf(&addition_string[0], sizeof(addition_string), "(chorus)");
+		}
+		switch(s_events[s_event_head_index].type)
+		{
+		case ACTIVATE_EVENT:
+			CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, %s oscillator = %u ACTIVATED\r\n",
+							tick, &addition_string[0], s_events[s_event_head_index].oscillator);
+			SET_ACTIVATED_ON(p_oscillator->state_bits);
+			break;
+
+		case RELEASE_EVENT:
+			CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, %s oscillator = %u RELEASED\r\n",
+							tick, &addition_string[0], s_events[s_event_head_index]);
+			p_oscillator->voice = UNUSED_OSCILLATOR;
+			s_occupied_oscillator_number -= 1;
+			break;
+		default:
+			break;
+		}
+
+		s_events[s_event_head_index].type = UNUSED_EVENT;
+		s_event_head_index = s_events[s_event_head_index].next_event;
+		timely_event_number += 1;
 	}
 
-	s_occupied_event_number -= timely_event_number;
-	//CHIPTUNE_PRINTF("s_occupied_event_number = %u\r\n", s_occupied_event_number);
+	s_waiting_event_number -= timely_event_number;
+
+	check_waiting_events(tick);
 }
 
 /**********************************************************************************/
 
-uint32_t get_closest_time_event_tick(void)
+uint32_t get_next_event_triggering_tick(void)
 {
-	if(0 == s_occupied_event_number){
-		return UINT32_MAX;
+	if(0 == s_waiting_event_number){
+			return UINT32_MAX;
 	}
 
-	int kk = 0;
-	uint32_t closest_tick = UINT32_MAX;
-	for(int i = 0; i < MAX_TIME_EVENT_NUMBER; i++){
-		if(UNUSED_EVENT == s_events[i].type){
-			continue;
-		}
-
-		if(closest_tick > s_events[i].triggerring_tick){
-			closest_tick = s_events[i].triggerring_tick;
-		}
-
-		if(s_occupied_event_number == kk){
-			break;
-		}
-	}
-
-	return closest_tick;
+	return s_events[s_event_head_index].triggerring_tick;
 }
 
 /**********************************************************************************/
@@ -318,7 +384,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 				return -1;
 			}
 
-			if(MAX_TIME_EVENT_NUMBER < s_occupied_event_number + (CHORUS_OSCILLATOR_NUMBER - 1)){
+			if(MAX_EVENT_NUMBER < s_waiting_event_number + (CHORUS_OSCILLATOR_NUMBER - 1)){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR::available time event is not enough for chorus effect\r\n");
 				return -2;
 			}
@@ -412,30 +478,12 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 	} while(0);
 
 
-	int kk = 0;
 	uint8_t event_type = (true == is_note_on) ? ACTIVATE_EVENT : RELEASE_EVENT;
-	int iii;
-	for(iii = 0; iii < MAX_TIME_EVENT_NUMBER; iii++){
-		if(UNUSED_EVENT != s_events[iii].type){
-			continue;
-		}
-
-		s_events[iii].type = event_type;
-		s_events[iii].created_tick = tick;
-		s_events[iii].triggerring_tick = tick + ((kk + 1) * s_chorus_delta_tick);
-		s_events[iii].oscillator = oscillator_indexes[kk];
-		//CHIPTUNE_PRINTF(cDeveloping, "event = %u, oscillator = %u,is_note_on = %u\r\n", iii, oscillator_indexes[kk], is_note_on);
-		kk += 1;
-		if(CHORUS_OSCILLATOR_NUMBER - 1 == kk){
-			break;
-		}
-	}
-	if(MAX_OSCILLATOR_NUMBER == iii){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR::available event could not be found\r\n");
-		return -5;
+	for(int j = 0; j  < CHORUS_OSCILLATOR_NUMBER - 1; j++){
+		put_event(event_type, oscillator_indexes[j], tick + (j + 1) * s_chorus_delta_tick);
 	}
 
-	s_occupied_event_number += (CHORUS_OSCILLATOR_NUMBER - 1);
+	check_waiting_events(tick);
 	return 0;
 }
 
@@ -700,7 +748,7 @@ static int process_timely_midi_message(void)
 
 
 		if(NULL_TICK == s_fetched_event_tick){
-			s_fetched_event_tick = get_closest_time_event_tick();
+			s_fetched_event_tick = get_next_event_triggering_tick();
 		}
 
 		if(true == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)
@@ -716,7 +764,7 @@ static int process_timely_midi_message(void)
 			SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
 			is_both_after_current_tick = false;
 
-			s_fetched_event_tick = get_closest_time_event_tick();
+			s_fetched_event_tick = get_next_event_triggering_tick();
 		}
 
 		do {
@@ -767,7 +815,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 		} while(0);
 
 		if(NULL_TICK == event_tick){
-			event_tick = get_closest_time_event_tick();
+			event_tick = get_next_event_triggering_tick();
 		}
 
 		if(true == IS_NULL_TICK_MESSAGE(tick_message)
@@ -800,7 +848,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 			process_midi_message(tick_message);
 			SET_TICK_MESSAGE_NULL(tick_message);
 
-			event_tick = get_closest_time_event_tick();
+			event_tick = get_next_event_triggering_tick();
 		}
 
 		if(tick == event_tick){
@@ -821,7 +869,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 							i, s_oscillators[i].voice, s_oscillators[i].note, s_oscillators[i].note);
 		}
 	}
-	if(0 != s_occupied_event_number){
+	if(0 != s_waiting_event_number){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: not all events are released\r\n");
 	}
 	return max_amplitude;
@@ -898,10 +946,10 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	}
 	s_occupied_oscillator_number = 0;
 
-	for(int i = 0; i < MAX_TIME_EVENT_NUMBER; i++){
+	for(int i = 0; i < MAX_EVENT_NUMBER; i++){
 		s_events[i].type = UNUSED_EVENT;
 	}
-	s_occupied_event_number = 0;
+	s_waiting_event_number = 0;
 
 	s_sampling_rate = sampling_rate;
 	s_resolution = resolution;
