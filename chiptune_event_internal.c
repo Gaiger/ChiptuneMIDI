@@ -125,11 +125,9 @@ int put_event(int8_t type, int16_t oscillator, uint32_t triggerring_tick)
 
 /**********************************************************************************/
 
-void process_events(uint32_t const tick, struct _oscillator * const p_oscillators, uint32_t * const
-					p_number_of_disabling_oscillators)
+void process_events(uint32_t const tick, struct _oscillator * const p_oscillators)
 {
 	int timely_event_number = 0;
-	uint32_t number_of_disabling_oscillators = 0;
 
 	for(uint32_t i = 0; i < s_upcoming_event_number; i++){
 		if(s_events[s_event_head_index].triggerring_tick > tick){
@@ -154,8 +152,7 @@ void process_events(uint32_t const tick, struct _oscillator * const p_oscillator
 			CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, RELEASE oscillator = %u, voice = %u, note = %u, volume = %u for %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->volume,  &addition_string[0]);
-			p_oscillator->voice = UNUSED_OSCILLATOR;
-			number_of_disabling_oscillators += 1;
+			discard_oscillator(s_events[s_event_head_index].oscillator);
 			break;
 		default:
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: UNKOWN event type = %d\r\n");
@@ -168,7 +165,6 @@ void process_events(uint32_t const tick, struct _oscillator * const p_oscillator
 	}
 
 	s_upcoming_event_number -= timely_event_number;
-	*p_number_of_disabling_oscillators = number_of_disabling_oscillators;
 	check_waiting_events(tick);
 }
 

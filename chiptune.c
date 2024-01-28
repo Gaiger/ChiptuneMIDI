@@ -372,8 +372,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 							if(0 < s_channel_controllers[voice].chorus){
 								process_chorus_effect(tick, is_note_on, voice, note, velocity, ii);
 							}
-							s_oscillators[ii].voice = UNUSED_OSCILLATOR;
-							s_occupied_oscillator_number -= 1;
+							discard_oscillator(ii);
 							is_found = true;
 							break;
 						}
@@ -591,10 +590,7 @@ static int process_timely_midi_message(void)
 				break;
 			}
 			if(false == IS_AFTER_CURRENT_TIME(s_fetched_event_tick)){
-				uint32_t number_of_disabling_oscillators;
-				process_events(s_fetched_event_tick, &s_oscillators[0],
-						&number_of_disabling_oscillators);
-				s_occupied_oscillator_number -= number_of_disabling_oscillators;
+				process_events(s_fetched_event_tick, &s_oscillators[0]);
 				s_fetched_event_tick = NULL_TICK;
 				is_both_after_current_tick = false;
 			}
@@ -674,10 +670,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 		}
 
 		if(tick == event_tick){
-			uint32_t number_of_disabling_oscillators;
-			process_events(event_tick, &s_oscillators[0],
-					&number_of_disabling_oscillators);
-			s_occupied_oscillator_number -= number_of_disabling_oscillators;
+			process_events(event_tick, &s_oscillators[0]);
 			event_tick = NULL_TICK;
 		}
 	}
