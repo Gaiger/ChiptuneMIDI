@@ -70,8 +70,16 @@ uint32_t s_chorus_delta_tick = (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_
 													do { \
 														 s_chorus_delta_tick \
 															= (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ 60.0 + 0.5); \
-													} while(0);
+													} while(0)
 
+#define DEMPER_PEDAL_ATTENUATION_TIME_IN_SECOND						(4.0)
+static uint32_t s_damper_pedal_attenuation_tick	= (uint32_t)((DEMPER_PEDAL_ATTENUATION_TIME_IN_SECOND) * (DEFAULT_RESOLUTION) * (DEFAULT_TEMPO / 60.0) + 0.5);
+
+#define UPDATE_DAMPER_PEDAL_ATTENUATION_TICK()		\
+													do { \
+														s_damper_pedal_attenuation_tick \
+															= (uint32_t)(DEMPER_PEDAL_ATTENUATION_TIME_IN_SECOND * (s_resolution) * (s_tempo/60.0) + 0.5); \
+													} while(0)
 
 static int(*s_handler_get_midi_message)(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message) = NULL;
 
@@ -338,7 +346,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->vibration_table_index = 0;
 			p_oscillator->vibration_same_index_count = 0;
 			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
-			//SET_ACTIVATED_ON(p_oscillator->state_bits);
 			put_event(ACTIVATE_EVENT, ii, tick);
 			if(0 != s_channel_controllers[voice].chorus){
 				process_chorus_effect(tick, is_note_on, voice, note, velocity, ii);
@@ -349,6 +356,25 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		bool is_found = false;
 		do {
 			if(true == s_channel_controllers[voice].is_damper_pedal_on){
+#if(0)
+
+				if(0 < s_channel_controllers[voice].chorus){
+					for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
+						if(voice == s_oscillators[ii].voice){
+							if(note == s_oscillators[ii].note){
+								SET_NOTE_OFF(s_oscillators[ii].state_bits);
+								put_event(RELEASE_EVENT, ii, tick + s_damper_pedal_attenuation_tick);
+								is_found = true;
+								break;
+							}
+						}
+					}
+					process_chorus_effect(tick, is_note_on, voice + s_damper_pedal_attenuation_tick,
+										  note, velocity, ii);
+					break;
+				}
+#endif
+#if(1)
 				for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
 					if(voice == s_oscillators[ii].voice){
 						if(note == s_oscillators[ii].note){
@@ -359,23 +385,27 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						}
 					}
 				}
+#endif
+
 				break;
 			}
 
 			for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
+				if(UNUSED_OSCILLATOR != s_oscillators[ii].native_oscillator){
+					continue;
+				}
+
 				if(voice == s_oscillators[ii].voice){
 					if(note == s_oscillators[ii].note){
-						if(UNUSED_OSCILLATOR == s_oscillators[ii].native_oscillator){
-							put_event(RELEASE_EVENT, ii, tick);
-							if(0 < s_channel_controllers[voice].chorus){
-								process_chorus_effect(tick, is_note_on, voice, note, velocity, ii);
-							}
-							//discard_oscillator(ii);
-							is_found = true;
-							break;
+						put_event(RELEASE_EVENT, ii, tick);
+						if(0 < s_channel_controllers[voice].chorus){
+							process_chorus_effect(tick, is_note_on, voice, note, velocity, ii);
 						}
+						is_found = true;
+						break;
 					}
 				}
+
 			}
 		} while(0);
 
@@ -787,6 +817,7 @@ void chiptune_set_tempo(float const tempo)
 	CORRECT_TIME_BASE();
 	s_tempo = (chiptune_float)tempo;
 	UPDATE_TIME_BASE_UNIT();
+	UPDATE_DAMPER_PEDAL_ATTENUATION_TICK();
 	UPDATE_CHORUS_DELTA_TICK();
 }
 

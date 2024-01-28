@@ -160,7 +160,6 @@ static void process_cc_damper_pedal(struct _channel_controller * const p_channel
 						put_event(RELEASE_EVENT, i, tick);
 						process_chorus_effect(tick, false, voice, p_oscillators[i].note,
 									  p_oscillators[i].volume/p_channel_controllers->playing_volume, i);
-						//discard_oscillator(i);
 					}
 				}
 
