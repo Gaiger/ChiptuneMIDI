@@ -21,9 +21,11 @@ struct _event
 uint32_t s_upcoming_event_number = 0;
 int16_t s_event_head_index = NO_EVENT;
 
+#ifdef _PRINT_OSCILLATOR_TRANSITION
+
 /**********************************************************************************/
 
-void check_waiting_events(uint32_t const tick)
+void check_upcoming_events(uint32_t const tick)
 {
 	int16_t index = s_event_head_index;
 	bool is_error_occur = false;
@@ -63,7 +65,12 @@ void check_waiting_events(uint32_t const tick)
 	} while(0);
 	return ;
 }
-
+#define CHECK_UPCOMING_EVENTS(TICK)					check_upcoming_events((TICK))
+#else
+#define CHECK_UPCOMING_EVENTS(TICK)					do { \
+														(void)0; \
+													} while(0)
+#endif
 /**********************************************************************************/
 
 int put_event(int8_t type, int16_t oscillator, uint32_t triggerring_tick)
@@ -119,7 +126,7 @@ int put_event(int8_t type, int16_t oscillator, uint32_t triggerring_tick)
 	} while(0);
 	s_upcoming_event_number += 1;
 
-	check_waiting_events(s_events[s_event_head_index].triggerring_tick);
+	CHECK_UPCOMING_EVENTS(s_events[s_event_head_index].triggerring_tick);
 	return 0;
 }
 
@@ -137,19 +144,19 @@ void process_events(uint32_t const tick, struct _oscillator * const p_oscillator
 		struct _oscillator *p_oscillator = &p_oscillators[s_events[s_event_head_index].oscillator];
 		char addition_string[16] = "";
 		if(IS_CHORUS_OSCILLATOR(p_oscillator->state_bits)){
-			snprintf(&addition_string[0], sizeof(addition_string), "chorus");
+			snprintf(&addition_string[0], sizeof(addition_string), "(chorus)");
 		}
 		switch(s_events[s_event_head_index].type)
 		{
 		case ACTIVATE_EVENT:
-			CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, ACTIVATE oscillator = %u, voice = %u, note = %u, volume = %u for %s\r\n",
+			CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, ACTIVATE oscillator = %u, voice = %u, note = %u, volume = %u%s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->volume, &addition_string[0]);
 			SET_ACTIVATED_ON(p_oscillator->state_bits);
 			break;
 
 		case RELEASE_EVENT:
-			CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, RELEASE oscillator = %u, voice = %u, note = %u, volume = %u for %s\r\n",
+			CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, RELEASE oscillator = %u, voice = %u, note = %u, volume = %u%s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->volume,  &addition_string[0]);
 			discard_oscillator(s_events[s_event_head_index].oscillator);
@@ -165,7 +172,7 @@ void process_events(uint32_t const tick, struct _oscillator * const p_oscillator
 	}
 
 	s_upcoming_event_number -= timely_event_number;
-	check_waiting_events(tick);
+	CHECK_UPCOMING_EVENTS(tick);
 }
 
 /**********************************************************************************/
