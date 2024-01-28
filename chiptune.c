@@ -91,6 +91,12 @@ static struct _channel_controller s_channel_controllers[MAX_VOICE_NUMBER];
 static struct _oscillator s_oscillators[MAX_OSCILLATOR_NUMBER];
 static uint32_t s_occupied_oscillator_number = 0;
 
+void discard_oscillator(int16_t index)
+{
+	s_oscillators[index].voice = UNUSED_OSCILLATOR;
+	s_occupied_oscillator_number -= 1;
+}
+
 /**********************************************************************************/
 
 static void process_program_change_message(uint32_t const tick, uint8_t const voice, uint8_t const number)
@@ -265,18 +271,6 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 			if(voice == s_oscillators[ii].voice){
 				if(note == s_oscillators[ii].note){
 					if(true == IS_CHORUS_OSCILLATOR(s_oscillators[ii].state_bits)){
-
-						if(true == s_channel_controllers[voice].is_damper_pedal_on){
-							SET_NOTE_OFF(s_oscillators[ii].state_bits);
-							s_oscillators[ii].volume
-									= REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(s_oscillators[ii].volume);
-							kk += 1;
-							if((CHORUS_OSCILLATOR_NUMBER - 1) == kk){
-								return 0;
-							}
-							continue;
-						}
-
 						oscillator_indexes[kk] = ii;
 						kk += 1;
 						if(CHORUS_OSCILLATOR_NUMBER - 1 == kk){
@@ -350,34 +344,45 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			SET_ACTIVATED_ON(s_oscillators[ii].state_bits);
 			s_occupied_oscillator_number += 1;
 			if(0 != s_channel_controllers[voice].chorus){
-
+				process_chorus_effect(tick, is_note_on, voice, note, velocity, ii);
 			}
 			break;
 		}
 
-		for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
-			if(voice == s_oscillators[ii].voice){
-				if(note == s_oscillators[ii].note){
-					if(true == IS_CHORUS_OSCILLATOR(s_oscillators[ii].state_bits)){
-						continue;
+		bool is_found = false;
+		do {
+			if(true == s_channel_controllers[voice].is_damper_pedal_on){
+				for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
+					if(voice == s_oscillators[ii].voice){
+						if(note == s_oscillators[ii].note){
+							SET_NOTE_OFF(s_oscillators[ii].state_bits);
+							s_oscillators[ii].volume
+									= REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(s_oscillators[ii].volume);
+							is_found = true;
+						}
 					}
+				}
+				break;
+			}
 
-
-					if(true == s_channel_controllers[voice].is_damper_pedal_on)
-					{
-						SET_NOTE_OFF(s_oscillators[ii].state_bits);
-						s_oscillators[ii].volume
-								= REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(s_oscillators[ii].volume);
-						continue;;
+			for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
+				if(voice == s_oscillators[ii].voice){
+					if(note == s_oscillators[ii].note){
+						if(UNUSED_OSCILLATOR == s_oscillators[ii].native_oscillator){
+							if(0 < s_channel_controllers[voice].chorus){
+								process_chorus_effect(tick, is_note_on, voice, note, velocity, ii);
+							}
+							s_oscillators[ii].voice = UNUSED_OSCILLATOR;
+							s_occupied_oscillator_number -= 1;
+							is_found = true;
+							break;
+						}
 					}
-					s_oscillators[ii].voice = UNUSED_OSCILLATOR;
-					s_occupied_oscillator_number -= 1;
-					break;
 				}
 			}
-		}
+		} while(0);
 
-		if(MAX_OSCILLATOR_NUMBER == ii){
+		if(false == is_found){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR::no corresponding note for off :: tick = %u, voice = %u,  note = %u\r\n",
 							tick, voice, note);
 			return -2;
@@ -390,13 +395,11 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			", pitch wheel bend = %+3.2f", pitch_wheel_bend_in_semitone);
 	}
 
-
 	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u\r\n",
 					tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" ,
 					voice, note, velocity, s_oscillators[ii].volume/s_channel_controllers[voice].playing_volume,
 					&pitch_wheel_bend_string[0]);
 
-	process_chorus_effect(tick, is_note_on, voice, note, velocity, ii);
 
 #ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 	#ifdef _INCREMENTAL_SAMPLE_INDEX
@@ -672,7 +675,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 
 		if(tick == event_tick){
 			uint32_t number_of_disabling_oscillators;
-			process_events(s_fetched_event_tick, &s_oscillators[0],
+			process_events(event_tick, &s_oscillators[0],
 					&number_of_disabling_oscillators);
 			s_occupied_oscillator_number -= number_of_disabling_oscillators;
 			event_tick = NULL_TICK;

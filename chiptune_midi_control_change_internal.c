@@ -38,7 +38,7 @@ static inline void process_modulation_wheel(struct _channel_controller * const p
 											uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
 	(void)p_oscillators;
-	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC_MODULATION_WHEEL :: voice = %u, value = %u\r\n",
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_MODULATION_WHEEL :: voice = %u, value = %u\r\n",
 					tick, voice, value);
 	p_channel_controllers[voice].modulation_wheel = value;
 }
@@ -136,6 +136,7 @@ static inline void process_cc_expression(struct _channel_controller * const p_ch
 int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 						   uint8_t const voice, uint8_t const note, uint8_t const velocity,
 						   int const original_oscillator_index);
+#include <stdio.h>
 
 static void process_cc_damper_pedal(struct _channel_controller * const p_channel_controllers,
 									 struct _oscillator * const p_oscillators,
@@ -145,18 +146,24 @@ static void process_cc_damper_pedal(struct _channel_controller * const p_channel
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %u, %s\r\n",
 					tick, voice, is_damper_pedal_on? "on" : "off");
 
-	p_channel_controllers->is_damper_pedal_on = is_damper_pedal_on;
+	p_channel_controllers[voice].is_damper_pedal_on = is_damper_pedal_on;
+	if(true == is_damper_pedal_on){
+		return ;
+	}
+
 	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		if( voice == p_oscillators[i].voice){
 			if(false == IS_NOTE_ON(p_oscillators[i].state_bits)){
-				do {
-					if(p_channel_controllers[voice].chorus > 0){
-						process_chorus_effect(tick, is_damper_pedal_on, voice, p_oscillators[i].note,
-										  p_oscillators->volume/p_channel_controllers->playing_volume, i);
+				if(p_channel_controllers[voice].chorus > 0){
+					if(UNUSED_OSCILLATOR == p_oscillators[i].native_oscillator){
+						process_chorus_effect(tick, false, voice, p_oscillators[i].note,
+									  p_oscillators[i].volume/p_channel_controllers->playing_volume, i);
+						discard_oscillator(i);
 					}
-					p_oscillators[i].voice = UNUSED_OSCILLATOR;
-				} while(0);
-				continue;
+
+
+				}
+
 			}
 		}
 	}
