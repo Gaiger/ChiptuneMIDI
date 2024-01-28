@@ -222,12 +222,12 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 		return 1;
 	}
 	struct _oscillator  * const p_native_oscillator = &s_oscillators[native_oscillator_index];
-#define CHORUS_OSCILLATOR_NUMBER					(4)
-	int oscillator_indexes[CHORUS_OSCILLATOR_NUMBER - 1] = {UNUSED_OSCILLATOR, UNUSED_OSCILLATOR, UNUSED_OSCILLATOR};
+#define ASSOCIATE_CHORUS_OSCILLATOR_NUMBER			(4 - 1)
+	int oscillator_indexes[ASSOCIATE_CHORUS_OSCILLATOR_NUMBER] = {UNUSED_OSCILLATOR, UNUSED_OSCILLATOR, UNUSED_OSCILLATOR};
 
 	do {
 		if(true == is_note_on){
-			if(MAX_OSCILLATOR_NUMBER < s_occupied_oscillator_number + (CHORUS_OSCILLATOR_NUMBER - 1)){
+			if(MAX_OSCILLATOR_NUMBER < s_occupied_oscillator_number + ASSOCIATE_CHORUS_OSCILLATOR_NUMBER){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR::available oscillators is not enough for chorus effect\r\n");
 				return -1;
 			}
@@ -244,25 +244,25 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 			float pitch_wheel_bend_in_semitone = 0.0f;
 			oscillator_volume = 4 * averaged_volume;
 			int16_t i;
-			for(int j = 0; j < CHORUS_OSCILLATOR_NUMBER - 1;j++){
+			for(int j = 0; j < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER;j++){
 				struct _oscillator * const p_oscillator = acquire_oscillator(&i);
-				 memcpy(p_oscillator, p_native_oscillator, sizeof(struct _oscillator));
-				 p_oscillator->volume = oscillator_volume;
-				 p_oscillator->pitch_chorus_bend_in_semitone = pitch_chorus_bend_in_semitone(voice);
-				 p_oscillator->delta_phase = calculate_delta_phase(p_oscillator->note, s_channel_controllers[voice].tuning_in_semitones,
-																	 s_channel_controllers[voice].pitch_wheel_bend_range_in_semitones,
-																	 s_channel_controllers[voice].pitch_wheel,
-																	   p_oscillator->pitch_chorus_bend_in_semitone,
-																	   &pitch_wheel_bend_in_semitone);
-				 s_oscillators[i].delta_vibration_phase = calculate_delta_phase(p_oscillator->note + VIBRATION_AMPLITUDE_IN_SEMITINE,
-																				s_channel_controllers[voice].tuning_in_semitones,
-																			s_channel_controllers[voice].pitch_wheel_bend_range_in_semitones,
-																			s_channel_controllers[voice].pitch_wheel,
-																				p_oscillator->pitch_chorus_bend_in_semitone,
-																				&pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
-				 s_oscillators[i].native_oscillator = native_oscillator_index;
-				 SET_CHORUS_OSCILLATOR(s_oscillators[i].state_bits);
-				 SET_ACTIVATED_OFF(s_oscillators[i].state_bits);
+				memcpy(p_oscillator, p_native_oscillator, sizeof(struct _oscillator));
+				p_oscillator->volume = oscillator_volume;
+				p_oscillator->pitch_chorus_bend_in_semitone = pitch_chorus_bend_in_semitone(voice);
+				p_oscillator->delta_phase = calculate_delta_phase(p_oscillator->note, s_channel_controllers[voice].tuning_in_semitones,
+																  s_channel_controllers[voice].pitch_wheel_bend_range_in_semitones,
+																  s_channel_controllers[voice].pitch_wheel,
+																  p_oscillator->pitch_chorus_bend_in_semitone,
+																  &pitch_wheel_bend_in_semitone);
+				 p_oscillator->delta_vibration_phase = calculate_delta_phase(p_oscillator->note + VIBRATION_AMPLITUDE_IN_SEMITINE,
+																			 s_channel_controllers[voice].tuning_in_semitones,
+																			 s_channel_controllers[voice].pitch_wheel_bend_range_in_semitones,
+																			 s_channel_controllers[voice].pitch_wheel,
+																			 p_oscillator->pitch_chorus_bend_in_semitone,
+																			 &pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
+				 p_oscillator->native_oscillator = native_oscillator_index;
+				 SET_CHORUS_OSCILLATOR(p_oscillator->state_bits);
+				 SET_ACTIVATED_OFF(p_oscillator->state_bits);
 				 oscillator_indexes[j] = i;
 			}
 			break;
@@ -279,7 +279,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 					if(true == IS_CHORUS_OSCILLATOR(s_oscillators[ii].state_bits)){
 						oscillator_indexes[kk] = ii;
 						kk += 1;
-						if(CHORUS_OSCILLATOR_NUMBER - 1 == kk){
+						if(ASSOCIATE_CHORUS_OSCILLATOR_NUMBER == kk){
 							break;
 						}
 					}
@@ -293,7 +293,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 	} while(0);
 
 	uint8_t event_type = (true == is_note_on) ? ACTIVATE_EVENT : RELEASE_EVENT;
-	for(int j = 0; j  < CHORUS_OSCILLATOR_NUMBER - 1; j++){
+	for(int j = 0; j  < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; j++){
 		put_event(event_type, oscillator_indexes[j], tick + (j + 1) * s_chorus_delta_tick);
 	}
 
@@ -321,20 +321,20 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->note = note;
 			p_oscillator->pitch_chorus_bend_in_semitone = 0;
 			p_oscillator->delta_phase = calculate_delta_phase(p_oscillator->note, s_channel_controllers[voice].tuning_in_semitones,
-															   s_channel_controllers[voice].pitch_wheel_bend_range_in_semitones,
-															   s_channel_controllers[voice].pitch_wheel,
-																 p_oscillator->pitch_chorus_bend_in_semitone,
-																 &pitch_wheel_bend_in_semitone);
+															  s_channel_controllers[voice].pitch_wheel_bend_range_in_semitones,
+															  s_channel_controllers[voice].pitch_wheel,
+															  p_oscillator->pitch_chorus_bend_in_semitone,
+															  &pitch_wheel_bend_in_semitone);
 			p_oscillator->current_phase = 0;
 			p_oscillator->volume = (uint16_t)velocity * (uint16_t)s_channel_controllers[voice].playing_volume;
 			p_oscillator->waveform = s_channel_controllers[voice].waveform;
 			p_oscillator->duty_cycle_critical_phase = p_oscillator->duty_cycle_critical_phase;
 			p_oscillator->delta_vibration_phase = calculate_delta_phase(s_oscillators[ii].note + VIBRATION_AMPLITUDE_IN_SEMITINE,
-																		   s_channel_controllers[voice].tuning_in_semitones,
-																	   s_channel_controllers[voice].pitch_wheel_bend_range_in_semitones,
-																	   s_channel_controllers[voice].pitch_wheel,
-																		   p_oscillator->pitch_chorus_bend_in_semitone,
-																		   &pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
+																		s_channel_controllers[voice].tuning_in_semitones,
+																		s_channel_controllers[voice].pitch_wheel_bend_range_in_semitones,
+																		s_channel_controllers[voice].pitch_wheel,
+																		p_oscillator->pitch_chorus_bend_in_semitone,
+																		&pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
 			p_oscillator->vibration_table_index = 0;
 			p_oscillator->vibration_same_index_count = 0;
 			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
