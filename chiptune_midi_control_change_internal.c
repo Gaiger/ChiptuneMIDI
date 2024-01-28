@@ -1,5 +1,6 @@
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
+#include "chiptune_event_internal.h"
 
 #include "chiptune_midi_control_change_internal.h"
 
@@ -156,12 +157,11 @@ static void process_cc_damper_pedal(struct _channel_controller * const p_channel
 			if(false == IS_NOTE_ON(p_oscillators[i].state_bits)){
 				if(p_channel_controllers[voice].chorus > 0){
 					if(UNUSED_OSCILLATOR == p_oscillators[i].native_oscillator){
+						put_event(RELEASE_EVENT, i, tick);
 						process_chorus_effect(tick, false, voice, p_oscillators[i].note,
 									  p_oscillators[i].volume/p_channel_controllers->playing_volume, i);
-						discard_oscillator(i);
+						//discard_oscillator(i);
 					}
-
-
 				}
 
 			}

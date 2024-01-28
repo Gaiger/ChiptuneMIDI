@@ -338,7 +338,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->vibration_table_index = 0;
 			p_oscillator->vibration_same_index_count = 0;
 			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
-			SET_ACTIVATED_ON(p_oscillator->state_bits);
+			//SET_ACTIVATED_ON(p_oscillator->state_bits);
+			put_event(ACTIVATE_EVENT, ii, tick);
 			if(0 != s_channel_controllers[voice].chorus){
 				process_chorus_effect(tick, is_note_on, voice, note, velocity, ii);
 			}
@@ -365,10 +366,11 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				if(voice == s_oscillators[ii].voice){
 					if(note == s_oscillators[ii].note){
 						if(UNUSED_OSCILLATOR == s_oscillators[ii].native_oscillator){
+							put_event(RELEASE_EVENT, ii, tick);
 							if(0 < s_channel_controllers[voice].chorus){
 								process_chorus_effect(tick, is_note_on, voice, note, velocity, ii);
 							}
-							discard_oscillator(ii);
+							//discard_oscillator(ii);
 							is_found = true;
 							break;
 						}
