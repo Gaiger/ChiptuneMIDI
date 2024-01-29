@@ -11,7 +11,7 @@
 #define _PRINT_DEVELOPING
 #define _PRINT_MIDI_SETUP
 #define _PRINT_NOTE_OPERATION
-//#define _PRINT_OSCILLATOR_TRANSITION
+#define _PRINT_OSCILLATOR_TRANSITION
 
 enum
 {
@@ -81,8 +81,8 @@ struct _oscillator
 	int16_t		native_oscillator;
 };
 
-#define MAX_VOICE_NUMBER							(16)
-#define MAX_OSCILLATOR_NUMBER						(MAX_VOICE_NUMBER * 8)
+#define MAX_CHANNEL_NUMBER							(16)
+#define MAX_OSCILLATOR_NUMBER						(MAX_CHANNEL_NUMBER * 8)
 
 #define UNUSED_OSCILLATOR							(-1)
 #define RESET_STATE_BITES(STATE_BITES)				((STATE_BITES) = 0)

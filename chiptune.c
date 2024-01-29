@@ -94,7 +94,7 @@ void chiptune_set_midi_message_callback( int(*handler_get_midi_message)(uint32_t
 
 /**********************************************************************************/
 
-static struct _channel_controller s_channel_controllers[MAX_VOICE_NUMBER];
+static struct _channel_controller s_channel_controllers[MAX_CHANNEL_NUMBER];
 
 static struct _oscillator s_oscillators[MAX_OSCILLATOR_NUMBER];
 static uint32_t s_occupied_oscillator_number = 0;
@@ -588,7 +588,7 @@ int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_message
 void release_all_channels_damper_pedal(const uint32_t tick)
 {
 	int kk = 0;
-	for(int i = 0; i < MAX_VOICE_NUMBER; i++){
+	for(int i = 0; i < MAX_CHANNEL_NUMBER; i++){
 		if(true == s_channel_controllers[i].is_damper_pedal_on){
 			 s_channel_controllers[i].is_damper_pedal_on = false;
 			 for(int j = 0; j < MAX_OSCILLATOR_NUMBER; j++){
@@ -825,7 +825,7 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	s_midi_messge_index = 0;
 	SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
 
-	for(int i = 0; i < MAX_VOICE_NUMBER; i++){
+	for(int i = 0; i < MAX_CHANNEL_NUMBER; i++){
 		reset_channel_controller(&s_channel_controllers[i]);
 	}
 
