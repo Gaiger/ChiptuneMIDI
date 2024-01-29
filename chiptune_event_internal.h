@@ -14,8 +14,8 @@ enum TImeEventType
 
 void clean_all_events(void);
 
-int put_event(int8_t type, int16_t oscillator, uint32_t triggerring_tick);
-void process_events(uint32_t const tick, struct _oscillator * const p_oscillators);
+int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick);
+void process_events(uint32_t const tick);
 
 uint32_t get_next_event_triggering_tick(void);
 uint32_t get_upcoming_event_number(void);

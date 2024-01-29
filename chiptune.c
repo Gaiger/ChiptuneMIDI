@@ -729,7 +729,7 @@ void release_all_channels_damper_pedal(const uint32_t tick)
 void process_ending(const uint32_t tick)
 {
 	release_all_channels_damper_pedal(tick);
-	process_events(tick, s_oscillators);
+	process_events(tick);
 }
 
 /**********************************************************************************/
@@ -778,7 +778,7 @@ static int process_timely_midi_message(void)
 				break;
 			}
 			if(false == IS_AFTER_CURRENT_TIME(s_fetched_event_tick)){
-				process_events(s_fetched_event_tick, &s_oscillators[0]);
+				process_events(s_fetched_event_tick);
 				s_fetched_event_tick = NULL_TICK;
 				is_both_after_current_tick = false;
 			}
@@ -860,7 +860,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 		}
 
 		if(tick == event_tick){
-			process_events(event_tick, &s_oscillators[0]);
+			process_events(event_tick);
 			event_tick = NULL_TICK;
 		}
 	}

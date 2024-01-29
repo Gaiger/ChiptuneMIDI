@@ -73,7 +73,7 @@ void check_upcoming_events(uint32_t const tick)
 #endif
 /**********************************************************************************/
 
-int put_event(int8_t type, int16_t oscillator, uint32_t triggerring_tick)
+int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 {
 	if(MAX_EVENT_NUMBER == s_upcoming_event_number){
 		CHIPTUNE_PRINTF(cDeveloping, "No event are available\r\n");
@@ -88,7 +88,7 @@ int put_event(int8_t type, int16_t oscillator, uint32_t triggerring_tick)
 			}
 		}
 		s_events[current_index].type = type;
-		s_events[current_index].oscillator = oscillator;
+		s_events[current_index].oscillator = oscillator_index;
 		s_events[current_index].triggerring_tick = triggerring_tick;
 		s_events[current_index].next_event = NO_EVENT;
 
@@ -164,7 +164,7 @@ void remove_same_voice_note_events(int reference_event_index, struct _oscillator
 
 /**********************************************************************************/
 
-void process_events(uint32_t const tick, struct _oscillator * const p_oscillators)
+void process_events(uint32_t const tick)
 {
 	int timely_event_number = 0;
 
@@ -173,7 +173,7 @@ void process_events(uint32_t const tick, struct _oscillator * const p_oscillator
 			break;
 		}
 
-		struct _oscillator *p_oscillator = &p_oscillators[s_events[s_event_head_index].oscillator];
+		struct _oscillator *p_oscillator = get_oscillator_pointer_from_index(s_events[s_event_head_index].oscillator);
 		char addition_string[16] = "";
 		if(IS_CHORUS_OSCILLATOR(p_oscillator->state_bits)){
 			snprintf(&addition_string[0], sizeof(addition_string), "(chorus)");
