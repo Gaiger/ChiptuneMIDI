@@ -110,6 +110,6 @@ struct _oscillator
 #define MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES	\
 													(2 * 2)
 
-void discard_oscillator(int16_t index);
+int discard_oscillator(int16_t const index);
 
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_

@@ -99,21 +99,48 @@ static struct _channel_controller s_channel_controllers[MAX_CHANNEL_NUMBER];
 static struct _oscillator s_oscillators[MAX_OSCILLATOR_NUMBER];
 static uint32_t s_occupied_oscillator_number = 0;
 
-struct _oscillator * const acquire_oscillator(int16_t *p_index)
+struct _occupied_oscillator_node
+{
+	int16_t previous;
+	int16_t next;
+}s_occupied_oscillator_nodes[MAX_OSCILLATOR_NUMBER];
+
+int16_t s_head_occupied_oscillator_index = UNUSED_OSCILLATOR;
+int16_t s_last_occupied_oscillator_index = UNUSED_OSCILLATOR;
+
+struct _oscillator * const acquire_oscillator(int16_t * const p_index)
 {
 	if(MAX_OSCILLATOR_NUMBER == s_occupied_oscillator_number){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillators are used\r\n");
 		return NULL;
 	}
 
+	if(0 == s_occupied_oscillator_number){
+		s_occupied_oscillator_nodes[0].previous = UNUSED_OSCILLATOR;
+		s_occupied_oscillator_nodes[0].next = UNUSED_OSCILLATOR;
+		s_head_occupied_oscillator_index = 0;
+		s_last_occupied_oscillator_index = 0;
+
+		*p_index = 0;
+		s_occupied_oscillator_number += 1;
+		return &s_oscillators[0];
+	}
+
 	int16_t i;
 	for(i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		if(UNUSED_OSCILLATOR == s_oscillators[i].voice){
+			s_occupied_oscillator_nodes[s_last_occupied_oscillator_index].next = i;
+			s_occupied_oscillator_nodes[i].previous = s_last_occupied_oscillator_index;
+			s_occupied_oscillator_nodes[i].next = UNUSED_OSCILLATOR;
+			s_last_occupied_oscillator_index = i;
+
 			s_occupied_oscillator_number += 1;
 			*p_index = i;
+
 			return &s_oscillators[i];
 		}
 	}
+
 	CHIPTUNE_PRINTF(cDeveloping, "ERROR::available oscillator is not found\r\n");
 	*p_index = UNUSED_OSCILLATOR;
 	return NULL;
@@ -121,10 +148,48 @@ struct _oscillator * const acquire_oscillator(int16_t *p_index)
 
 /**********************************************************************************/
 
-void discard_oscillator(int16_t index)
+int discard_oscillator(int16_t const index)
 {
+	int16_t previous_index = s_occupied_oscillator_nodes[index].previous;
+	int16_t next_index = s_occupied_oscillator_nodes[index].next;
+
+	do {
+		if(0 == s_occupied_oscillator_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator %d has been discard\r\n");
+			return -1;
+		}
+
+		if(1 != s_occupied_oscillator_number
+				&& (UNUSED_OSCILLATOR == previous_index && UNUSED_OSCILLATOR == next_index)){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator %d is not in the occupied list\r\n", index);
+			return -2;
+		}
+	} while(0);
+
+	do {
+		if(index == s_head_occupied_oscillator_index){
+			s_head_occupied_oscillator_index = next_index;
+			s_occupied_oscillator_nodes[s_head_occupied_oscillator_index].previous = UNUSED_OSCILLATOR;
+			break;
+		}
+
+		if(index == s_last_occupied_oscillator_index){
+			s_last_occupied_oscillator_index = previous_index;
+			s_occupied_oscillator_nodes[s_last_occupied_oscillator_index].next = UNUSED_OSCILLATOR;
+			break;
+		}
+
+		s_occupied_oscillator_nodes[previous_index].next = next_index;
+		s_occupied_oscillator_nodes[next_index].previous = previous_index;
+	} while (0);
+
+
+	s_occupied_oscillator_nodes[index].previous = UNUSED_OSCILLATOR;
+	s_occupied_oscillator_nodes[index].next = UNUSED_OSCILLATOR;
 	s_oscillators[index].voice = UNUSED_OSCILLATOR;
 	s_occupied_oscillator_number -= 1;
+
+	return 0;
 }
 
 /**********************************************************************************/
@@ -288,24 +353,35 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 		}
 
 		int kk = 0;
-		int ii;
-		for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
-			if(native_oscillator_index != s_oscillators[ii].native_oscillator){
-				continue;
-			}
-			if(voice == s_oscillators[ii].voice){
-				if(note == s_oscillators[ii].note){
-					if(true == IS_CHORUS_OSCILLATOR(s_oscillators[ii].state_bits)){
-						oscillator_indexes[kk] = ii;
-						kk += 1;
-						if(ASSOCIATE_CHORUS_OSCILLATOR_NUMBER == kk){
-							break;
-						}
-					}
+		uint16_t ii = 0;
+		int oscillator_index = s_head_occupied_oscillator_index;
+		for(ii = 0; ii < s_occupied_oscillator_number; ii++){
+
+			do {
+				if(true != IS_CHORUS_OSCILLATOR(s_oscillators[oscillator_index].state_bits)){
+					break;
 				}
+				if(native_oscillator_index != s_oscillators[oscillator_index].native_oscillator){
+					break;
+				}
+				if(note != s_oscillators[oscillator_index].note){
+					break;
+				}
+				if(voice != s_oscillators[oscillator_index].voice){
+					break;
+				}
+
+				oscillator_indexes[kk] = oscillator_index;
+				kk += 1;
+			} while(0);
+
+			if(ASSOCIATE_CHORUS_OSCILLATOR_NUMBER == kk){
+				break;
 			}
+			oscillator_index = s_occupied_oscillator_nodes[oscillator_index].next;
 		}
-		if(MAX_OSCILLATOR_NUMBER == ii){
+
+		if(s_occupied_oscillator_number == ii){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR::targeted oscillator could not be found\r\n");
 			return -4;
 		}
@@ -345,9 +421,12 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 									break;
 								}
 
+								//TODO :  chorus associate oscillators also need to be corrected the volume.
 								actual_velocity -= s_oscillators[i].volume/s_channel_controllers[voice].playing_volume;
 								if(actual_velocity > INT8_MAX){
-									CHIPTUNE_PRINTF(cDeveloping, "ERROR :: actual_velocity too loud\r\n");
+									actual_velocity = DIVIDE_BY_2(velocity);
+									s_oscillators[i].volume = (actual_velocity + (actual_velocity & 0x01))
+											* s_channel_controllers[voice].playing_volume;
 								}
 							}
 
