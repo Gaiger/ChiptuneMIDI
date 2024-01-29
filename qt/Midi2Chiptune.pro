@@ -13,6 +13,7 @@ include(QMidi/src/QMidi.pri)
 SOURCES += \
         ../chiptune.c \
         ../chiptune_midi_control_change_internal.c \
+        ../chiptune_event_internal.c \
         ../chiptune_printf_internal.c \
         TuneManager.cpp \
         AudioPlayer.cpp \
@@ -27,6 +28,7 @@ HEADERS += \
     ../chiptune.h \
     ../chiptune_common_internal.h \
     ../chiptune_midi_control_change_internal.h \
+    ../chiptune_event_internal.h \
     ../chiptune_printf_internal.h \
     MidiPlayer.h \
     TuneManager.h \

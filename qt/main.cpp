@@ -56,7 +56,15 @@ int main(int argc, char* argv[])
 	QCoreApplication a(argc, argv);
 	ListAvailableMidiDevices();
 
-	QString filename = "8bit(bpm185)v0727T1.mid";
+	//QString filename = "8bit(bpm185)v0727T1.mid";
+	//QString filename = "totoro.mid";
+	//QString filename = "evil_eye.mid";
+	//QString filename = "requiem.mid";
+	QString filename = "Laputa.mid";
+
+	//QString filename = "67573.mid";
+	//QString filename = "2012111316917146.mid";
+	//QString filename = "102473.mid";
 #if(0)
 	QString midiOutName = "0";
 	QMidiFile* midi_file = new QMidiFile();
@@ -70,6 +78,7 @@ int main(int argc, char* argv[])
 	//p_player->moveToThread(a.thread());
 	p_player->Play();
 #endif
+
 #if(1)
 	TuneManager tune_manager(16000, 16);
 	QThread tune_manager_working_thread;

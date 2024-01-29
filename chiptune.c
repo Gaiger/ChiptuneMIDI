@@ -97,7 +97,7 @@ void chiptune_set_midi_message_callback( int(*handler_get_midi_message)(uint32_t
 static struct _channel_controller s_channel_controllers[MAX_CHANNEL_NUMBER];
 
 static struct _oscillator s_oscillators[MAX_OSCILLATOR_NUMBER];
-static int16_t s_occupied_oscillator_number = 0;
+static uint32_t s_occupied_oscillator_number = 0;
 
 struct _occupied_oscillator_node
 {
@@ -155,7 +155,7 @@ int discard_oscillator(int16_t const index)
 
 	do {
 		if(0 == s_occupied_oscillator_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all oscillators have been discarded\r\n");
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator %d has been discard\r\n");
 			return -1;
 		}
 
@@ -183,16 +183,18 @@ int discard_oscillator(int16_t const index)
 		s_occupied_oscillator_nodes[next_index].previous = previous_index;
 	} while (0);
 
+
 	s_occupied_oscillator_nodes[index].previous = UNUSED_OSCILLATOR;
 	s_occupied_oscillator_nodes[index].next = UNUSED_OSCILLATOR;
 	s_oscillators[index].voice = UNUSED_OSCILLATOR;
 	s_occupied_oscillator_number -= 1;
+
 	return 0;
 }
 
 /**********************************************************************************/
 
-int16_t get_occupied_oscillator_number(void){ return s_occupied_oscillator_number; }
+int16_t const get_occupied_oscillator_number(void){ return s_occupied_oscillator_number; }
 
 /**********************************************************************************/
 
@@ -207,7 +209,7 @@ int16_t get_next_occupied_oscillator_index(int16_t const index)
 
 /**********************************************************************************/
 
-struct _oscillator * const get_oscillator_pointer(int16_t const index)
+struct _oscillator * const get_oscillator_pointer_from_index(int16_t const index)
 {
 	return &s_oscillators[index];
 }
@@ -515,6 +517,9 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 			for(ii = 0; ii < occupied_oscillator_number; ii++){
 				do {
+					if(UNUSED_OSCILLATOR != s_oscillators[oscillator_index].native_oscillator){
+						break;
+					}
 					if(note != s_oscillators[oscillator_index].note){
 						break;
 					}
@@ -1035,10 +1040,13 @@ int16_t chiptune_fetch_16bit_wave(void)
 		}
 	}
 
+	uint32_t kk = 0;
 	int64_t accumulated_value = 0;
-	int16_t i = get_head_occupied_oscillator_index();
-	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
-	for(int16_t k = 0; k < occupied_oscillator_number; k++){
+	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+		if(UNUSED_OSCILLATOR == s_oscillators[i].voice){
+			continue;
+		}
+
 		if(false == IS_ACTIVATED(s_oscillators[i].state_bits)){
 			goto Flag_oscillator_take_effect_end;
 		}
@@ -1091,7 +1099,10 @@ int16_t chiptune_fetch_16bit_wave(void)
 		s_oscillators[i].current_phase += s_oscillators[i].delta_phase;
 
 Flag_oscillator_take_effect_end:
-		i = get_next_occupied_oscillator_index(i);
+		kk += 1;
+		if(kk == s_occupied_oscillator_number){
+			break;
+		}
 	}
 
 	INCREMENT_TIME_BASE();
