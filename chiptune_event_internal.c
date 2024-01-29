@@ -102,7 +102,7 @@ int put_event(int8_t type, int16_t oscillator, uint32_t triggerring_tick)
 			return -2;
 		}
 
-		if(s_events[current_index].triggerring_tick <= s_events[s_event_head_index].triggerring_tick){
+		if(s_events[current_index].triggerring_tick < s_events[s_event_head_index].triggerring_tick){
 			s_events[current_index].next_event = s_event_head_index;
 			s_event_head_index = current_index;
 			break;
@@ -129,6 +129,38 @@ int put_event(int8_t type, int16_t oscillator, uint32_t triggerring_tick)
 	CHECK_UPCOMING_EVENTS(s_events[s_event_head_index].triggerring_tick);
 	return 0;
 }
+
+#if(0)
+/**********************************************************************************/
+
+void remove_same_voice_note_events(int reference_event_index, struct _oscillator * const p_oscillators)
+{
+	int8_t const voice = p_oscillators[s_events[reference_event_index].oscillator].voice;
+	uint8_t const note = p_oscillators[s_events[reference_event_index].oscillator].note;
+
+
+	int previous_event_index = reference_event_index;
+	int16_t current_event_index = s_events[reference_event_index].next_event;
+	while(UNUSED_EVENT != current_event_index)
+	{
+		struct _oscillator * const p_oscillator = &p_oscillators[s_events[current_event_index].oscillator];
+
+		do {
+			if(false == (voice == p_oscillator->voice && note == p_oscillator->note)) {
+				previous_event_index = current_event_index;
+				current_event_index = s_events[current_event_index].next_event;
+				break;
+			}
+
+			s_events[previous_event_index].next_event = s_events[current_event_index].next_event;
+			discard_oscillator(s_events[current_event_index].oscillator);
+			s_upcoming_event_number -= 1;
+			current_event_index = s_events[previous_event_index].next_event;
+		}while(0);
+	}
+
+}
+#endif
 
 /**********************************************************************************/
 
@@ -158,7 +190,8 @@ void process_events(uint32_t const tick, struct _oscillator * const p_oscillator
 		case RELEASE_EVENT:
 			CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, RELEASE oscillator = %u, voice = %u, note = %u, volume = %u%s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
-							p_oscillator->voice, p_oscillator->note, p_oscillator->volume,  &addition_string[0]);
+							p_oscillator->voice, p_oscillator->note, p_oscillator->volume, &addition_string[0]);
+			//remove_same_voice_note_events(s_event_head_index, p_oscillators);
 			discard_oscillator(s_events[s_event_head_index].oscillator);
 			break;
 		default:
