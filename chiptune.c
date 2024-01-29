@@ -314,10 +314,40 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 uint8_t const voice, uint8_t const note, uint8_t const velocity)
 {
 	float pitch_wheel_bend_in_semitone = 0.0f;
-
+	uint8_t actual_velocity = velocity;
 	int16_t  ii = 0;
 	do {
 		if(true == is_note_on){
+			int kk = 0;
+			for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+
+				if(voice == s_oscillators[i].voice){
+					if(note == s_oscillators[i].note){
+						do {
+							if(UNUSED_OSCILLATOR == s_oscillators[i].native_oscillator){
+								if(false == IS_NOTE_ON(s_oscillators[i].state_bits)){
+									discard_oscillator(i);
+									if( 0 < s_channel_controllers[voice].chorus){
+										process_chorus_effect(tick, false, voice, note, velocity, i);
+									}
+
+									break;
+								}
+
+								actual_velocity -= s_oscillators[i].volume/s_channel_controllers[voice].playing_volume;
+								if(actual_velocity > INT8_MAX){
+									CHIPTUNE_PRINTF(cDeveloping, "ERROR :: actual_velocity too loud\r\n");
+								}
+							}
+
+						} while(0);
+					}
+				}
+				kk += 1;
+				if(s_occupied_oscillator_number == kk){
+					break;
+				}
+			}
 
 			struct _oscillator * const p_oscillator = acquire_oscillator(&ii);
 			if(NULL == p_oscillator){
@@ -334,7 +364,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 															  p_oscillator->pitch_chorus_bend_in_semitone,
 															  &pitch_wheel_bend_in_semitone);
 			p_oscillator->current_phase = 0;
-			p_oscillator->volume = (uint16_t)velocity * (uint16_t)s_channel_controllers[voice].playing_volume;
+			p_oscillator->volume = (uint16_t)actual_velocity * (uint16_t)s_channel_controllers[voice].playing_volume;
 			p_oscillator->waveform = s_channel_controllers[voice].waveform;
 			p_oscillator->duty_cycle_critical_phase = p_oscillator->duty_cycle_critical_phase;
 			p_oscillator->delta_vibration_phase = calculate_delta_phase(s_oscillators[ii].note + VIBRATION_AMPLITUDE_IN_SEMITINE,
@@ -356,25 +386,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		bool is_found = false;
 		do {
 			if(true == s_channel_controllers[voice].is_damper_pedal_on){
-#if(0)
-
-				if(0 < s_channel_controllers[voice].chorus){
-					for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
-						if(voice == s_oscillators[ii].voice){
-							if(note == s_oscillators[ii].note){
-								SET_NOTE_OFF(s_oscillators[ii].state_bits);
-								put_event(RELEASE_EVENT, ii, tick + s_damper_pedal_attenuation_tick);
-								is_found = true;
-								break;
-							}
-						}
-					}
-					process_chorus_effect(tick, is_note_on, voice + s_damper_pedal_attenuation_tick,
-										  note, velocity, ii);
-					break;
-				}
-#endif
-#if(1)
 				for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
 					if(voice == s_oscillators[ii].voice){
 						if(note == s_oscillators[ii].note){
@@ -385,7 +396,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						}
 					}
 				}
-#endif
 
 				break;
 			}
@@ -575,6 +585,35 @@ int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_message
 
 /**********************************************************************************/
 
+void release_all_channels_damper_pedal(const uint32_t tick)
+{
+	int kk = 0;
+	for(int i = 0; i < MAX_VOICE_NUMBER; i++){
+		if(true == s_channel_controllers[i].is_damper_pedal_on){
+			 s_channel_controllers[i].is_damper_pedal_on = false;
+			 for(int j = 0; j < MAX_OSCILLATOR_NUMBER; j++){
+				 if(i == s_oscillators[j].voice){
+					put_event(RELEASE_EVENT, j, tick);
+				 }
+			 }
+		}
+		kk += 1;
+		if(0 == kk){
+			break;
+		}
+	}
+}
+
+/**********************************************************************************/
+
+void process_ending(const uint32_t tick)
+{
+	release_all_channels_damper_pedal(tick);
+	process_events(tick, s_oscillators);
+}
+
+/**********************************************************************************/
+
 struct _tick_message s_fetched_tick_message = {NULL_TICK, NULL_MESSAGE};
 uint32_t s_fetched_event_tick = NULL_TICK;
 
@@ -599,6 +638,7 @@ static int process_timely_midi_message(void)
 
 		if(true == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)
 				&& NULL_TICK == s_fetched_event_tick){
+			process_ending((uint32_t)s_current_tick);
 			ret = -1;
 			break;
 		}
@@ -649,6 +689,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 	previous_tick = tick_message.tick;
 	SET_TICK_MESSAGE_NULL(tick_message);
 
+	int tick = NULL_TICK;
 	while(1)
 	{
 		do {
@@ -666,10 +707,11 @@ static uint32_t get_max_simultaneous_amplitude(void)
 
 		if(true == IS_NULL_TICK_MESSAGE(tick_message)
 				&& NULL_TICK == event_tick){
+			process_ending(tick);
 			break;
 		}
 
-		int const tick = (tick_message.tick < event_tick) ? tick_message.tick : event_tick;
+		tick = (tick_message.tick < event_tick) ? tick_message.tick : event_tick;
 
 		do
 		{

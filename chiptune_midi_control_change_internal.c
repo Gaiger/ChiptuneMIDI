@@ -137,7 +137,6 @@ static inline void process_cc_expression(struct _channel_controller * const p_ch
 int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 						   uint8_t const voice, uint8_t const note, uint8_t const velocity,
 						   int const original_oscillator_index);
-#include <stdio.h>
 
 static void process_cc_damper_pedal(struct _channel_controller * const p_channel_controllers,
 									 struct _oscillator * const p_oscillators,
