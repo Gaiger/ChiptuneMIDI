@@ -151,19 +151,28 @@ static void process_cc_damper_pedal(struct _channel_controller * const p_channel
 		return ;
 	}
 
-	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if( voice == p_oscillators[i].voice){
-			if(false == IS_NOTE_ON(p_oscillators[i].state_bits)){
-				if(p_channel_controllers[voice].chorus > 0){
-					if(UNUSED_OSCILLATOR == p_oscillators[i].native_oscillator){
-						put_event(RELEASE_EVENT, i, tick);
-						process_chorus_effect(tick, false, voice, p_oscillators[i].note,
-									  p_oscillators[i].volume/p_channel_controllers->playing_volume, i);
-					}
-				}
-
+	int16_t oscillator_index = get_head_occupied_oscillator_index();
+	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
+	for(int16_t i = 0; i < occupied_oscillator_number; i++){
+		do {
+			if(p_channel_controllers[voice].chorus == 0){
+				break;
 			}
-		}
+			if(voice != p_oscillators[oscillator_index].voice){
+				break;
+			}
+			if(true == IS_NOTE_ON(p_oscillators[oscillator_index].state_bits)){
+				break;
+			}
+			if(UNUSED_OSCILLATOR != p_oscillators[oscillator_index].native_oscillator){
+				break;
+			}
+			put_event(RELEASE_EVENT, oscillator_index, tick);
+			process_chorus_effect(tick, false, voice, p_oscillators[oscillator_index].note,
+						  p_oscillators[oscillator_index].volume/p_channel_controllers->playing_volume,
+								  oscillator_index);
+		} while(0);
+		oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 	}
 }
 
@@ -188,10 +197,13 @@ static void process_cc_reset_all_controllers(struct _channel_controller * const 
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RESET_ALL_CONTROLLERS :: voices = %u \r\n", tick, voice);
 	reset_channel_controller(&p_channel_controllers[voice]);
 
-	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if( voice == p_oscillators[i].voice){
-			p_oscillators[i].voice = UNUSED_OSCILLATOR;
+	int16_t oscillator_index = get_head_occupied_oscillator_index();
+	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
+	for(int16_t i = 0; i < occupied_oscillator_number; i++){
+		if( voice == p_oscillators[oscillator_index].voice){
+			put_event(RELEASE_EVENT, oscillator_index, tick);
 		}
+		oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 	}
 }
 

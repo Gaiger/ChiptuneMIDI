@@ -97,7 +97,7 @@ void chiptune_set_midi_message_callback( int(*handler_get_midi_message)(uint32_t
 static struct _channel_controller s_channel_controllers[MAX_CHANNEL_NUMBER];
 
 static struct _oscillator s_oscillators[MAX_OSCILLATOR_NUMBER];
-static uint32_t s_occupied_oscillator_number = 0;
+static int16_t s_occupied_oscillator_number = 0;
 
 struct _occupied_oscillator_node
 {
@@ -155,7 +155,7 @@ int discard_oscillator(int16_t const index)
 
 	do {
 		if(0 == s_occupied_oscillator_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator %d has been discard\r\n");
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all oscillators have been discarded\r\n");
 			return -1;
 		}
 
@@ -183,13 +183,33 @@ int discard_oscillator(int16_t const index)
 		s_occupied_oscillator_nodes[next_index].previous = previous_index;
 	} while (0);
 
-
 	s_occupied_oscillator_nodes[index].previous = UNUSED_OSCILLATOR;
 	s_occupied_oscillator_nodes[index].next = UNUSED_OSCILLATOR;
 	s_oscillators[index].voice = UNUSED_OSCILLATOR;
 	s_occupied_oscillator_number -= 1;
-
 	return 0;
+}
+
+/**********************************************************************************/
+
+int16_t get_occupied_oscillator_number(void){ return s_occupied_oscillator_number; }
+
+/**********************************************************************************/
+
+int16_t get_head_occupied_oscillator_index(){ return s_head_occupied_oscillator_index; }
+
+/**********************************************************************************/
+
+int16_t get_next_occupied_oscillator_index(int16_t const index)
+{
+	return 	s_occupied_oscillator_nodes[index].next;
+}
+
+/**********************************************************************************/
+
+struct _oscillator * const get_oscillator_pointer(int16_t const index)
+{
+	return &s_oscillators[index];
 }
 
 /**********************************************************************************/
@@ -338,25 +358,24 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 																  s_channel_controllers[voice].pitch_wheel,
 																  p_oscillator->pitch_chorus_bend_in_semitone,
 																  &pitch_wheel_bend_in_semitone);
-				 p_oscillator->delta_vibration_phase = calculate_delta_phase(p_oscillator->note + VIBRATION_AMPLITUDE_IN_SEMITINE,
-																			 s_channel_controllers[voice].tuning_in_semitones,
-																			 s_channel_controllers[voice].pitch_wheel_bend_range_in_semitones,
-																			 s_channel_controllers[voice].pitch_wheel,
-																			 p_oscillator->pitch_chorus_bend_in_semitone,
-																			 &pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
-				 p_oscillator->native_oscillator = native_oscillator_index;
-				 SET_CHORUS_OSCILLATOR(p_oscillator->state_bits);
-				 SET_ACTIVATED_OFF(p_oscillator->state_bits);
-				 oscillator_indexes[j] = i;
+				p_oscillator->delta_vibration_phase = calculate_delta_phase(p_oscillator->note + VIBRATION_AMPLITUDE_IN_SEMITINE,
+																			s_channel_controllers[voice].tuning_in_semitones,
+																			s_channel_controllers[voice].pitch_wheel_bend_range_in_semitones,
+																			s_channel_controllers[voice].pitch_wheel,
+																			p_oscillator->pitch_chorus_bend_in_semitone,
+																			&pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
+				p_oscillator->native_oscillator = native_oscillator_index;
+				SET_CHORUS_OSCILLATOR(p_oscillator->state_bits);
+				oscillator_indexes[j] = i;
 			}
 			break;
 		}
 
 		int kk = 0;
-		uint16_t ii = 0;
-		int oscillator_index = s_head_occupied_oscillator_index;
-		for(ii = 0; ii < s_occupied_oscillator_number; ii++){
-
+		int16_t ii = 0;
+		int16_t oscillator_index = get_head_occupied_oscillator_index();
+		int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
+		for(ii = 0; ii < occupied_oscillator_number; ii++){
 			do {
 				if(true != IS_CHORUS_OSCILLATOR(s_oscillators[oscillator_index].state_bits)){
 					break;
@@ -378,10 +397,10 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 			if(ASSOCIATE_CHORUS_OSCILLATOR_NUMBER == kk){
 				break;
 			}
-			oscillator_index = s_occupied_oscillator_nodes[oscillator_index].next;
+			oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 		}
 
-		if(s_occupied_oscillator_number == ii){
+		if(occupied_oscillator_number == ii){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR::targeted oscillator could not be found\r\n");
 			return -4;
 		}
@@ -405,38 +424,35 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	int16_t  ii = 0;
 	do {
 		if(true == is_note_on){
-			int kk = 0;
-			for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-
-				if(voice == s_oscillators[i].voice){
-					if(note == s_oscillators[i].note){
-						do {
-							if(UNUSED_OSCILLATOR == s_oscillators[i].native_oscillator){
-								if(false == IS_NOTE_ON(s_oscillators[i].state_bits)){
-									discard_oscillator(i);
-									if( 0 < s_channel_controllers[voice].chorus){
-										process_chorus_effect(tick, false, voice, note, velocity, i);
-									}
-
-									break;
-								}
-
-								//TODO :  chorus associate oscillators also need to be corrected the volume.
-								actual_velocity -= s_oscillators[i].volume/s_channel_controllers[voice].playing_volume;
-								if(actual_velocity > INT8_MAX){
-									actual_velocity = DIVIDE_BY_2(velocity);
-									s_oscillators[i].volume = (actual_velocity + (actual_velocity & 0x01))
-											* s_channel_controllers[voice].playing_volume;
-								}
-							}
-
-						} while(0);
+			int16_t oscillator_index = get_head_occupied_oscillator_index();
+			int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
+			for(ii = 0; ii < occupied_oscillator_number; ii++){
+				do {
+					if(note != s_oscillators[oscillator_index].note){
+						break;
 					}
-				}
-				kk += 1;
-				if(s_occupied_oscillator_number == kk){
-					break;
-				}
+					if(voice != s_oscillators[oscillator_index].voice){
+						break;
+					}
+
+					if(UNUSED_OSCILLATOR == s_oscillators[oscillator_index].native_oscillator){
+						if(false == IS_NOTE_ON(s_oscillators[oscillator_index].state_bits)){
+							discard_oscillator(oscillator_index);
+							if( 0 < s_channel_controllers[voice].chorus){
+								process_chorus_effect(tick, false, voice, note, velocity, oscillator_index);
+							}
+							break;
+						}
+					}
+
+					actual_velocity -= s_oscillators[oscillator_index].volume/s_channel_controllers[voice].playing_volume;
+					if(actual_velocity > INT8_MAX){
+						actual_velocity = DIVIDE_BY_2(velocity);
+						s_oscillators[oscillator_index].volume = (actual_velocity + (actual_velocity & 0x01))
+								* s_channel_controllers[voice].playing_volume;
+					}
+				} while(0);
+				oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 			}
 
 			struct _oscillator * const p_oscillator = acquire_oscillator(&ii);
@@ -475,37 +491,46 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 		bool is_found = false;
 		do {
-			if(true == s_channel_controllers[voice].is_damper_pedal_on){
-				for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
-					if(voice == s_oscillators[ii].voice){
-						if(note == s_oscillators[ii].note){
-							SET_NOTE_OFF(s_oscillators[ii].state_bits);
-							s_oscillators[ii].volume
-									= REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(s_oscillators[ii].volume);
-							is_found = true;
-						}
-					}
-				}
+			int16_t oscillator_index = get_head_occupied_oscillator_index();
+			int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 
+			if(true == s_channel_controllers[voice].is_damper_pedal_on){
+				for(ii = 0; ii < occupied_oscillator_number; ii++){
+					do {
+						if(note != s_oscillators[oscillator_index].note){
+							break;
+						}
+						if(voice != s_oscillators[oscillator_index].voice){
+							break;
+						}
+						SET_NOTE_OFF(s_oscillators[oscillator_index].state_bits);
+						s_oscillators[oscillator_index].volume
+								= REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(s_oscillators[oscillator_index].volume);
+						is_found = true;
+					} while(0);
+					oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
+				}
 				break;
 			}
 
-			for(ii = 0; ii < MAX_OSCILLATOR_NUMBER; ii++){
-				if(UNUSED_OSCILLATOR != s_oscillators[ii].native_oscillator){
-					continue;
-				}
-
-				if(voice == s_oscillators[ii].voice){
-					if(note == s_oscillators[ii].note){
-						put_event(RELEASE_EVENT, ii, tick);
-						if(0 < s_channel_controllers[voice].chorus){
-							process_chorus_effect(tick, is_note_on, voice, note, velocity, ii);
-						}
-						is_found = true;
+			for(ii = 0; ii < occupied_oscillator_number; ii++){
+				do {
+					if(note != s_oscillators[oscillator_index].note){
 						break;
 					}
+					if(voice != s_oscillators[oscillator_index].voice){
+						break;
+					}
+					put_event(RELEASE_EVENT, oscillator_index, tick);
+					if(0 < s_channel_controllers[voice].chorus){
+						process_chorus_effect(tick, is_note_on, voice, note, velocity, oscillator_index);
+					}
+					is_found = true;
+				} while(0);
+				if(true == is_found){
+					break;
 				}
-
+				oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 			}
 		} while(0);
 
@@ -1010,13 +1035,10 @@ int16_t chiptune_fetch_16bit_wave(void)
 		}
 	}
 
-	uint32_t kk = 0;
 	int64_t accumulated_value = 0;
-	for(int i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(UNUSED_OSCILLATOR == s_oscillators[i].voice){
-			continue;
-		}
-
+	int16_t i = get_head_occupied_oscillator_index();
+	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
+	for(int16_t k = 0; k < occupied_oscillator_number; k++){
 		if(false == IS_ACTIVATED(s_oscillators[i].state_bits)){
 			goto Flag_oscillator_take_effect_end;
 		}
@@ -1069,10 +1091,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 		s_oscillators[i].current_phase += s_oscillators[i].delta_phase;
 
 Flag_oscillator_take_effect_end:
-		kk += 1;
-		if(kk == s_occupied_oscillator_number){
-			break;
-		}
+		i = get_next_occupied_oscillator_index(i);
 	}
 
 	INCREMENT_TIME_BASE();
