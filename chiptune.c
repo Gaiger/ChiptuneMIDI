@@ -189,10 +189,22 @@ static  uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semi
 
 /**********************************************************************************/
 
-#include <stdlib.h>
+//xor-shift pesudo random https://en.wikipedia.org/wiki/Xorshift
+
+static int32_t s_chorus_random_seed = 20240129;
+
+static uint16_t chorus_ramdom(void)
+{
+	s_chorus_random_seed ^= s_chorus_random_seed << 13;
+	s_chorus_random_seed ^= s_chorus_random_seed >> 17;
+	s_chorus_random_seed ^= s_chorus_random_seed << 5;
+	return (uint16_t)(s_chorus_random_seed);
+}
+
+/**********************************************************************************/
 
 #define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
-												(((DIVIDE_BY_2(RAND_MAX) + 1)- (VALUE))/(float)(DIVIDE_BY_2(RAND_MAX) + 1))
+												(((DIVIDE_BY_2(UINT16_MAX) + 1) - (VALUE))/(float)(DIVIDE_BY_2(UINT16_MAX) + 1))
 
 static float pitch_chorus_bend_in_semitone(uint8_t const voice)
 {
@@ -200,12 +212,11 @@ static float pitch_chorus_bend_in_semitone(uint8_t const voice)
 		return 0.0;
 	}
 
-	//TODO :: too complex
-	int random = rand();
+	int random = chorus_ramdom();
 	float pitch_chorus_bend_in_semitone;
 #define	MAX_CHORUS_PITCH_BEND_IN_SEMITONE			(0.25f)
 	pitch_chorus_bend_in_semitone = RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) * MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
-	pitch_chorus_bend_in_semitone *= s_channel_controllers[voice].chorus/127.0f;
+	pitch_chorus_bend_in_semitone *= s_channel_controllers[voice].chorus/(float)INT8_MAX;
 	//CHIPTUNE_PRINTF(cDeveloping, "pitch_chorus_bend_in_semitone = %3.2f\r\n", pitch_chorus_bend_in_semitone);
 	return pitch_chorus_bend_in_semitone;
 }
