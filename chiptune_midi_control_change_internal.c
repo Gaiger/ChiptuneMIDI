@@ -1,5 +1,7 @@
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
+
+#include "chiptune_channel_controller_internal.h"
 #include "chiptune_oscillator_internal.h"
 #include "chiptune_event_internal.h"
 

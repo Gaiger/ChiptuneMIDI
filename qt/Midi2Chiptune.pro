@@ -12,6 +12,7 @@ include(QMidi/src/QMidi.pri)
 
 SOURCES += \
         ../chiptune.c \
+        ../chiptune_channel_controller_internal.c \
         ../chiptune_midi_control_change_internal.c \
         ../chiptune_event_internal.c \
         ../chiptune_oscillator_internal.c \
@@ -27,6 +28,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     ../chiptune.h \
+    ../chiptune_channel_controller_internal.h \
     ../chiptune_common_internal.h \
     ../chiptune_midi_control_change_internal.h \
     ../chiptune_event_internal.h \
