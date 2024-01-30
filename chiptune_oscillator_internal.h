@@ -52,6 +52,7 @@ void reset_all_oscillators(void);
 
 struct _oscillator * const acquire_oscillator(int16_t * const p_index);
 int discard_oscillator(int16_t const index);
+
 int16_t const get_occupied_oscillator_number(void);
 int16_t get_head_occupied_oscillator_index();
 int16_t get_next_occupied_oscillator_index(int16_t const index);

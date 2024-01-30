@@ -30,13 +30,20 @@ static uint32_t s_resolution = DEFAULT_RESOLUTION;
 #ifdef _INCREMENTAL_SAMPLE_INDEX
 static uint32_t s_current_sample_index = 0;
 static chiptune_float s_tick_to_sample_index_ratio = (chiptune_float)(DEFAULT_SAMPLING_RATE * 1.0/(DEFAULT_TEMPO/60.0)/DEFAULT_RESOLUTION);
+
+#define RESET_CURRENT_TIME()						\
+													do { \
+														s_current_sample_index = 0; \
+													} while(0)
+
 #define UPDATE_SAMPLES_TO_TICK_RATIO()				\
 													do { \
 														s_tick_to_sample_index_ratio \
 														= (chiptune_float)(s_sampling_rate * 60.0/s_tempo/s_resolution); \
 													} while(0)
 
-#define CORRECT_TIME_BASE()							do { \
+#define CORRECT_TIME_BASE()							\
+													do { \
 														s_current_sample_index = (uint32_t)(s_current_sample_index * s_tempo/tempo); \
 													} while(0)
 
@@ -50,12 +57,18 @@ static chiptune_float s_tick_to_sample_index_ratio = (chiptune_float)(DEFAULT_SA
 static chiptune_float s_current_tick = 0.0;
 static chiptune_float s_delta_tick_per_sample = (DEFAULT_RESOLUTION / ( (chiptune_float)DEFAULT_SAMPLING_RATE/(DEFAULT_TEMPO /60.0) ) );
 
+#define RESET_CURRENT_TIME()						\
+													do { \
+														s_current_tick = 0.0; \
+													} while(0)
+
 #define	UPDATE_DELTA_TICK_PER_SAMPLE()				\
 													do { \
 														s_delta_tick_per_sample = ( s_resolution * s_tempo / (chiptune_float)s_sampling_rate/ 60.0 ); \
 													} while(0)
 
-#define CORRECT_TIME_BASE()							do { \
+#define CORRECT_TIME_BASE()							\
+													do { \
 														(void)0; \
 													} while(0)
 
@@ -835,21 +848,14 @@ static uint32_t  s_vibrato_same_index_count_number = (uint32_t)(DEFAULT_SAMPLING
 
 void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
 {
-#ifdef _INCREMENTAL_SAMPLE_INDEX
-	s_current_sample_index = 0;
-#else
-	s_current_tick = 0;
-#endif
+	RESET_CURRENT_TIME();
 	s_is_tune_ending = false;
 	s_midi_messge_index = 0;
 	SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
-
 	for(int i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 		reset_channel_controller(&s_channel_controllers[i]);
 	}
-
 	reset_all_oscillators();
-
 	clean_all_events();
 
 	s_sampling_rate = sampling_rate;

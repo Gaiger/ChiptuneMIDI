@@ -64,11 +64,13 @@ void check_occupied_oscillator_list(void)
 		return ;
 	}
 }
-#define CHECK_OCCUPIED_OSCILLATOR_LIST()			do { \
+#define CHECK_OCCUPIED_OSCILLATOR_LIST()			\
+													do { \
 														check_occupied_oscillator_list(); \
 													} while(0)
 #else
-#define CHECK_OCCUPIED_OSCILLATOR_LIST()			do { \
+#define CHECK_OCCUPIED_OSCILLATOR_LIST()			\
+													do { \
 														(void)0; \
 													} while(0)
 #endif
@@ -94,7 +96,6 @@ struct _oscillator * const acquire_oscillator(int16_t * const p_index)
 			break;
 		}
 
-
 		bool is_found = false;
 		for(i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 			if(UNUSED_OSCILLATOR == s_oscillators[i].voice){
@@ -113,8 +114,8 @@ struct _oscillator * const acquire_oscillator(int16_t * const p_index)
 	} while(0);
 
 	s_occupied_oscillator_number += 1;
-	CHECK_OCCUPIED_OSCILLATOR_LIST();
 	*p_index = i;
+	CHECK_OCCUPIED_OSCILLATOR_LIST();
 	return &s_oscillators[i];
 }
 
@@ -159,7 +160,6 @@ int discard_oscillator(int16_t const index)
 	s_occupied_oscillator_nodes[index].next = UNUSED_OSCILLATOR;
 	s_oscillators[index].voice = UNUSED_OSCILLATOR;
 	s_occupied_oscillator_number -= 1;
-
 	CHECK_OCCUPIED_OSCILLATOR_LIST();
 	return 0;
 }

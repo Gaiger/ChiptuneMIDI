@@ -66,12 +66,14 @@ void check_upcoming_events(uint32_t const tick)
 	} while(0);
 	return ;
 }
-#define CHECK_UPCOMING_EVENTS(TICK)					do { \
+#define CHECK_UPCOMING_EVENTS(TICK)					\
+													do { \
 														check_upcoming_events((TICK)); \
 													} while(0)
 
 #else
-#define CHECK_UPCOMING_EVENTS(TICK)					do { \
+#define CHECK_UPCOMING_EVENTS(TICK)					\
+													do { \
 														(void)0; \
 													} while(0)
 #endif
