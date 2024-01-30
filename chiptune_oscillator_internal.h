@@ -28,7 +28,7 @@ typedef struct _oscillator
 	uint32_t	vibrato_same_index_count;
 
 	int16_t		native_oscillator;
-} oscillator;
+} oscillator_t;
 
 #define UNUSED_OSCILLATOR							(-1)
 #define RESET_STATE_BITES(STATE_BITES)				((STATE_BITES) = 0)
@@ -50,12 +50,12 @@ typedef struct _oscillator
 
 void reset_all_oscillators(void);
 
-oscillator * const acquire_oscillator(int16_t * const p_index);
+oscillator_t * const acquire_oscillator(int16_t * const p_index);
 int discard_oscillator(int16_t const index);
 
 int16_t const get_occupied_oscillator_number(void);
 int16_t get_head_occupied_oscillator_index();
 int16_t get_next_occupied_oscillator_index(int16_t const index);
-oscillator * const get_oscillator_pointer_from_index(int16_t const index);
+oscillator_t * const get_oscillator_pointer_from_index(int16_t const index);
 
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_

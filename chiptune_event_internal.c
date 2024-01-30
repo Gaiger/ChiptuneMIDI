@@ -179,7 +179,7 @@ void process_events(uint32_t const tick)
 			break;
 		}
 
-		oscillator *p_oscillator = get_oscillator_pointer_from_index(s_events[s_event_head_index].oscillator);
+		oscillator_t *p_oscillator = get_oscillator_pointer_from_index(s_events[s_event_head_index].oscillator);
 		char addition_string[16] = "";
 		if(IS_CHORUS_OSCILLATOR(p_oscillator->state_bits)){
 			snprintf(&addition_string[0], sizeof(addition_string), "(chorus)");

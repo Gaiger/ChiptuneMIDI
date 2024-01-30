@@ -4,7 +4,7 @@
 
 #define MAX_OSCILLATOR_NUMBER						(MIDI_MAX_CHANNEL_NUMBER * 8)
 
-static oscillator s_oscillators[MAX_OSCILLATOR_NUMBER];
+static oscillator_t s_oscillators[MAX_OSCILLATOR_NUMBER];
 static int16_t s_occupied_oscillator_number = 0;
 
 struct _occupied_oscillator_node
@@ -76,7 +76,7 @@ void check_occupied_oscillator_list(void)
 #endif
 /**********************************************************************************/
 
-oscillator * const acquire_oscillator(int16_t * const p_index)
+oscillator_t * const acquire_oscillator(int16_t * const p_index)
 {
 	if(MAX_OSCILLATOR_NUMBER == s_occupied_oscillator_number){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillators are used\r\n");
@@ -196,7 +196,7 @@ int16_t get_next_occupied_oscillator_index(int16_t const index)
 
 /**********************************************************************************/
 
-oscillator * const get_oscillator_pointer_from_index(int16_t const index)
+oscillator_t * const get_oscillator_pointer_from_index(int16_t const index)
 {
 	if(false == (index >= 0 && index < MAX_OSCILLATOR_NUMBER)){
 		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %u out of range \r\n", index);
