@@ -23,15 +23,14 @@ uint32_t s_upcoming_event_number = 0;
 int16_t s_event_head_index = NO_EVENT;
 
 #ifdef _CHECK_EVENT_LIST
-
 /**********************************************************************************/
 
-void check_upcoming_events(uint32_t const tick)
+static void check_upcoming_events(uint32_t const tick)
 {
 	int16_t index = s_event_head_index;
 	bool is_error_occur = false;
 	uint32_t previous_tick = 0;
-	for(uint32_t i = 0; i < s_upcoming_event_number; i++){
+	for(int16_t i = 0; i < s_upcoming_event_number; i++){
 
 		if(UNUSED_EVENT == s_events[index].type){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event element type error\r\n");
@@ -54,7 +53,7 @@ void check_upcoming_events(uint32_t const tick)
 
 		CHIPTUNE_PRINTF(cDeveloping, "tick = %u\r\n", tick);
 		index = s_event_head_index;
-		for(uint32_t i = 0; i < s_upcoming_event_number; i++){
+		for(int16_t i = 0; i < s_upcoming_event_number; i++){
 
 			CHIPTUNE_PRINTF(cDeveloping, "type = %d, oscillator = %u, triggerring_tick = %u\r\n",
 							s_events[index].type, s_events[index].oscillator, s_events[index].triggerring_tick);
@@ -77,6 +76,7 @@ void check_upcoming_events(uint32_t const tick)
 														(void)0; \
 													} while(0)
 #endif
+
 /**********************************************************************************/
 
 int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
@@ -87,7 +87,7 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 	}
 
 	do {
-		int current_index;
+		int16_t current_index;
 		for(current_index = 0; current_index < MAX_EVENT_NUMBER; current_index++){
 			if(UNUSED_EVENT == s_events[current_index].type){
 				break;
@@ -114,10 +114,10 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 			break;
 		}
 
-		int previous_index = s_event_head_index;
-		uint32_t kk;
+		int16_t previous_index = s_event_head_index;
+		int16_t kk;
 		for(kk = 1; kk < s_upcoming_event_number; kk++){
-			int next_index = s_events[previous_index].next_event;
+			int16_t next_index = s_events[previous_index].next_event;
 			if(s_events[current_index].triggerring_tick <= s_events[next_index].triggerring_tick){
 				s_events[previous_index].next_event = current_index;
 				s_events[current_index].next_event = next_index;
@@ -218,7 +218,7 @@ void process_events(uint32_t const tick)
 
 void clean_all_events(void)
 {
-	for(int i = 0; i < MAX_EVENT_NUMBER; i++){
+	for(int16_t i = 0; i < MAX_EVENT_NUMBER; i++){
 		s_events[i].type = UNUSED_EVENT;
 	}
 	s_upcoming_event_number = 0;

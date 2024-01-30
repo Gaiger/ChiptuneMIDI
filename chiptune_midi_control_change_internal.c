@@ -100,7 +100,7 @@ static inline void process_cc_expression(uint32_t const tick, uint8_t const voic
 
 int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 						   uint8_t const voice, uint8_t const note, uint8_t const velocity,
-						   int const original_oscillator_index);
+						   int16_t const original_oscillator_index);
 
 static void process_cc_damper_pedal(uint32_t const tick, uint8_t const voice, uint8_t const value)
 {

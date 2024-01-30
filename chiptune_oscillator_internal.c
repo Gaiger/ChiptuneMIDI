@@ -17,6 +17,8 @@ int16_t s_head_occupied_oscillator_index = UNUSED_OSCILLATOR;
 int16_t s_last_occupied_oscillator_index = UNUSED_OSCILLATOR;
 
 #ifdef _CHECK_OCCUPIED_OSCILLATOR_LIST
+/**********************************************************************************/
+
 void check_occupied_oscillator_list(void)
 {
 	if(0 > s_occupied_oscillator_number){
@@ -74,6 +76,7 @@ void check_occupied_oscillator_list(void)
 														(void)0; \
 													} while(0)
 #endif
+
 /**********************************************************************************/
 
 oscillator_t * const acquire_oscillator(int16_t * const p_index)

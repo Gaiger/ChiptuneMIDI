@@ -151,7 +151,7 @@ static void process_program_change_message(uint32_t const tick, uint8_t const vo
 
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 
-static  uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semitones,
+static uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semitones,
 											 uint16_t const pitch_wheel_bend_range_in_semitones, uint16_t const pitch_wheel,
 											float pitch_chorus_bend_in_semitones, float *p_pitch_wheel_bend_in_semitone)
 {
@@ -197,7 +197,7 @@ static float pitch_chorus_bend_in_semitone(uint8_t const voice)
 		return 0.0;
 	}
 
-	int random = chorus_ramdom();
+	uint16_t random = chorus_ramdom();
 	float pitch_chorus_bend_in_semitone;
 #define	MAX_CHORUS_PITCH_BEND_IN_SEMITONE			(0.25f)
 	pitch_chorus_bend_in_semitone = RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) *  chorus/(float)INT8_MAX;
@@ -244,7 +244,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 			float pitch_wheel_bend_in_semitone = 0.0f;
 			oscillator_volume = 4 * averaged_volume;
 			int16_t i;
-			for(int j = 0; j < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER;j++){
+			for(int16_t j = 0; j < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER;j++){
 				oscillator_t * const p_oscillator = acquire_oscillator(&i);
 				if(NULL == p_oscillator){
 					return -1;
@@ -270,7 +270,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 			break;
 		}
 
-		int kk = 0;
+		int16_t kk = 0;
 		int16_t ii = 0;
 		int16_t oscillator_index = get_head_occupied_oscillator_index();
 		int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
@@ -307,7 +307,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 	} while(0);
 
 	uint8_t event_type = (true == is_note_on) ? ACTIVATE_EVENT : RELEASE_EVENT;
-	for(int j = 0; j  < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; j++){
+	for(int16_t j = 0; j  < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; j++){
 		put_event(event_type, oscillator_indexes[j], tick + (j + 1) * s_chorus_delta_tick);
 	}
 
@@ -594,7 +594,7 @@ static void process_midi_message(struct _tick_message const tick_message)
 uint32_t s_midi_messge_index = 0;
 uint32_t s_total_message_number = 0;
 
-int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_message)
+static int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_message)
 {
 	uint32_t tick;
 	uint32_t message;
@@ -614,7 +614,7 @@ int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_message
 
 /**********************************************************************************/
 
-void release_all_channels_damper_pedal(const uint32_t tick)
+static void release_all_channels_damper_pedal(const uint32_t tick)
 {
 	for(int8_t k = 0; k < MIDI_MAX_CHANNEL_NUMBER; k++){
 		do {
@@ -722,7 +722,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 	previous_tick = tick_message.tick;
 	SET_TICK_MESSAGE_NULL(tick_message);
 
-	int tick = NULL_TICK;
+	uint32_t tick = NULL_TICK;
 	while(1)
 	{
 		do {
@@ -811,7 +811,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 
 uint32_t number_of_roundup_to_power2_left_shift_bits(uint32_t const value)
 {
-	unsigned int v = value; // compute the next highest power of 2 of 32-bit v
+	uint32_t v = value; // compute the next highest power of 2 of 32-bit v
 
 	v--;
 	v |= v >> 1;
@@ -869,7 +869,7 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	s_sampling_rate = sampling_rate;
 	s_resolution = resolution;
 	s_total_message_number = total_message_number;
-	for(int i = 0; i < VIBRATO_PHASE_TABLE_LENGTH; i++){
+	for(int16_t i = 0; i < VIBRATO_PHASE_TABLE_LENGTH; i++){
 		s_vibrato_phase_table[i] = (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)VIBRATO_PHASE_TABLE_LENGTH));
 	}
 	s_vibrato_same_index_count_number = (uint32_t)(s_sampling_rate/(VIBRATO_PHASE_TABLE_LENGTH * (float)VIBRATO_FREQUENCY));
@@ -881,7 +881,6 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 }
 
 /**********************************************************************************/
-
 
 void chiptune_set_tempo(float const tempo)
 {
@@ -967,7 +966,6 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 
 #define INT16_MAX_PLUS_1							(INT16_MAX + 1)
 #define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
-
 
 int16_t chiptune_fetch_16bit_wave(void)
 {
