@@ -289,7 +289,6 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 				if(voice != p_oscillator->voice){
 					break;
 				}
-
 				oscillator_indexes[kk] = oscillator_index;
 				kk += 1;
 			} while(0);
@@ -337,13 +336,17 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						break;
 					}
 
-					if(UNUSED_OSCILLATOR == p_oscillator->native_oscillator){
-						if(false == IS_NOTE_ON(p_oscillator->state_bits)){
-							put_event(RELEASE_EVENT, oscillator_index, tick);
-								process_chorus_effect(tick, false, voice, note, velocity, oscillator_index);
+					do {
+						if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
 							break;
 						}
-					}
+						if(true == IS_NOTE_ON(p_oscillator->state_bits)){
+							break;
+						}
+						put_event(RELEASE_EVENT, oscillator_index, tick);
+						process_chorus_effect(tick, false, voice, note, velocity, oscillator_index);
+					} while(0);
+
 					// TODO : the associate chorus oscillators volume should be decreased
 					actual_velocity -= p_oscillator->volume/p_channel_controller->playing_volume;
 					if(actual_velocity > INT8_MAX){
@@ -388,52 +391,40 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}
 
 		bool is_found = false;
-		do {
-			int16_t oscillator_index = get_head_occupied_oscillator_index();
-			int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
-
-			if(true == p_channel_controller->is_damper_pedal_on){
-				for(ii = 0; ii < occupied_oscillator_number; ii++){
-					oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
-					do {
-						if(note != p_oscillator->note){
-							break;
-						}
-						if(voice != p_oscillator->voice){
-							break;
-						}
+		int16_t oscillator_index = get_head_occupied_oscillator_index();
+		int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
+		for(ii = 0; ii < occupied_oscillator_number; ii++){
+			oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+			bool is_leave_loop = false;
+			do {
+				if(note != p_oscillator->note){
+					break;
+				}
+				if(voice != p_oscillator->voice){
+					break;
+				}
+				do {
+					if(true == p_channel_controller->is_damper_pedal_on){
 						SET_NOTE_OFF(p_oscillator->state_bits);
 						p_oscillator->volume
 								= REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->volume);
 						is_found = true;
-					} while(0);
-					oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
-				}
-				break;
-			}
-
-			for(ii = 0; ii < occupied_oscillator_number; ii++){
-				oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
-				do {
+						break;
+					}
 					if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
-						break;
-					}
-					if(note != p_oscillator->note){
-						break;
-					}
-					if(voice != p_oscillator->voice){
 						break;
 					}
 					put_event(RELEASE_EVENT, oscillator_index, tick);
 					process_chorus_effect(tick, is_note_on, voice, note, velocity, oscillator_index);
 					is_found = true;
+					is_leave_loop = true;
 				} while(0);
-				if(true == is_found){
-					break;
-				}
-				oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
+			} while(0);
+			if(true == is_leave_loop){
+				break;
 			}
-		} while(0);
+			oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
+		}
 
 		if(false == is_found){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR::no corresponding note for off :: tick = %u, voice = %u,  note = %u\r\n",
@@ -607,7 +598,7 @@ static int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_
 
 		p_tick_message->tick = tick;
 		p_tick_message->message = message;
-	}while(0);
+	} while(0);
 
 	return ret;
 }
@@ -631,7 +622,7 @@ static void release_all_channels_damper_pedal(const uint32_t tick)
 					put_event(RELEASE_EVENT, oscillator_index, tick);
 				}
 				oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
-		}
+			}
 		}while(0);
 	}
 
@@ -659,11 +650,9 @@ static int process_timely_midi_message(void)
 			if(false == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)){
 				break;
 			}
-
 			fetch_midi_tick_message(s_midi_messge_index, &s_fetched_tick_message);
 			s_midi_messge_index += 1;
 		} while(0);
-
 
 		if(NULL_TICK == s_fetched_event_tick){
 			s_fetched_event_tick = get_next_event_triggering_tick();
@@ -678,23 +667,28 @@ static int process_timely_midi_message(void)
 
 		bool is_both_after_current_tick = true;
 
-		if(false == IS_AFTER_CURRENT_TIME(s_fetched_tick_message.tick)){
+		do
+		{
+			if(true == IS_AFTER_CURRENT_TIME(s_fetched_tick_message.tick)){
+				break;
+			}
 			process_midi_message(s_fetched_tick_message);
 			SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
 			is_both_after_current_tick = false;
 
 			s_fetched_event_tick = get_next_event_triggering_tick();
-		}
+		} while(0);
 
 		do {
 			if(NULL_TICK == s_fetched_event_tick){
 				break;
 			}
-			if(false == IS_AFTER_CURRENT_TIME(s_fetched_event_tick)){
-				process_events(s_fetched_event_tick);
-				s_fetched_event_tick = NULL_TICK;
-				is_both_after_current_tick = false;
+			if(true == IS_AFTER_CURRENT_TIME(s_fetched_event_tick)){
+				break;
 			}
+			process_events(s_fetched_event_tick);
+			s_fetched_event_tick = NULL_TICK;
+			is_both_after_current_tick = false;
 		} while(0);
 
 		if(true == is_both_after_current_tick){
