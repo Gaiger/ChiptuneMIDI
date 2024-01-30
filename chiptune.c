@@ -522,6 +522,8 @@ struct _tick_message
 									(MESSAGE_TICK).message = NULL_MESSAGE; \
 								} while(0)
 
+#define SEVEN_BITS_VALID(VALUE)						((0x7F) & (VALUE))
+
 static void process_midi_message(struct _tick_message const tick_message)
 {
 	if(true == IS_NULL_TICK_MESSAGE(tick_message)){
@@ -536,8 +538,8 @@ static void process_midi_message(struct _tick_message const tick_message)
 	const uint32_t tick = tick_message.tick;
 	u.data_as_uint32 = tick_message.message;
 
-	uint8_t type =  u.data_as_bytes[0] & 0xF0;
-	uint8_t voice = u.data_as_bytes[0] & 0x0F;
+	uint8_t type = u.data_as_bytes[0] & 0xF0;
+	int8_t voice = u.data_as_bytes[0] & 0x0F;
 
 #define MIDI_MESSAGE_NOTE_OFF						(0x80)
 #define MIDI_MESSAGE_NOTE_ON						(0x90)
@@ -551,26 +553,26 @@ static void process_midi_message(struct _tick_message const tick_message)
 	case MIDI_MESSAGE_NOTE_OFF:
 	case MIDI_MESSAGE_NOTE_ON:
 		process_note_message(tick, (MIDI_MESSAGE_NOTE_OFF == type) ? false : true,
-			voice, u.data_as_bytes[1], u.data_as_bytes[2]);
+			voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]));
 	 break;
 	case MIDI_MESSAGE_KEY_PRESSURE:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: note = %u, amount = %u %s\r\n",
-						tick, voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
+						tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_CONTROL_CHANGE:
-		process_control_change_message(tick, voice, u.data_as_bytes[1], u.data_as_bytes[2]);
+		process_control_change_message(tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]));
 		break;
 	case MIDI_MESSAGE_PROGRAM_CHANGE:
-		process_program_change_message(tick, voice, u.data_as_bytes[1]);
+		process_program_change_message(tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]));
 		break;
 	case MIDI_MESSAGE_CHANNEL_PRESSURE:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %u, amount = %u %s\r\n",
-						tick, voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
+						tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_PITCH_WHEEL:
 #define COMBINE_AS_PITCH_WHEEL_14BITS(BYTE1, BYTE2)	\
-													((0x7F & (BYTE2)) << 7) | (0x7F & (BYTE1))
-		process_pitch_wheel_message(tick, voice, COMBINE_AS_PITCH_WHEEL_14BITS(u.data_as_bytes[1], u.data_as_bytes[2]) );
+													(SEVEN_BITS_VALID(BYTE2) << 7) | SEVEN_BITS_VALID(BYTE1))
+		process_pitch_wheel_message(tick, voice, COMBINE_AS_PITCH_WHEEL_14BITS(u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	default:
 		//CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE code = %u :: voice = %u, byte 1 = %u, byte 2 = %u %s\r\n",

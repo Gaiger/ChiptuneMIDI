@@ -18,6 +18,8 @@ static inline void process_modulation_wheel(uint32_t const tick, uint8_t const v
 
 /**********************************************************************************/
 
+#define SEVEN_BITS_VALID(VALUE)						((0x7F) & (VALUE))
+
 static void process_cc_registered_parameter(uint32_t const tick, uint8_t const voice)
 {
 	(void)tick;
@@ -35,12 +37,12 @@ static void process_cc_registered_parameter(uint32_t const tick, uint8_t const v
 	switch(p_channel_controller->registered_parameter_number)
 	{
 	case MIDI_CC_RPN_PITCH_BEND_SENSITIVY:
-		p_channel_controller->pitch_wheel_bend_range_in_semitones = 0x7F & (p_channel_controller->registered_parameter_value >> 8);
+		p_channel_controller->pitch_wheel_bend_range_in_semitones = SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value >> 8);
 		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %u, semitones = %u\r\n",
 						voice, p_channel_controller->pitch_wheel_bend_range_in_semitones);
-		if(0 != (p_channel_controller->registered_parameter_value & 0x7F)){
+		if(0 != SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value)){
 			CHIPTUNE_PRINTF(cMidiSetup, "----  MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %u, cents = %u (%s)\r\n",
-						voice, p_channel_controller->registered_parameter_number & 0x7F, "(NOT IMPLEMENTED YET)");
+						voice, SEVEN_BITS_VALID(p_channel_controller->registered_parameter_number), "(NOT IMPLEMENTED YET)");
 		}
 		break;
 	case MIDI_CC_RPN_CHANNEL_FINE_TUNING:
@@ -49,7 +51,7 @@ static void process_cc_registered_parameter(uint32_t const tick, uint8_t const v
 						"(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_RPN_CHANNEL_COARSE_TUNING:
-		p_channel_controller->tuning_in_semitones = 0x7F & (p_channel_controller->registered_parameter_value >> 8) - MIDI_CC_CENTER_VALUE;
+		p_channel_controller->tuning_in_semitones = SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value >> 8) - MIDI_CC_CENTER_VALUE;
 		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_CHANNEL_COARSE_TUNING(%u) :: voice = %u, tuning in semitones = %+d\r\n",
 						voice, p_channel_controller->registered_parameter_number, p_channel_controller->tuning_in_semitones);
 		break;
