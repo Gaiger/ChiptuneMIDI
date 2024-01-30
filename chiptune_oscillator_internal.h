@@ -23,9 +23,9 @@ struct _oscillator
 
 	float		pitch_chorus_bend_in_semitone;
 
-	uint16_t	delta_vibration_phase;
-	uint16_t	vibration_table_index;
-	uint32_t	vibration_same_index_count;
+	uint16_t	delta_vibrato_phase;
+	uint16_t	vibrato_table_index;
+	uint32_t	vibrato_same_index_count;
 
 	int16_t		native_oscillator;
 };

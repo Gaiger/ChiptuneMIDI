@@ -198,7 +198,7 @@ static float pitch_chorus_bend_in_semitone(uint8_t const voice)
 #define REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(VALUE)	\
 													DIVIDE_BY_8(VALUE)
 
-#define	VIBRATION_AMPLITUDE_IN_SEMITINE				(1)
+#define	VIBRATO_AMPLITUDE_IN_SEMITINE				(1)
 
 #define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
 #define OSCILLATOR_NUMBER_FOR_CHORUS(VALUE)			(DIVIDE_BY_16(((VALUE) + 15)))
@@ -242,7 +242,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 																  s_channel_controllers[voice].pitch_wheel,
 																  p_oscillator->pitch_chorus_bend_in_semitone,
 																  &pitch_wheel_bend_in_semitone);
-				p_oscillator->delta_vibration_phase = calculate_delta_phase(p_oscillator->note + VIBRATION_AMPLITUDE_IN_SEMITINE,
+				p_oscillator->delta_vibrato_phase = calculate_delta_phase(p_oscillator->note + VIBRATO_AMPLITUDE_IN_SEMITINE,
 																			s_channel_controllers[voice].tuning_in_semitones,
 																			s_channel_controllers[voice].pitch_wheel_bend_range_in_semitones,
 																			s_channel_controllers[voice].pitch_wheel,
@@ -359,14 +359,14 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->volume = (uint16_t)actual_velocity * (uint16_t)s_channel_controllers[voice].playing_volume;
 			p_oscillator->waveform = s_channel_controllers[voice].waveform;
 			p_oscillator->duty_cycle_critical_phase = p_oscillator->duty_cycle_critical_phase;
-			p_oscillator->delta_vibration_phase = calculate_delta_phase(p_oscillator->note + VIBRATION_AMPLITUDE_IN_SEMITINE,
+			p_oscillator->delta_vibrato_phase = calculate_delta_phase(p_oscillator->note + VIBRATO_AMPLITUDE_IN_SEMITINE,
 																		s_channel_controllers[voice].tuning_in_semitones,
 																		s_channel_controllers[voice].pitch_wheel_bend_range_in_semitones,
 																		s_channel_controllers[voice].pitch_wheel,
 																		p_oscillator->pitch_chorus_bend_in_semitone,
 																		&pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
-			p_oscillator->vibration_table_index = 0;
-			p_oscillator->vibration_same_index_count = 0;
+			p_oscillator->vibrato_table_index = 0;
+			p_oscillator->vibrato_same_index_count = 0;
 			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
 			put_event(ACTIVATE_EVENT, ii, tick);
 			if(0 != s_channel_controllers[voice].chorus){
@@ -831,13 +831,13 @@ uint32_t g_max_amplitude = 1 << 16;
 
 /**********************************************************************************/
 
-#define VIBRATION_PHASE_TABLE_LENGTH				(64)
-static int8_t s_vibration_phase_table[VIBRATION_PHASE_TABLE_LENGTH] = {0};
-#define CALCULATE_VIBRATION_TABLE_INDEX_REMAINDER(INDEX) \
-													((INDEX) & (VIBRATION_PHASE_TABLE_LENGTH - 1))
+#define VIBRATO_PHASE_TABLE_LENGTH					(64)
+static int8_t s_vibrato_phase_table[VIBRATO_PHASE_TABLE_LENGTH] = {0};
+#define CALCULATE_VIBRATO_TABLE_INDEX_REMAINDER(INDEX) \
+													((INDEX) & (VIBRATO_PHASE_TABLE_LENGTH - 1))
 
-#define VIBRATION_FREQUENCY							(4.0)
-static uint32_t  s_vibration_same_index_count_number = (uint32_t)(DEFAULT_SAMPLING_RATE/VIBRATION_PHASE_TABLE_LENGTH/(float)VIBRATION_FREQUENCY);
+#define VIBRATO_FREQUENCY							(4)
+static uint32_t  s_vibrato_same_index_count_number = (uint32_t)(DEFAULT_SAMPLING_RATE/VIBRATO_PHASE_TABLE_LENGTH/(float)VIBRATO_FREQUENCY);
 
 void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
 {
@@ -861,10 +861,10 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	s_sampling_rate = sampling_rate;
 	s_resolution = resolution;
 	s_total_message_number = total_message_number;
-	for(int i = 0; i < VIBRATION_PHASE_TABLE_LENGTH; i++){
-		s_vibration_phase_table[i] = (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)VIBRATION_PHASE_TABLE_LENGTH));
+	for(int i = 0; i < VIBRATO_PHASE_TABLE_LENGTH; i++){
+		s_vibrato_phase_table[i] = (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)VIBRATO_PHASE_TABLE_LENGTH));
 	}
-	s_vibration_same_index_count_number = (uint32_t)(s_sampling_rate/(VIBRATION_PHASE_TABLE_LENGTH * (float)VIBRATION_FREQUENCY));
+	s_vibrato_same_index_count_number = (uint32_t)(s_sampling_rate/(VIBRATO_PHASE_TABLE_LENGTH * (float)VIBRATO_FREQUENCY));
 
 	UPDATE_TIME_BASE_UNIT();
 	UPDATE_AMPLITUDE_NORMALIZER();
@@ -920,6 +920,36 @@ inline static void increase_time_base_for_fast_to_ending(void)
 
 /**********************************************************************************/
 
+#define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
+#define NORMALIZE_VIBRAION_DELTA_PHASE_AMPLITUDE(VALUE)	\
+													DIVIDE_BY_128(DIVIDE_BY_128(VALUE))
+#define REGULATE_MODULATION_WHEEL(VALUE)			(VALUE + 1)
+
+void perform_vibrato(struct _oscillator * const p_oscillator)
+{
+	do {
+		if(0 ==  s_channel_controllers[p_oscillator->voice].modulation_wheel){
+			break;
+		}
+
+		uint16_t delta_vibrato_phase = p_oscillator->delta_vibrato_phase;
+		uint32_t vibrato_amplitude
+				= REGULATE_MODULATION_WHEEL(s_channel_controllers[p_oscillator->voice].modulation_wheel)
+					* s_vibrato_phase_table[p_oscillator->vibrato_table_index];
+
+		delta_vibrato_phase = NORMALIZE_VIBRAION_DELTA_PHASE_AMPLITUDE(vibrato_amplitude * delta_vibrato_phase);
+		p_oscillator->current_phase += delta_vibrato_phase;
+
+		p_oscillator->vibrato_same_index_count += 1;
+		if(s_vibrato_same_index_count_number == p_oscillator->vibrato_same_index_count){
+			p_oscillator->vibrato_same_index_count = 0;
+			p_oscillator->vibrato_table_index = CALCULATE_VIBRATO_TABLE_INDEX_REMAINDER(p_oscillator->vibrato_table_index  + 1);
+		}
+	} while(0);
+}
+
+/**********************************************************************************/
+
 #ifdef _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
 #define NORMALIZE_AMPLITUDE(VALUE)					((int32_t)((VALUE) >> g_amplitude_nomalization_right_shift))
 #else
@@ -929,10 +959,6 @@ inline static void increase_time_base_for_fast_to_ending(void)
 #define INT16_MAX_PLUS_1							(INT16_MAX + 1)
 #define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
 
-#define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
-#define NORMALIZE_VIBRAION_DELTA_PHASE_AMPLITUDE(VALUE)	\
-													DIVIDE_BY_128(DIVIDE_BY_128(VALUE))
-#define REGULATE_MODULATION_WHEEL(VALUE)			(VALUE + 1)
 
 int16_t chiptune_fetch_16bit_wave(void)
 {
@@ -952,26 +978,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 		}
 
 		int16_t value = 0;
-		do {
-			if(0 ==  s_channel_controllers[p_oscillator->voice].modulation_wheel){
-				break;
-			}
-
-			uint16_t delta_vibration_phase = p_oscillator->delta_vibration_phase;
-			uint32_t vibration_amplitude
-					= REGULATE_MODULATION_WHEEL(s_channel_controllers[p_oscillator->voice].modulation_wheel)
-						* s_vibration_phase_table[p_oscillator->vibration_table_index];
-
-			delta_vibration_phase = NORMALIZE_VIBRAION_DELTA_PHASE_AMPLITUDE(vibration_amplitude * delta_vibration_phase);
-			p_oscillator->current_phase += delta_vibration_phase;
-
-			p_oscillator->vibration_same_index_count += 1;
-			if(s_vibration_same_index_count_number == p_oscillator->vibration_same_index_count){
-				p_oscillator->vibration_same_index_count = 0;
-				p_oscillator->vibration_table_index = (p_oscillator->vibration_table_index  + 1) % VIBRATION_PHASE_TABLE_LENGTH;
-			}
-		} while(0);
-
+		perform_vibrato(p_oscillator);
 		switch(p_oscillator->waveform)
 		{
 		case WAVEFORM_SQUARE:
