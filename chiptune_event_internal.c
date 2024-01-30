@@ -21,7 +21,7 @@ struct _event
 uint32_t s_upcoming_event_number = 0;
 int16_t s_event_head_index = NO_EVENT;
 
-#ifdef _PRINT_OSCILLATOR_TRANSITION
+#ifdef _CHECK_EVENT_LIST
 
 /**********************************************************************************/
 
@@ -65,7 +65,10 @@ void check_upcoming_events(uint32_t const tick)
 	} while(0);
 	return ;
 }
-#define CHECK_UPCOMING_EVENTS(TICK)					check_upcoming_events((TICK))
+#define CHECK_UPCOMING_EVENTS(TICK)					do { \
+														check_upcoming_events((TICK)); \
+													} while(0)
+
 #else
 #define CHECK_UPCOMING_EVENTS(TICK)					do { \
 														(void)0; \
