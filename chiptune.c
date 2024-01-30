@@ -735,7 +735,7 @@ static void process_midi_message(struct _tick_message const tick_message)
 						tick, voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_CONTROL_CHANGE:
-		process_control_change_message(&s_channel_controllers[0], &s_oscillators[0],
+		process_control_change_message(&s_channel_controllers[0],
 				tick, voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	case MIDI_MESSAGE_PROGRAM_CHANGE:

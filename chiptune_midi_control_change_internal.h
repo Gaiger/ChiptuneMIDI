@@ -5,8 +5,7 @@
 
 
 int process_control_change_message(struct _channel_controller * const p_channel_controller,
-										  struct _oscillator * const p_oscillator,
-										  uint32_t const tick, uint8_t const voice, uint8_t const number, uint8_t const value);
+								   uint32_t const tick, uint8_t const voice, uint8_t const number, uint8_t const value);
 
 void reset_channel_controller(struct _channel_controller * const p_channel_controller);
 #endif // _CHIPTUNE_MIDI_CONTROL_CHANGE_INTERNAL_H_
