@@ -519,8 +519,20 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 static void process_pitch_wheel_message(uint32_t const tick, uint8_t const voice, uint16_t const value)
 {
-	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %u, value = %u\r\n",
-					tick, voice, value);
+	char delta_hex_string[12] = "";
+	do {
+		if(value == MIDI_PITCH_WHEEL_CENTER){
+			break;
+		}
+		if(value > MIDI_PITCH_WHEEL_CENTER){
+			snprintf(&delta_hex_string[0], sizeof(delta_hex_string),"(+0x%04x)", value - MIDI_PITCH_WHEEL_CENTER);
+			break;
+		}
+		snprintf(&delta_hex_string[0], sizeof(delta_hex_string),"(-0x%04x)", MIDI_PITCH_WHEEL_CENTER - value);
+	} while(0);
+	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %u, value = 0x%04x %s\r\n",
+					tick, voice, value, &delta_hex_string[0]);
+
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	p_channel_controller->pitch_wheel = value;
 
@@ -539,7 +551,7 @@ static void process_pitch_wheel_message(uint32_t const tick, uint8_t const voice
 															   p_channel_controller->pitch_wheel, p_oscillator->pitch_chorus_bend_in_semitone,
 															  &pitch_bend_in_semitone);
 
-			CHIPTUNE_PRINTF(cNoteOperation, "---- voice = %u, note = %u, pitch bend = %+3.2f\r\n",
+			CHIPTUNE_PRINTF(cNoteOperation, "---- voice = %u, note = %u, pitch bend in semitone = %+3.2f\r\n",
 							voice, p_oscillator->note, pitch_bend_in_semitone);
 		} while(0);
 		oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
@@ -602,8 +614,7 @@ static void process_midi_message(struct _tick_message const tick_message)
 						tick, voice, u.data_as_bytes[1], "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_CONTROL_CHANGE:
-		process_control_change_message(&s_channel_controllers[0],
-				tick, voice, u.data_as_bytes[1], u.data_as_bytes[2]);
+		process_control_change_message(tick, voice, u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	case MIDI_MESSAGE_PROGRAM_CHANGE:
 		process_program_change_message(tick, voice, u.data_as_bytes[1]);
