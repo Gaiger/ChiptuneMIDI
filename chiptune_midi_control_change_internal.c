@@ -145,7 +145,7 @@ static void process_cc_damper_pedal(struct _channel_controller * const p_channel
 	int16_t oscillator_index = get_head_occupied_oscillator_index();
 	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 	for(int16_t i = 0; i < occupied_oscillator_number; i++){
-		struct _oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+		oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 		do {
 			if(p_channel_controllers[voice].chorus == 0){
 				break;
@@ -190,7 +190,7 @@ static void process_cc_reset_all_controllers(struct _channel_controller * const 
 	int16_t oscillator_index = get_head_occupied_oscillator_index();
 	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 	for(int16_t i = 0; i < occupied_oscillator_number; i++){
-		struct _oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+		oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 		if( voice == p_oscillator->voice){
 			put_event(RELEASE_EVENT, oscillator_index, tick);
 		}

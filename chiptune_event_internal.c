@@ -139,7 +139,7 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 #if(0)
 /**********************************************************************************/
 
-void remove_same_voice_note_events(int reference_event_index, struct _oscillator * const p_oscillators)
+void remove_same_voice_note_events(int reference_event_index, oscillator * const p_oscillators)
 {
 	int8_t const voice = p_oscillators[s_events[reference_event_index].oscillator].voice;
 	uint8_t const note = p_oscillators[s_events[reference_event_index].oscillator].note;
@@ -149,7 +149,7 @@ void remove_same_voice_note_events(int reference_event_index, struct _oscillator
 	int16_t current_event_index = s_events[reference_event_index].next_event;
 	while(UNUSED_EVENT != current_event_index)
 	{
-		struct _oscillator * const p_oscillator = &p_oscillators[s_events[current_event_index].oscillator];
+		oscillator * const p_oscillator = &p_oscillators[s_events[current_event_index].oscillator];
 
 		do {
 			if(false == (voice == p_oscillator->voice && note == p_oscillator->note)) {
@@ -179,7 +179,7 @@ void process_events(uint32_t const tick)
 			break;
 		}
 
-		struct _oscillator *p_oscillator = get_oscillator_pointer_from_index(s_events[s_event_head_index].oscillator);
+		oscillator *p_oscillator = get_oscillator_pointer_from_index(s_events[s_event_head_index].oscillator);
 		char addition_string[16] = "";
 		if(IS_CHORUS_OSCILLATOR(p_oscillator->state_bits)){
 			snprintf(&addition_string[0], sizeof(addition_string), "(chorus)");

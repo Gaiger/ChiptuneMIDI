@@ -224,7 +224,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 	if(0 == s_channel_controllers[voice].chorus){
 		return 1;
 	}
-	struct _oscillator  * const p_native_oscillator = get_oscillator_pointer_from_index(native_oscillator_index);
+	oscillator  * const p_native_oscillator = get_oscillator_pointer_from_index(native_oscillator_index);
 #define ASSOCIATE_CHORUS_OSCILLATOR_NUMBER			(4 - 1)
 	int oscillator_indexes[ASSOCIATE_CHORUS_OSCILLATOR_NUMBER] = {UNUSED_OSCILLATOR, UNUSED_OSCILLATOR, UNUSED_OSCILLATOR};
 
@@ -243,11 +243,11 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 			oscillator_volume = 4 * averaged_volume;
 			int16_t i;
 			for(int j = 0; j < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER;j++){
-				struct _oscillator * const p_oscillator = acquire_oscillator(&i);
+				oscillator * const p_oscillator = acquire_oscillator(&i);
 				if(NULL == p_oscillator){
 					return -1;
 				}
-				memcpy(p_oscillator, p_native_oscillator, sizeof(struct _oscillator));
+				memcpy(p_oscillator, p_native_oscillator, sizeof(oscillator));
 				p_oscillator->volume = oscillator_volume;
 				p_oscillator->pitch_chorus_bend_in_semitone = pitch_chorus_bend_in_semitone(voice);
 				p_oscillator->delta_phase = calculate_delta_phase(p_oscillator->note, s_channel_controllers[voice].tuning_in_semitones,
@@ -273,7 +273,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 		int16_t oscillator_index = get_head_occupied_oscillator_index();
 		int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 		for(ii = 0; ii < occupied_oscillator_number; ii++){
-			struct _oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+			oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 			do {
 				if(true != IS_CHORUS_OSCILLATOR(p_oscillator->state_bits)){
 					break;
@@ -325,7 +325,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			int16_t oscillator_index = get_head_occupied_oscillator_index();
 			int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 			for(ii = 0; ii < occupied_oscillator_number; ii++){
-				struct _oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+				oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 				do {
 					if(note != p_oscillator->note){
 						break;
@@ -352,7 +352,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 			}
 
-			struct _oscillator * const p_oscillator = acquire_oscillator(&ii);
+			oscillator * const p_oscillator = acquire_oscillator(&ii);
 			if(NULL == p_oscillator){
 				return -1;
 			}
@@ -393,7 +393,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 			if(true == s_channel_controllers[voice].is_damper_pedal_on){
 				for(ii = 0; ii < occupied_oscillator_number; ii++){
-					struct _oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+					oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 					do {
 						if(note != p_oscillator->note){
 							break;
@@ -412,7 +412,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			}
 
 			for(ii = 0; ii < occupied_oscillator_number; ii++){
-				struct _oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+				oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 				do {
 					if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
 						break;
@@ -484,7 +484,7 @@ static void process_pitch_wheel_message(uint32_t const tick, uint8_t const voice
 		int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 
 		for(int16_t i = 0; i < occupied_oscillator_number; i++){
-			struct _oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+			oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 			do {
 				if(voice != p_oscillator->voice){
 					break;
@@ -616,7 +616,7 @@ void release_all_channels_damper_pedal(const uint32_t tick)
 			int16_t oscillator_index = get_head_occupied_oscillator_index();
 			int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 			for(int16_t i = 0; i < occupied_oscillator_number; i++){
-				struct _oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+				oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 				if(k == p_oscillator->voice){
 					put_event(RELEASE_EVENT, oscillator_index, tick);
 				}
@@ -748,7 +748,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 			int16_t oscillator_index = get_head_occupied_oscillator_index();
 			int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 			for(int16_t i = 0; i < occupied_oscillator_number; i++){
-				struct _oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+				oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 				sum_amplitude += p_oscillator->volume;
 				oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 			}
@@ -783,7 +783,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 		int16_t oscillator_index = get_head_occupied_oscillator_index();
 		int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 		for(int16_t i = 0; i < occupied_oscillator_number; i++){
-			struct _oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+			oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 
 			CHIPTUNE_PRINTF(cDeveloping, "oscillators = %u, voice = %u, note = 0x%02x(%u)\r\n",
 							oscillator_index, p_oscillator->voice, p_oscillator->note, p_oscillator->note);
@@ -925,7 +925,7 @@ inline static void increase_time_base_for_fast_to_ending(void)
 													DIVIDE_BY_128(DIVIDE_BY_128(VALUE))
 #define REGULATE_MODULATION_WHEEL(VALUE)			(VALUE + 1)
 
-void perform_vibrato(struct _oscillator * const p_oscillator)
+void perform_vibrato(oscillator * const p_oscillator)
 {
 	do {
 		if(0 ==  s_channel_controllers[p_oscillator->voice].modulation_wheel){
@@ -972,7 +972,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 	int16_t oscillator_index = get_head_occupied_oscillator_index();
 	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 	for(int16_t k = 0; k < occupied_oscillator_number; k++){
-		struct _oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+		oscillator * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 		if(false == IS_ACTIVATED(p_oscillator->state_bits)){
 			goto Flag_oscillator_take_effect_end;
 		}
