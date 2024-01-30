@@ -187,7 +187,7 @@ int16_t get_head_occupied_oscillator_index()
 int16_t get_next_occupied_oscillator_index(int16_t const index)
 {
 	if(false == (index >= 0 && index < MAX_OSCILLATOR_NUMBER)){
-		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d out of range \r\n", index);
+		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
 		return UNUSED_OSCILLATOR;
 	}
 
@@ -199,7 +199,7 @@ int16_t get_next_occupied_oscillator_index(int16_t const index)
 oscillator_t * const get_oscillator_pointer_from_index(int16_t const index)
 {
 	if(false == (index >= 0 && index < MAX_OSCILLATOR_NUMBER)){
-		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %u out of range \r\n", index);
+		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
 		return NULL;
 	}
 

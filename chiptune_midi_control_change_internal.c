@@ -7,33 +7,6 @@
 
 //https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
 
-#define MIDI_CC_RPN_NULL							((127 << 8) + 127)
-
-void reset_channel_controller(struct _channel_controller * const p_channel_controller)
-{
-	p_channel_controller->tuning_in_semitones = 0;
-
-	p_channel_controller->max_volume = MIDI_CC_CENTER_VALUE;
-	p_channel_controller->playing_volume = (p_channel_controller->max_volume * INT8_MAX)/INT8_MAX;
-	p_channel_controller->pan = MIDI_CC_CENTER_VALUE;
-
-	p_channel_controller->waveform = WAVEFORM_TRIANGLE;
-
-	p_channel_controller->pitch_wheel_bend_range_in_semitones = MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES;
-	p_channel_controller->pitch_wheel = MIDI_PITCH_WHEEL_CENTER;
-
-	p_channel_controller->is_damper_pedal_on = false;
-
-	p_channel_controller->modulation_wheel = 0;
-
-	p_channel_controller->chorus = 0;
-
-	p_channel_controller->registered_parameter_number = MIDI_CC_RPN_NULL;
-	p_channel_controller->registered_parameter_value = 0;
-}
-
-/**********************************************************************************/
-
 static inline void process_modulation_wheel(struct _channel_controller * const p_channel_controllers,
 											uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
@@ -179,13 +152,14 @@ static void process_cc_chorus_effect(struct _channel_controller * const p_channe
 
 /**********************************************************************************/
 
+
 static void process_cc_reset_all_controllers(struct _channel_controller * const p_channel_controllers,
 											 uint32_t const tick, uint8_t const voice, uint8_t const value)
 {
 	(void)voice;
 	(void)value;
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RESET_ALL_CONTROLLERS :: voices = %u \r\n", tick, voice);
-	reset_channel_controller(&p_channel_controllers[voice]);
+	reset_channel_controller_from_index(voice);
 
 	int16_t oscillator_index = get_head_occupied_oscillator_index();
 	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();

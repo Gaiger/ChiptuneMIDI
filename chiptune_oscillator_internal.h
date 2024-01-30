@@ -11,7 +11,7 @@ typedef struct _oscillator
 
 	int8_t		voice;
 
-	uint8_t		note;
+	int8_t		note;
 	uint16_t	delta_phase;
 	uint16_t	current_phase;
 
