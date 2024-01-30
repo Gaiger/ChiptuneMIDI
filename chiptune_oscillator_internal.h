@@ -17,7 +17,7 @@ typedef struct _oscillator
 
 	uint16_t	volume;
 
-	uint8_t		waveform;
+	int8_t		waveform;
 	uint8_t		: 8;
 	uint16_t	duty_cycle_critical_phase;
 

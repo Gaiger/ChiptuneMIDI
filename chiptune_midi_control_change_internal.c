@@ -35,12 +35,12 @@ static void process_cc_registered_parameter(uint32_t const tick, uint8_t const v
 	switch(p_channel_controller->registered_parameter_number)
 	{
 	case MIDI_CC_RPN_PITCH_BEND_SENSITIVY:
-		p_channel_controller->pitch_wheel_bend_range_in_semitones = p_channel_controller->registered_parameter_value >> 8;
+		p_channel_controller->pitch_wheel_bend_range_in_semitones = 0x7F & (p_channel_controller->registered_parameter_value >> 8);
 		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %u, semitones = %u\r\n",
 						voice, p_channel_controller->pitch_wheel_bend_range_in_semitones);
-		if(0 != (p_channel_controller->registered_parameter_value & 0xFF)){
+		if(0 != (p_channel_controller->registered_parameter_value & 0x7F)){
 			CHIPTUNE_PRINTF(cMidiSetup, "----  MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %u, cents = %u (%s)\r\n",
-						voice, p_channel_controller->registered_parameter_number & 0xFF, "(NOT IMPLEMENTED YET)");
+						voice, p_channel_controller->registered_parameter_number & 0x7F, "(NOT IMPLEMENTED YET)");
 		}
 		break;
 	case MIDI_CC_RPN_CHANNEL_FINE_TUNING:

@@ -31,12 +31,12 @@ typedef struct _channel_controller
 	int8_t		playing_volume;
 	int8_t		pan;
 
-	uint8_t		waveform;
+	int8_t		waveform;
 	uint8_t		: 8;
 	uint16_t	duty_cycle_critical_phase;
 
-	uint16_t	pitch_wheel_bend_range_in_semitones;
-	uint16_t	pitch_wheel;
+	int8_t		pitch_wheel_bend_range_in_semitones;
+	int16_t		pitch_wheel;
 
 	bool		is_damper_pedal_on;
 	uint8_t		: 8;

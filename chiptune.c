@@ -152,11 +152,11 @@ static void process_program_change_message(uint32_t const tick, uint8_t const vo
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 
 static uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semitones,
-											 uint16_t const pitch_wheel_bend_range_in_semitones, uint16_t const pitch_wheel,
-											float pitch_chorus_bend_in_semitones, float *p_pitch_wheel_bend_in_semitone)
+									  int8_t const pitch_wheel_bend_range_in_semitones, int16_t const pitch_wheel,
+									  float pitch_chorus_bend_in_semitones, float *p_pitch_wheel_bend_in_semitone)
 {
 	// TO DO : too many float variable
-	float pitch_wheel_bend_in_semitone = (((int16_t)pitch_wheel - MIDI_PITCH_WHEEL_CENTER)/(float)MIDI_PITCH_WHEEL_CENTER) * DIVIDE_BY_2(pitch_wheel_bend_range_in_semitones);
+	float pitch_wheel_bend_in_semitone = ((pitch_wheel - MIDI_PITCH_WHEEL_CENTER)/(float)MIDI_PITCH_WHEEL_CENTER) * DIVIDE_BY_2(pitch_wheel_bend_range_in_semitones);
 	float corrected_note = (float)((int16_t)note + (int16_t)tuning_in_semitones) + pitch_wheel_bend_in_semitone + pitch_chorus_bend_in_semitones;
 	/*
 	 * freq = 440 * 2**((note - 69)/12)
@@ -174,8 +174,7 @@ static uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semit
 /**********************************************************************************/
 
 //xor-shift pesudo random https://en.wikipedia.org/wiki/Xorshift
-
-static int32_t s_chorus_random_seed = 20240129;
+static uint32_t s_chorus_random_seed = 20240129;
 
 static uint16_t chorus_ramdom(void)
 {
@@ -462,7 +461,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 /**********************************************************************************/
 
-static void process_pitch_wheel_message(uint32_t const tick, uint8_t const voice, uint16_t const value)
+static void process_pitch_wheel_message(uint32_t const tick, uint8_t const voice, int16_t const value)
 {
 	char delta_hex_string[12] = "";
 	do {
