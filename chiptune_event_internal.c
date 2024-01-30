@@ -2,10 +2,11 @@
 
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
+#include "chiptune_oscillator_internal.h"
 
 #include "chiptune_event_internal.h"
 
-#define MAX_EVENT_NUMBER							(4 * MAX_OSCILLATOR_NUMBER)
+#define MAX_EVENT_NUMBER							(4 * MAX_CHANNEL_NUMBER)
 
 struct _event
 {

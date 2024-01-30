@@ -1,9 +1,9 @@
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
+#include "chiptune_oscillator_internal.h"
 #include "chiptune_event_internal.h"
 
 #include "chiptune_midi_control_change_internal.h"
-
 
 //https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
 
