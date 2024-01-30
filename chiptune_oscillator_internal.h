@@ -30,8 +30,6 @@ struct _oscillator
 	int16_t		native_oscillator;
 };
 
-#define MAX_CHANNEL_NUMBER							(16)
-
 #define UNUSED_OSCILLATOR							(-1)
 #define RESET_STATE_BITES(STATE_BITES)				((STATE_BITES) = 0)
 

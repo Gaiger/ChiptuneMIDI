@@ -58,9 +58,7 @@ struct _channel_controller
 	uint16_t	registered_parameter_value;
 };
 
-#define NULL_TICK									(UINT32_MAX)
-
-
+#define MIDI_MAX_CHANNEL_NUMBER						(16)
 #define MIDI_CC_CENTER_VALUE						(64)
 #define MIDI_PITCH_WHEEL_CENTER						(0x2000)
 #define MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES	\

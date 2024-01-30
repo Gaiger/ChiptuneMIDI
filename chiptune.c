@@ -97,7 +97,7 @@ void chiptune_set_midi_message_callback( int(*handler_get_midi_message)(uint32_t
 
 /**********************************************************************************/
 
-static struct _channel_controller s_channel_controllers[MAX_CHANNEL_NUMBER];
+static struct _channel_controller s_channel_controllers[MIDI_MAX_CHANNEL_NUMBER];
 
 
 static void process_program_change_message(uint32_t const tick, uint8_t const voice, uint8_t const number)
@@ -324,9 +324,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					if(UNUSED_OSCILLATOR == p_oscillator->native_oscillator){
 						if(false == IS_NOTE_ON(p_oscillator->state_bits)){
 							put_event(RELEASE_EVENT, oscillator_index, tick);
-							if( 0 < s_channel_controllers[voice].chorus){
 								process_chorus_effect(tick, false, voice, note, velocity, oscillator_index);
-							}
 							break;
 						}
 					}
@@ -413,9 +411,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						break;
 					}
 					put_event(RELEASE_EVENT, oscillator_index, tick);
-					if(0 < s_channel_controllers[voice].chorus){
-						process_chorus_effect(tick, is_note_on, voice, note, velocity, oscillator_index);
-					}
+					process_chorus_effect(tick, is_note_on, voice, note, velocity, oscillator_index);
 					is_found = true;
 				} while(0);
 				if(true == is_found){
@@ -501,9 +497,7 @@ struct _tick_message
 	uint32_t message;
 };
 
-#ifndef NULL_TICK
-	#define NULL_TICK								(UINT32_MAX)
-#endif
+#define NULL_TICK								(UINT32_MAX)
 #define NULL_MESSAGE							(0)
 
 #define IS_NULL_TICK_MESSAGE(MESSAGE_TICK)			\
@@ -600,7 +594,7 @@ int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_message
 
 void release_all_channels_damper_pedal(const uint32_t tick)
 {
-	for(int8_t k = 0; k < MAX_CHANNEL_NUMBER; k++){
+	for(int8_t k = 0; k < MIDI_MAX_CHANNEL_NUMBER; k++){
 		do {
 			if(false == s_channel_controllers[k].is_damper_pedal_on){
 				break;
@@ -850,7 +844,7 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	s_midi_messge_index = 0;
 	SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
 
-	for(int i = 0; i < MAX_CHANNEL_NUMBER; i++){
+	for(int i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 		reset_channel_controller(&s_channel_controllers[i]);
 	}
 

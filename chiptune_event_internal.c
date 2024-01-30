@@ -6,7 +6,7 @@
 
 #include "chiptune_event_internal.h"
 
-#define MAX_EVENT_NUMBER							(4 * MAX_CHANNEL_NUMBER)
+#define MAX_EVENT_NUMBER							(4 * MIDI_MAX_CHANNEL_NUMBER)
 
 struct _event
 {
