@@ -35,9 +35,16 @@ void reset_channel_controller_from_index(int8_t const index)
 
 	p_channel_controller->is_damper_pedal_on = false;
 
+#define	DEFAULT_VIBRATO_MODULATION_IN_SEMITINE		(1)
+#define DEFAULT_VIBRATO_FREQUENCY					(4)
 	p_channel_controller->modulation_wheel = 0;
+	p_channel_controller->vibrato_modulation_in_semitone = DEFAULT_VIBRATO_MODULATION_IN_SEMITINE;
+	p_channel_controller->vibrato_same_index_number
+			= (uint16_t)(get_sampling_rate()/VIBRATO_PHASE_TABLE_LENGTH/(float)DEFAULT_VIBRATO_FREQUENCY);
 
+#define	DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE	(0.25f)
 	p_channel_controller->chorus = 0;
+	p_channel_controller->max_pitch_chorus_bend_in_semitones = DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
 
 	p_channel_controller->registered_parameter_number = MIDI_CC_RPN_NULL;
 	p_channel_controller->registered_parameter_value = 0;

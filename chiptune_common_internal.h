@@ -26,4 +26,8 @@
 
 #define NULL_TICK									(UINT32_MAX)
 
+
+#define VIBRATO_PHASE_TABLE_LENGTH					(64)
+uint32_t get_sampling_rate(void);
+
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_

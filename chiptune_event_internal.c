@@ -192,9 +192,10 @@ void process_events(uint32_t const tick)
 							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, &addition_string[0]);
 			SET_ACTIVATED_ON(p_oscillator->state_bits);
 			break;
-
 		case RELEASE_EVENT:
-			CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, RELEASE oscillator = %u, voice = %u, note = %u, volume = %u%s\r\n",
+			break;
+		case DISCARD_EVENT:
+			CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, DISCARD oscillator = %u, voice = %u, note = %u, volume = %u%s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, &addition_string[0]);
 			//remove_same_voice_note_events(s_event_head_index, p_oscillators);

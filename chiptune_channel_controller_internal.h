@@ -40,8 +40,13 @@ typedef struct _channel_controller
 
 	bool		is_damper_pedal_on;
 	uint8_t		: 8;
+
 	int8_t		modulation_wheel;
+	int8_t		vibrato_modulation_in_semitone;
+	uint16_t	vibrato_same_index_number;
+
 	int8_t		chorus;
+	float		max_pitch_chorus_bend_in_semitones;
 
 	uint16_t	registered_parameter_number;
 	uint16_t	registered_parameter_value;

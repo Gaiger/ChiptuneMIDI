@@ -10,6 +10,7 @@ enum TImeEventType
 
 	ACTIVATE_EVENT,
 	RELEASE_EVENT,
+	DISCARD_EVENT,
 };
 
 void clean_all_events(void);
