@@ -1,7 +1,6 @@
 #ifndef _CHIPTUNE_COMMON_INTERNAL_H_
 #define _CHIPTUNE_COMMON_INTERNAL_H_
 
-#include <stdbool.h>
 #include <stdint.h>
 //#define _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 
@@ -24,5 +23,7 @@
 
 #define MIDI_CC_RPN_NULL							((127 << 8) + 127)
 
+
+#define NULL_TICK									(UINT32_MAX)
 
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_

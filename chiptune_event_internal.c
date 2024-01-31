@@ -142,7 +142,7 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 void remove_same_voice_note_events(int reference_event_index, oscillator * const p_oscillators)
 {
 	int8_t const voice = p_oscillators[s_events[reference_event_index].oscillator].voice;
-	uint8_t const note = p_oscillators[s_events[reference_event_index].oscillator].note;
+	int8_t const note = p_oscillators[s_events[reference_event_index].oscillator].note;
 
 
 	int previous_event_index = reference_event_index;
@@ -226,10 +226,14 @@ void clean_all_events(void)
 
 /**********************************************************************************/
 
+#ifndef NULL_TICK
+	#define NULL_TICK								(UINT32_MAX)
+#endif
+
 uint32_t get_next_event_triggering_tick(void)
 {
 	if(0 == s_upcoming_event_number){
-			return UINT32_MAX;
+			return NULL_TICK;
 	}
 
 	return s_events[s_event_head_index].triggerring_tick;

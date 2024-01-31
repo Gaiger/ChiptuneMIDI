@@ -89,12 +89,10 @@ oscillator_t * const acquire_oscillator(int16_t * const p_index)
 	int16_t i;
 	do {
 		if(0 == s_occupied_oscillator_number){
-
 			s_occupied_oscillator_nodes[0].previous = UNUSED_OSCILLATOR;
 			s_occupied_oscillator_nodes[0].next = UNUSED_OSCILLATOR;
 			s_head_occupied_oscillator_index = 0;
 			s_last_occupied_oscillator_index = 0;
-
 			i = 0;
 			break;
 		}

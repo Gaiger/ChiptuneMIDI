@@ -112,7 +112,7 @@ void chiptune_set_midi_message_callback( int(*handler_get_midi_message)(uint32_t
 
 /**********************************************************************************/
 
-static void process_program_change_message(uint32_t const tick, uint8_t const voice, uint8_t const number)
+static void process_program_change_message(uint32_t const tick, int8_t const voice, uint8_t const number)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: ", tick);
 #define MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0		(9)
@@ -151,7 +151,7 @@ static void process_program_change_message(uint32_t const tick, uint8_t const vo
 
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 
-static uint16_t calculate_delta_phase(uint8_t const note, int8_t tuning_in_semitones,
+static uint16_t calculate_delta_phase(int8_t const note, int8_t tuning_in_semitones,
 									  int8_t const pitch_wheel_bend_range_in_semitones, int16_t const pitch_wheel,
 									  float pitch_chorus_bend_in_semitones, float *p_pitch_wheel_bend_in_semitone)
 {
@@ -189,7 +189,7 @@ static uint16_t chorus_ramdom(void)
 #define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
 												(((DIVIDE_BY_2(UINT16_MAX) + 1) - (VALUE))/(float)(DIVIDE_BY_2(UINT16_MAX) + 1))
 
-static float pitch_chorus_bend_in_semitone(uint8_t const voice)
+static float pitch_chorus_bend_in_semitone(int8_t const voice)
 {
 	const int8_t chorus = get_channel_controller_pointer_from_index(voice)->chorus;
 	if(0 == chorus){
@@ -217,8 +217,8 @@ static float pitch_chorus_bend_in_semitone(uint8_t const voice)
 #define OSCILLATOR_NUMBER_FOR_CHORUS(VALUE)			(DIVIDE_BY_16(((VALUE) + 15)))
 
 int process_chorus_effect(uint32_t const tick, bool const is_note_on,
-						   uint8_t const voice, uint8_t const note, uint8_t const velocity,
-						   int16_t const native_oscillator_index)
+						  int8_t const voice, int8_t const note, int8_t const velocity,
+						  int16_t const native_oscillator_index)
 {
 	(void)velocity;
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
@@ -304,7 +304,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 		}
 	} while(0);
 
-	uint8_t event_type = (true == is_note_on) ? ACTIVATE_EVENT : RELEASE_EVENT;
+	int8_t event_type = (true == is_note_on) ? ACTIVATE_EVENT : RELEASE_EVENT;
 	for(int16_t j = 0; j  < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; j++){
 		put_event(event_type, oscillator_indexes[j], tick + (j + 1) * s_chorus_delta_tick);
 	}
@@ -315,12 +315,12 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 /**********************************************************************************/
 
 static int process_note_message(uint32_t const tick, bool const is_note_on,
-						 uint8_t const voice, uint8_t const note, uint8_t const velocity)
+						 int8_t const voice, int8_t const note, int8_t const velocity)
 {
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	float pitch_wheel_bend_in_semitone = 0.0f;
-	uint8_t actual_velocity = velocity;
-	int16_t  ii = 0;
+	int8_t actual_velocity = velocity;
+	int16_t ii = 0;
 	do {
 		if(true == is_note_on){
 			int16_t oscillator_index = get_head_occupied_oscillator_index();
@@ -348,7 +348,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 					// TODO : the associate chorus oscillators amplitude should be decreased
 					actual_velocity -= p_oscillator->amplitude/p_channel_controller->playing_volume;
-					if(actual_velocity > INT8_MAX){
+					if(0 > actual_velocity){
 						actual_velocity = DIVIDE_BY_2(velocity);
 						p_oscillator->amplitude = (actual_velocity + (actual_velocity & 0x01))
 								* p_channel_controller->playing_volume;
@@ -460,7 +460,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 /**********************************************************************************/
 
-static void process_pitch_wheel_message(uint32_t const tick, uint8_t const voice, int16_t const value)
+static void process_pitch_wheel_message(uint32_t const tick, int8_t const voice, int16_t const value)
 {
 	char delta_hex_string[12] = "";
 	do {
@@ -508,8 +508,9 @@ struct _tick_message
 	uint32_t tick;
 	uint32_t message;
 };
-
-#define NULL_TICK								(UINT32_MAX)
+#ifndef NULL_TICK
+	#define NULL_TICK								(UINT32_MAX)
+#endif
 #define NULL_MESSAGE							(0)
 
 #define IS_NULL_TICK_MESSAGE(MESSAGE_TICK)			\
@@ -539,7 +540,6 @@ static void process_midi_message(struct _tick_message const tick_message)
 
 	uint8_t type = u.data_as_bytes[0] & 0xF0;
 	int8_t voice = u.data_as_bytes[0] & 0x0F;
-
 #define MIDI_MESSAGE_NOTE_OFF						(0x80)
 #define MIDI_MESSAGE_NOTE_ON						(0x90)
 #define MIDI_MESSAGE_KEY_PRESSURE					(0xA0)

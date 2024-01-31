@@ -9,7 +9,7 @@
 
 //https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
 
-static inline void process_modulation_wheel(uint32_t const tick, uint8_t const voice, uint8_t const value)
+static inline void process_modulation_wheel(uint32_t const tick, int8_t const voice, int8_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_MODULATION_WHEEL :: voice = %u, value = %u\r\n",
 					tick, voice, value);
@@ -20,7 +20,7 @@ static inline void process_modulation_wheel(uint32_t const tick, uint8_t const v
 
 #define SEVEN_BITS_VALID(VALUE)						((0x7F) & (VALUE))
 
-static void process_cc_registered_parameter(uint32_t const tick, uint8_t const voice)
+static void process_cc_registered_parameter(uint32_t const tick, int8_t const voice)
 {
 	(void)tick;
 //http://www.philrees.co.uk/nrpnq.htm
@@ -83,7 +83,7 @@ static void process_cc_registered_parameter(uint32_t const tick, uint8_t const v
 
 /**********************************************************************************/
 
-static inline void process_cc_volume(uint32_t const tick, uint8_t const voice, uint8_t const value)
+static inline void process_cc_volume(uint32_t const tick, int8_t const voice, int8_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", tick, voice, value);
 	get_channel_controller_pointer_from_index(voice)->max_volume = value;
@@ -91,7 +91,7 @@ static inline void process_cc_volume(uint32_t const tick, uint8_t const voice, u
 
 /**********************************************************************************/
 
-static inline void process_cc_expression(uint32_t const tick, uint8_t const voice, uint8_t const value)
+static inline void process_cc_expression(uint32_t const tick, int8_t const voice, int8_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EXPRESSION :: voice = %u, value = %u\r\n", tick, voice, value);
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
@@ -101,10 +101,10 @@ static inline void process_cc_expression(uint32_t const tick, uint8_t const voic
 /**********************************************************************************/
 
 int process_chorus_effect(uint32_t const tick, bool const is_note_on,
-						   uint8_t const voice, uint8_t const note, uint8_t const velocity,
+						   int8_t const voice, int8_t const note, int8_t const velocity,
 						   int16_t const original_oscillator_index);
 
-static void process_cc_damper_pedal(uint32_t const tick, uint8_t const voice, uint8_t const value)
+static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uint8_t const value)
 {
 	bool is_damper_pedal_on = (value < MIDI_CC_CENTER_VALUE) ? false : true;
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %u, %s\r\n",
@@ -141,7 +141,7 @@ static void process_cc_damper_pedal(uint32_t const tick, uint8_t const voice, ui
 
 /**********************************************************************************/
 
-static void process_cc_chorus_effect(uint32_t const tick, uint8_t const voice, uint8_t const value)
+static void process_cc_chorus_effect(uint32_t const tick, int8_t const voice, int8_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_CHORUS_EFFECT :: voice = %u, value = %u\r\n", tick, voice, value);
 	get_channel_controller_pointer_from_index(voice)->chorus = value;
@@ -149,7 +149,7 @@ static void process_cc_chorus_effect(uint32_t const tick, uint8_t const voice, u
 
 /**********************************************************************************/
 
-static void process_cc_reset_all_controllers(uint32_t const tick, uint8_t const voice, uint8_t const value)
+static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const voice, int8_t const value)
 {
 	(void)voice;
 	(void)value;
@@ -169,7 +169,7 @@ static void process_cc_reset_all_controllers(uint32_t const tick, uint8_t const 
 
 /**********************************************************************************/
 
-int process_control_change_message(uint32_t const tick, uint8_t const voice, uint8_t const number, uint8_t const value)
+int process_control_change_message(uint32_t const tick, int8_t const voice, int8_t const number, int8_t const value)
 {
 #define MIDI_CC_MODULATION_WHEEL					(1)
 
