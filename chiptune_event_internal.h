@@ -3,14 +3,12 @@
 
 #include <stdint.h>
 
-enum TImeEventType
+enum EventType
 {
-	UNUSED_EVENT = -1,
-	READY_EVENT = 0,
-
-	ACTIVATE_EVENT,
+	ACTIVATE_EVENT = 1,
 	RELEASE_EVENT,
-	DISCARD_EVENT,
+
+	EVENT_TYPE_MAX,
 };
 
 void clean_all_events(void);

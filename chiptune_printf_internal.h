@@ -26,7 +26,7 @@ enum
 	cDeveloping		= 0,
 	cMidiSetup		= 1,
 	cNoteOperation	= 2,
-	cOscillatorTransition = 3,
+	cEventTriggering = 3,
 };
 
 void chiptune_printf(int const print_type, const char* fmt, ...);

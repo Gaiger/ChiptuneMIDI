@@ -8,6 +8,12 @@
 
 #define MAX_EVENT_NUMBER							(4 * MIDI_MAX_CHANNEL_NUMBER)
 
+enum
+{
+	UNUSED_EVENT =  -1,
+	DISCARD_EVENT = (EVENT_TYPE_MAX + 1),
+};
+
 struct _event
 {
 	int8_t	type;
@@ -15,7 +21,7 @@ struct _event
 	int16_t oscillator;
 	uint32_t triggerring_tick;
 	int16_t next_event;
-}s_events[MAX_EVENT_NUMBER];
+} s_events[MAX_EVENT_NUMBER];
 
 #define NO_EVENT									(-1)
 
@@ -28,6 +34,17 @@ int16_t s_event_head_index = NO_EVENT;
 static void check_upcoming_events(uint32_t const tick)
 {
 	int16_t index = s_event_head_index;
+	do {
+		if(NO_EVENT != s_event_head_index){
+			break;
+		}
+		if(0 != s_upcoming_event_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: tick = %u,"
+										 " event head is NO_EVENT but s_upcoming_event_number = %d\r\n",
+										s_upcoming_event_number);
+			return ;
+		}
+	} while(0);
 	bool is_error_occur = false;
 	uint32_t previous_tick = 0;
 	for(int16_t i = 0; i < s_upcoming_event_number; i++){
@@ -136,45 +153,12 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 	return 0;
 }
 
-#if(0)
-/**********************************************************************************/
-
-void remove_same_voice_note_events(int reference_event_index, oscillator * const p_oscillators)
-{
-	int8_t const voice = p_oscillators[s_events[reference_event_index].oscillator].voice;
-	int8_t const note = p_oscillators[s_events[reference_event_index].oscillator].note;
-
-
-	int previous_event_index = reference_event_index;
-	int16_t current_event_index = s_events[reference_event_index].next_event;
-	while(UNUSED_EVENT != current_event_index)
-	{
-		oscillator * const p_oscillator = &p_oscillators[s_events[current_event_index].oscillator];
-
-		do {
-			if(false == (voice == p_oscillator->voice && note == p_oscillator->note)) {
-				previous_event_index = current_event_index;
-				current_event_index = s_events[current_event_index].next_event;
-				break;
-			}
-
-			s_events[previous_event_index].next_event = s_events[current_event_index].next_event;
-			discard_oscillator(s_events[current_event_index].oscillator);
-			s_upcoming_event_number -= 1;
-			current_event_index = s_events[previous_event_index].next_event;
-		}while(0);
-	}
-
-}
-#endif
-
 /**********************************************************************************/
 
 void process_events(uint32_t const tick)
 {
-	int timely_event_number = 0;
-
-	for(int16_t i = 0; i < s_upcoming_event_number; i++){
+	while(NO_EVENT != s_event_head_index)
+	{
 		if(s_events[s_event_head_index].triggerring_tick > tick){
 			break;
 		}
@@ -187,31 +171,31 @@ void process_events(uint32_t const tick)
 		switch(s_events[s_event_head_index].type)
 		{
 		case ACTIVATE_EVENT:
-			CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, ACTIVATE oscillator = %u, voice = %u, note = %u, volume = %u%s\r\n",
+			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, ACTIVATE oscillator = %u, voice = %u, note = %u, amplitude = 0x%04x %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, &addition_string[0]);
 			SET_ACTIVATED_ON(p_oscillator->state_bits);
 			break;
 		case RELEASE_EVENT:
-			break;
-		case DISCARD_EVENT:
-			CHIPTUNE_PRINTF(cOscillatorTransition, "tick = %u, DISCARD oscillator = %u, voice = %u, note = %u, volume = %u%s\r\n",
+			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, RELEASE oscillator = %u, voice = %u, note = %u, amplitude = 0x%04x %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, &addition_string[0]);
-			//remove_same_voice_note_events(s_event_head_index, p_oscillators);
+			put_event(DISCARD_EVENT, s_events[s_event_head_index].oscillator, tick);
+			break;
+		case DISCARD_EVENT:
+			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, DISCARD oscillator = %u, voice = %u, note = %u, amplitude = 0x%04x %s\r\n",
+							tick, s_events[s_event_head_index].oscillator,
+							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, &addition_string[0]);
 			discard_oscillator(s_events[s_event_head_index].oscillator);
 			break;
 		default:
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: UNKOWN event type = %d\r\n");
 			break;
 		}
-
 		s_events[s_event_head_index].type = UNUSED_EVENT;
 		s_event_head_index = s_events[s_event_head_index].next_event;
-		timely_event_number += 1;
+		s_upcoming_event_number -= 1;
 	}
-
-	s_upcoming_event_number -= timely_event_number;
 	CHECK_UPCOMING_EVENTS(tick);
 }
 

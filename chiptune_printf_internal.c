@@ -42,8 +42,8 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 	}
 #endif
 
-#ifdef _PRINT_OSCILLATOR_TRANSITION
-	if(cOscillatorTransition == print_type){
+#ifdef _PRINT_EVENT_TRIGGERING
+	if(cEventTriggering == print_type){
 		is_print_out = true;
 		//fprintf(stdout, "cNoteOperation:: ");
 	}

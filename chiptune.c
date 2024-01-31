@@ -307,7 +307,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 		}
 	} while(0);
 
-	int8_t event_type = (true == is_note_on) ? ACTIVATE_EVENT : DISCARD_EVENT;
+	int8_t event_type = (true == is_note_on) ? ACTIVATE_EVENT : RELEASE_EVENT;
 	for(int16_t j = 0; j  < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; j++){
 		put_event(event_type, oscillator_indexes[j], tick + (j + 1) * s_chorus_delta_tick);
 	}
@@ -345,7 +345,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 							break;
 						}
-						put_event(DISCARD_EVENT, oscillator_index, tick);
+						put_event(RELEASE_EVENT, oscillator_index, tick);
 						process_chorus_effect(tick, false, voice, note, velocity, oscillator_index);
 					} while(0);
 
@@ -416,7 +416,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
 						break;
 					}
-					put_event(DISCARD_EVENT, oscillator_index, tick);
+					put_event(RELEASE_EVENT, oscillator_index, tick);
 					process_chorus_effect(tick, is_note_on, voice, note, velocity, oscillator_index);
 					is_found = true;
 					is_leave_loop = true;
@@ -622,7 +622,7 @@ static void release_all_channels_damper_pedal(const uint32_t tick)
 			for(int16_t i = 0; i < occupied_oscillator_number; i++){
 				oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 				if(k == p_oscillator->voice){
-					put_event(DISCARD_EVENT, oscillator_index, tick);
+					put_event(RELEASE_EVENT, oscillator_index, tick);
 				}
 				oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 			}
