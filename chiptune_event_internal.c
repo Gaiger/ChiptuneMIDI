@@ -19,7 +19,7 @@ struct _event
 
 #define NO_EVENT									(-1)
 
-uint32_t s_upcoming_event_number = 0;
+int16_t s_upcoming_event_number = 0;
 int16_t s_event_head_index = NO_EVENT;
 
 #ifdef _CHECK_EVENT_LIST
@@ -174,7 +174,7 @@ void process_events(uint32_t const tick)
 {
 	int timely_event_number = 0;
 
-	for(uint32_t i = 0; i < s_upcoming_event_number; i++){
+	for(int16_t i = 0; i < s_upcoming_event_number; i++){
 		if(s_events[s_event_head_index].triggerring_tick > tick){
 			break;
 		}

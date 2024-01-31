@@ -195,15 +195,16 @@ static uint16_t chorus_ramdom(void)
 static float pitch_chorus_bend_in_semitone(int8_t const voice)
 {
 	channel_controller_t *p_channel_controller =  get_channel_controller_pointer_from_index(voice);
-	const int8_t chorus = p_channel_controller->chorus;
+	int8_t const chorus = p_channel_controller->chorus;
 	if(0 == chorus){
 		return 0.0;
 	}
+	float const max_pitch_chorus_bend_in_semitones = p_channel_controller->max_pitch_chorus_bend_in_semitones;
 
 	uint16_t random = chorus_ramdom();
 	float pitch_chorus_bend_in_semitone;
 	pitch_chorus_bend_in_semitone = RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) *  chorus/(float)INT8_MAX;
-	pitch_chorus_bend_in_semitone *= p_channel_controller->max_pitch_chorus_bend_in_semitones;
+	pitch_chorus_bend_in_semitone *= max_pitch_chorus_bend_in_semitones;
 	//CHIPTUNE_PRINTF(cDeveloping, "pitch_chorus_bend_in_semitone = %3.2f\r\n", pitch_chorus_bend_in_semitone);
 	return pitch_chorus_bend_in_semitone;
 }
@@ -232,7 +233,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 
 	do {
 		if(true == is_note_on){
-			const int16_t amplitude = p_native_oscillator->amplitude;
+			int16_t const amplitude = p_native_oscillator->amplitude;
 			int16_t averaged_amplitude = DIVIDE_BY_16(amplitude);
 			// oscillator 1 : 4 * averaged_volume
 			// oscillator 2 : 5 * averaged_volume
@@ -249,6 +250,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 				if(NULL == p_oscillator){
 					return -1;
 				}
+				int8_t const vibrato_modulation_in_semitone = p_channel_controller->vibrato_modulation_in_semitone;
 				memcpy(p_oscillator, p_native_oscillator, sizeof(oscillator_t));
 				p_oscillator->amplitude = oscillator_amplitude;
 				p_oscillator->pitch_chorus_bend_in_semitone = pitch_chorus_bend_in_semitone(voice);
@@ -257,7 +259,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 																  p_channel_controller->pitch_wheel,
 																  p_oscillator->pitch_chorus_bend_in_semitone,
 																  &pitch_wheel_bend_in_semitone);
-				p_oscillator->delta_vibrato_phase = calculate_delta_phase(p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitone,
+				p_oscillator->delta_vibrato_phase = calculate_delta_phase(p_oscillator->note + vibrato_modulation_in_semitone,
 																			p_channel_controller->tuning_in_semitones,
 																			p_channel_controller->pitch_wheel_bend_range_in_semitones,
 																			p_channel_controller->pitch_wheel,
@@ -930,7 +932,7 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 		if(0 >= modulation_wheel){
 			break;
 		}
-
+		uint16_t const vibrato_same_index_number = p_channel_controller->vibrato_same_index_number;
 		uint16_t delta_vibrato_phase = p_oscillator->delta_vibrato_phase;
 		uint32_t vibrato_modulation
 				= REGULATE_MODULATION_WHEEL(modulation_wheel)
@@ -940,7 +942,7 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 		p_oscillator->current_phase += delta_vibrato_phase;
 
 		p_oscillator->vibrato_same_index_count += 1;
-		if(p_channel_controller->vibrato_same_index_number == p_oscillator->vibrato_same_index_count){
+		if(vibrato_same_index_number == p_oscillator->vibrato_same_index_count){
 			p_oscillator->vibrato_same_index_count = 0;
 			p_oscillator->vibrato_table_index = CALCULATE_VIBRATO_TABLE_INDEX_REMAINDER(p_oscillator->vibrato_table_index  + 1);
 		}

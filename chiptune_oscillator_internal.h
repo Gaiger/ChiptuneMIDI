@@ -25,7 +25,7 @@ typedef struct _oscillator
 
 	uint16_t	delta_vibrato_phase;
 	uint16_t	vibrato_table_index;
-	uint32_t	vibrato_same_index_count;
+	uint16_t	vibrato_same_index_count;
 
 	int16_t		native_oscillator;
 } oscillator_t;
