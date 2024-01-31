@@ -15,7 +15,7 @@ typedef struct _oscillator
 	uint16_t	delta_phase;
 	uint16_t	current_phase;
 
-	uint16_t	amplitude;
+	int16_t		amplitude;
 
 	int8_t		waveform;
 	uint8_t		: 8;

@@ -231,13 +231,13 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 
 	do {
 		if(true == is_note_on){
-			const uint16_t amplitude = p_native_oscillator->amplitude;
-			uint16_t averaged_amplitude = DIVIDE_BY_16(amplitude);
+			const int16_t amplitude = p_native_oscillator->amplitude;
+			int16_t averaged_amplitude = DIVIDE_BY_16(amplitude);
 			// oscillator 1 : 4 * averaged_volume
 			// oscillator 2 : 5 * averaged_volume
 			// oscillator 3 : 6 * averaged_volume
 			// oscillator 0 : volume - (4 + 5  + 6) * averaged_volume
-			uint16_t oscillator_amplitude = amplitude - (4 + 5 + 6) * averaged_amplitude;
+			int16_t oscillator_amplitude = amplitude - (4 + 5 + 6) * averaged_amplitude;
 			p_native_oscillator->amplitude = oscillator_amplitude;
 
 			float pitch_wheel_bend_in_semitone = 0.0f;
@@ -700,11 +700,11 @@ static int process_timely_midi_message(void)
 
 /**********************************************************************************/
 
-static uint32_t get_max_simultaneous_amplitude(void)
+static int32_t get_max_simultaneous_amplitude(void)
 {
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(false);
 	uint32_t midi_messge_index = 0;
-	uint32_t max_amplitude = 0;
+	int32_t max_amplitude = 0;
 	uint32_t previous_tick;
 
 	struct _tick_message tick_message;
@@ -747,7 +747,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 			}
 			previous_tick = tick;
 
-			uint32_t sum_amplitude = 0;
+			int32_t sum_amplitude = 0;
 
 			int16_t oscillator_index = get_head_occupied_oscillator_index();
 			int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
@@ -825,7 +825,7 @@ uint32_t number_of_roundup_to_power2_left_shift_bits(uint32_t const value)
 	return i;
 }
 
-uint32_t g_amplitude_nomalization_right_shift = 16;
+int32_t g_amplitude_nomalization_right_shift = 16;
 #define UPDATE_AMPLITUDE_NORMALIZER()				\
 													do { \
 														uint32_t max_amplitude = get_max_simultaneous_amplitude(); \
@@ -833,7 +833,7 @@ uint32_t g_amplitude_nomalization_right_shift = 16;
 															= number_of_roundup_to_power2_left_shift_bits(max_amplitude);\
 													} while(0)
 #else
-uint32_t g_max_amplitude = 1 << 16;
+int32_t g_max_amplitude = 1 << 16;
 #define UPDATE_AMPLITUDE_NORMALIZER()				\
 													do { \
 														g_max_amplitude = get_max_simultaneous_amplitude(); \
@@ -848,7 +848,7 @@ static int8_t s_vibrato_phase_table[VIBRATO_PHASE_TABLE_LENGTH] = {0};
 													((INDEX) & (VIBRATO_PHASE_TABLE_LENGTH - 1))
 
 #define VIBRATO_FREQUENCY							(4)
-static uint32_t  s_vibrato_same_index_count_number = (uint32_t)(DEFAULT_SAMPLING_RATE/VIBRATO_PHASE_TABLE_LENGTH/(float)VIBRATO_FREQUENCY);
+static uint32_t s_vibrato_same_index_count_number = (uint32_t)(DEFAULT_SAMPLING_RATE/VIBRATO_PHASE_TABLE_LENGTH/(float)VIBRATO_FREQUENCY);
 
 void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
 {
@@ -922,7 +922,7 @@ inline static void increase_time_base_for_fast_to_ending(void)
 /**********************************************************************************/
 
 #define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
-#define NORMALIZE_VIBRAION_DELTA_PHASE_AMPLITUDE(VALUE)	\
+#define NORMALIZE_VIBRTO_DELTA_PHASE(VALUE)			\
 													DIVIDE_BY_128(DIVIDE_BY_128(VALUE))
 #define REGULATE_MODULATION_WHEEL(VALUE)			((VALUE) + 1)
 
@@ -935,11 +935,11 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 		}
 
 		uint16_t delta_vibrato_phase = p_oscillator->delta_vibrato_phase;
-		uint32_t vibrato_amplitude
+		uint32_t vibrato_modulation
 				= REGULATE_MODULATION_WHEEL(modulation_wheel)
 					* s_vibrato_phase_table[p_oscillator->vibrato_table_index];
 
-		delta_vibrato_phase = NORMALIZE_VIBRAION_DELTA_PHASE_AMPLITUDE(vibrato_amplitude * delta_vibrato_phase);
+		delta_vibrato_phase = NORMALIZE_VIBRTO_DELTA_PHASE(vibrato_modulation * delta_vibrato_phase);
 		p_oscillator->current_phase += delta_vibrato_phase;
 
 		p_oscillator->vibrato_same_index_count += 1;
