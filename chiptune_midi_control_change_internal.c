@@ -132,7 +132,7 @@ static void process_cc_damper_pedal(uint32_t const tick, uint8_t const voice, ui
 			}
 			put_event(RELEASE_EVENT, oscillator_index, tick);
 			process_chorus_effect(tick, false, voice, p_oscillator->note,
-						  p_oscillator->volume/p_channel_controller->playing_volume,
+						  p_oscillator->amplitude/p_channel_controller->playing_volume,
 								  oscillator_index);
 		} while(0);
 		oscillator_index = get_next_occupied_oscillator_index(oscillator_index);

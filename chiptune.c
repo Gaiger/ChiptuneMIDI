@@ -208,7 +208,7 @@ static float pitch_chorus_bend_in_semitone(uint8_t const voice)
 /**********************************************************************************/
 
 #define DIVIDE_BY_8(VALUE)							((VALUE) >> 3)
-#define REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(VALUE)	\
+#define REDUCE_AMPLITUDE_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(VALUE)	\
 													DIVIDE_BY_8(VALUE)
 
 #define	VIBRATO_AMPLITUDE_IN_SEMITINE				(1)
@@ -231,17 +231,17 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 
 	do {
 		if(true == is_note_on){
-			const uint16_t volume = p_native_oscillator->volume;
-			uint16_t averaged_volume = DIVIDE_BY_16(volume);
+			const uint16_t amplitude = p_native_oscillator->amplitude;
+			uint16_t averaged_amplitude = DIVIDE_BY_16(amplitude);
 			// oscillator 1 : 4 * averaged_volume
 			// oscillator 2 : 5 * averaged_volume
 			// oscillator 3 : 6 * averaged_volume
 			// oscillator 0 : volume - (4 + 5  + 6) * averaged_volume
-			uint16_t oscillator_volume = volume - (4 + 5 + 6) * averaged_volume;
-			p_native_oscillator->volume = oscillator_volume;
+			uint16_t oscillator_amplitude = amplitude - (4 + 5 + 6) * averaged_amplitude;
+			p_native_oscillator->amplitude = oscillator_amplitude;
 
 			float pitch_wheel_bend_in_semitone = 0.0f;
-			oscillator_volume = 4 * averaged_volume;
+			oscillator_amplitude = 4 * averaged_amplitude;
 			int16_t i;
 			for(int16_t j = 0; j < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER;j++){
 				oscillator_t * const p_oscillator = acquire_oscillator(&i);
@@ -249,7 +249,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 					return -1;
 				}
 				memcpy(p_oscillator, p_native_oscillator, sizeof(oscillator_t));
-				p_oscillator->volume = oscillator_volume;
+				p_oscillator->amplitude = oscillator_amplitude;
 				p_oscillator->pitch_chorus_bend_in_semitone = pitch_chorus_bend_in_semitone(voice);
 				p_oscillator->delta_phase = calculate_delta_phase(p_oscillator->note, p_channel_controller->tuning_in_semitones,
 																  p_channel_controller->pitch_wheel_bend_range_in_semitones,
@@ -346,11 +346,11 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						process_chorus_effect(tick, false, voice, note, velocity, oscillator_index);
 					} while(0);
 
-					// TODO : the associate chorus oscillators volume should be decreased
-					actual_velocity -= p_oscillator->volume/p_channel_controller->playing_volume;
+					// TODO : the associate chorus oscillators amplitude should be decreased
+					actual_velocity -= p_oscillator->amplitude/p_channel_controller->playing_volume;
 					if(actual_velocity > INT8_MAX){
 						actual_velocity = DIVIDE_BY_2(velocity);
-						p_oscillator->volume = (actual_velocity + (actual_velocity & 0x01))
+						p_oscillator->amplitude = (actual_velocity + (actual_velocity & 0x01))
 								* p_channel_controller->playing_volume;
 					}
 				} while(0);
@@ -372,7 +372,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 															  p_oscillator->pitch_chorus_bend_in_semitone,
 															  &pitch_wheel_bend_in_semitone);
 			p_oscillator->current_phase = 0;
-			p_oscillator->volume = (uint16_t)actual_velocity * (uint16_t)p_channel_controller->playing_volume;
+			p_oscillator->amplitude = (uint16_t)actual_velocity * (uint16_t)p_channel_controller->playing_volume;
 			p_oscillator->waveform = p_channel_controller->waveform;
 			p_oscillator->duty_cycle_critical_phase = p_oscillator->duty_cycle_critical_phase;
 			p_oscillator->delta_vibrato_phase = calculate_delta_phase(p_oscillator->note + VIBRATO_AMPLITUDE_IN_SEMITINE,
@@ -405,8 +405,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				do {
 					if(true == p_channel_controller->is_damper_pedal_on){
 						SET_NOTE_OFF(p_oscillator->state_bits);
-						p_oscillator->volume
-								= REDUCE_VOOLUME_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->volume);
+						p_oscillator->amplitude
+								= REDUCE_AMPLITUDE_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->amplitude);
 						is_found = true;
 						break;
 					}
@@ -441,7 +441,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u\r\n",
 					tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" ,
 					voice, note, velocity, velocity, &pitch_wheel_bend_string[0]);
-
 
 #ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 	#ifdef _INCREMENTAL_SAMPLE_INDEX
@@ -754,7 +753,7 @@ static uint32_t get_max_simultaneous_amplitude(void)
 			int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 			for(int16_t i = 0; i < occupied_oscillator_number; i++){
 				oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
-				sum_amplitude += p_oscillator->volume;
+				sum_amplitude += p_oscillator->amplitude;
 				oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 			}
 
@@ -1003,10 +1002,9 @@ int16_t chiptune_fetch_16bit_wave(void)
 		default:
 			break;
 		}
-		accumulated_value += (value * p_oscillator->volume);
+		accumulated_value += (value * p_oscillator->amplitude);
 
 		p_oscillator->current_phase += p_oscillator->delta_phase;
-
 Flag_oscillator_take_effect_end:
 		oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 	}
