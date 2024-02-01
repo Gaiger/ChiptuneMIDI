@@ -19,8 +19,35 @@ channel_controller_t * const get_channel_controller_pointer_from_index(int8_t co
 
 /**********************************************************************************/
 
+void update_channel_controller_envelope(int8_t const index)
+{
+	uint32_t const sampling_rate = get_sampling_rate();
+	uint32_t const resolution = get_resolution();
+	float tempo = get_tempo();
+
+	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
+
+#define DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND	(0.03f)
+	p_channel_controller->envelope_attack_tick_number
+		= (uint16_t)(DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5);
+	p_channel_controller->envelope_attack_same_index_number
+				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND)/(float)ENVELOPE_TABLE_LENGTH + 0.5);
+
+#define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.05f)
+	p_channel_controller->envelope_release_tick_number
+		= (uint16_t)(DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5f);
+
+	p_channel_controller->envelope_release_same_index_number
+				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND)/(float)ENVELOPE_TABLE_LENGTH + 0.5);
+
+}
+
+/**********************************************************************************/
+
 void reset_channel_controller_from_index(int8_t const index)
 {
+	uint32_t const sampling_rate = get_sampling_rate();
+
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
 	p_channel_controller->tuning_in_semitones = 0;
 
@@ -40,27 +67,30 @@ void reset_channel_controller_from_index(int8_t const index)
 	p_channel_controller->modulation_wheel = 0;
 	p_channel_controller->vibrato_modulation_in_semitone = DEFAULT_VIBRATO_MODULATION_IN_SEMITINE;
 	p_channel_controller->vibrato_same_index_number
-			= (uint16_t)(get_sampling_rate()/VIBRATO_PHASE_TABLE_LENGTH/(float)DEFAULT_VIBRATO_FREQUENCY);
+			= (uint16_t)(sampling_rate/VIBRATO_PHASE_TABLE_LENGTH/(float)DEFAULT_VIBRATO_FREQUENCY);
 
 #define	DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE	(0.25f)
 	p_channel_controller->chorus = 0;
 	p_channel_controller->max_pitch_chorus_bend_in_semitones = DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
 
-#define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.03f)
-	p_channel_controller->envelepe_release_tick_number = second_to_tick(DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND);
-	p_channel_controller->envelope_release_same_index_number
-			= (uint16_t)((get_sampling_rate() * DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND)/(float)ENVELOPE_TABLE_LENGTH + 0.5);
-
-	p_channel_controller->registered_parameter_number = MIDI_CC_RPN_NULL;
-	p_channel_controller->registered_parameter_value = 0;
+	update_channel_controller_envelope(index);
 }
 
 /**********************************************************************************/
 
-void reset_all_reset_channel_controller(void)
+void reset_all_channel_controllers(void)
 {
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 		reset_channel_controller_from_index(i);
+	}
+}
+
+/**********************************************************************************/
+
+void update_all_channel_controllers_envelope(void)
+{
+	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
+		update_channel_controller_envelope(i);
 	}
 }
 

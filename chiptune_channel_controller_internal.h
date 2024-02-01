@@ -48,7 +48,10 @@ typedef struct _channel_controller
 	int8_t		chorus;
 	float		max_pitch_chorus_bend_in_semitones;
 
-	uint16_t	envelepe_release_tick_number;
+	uint16_t	envelope_attack_tick_number;
+	uint16_t	envelope_attack_same_index_number;
+
+	uint16_t	envelope_release_tick_number;
 	uint16_t	envelope_release_same_index_number;
 
 	uint16_t	registered_parameter_number;
@@ -56,7 +59,8 @@ typedef struct _channel_controller
 } channel_controller_t;
 
 void reset_channel_controller_from_index(int8_t const index);
-void reset_all_reset_channel_controller(void);
+void reset_all_channel_controllers(void);
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index);
+void update_all_channel_controllers_envelope(void);
 
 #endif // _CHIPTUNE_CHANNEL_CONTROLLER_INTERNAL_H_

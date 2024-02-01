@@ -30,6 +30,7 @@
 #define ENVELOPE_TABLE_LENGTH						(64)
 
 uint32_t get_sampling_rate(void);
-uint32_t second_to_tick(float time_interval);
+uint32_t get_resolution(void);
+float get_tempo(void);
 
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_

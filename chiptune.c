@@ -25,7 +25,7 @@ typedef double chiptune_float;
 #define DEFAULT_SAMPLING_RATE						(16000)
 #define DEFAULT_RESOLUTION							(960)
 
-static chiptune_float s_tempo = DEFAULT_TEMPO;
+static float s_tempo = DEFAULT_TEMPO;
 static uint32_t s_sampling_rate = DEFAULT_SAMPLING_RATE;
 static uint32_t s_resolution = DEFAULT_RESOLUTION;
 
@@ -116,10 +116,11 @@ uint32_t get_sampling_rate(void) { return s_sampling_rate; }
 
 /**********************************************************************************/
 
-uint32_t second_to_tick(float time_interval)
-{
-	return (uint32_t)(time_interval * s_sampling_rate *s_delta_tick_per_sample + 0.5);
-}
+uint32_t get_resolution(void) { return s_resolution; }
+
+/**********************************************************************************/
+
+float get_tempo(void) { return s_tempo; }
 
 /**********************************************************************************/
 
@@ -863,29 +864,42 @@ int32_t g_max_loudness = 1 << 16;
 /**********************************************************************************/
 
 static int8_t s_vibrato_phase_table[VIBRATO_PHASE_TABLE_LENGTH] = {0};
-#define CALCULATE_VIBRATO_TABLE_INDEX_REMAINDER(INDEX) \
-													((INDEX) & (VIBRATO_PHASE_TABLE_LENGTH - 1))
+#define CALCULATE_VIBRATO_TABLE_INDEX_REMAINDER(INDEX)		\
+															((INDEX) & (VIBRATO_PHASE_TABLE_LENGTH - 1))
 
 static int8_t s_envelope_release_table[ENVELOPE_TABLE_LENGTH];
+
+static int8_t s_envelope_attack_table[ENVELOPE_TABLE_LENGTH];
+
+static void initialize_tables(void)
+{
+	for(int16_t i = 0; i < VIBRATO_PHASE_TABLE_LENGTH; i++){
+		s_vibrato_phase_table[i] = (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)VIBRATO_PHASE_TABLE_LENGTH));
+	}
+
+	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
+		s_envelope_release_table[i] = (int8_t)(INT8_MAX * ((ENVELOPE_TABLE_LENGTH - 1) - i)/(float)ENVELOPE_TABLE_LENGTH);
+	}
+
+	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
+		s_envelope_attack_table[i] = (int8_t)(INT8_MAX * (i + 1)/(float)ENVELOPE_TABLE_LENGTH);
+	}
+}
+
+/**********************************************************************************/
 
 void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
 {
 	s_sampling_rate = sampling_rate;
 	s_resolution = resolution;
 	s_total_message_number = total_message_number;
-	for(int16_t i = 0; i < VIBRATO_PHASE_TABLE_LENGTH; i++){
-		s_vibrato_phase_table[i] = (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)VIBRATO_PHASE_TABLE_LENGTH));
-	}
-
-	for(int16_t i = 0; i < VIBRATO_PHASE_TABLE_LENGTH; i++){
-		s_envelope_release_table[i] = (int8_t)(INT8_MAX * ((ENVELOPE_TABLE_LENGTH - 1) - i)/(float)ENVELOPE_TABLE_LENGTH);
-	}
+	initialize_tables();
 
 	RESET_CURRENT_TIME();
 	s_is_tune_ending = false;
 	s_midi_messge_index = 0;
 	SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
-	reset_all_reset_channel_controller();
+	reset_all_channel_controllers();
 	reset_all_oscillators();
 	clean_all_events();
 
@@ -901,10 +915,11 @@ void chiptune_set_tempo(float const tempo)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "%s :: tempo = %3.1f\r\n", __FUNCTION__,tempo);
 	CORRECT_TIME_BASE();
-	s_tempo = (chiptune_float)tempo;
+	s_tempo = tempo;
 	UPDATE_TIME_BASE_UNIT();
 	UPDATE_DAMPER_PEDAL_ATTENUATION_TICK();
 	UPDATE_CHORUS_DELTA_TICK();
+	update_all_channel_controllers_envelope();
 }
 
 /**********************************************************************************/
@@ -991,7 +1006,18 @@ void perform_envelope(oscillator_t * const p_oscillator)
 		switch(p_oscillator->envelope_state)
 		{
 		case ENVELOPE_ATTACK:
-			p_oscillator->amplitude = p_oscillator->loudness;
+			envelope_same_index_number = p_channel_controller->envelope_attack_same_index_number;
+			p_oscillator->amplitude = DIVIDE_BY_128(p_oscillator->loudness * (int32_t)s_envelope_attack_table[p_oscillator->envelope_table_index]);
+			p_oscillator->envelope_same_index_count += 1;
+			if(envelope_same_index_number == p_oscillator->envelope_same_index_count){
+				p_oscillator->envelope_same_index_count = 0;
+				p_oscillator->envelope_table_index += 1;
+				if( ENVELOPE_TABLE_LENGTH == p_oscillator->envelope_table_index){
+					p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
+					p_oscillator->envelope_same_index_count = 0;
+					p_oscillator->envelope_table_index = 0;
+				}
+			}
 			break;
 		case ENVELOPE_DECAY:
 			p_oscillator->amplitude = p_oscillator->loudness;
@@ -1004,14 +1030,6 @@ void perform_envelope(oscillator_t * const p_oscillator)
 			p_oscillator->amplitude = DIVIDE_BY_128(p_oscillator->loudness * (int32_t)s_envelope_release_table[p_oscillator->envelope_table_index]);
 			p_oscillator->envelope_same_index_count += 1;
 			if(envelope_same_index_number == p_oscillator->envelope_same_index_count){
-#if(0)
-				if(63 == p_oscillator->note && UNUSED_OSCILLATOR == p_oscillator->native_oscillator){
-					printf("voice = %d, note = %d, table_index = %d, loudness = %d, amplitude = %d\r\n",
-					   p_oscillator->voice, p_oscillator->note, p_oscillator->envelope_table_index,
-						   p_oscillator->loudness, p_oscillator->amplitude);
-					printf("\r\n");
-				}
-#endif
 				p_oscillator->envelope_same_index_count = 0;
 				p_oscillator->envelope_table_index += 1;
 			}
