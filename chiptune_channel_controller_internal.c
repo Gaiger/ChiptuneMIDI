@@ -6,8 +6,8 @@
 
 static channel_controller_t s_channel_controllers[MIDI_MAX_CHANNEL_NUMBER];
 
-static int8_t s_envelope_release_table[ENVELOPE_TABLE_LENGTH];
-static int8_t s_envelope_attack_table[ENVELOPE_TABLE_LENGTH];
+static int8_t s_linear_decline_table[ENVELOPE_TABLE_LENGTH];
+static int8_t s_linear_growth_table[ENVELOPE_TABLE_LENGTH];
 
 /**********************************************************************************/
 
@@ -31,13 +31,21 @@ void update_channel_controller_envelope(int8_t const index)
 
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
 
-#define DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND	(0.03f)
+#define DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND	(0.02f)
 	p_channel_controller->envelope_attack_tick_number
 		= (uint16_t)(DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5);
 	p_channel_controller->envelope_attack_same_index_number
 				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND)/(float)ENVELOPE_TABLE_LENGTH + 0.5);
 
-#define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.05f)
+#define DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND	(0.01f)
+	p_channel_controller->envelope_decay_tick_number
+		= (uint16_t)(DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5);
+	p_channel_controller->envelope_decay_same_index_number
+				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND)/(float)ENVELOPE_TABLE_LENGTH + 0.5);
+
+#define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(7)
+	p_channel_controller->envelope_sustain_level = DEFAULT_ENVELOPE_SUSTAIN_LEVEL;
+#define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.03f)
 	p_channel_controller->envelope_release_tick_number
 		= (uint16_t)(DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5f);
 
@@ -77,8 +85,9 @@ void reset_channel_controller_from_index(int8_t const index)
 	p_channel_controller->chorus = 0;
 	p_channel_controller->max_pitch_chorus_bend_in_semitones = DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
 
-	p_channel_controller->p_envelope_attack_table = &s_envelope_attack_table[0];
-	p_channel_controller->p_envelope_release_table = &s_envelope_release_table[0];
+	p_channel_controller->p_envelope_attack_table = &s_linear_growth_table[0];
+	p_channel_controller->p_envelope_decay_table  = &s_linear_decline_table[0];
+	p_channel_controller->p_envelope_release_table = &s_linear_decline_table[0];
 	update_channel_controller_envelope(index);
 }
 
@@ -96,11 +105,11 @@ void update_all_channel_controllers_envelope(void)
 static void initialize_envelope_tables(void)
 {
 	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
-		s_envelope_attack_table[i] = (int8_t)(INT8_MAX * (i/(float)ENVELOPE_TABLE_LENGTH));
+		s_linear_growth_table[i] = (int8_t)(INT8_MAX * (i/(float)ENVELOPE_TABLE_LENGTH));
 	}
 
 	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
-		s_envelope_release_table[i] = (int8_t)(INT8_MAX * ((ENVELOPE_TABLE_LENGTH - i)/(float)ENVELOPE_TABLE_LENGTH));
+		s_linear_decline_table[i] = (int8_t)(INT8_MAX * ((ENVELOPE_TABLE_LENGTH - i)/(float)ENVELOPE_TABLE_LENGTH));
 	}
 }
 

@@ -997,27 +997,60 @@ void perform_envelope(oscillator_t * const p_oscillator)
 			if(envelope_same_index_number == p_oscillator->envelope_same_index_count){
 				p_oscillator->envelope_same_index_count = 0;
 				p_oscillator->envelope_table_index += 1;
+				p_oscillator->amplitude = DIVIDE_BY_128(p_oscillator->loudness
+														* (int32_t)p_channel_controller->p_envelope_attack_table[
+														p_oscillator->envelope_table_index]);
 				if( ENVELOPE_TABLE_LENGTH == p_oscillator->envelope_table_index){
-					p_oscillator->amplitude = DIVIDE_BY_128(p_oscillator->loudness
-															* (int32_t)p_channel_controller->p_envelope_attack_table[
-															p_oscillator->envelope_table_index]);
 					p_oscillator->envelope_same_index_count = 0;
 					p_oscillator->envelope_table_index = 0;
-					p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
+					p_oscillator->amplitude = p_oscillator->loudness;
+					p_oscillator->envelope_state = ENVELOPE_DECAY;
 				}
 			}
 			break;
 		case ENVELOPE_DECAY:
-			p_oscillator->amplitude = p_oscillator->loudness;
+			envelope_same_index_number = p_channel_controller->envelope_decay_same_index_number;
+			p_oscillator->envelope_same_index_count += 1;
+			if(envelope_same_index_number == p_oscillator->envelope_same_index_count){
+				p_oscillator->envelope_same_index_count = 0;
+				p_oscillator->envelope_table_index += 1;
+				int16_t sustain_ampitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
+															 p_channel_controller->envelope_sustain_level);
+#if(0)
+				if(0 >sustain_ampitude || sustain_ampitude > p_oscillator->loudness){
+					printf("AA\r\n");
+					printf("\r\n");
+				}
+#endif
+				int16_t delta_ampitude = p_oscillator->loudness - sustain_ampitude;
+
+				p_oscillator->amplitude = DIVIDE_BY_128(delta_ampitude
+														* (int32_t)p_channel_controller->p_envelope_decay_table[
+														p_oscillator->envelope_table_index]) + sustain_ampitude;
+#if(0)
+				if(0 > p_oscillator->amplitude || sustain_ampitude > p_oscillator->loudness){
+					printf("AA\r\n");
+					printf("\r\n");
+				}
+#endif
+				if( ENVELOPE_TABLE_LENGTH == p_oscillator->envelope_table_index){
+					p_oscillator->envelope_same_index_count = 0;
+					p_oscillator->envelope_table_index = 0;
+					p_oscillator->amplitude = sustain_ampitude;
+					p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
+				}
+			}
 			break;
 		case ENVELOPE_SUSTAIN:
-			p_oscillator->amplitude = p_oscillator->loudness;
+			//p_oscillator->amplitude = p_oscillator->loudness;
 			break;
 		case ENVELOPE_RELEASE:
 			envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
 			p_oscillator->envelope_same_index_count += 1;
 			if(envelope_same_index_number == p_oscillator->envelope_same_index_count){
-				p_oscillator->amplitude = DIVIDE_BY_128(p_oscillator->loudness
+				int16_t sustain_ampitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
+															 p_channel_controller->envelope_sustain_level);
+				p_oscillator->amplitude = DIVIDE_BY_128(sustain_ampitude
 														* (int32_t)p_channel_controller->p_envelope_release_table[
 														p_oscillator->envelope_table_index]);
 				p_oscillator->envelope_same_index_count = 0;

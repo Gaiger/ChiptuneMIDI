@@ -52,6 +52,12 @@ typedef struct _channel_controller
 	uint16_t			envelope_attack_tick_number;
 	uint16_t			envelope_attack_same_index_number;
 
+	int8_t const *		p_envelope_decay_table;
+	uint16_t			envelope_decay_tick_number;
+	uint16_t			envelope_decay_same_index_number;
+
+	uint8_t				envelope_sustain_level;
+
 	int8_t const *		p_envelope_release_table;
 	uint16_t			envelope_release_tick_number;
 	uint16_t			envelope_release_same_index_number;
@@ -64,5 +70,14 @@ void initialize_channel_controller(void);
 void reset_channel_controller_from_index(int8_t const index);
 void update_all_channel_controllers_envelope(void);
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index);
+
+
+#define SUSTAIN_AMPLITUDE(LOUNDNESS, SUSTAIN_LEVEL)	\
+													((int16_t)(((int32_t)(LOUNDNESS) << (SUSTAIN_LEVEL)) >> 8))
+
+static inline int16_t  get_sustain_amplitude(int16_t loudness, uint8_t envelope_sustain_level)
+{
+	return (int16_t)(((int32_t)loudness << envelope_sustain_level) >> 8);
+}
 
 #endif // _CHIPTUNE_CHANNEL_CONTROLLER_INTERNAL_H_
