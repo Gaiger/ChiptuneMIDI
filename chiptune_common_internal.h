@@ -10,7 +10,7 @@
 #define _PRINT_DEVELOPING
 #define _PRINT_MIDI_SETUP
 #define _PRINT_NOTE_OPERATION
-//#define _PRINT_EVENT_TRIGGERING
+#define _PRINT_EVENT_TRIGGERING
 
 #define _CHECK_OCCUPIED_OSCILLATOR_LIST
 #define _CHECK_EVENT_LIST
@@ -26,8 +26,10 @@
 
 #define NULL_TICK									(UINT32_MAX)
 
-
 #define VIBRATO_PHASE_TABLE_LENGTH					(64)
+#define ENVELOPE_TABLE_LENGTH						(64)
+
 uint32_t get_sampling_rate(void);
+uint32_t second_to_tick(float time_interval);
 
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_

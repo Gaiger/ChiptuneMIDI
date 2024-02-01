@@ -48,6 +48,9 @@ typedef struct _channel_controller
 	int8_t		chorus;
 	float		max_pitch_chorus_bend_in_semitones;
 
+	uint16_t	envelepe_release_tick_number;
+	uint16_t	envelope_release_same_index_number;
+
 	uint16_t	registered_parameter_number;
 	uint16_t	registered_parameter_value;
 } channel_controller_t;

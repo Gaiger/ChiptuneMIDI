@@ -2,16 +2,17 @@
 
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
+#include "chiptune_channel_controller_internal.h"
 #include "chiptune_oscillator_internal.h"
 
 #include "chiptune_event_internal.h"
 
-#define MAX_EVENT_NUMBER							(4 * MIDI_MAX_CHANNEL_NUMBER)
+#define MAX_EVENT_NUMBER							(256 * MIDI_MAX_CHANNEL_NUMBER)
 
 enum
 {
 	UNUSED_EVENT =  -1,
-	DISCARD_EVENT = (EVENT_TYPE_MAX + 1),
+	EVENT_DISCARD = (EVENT_TYPE_MAX + 1),
 };
 
 struct _event
@@ -59,6 +60,11 @@ static void check_upcoming_events(uint32_t const tick)
 			is_error_occur = true;
 		}
 
+		if(UNUSED_OSCILLATOR == s_events[index].oscillator){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR:: oscillator is UNUSED_OSCILLATOR\r\n");
+			is_error_occur = true;
+		}
+
 		previous_tick = s_events[index].triggerring_tick;
 		index = s_events[index].next_event;
 	}
@@ -99,7 +105,7 @@ static void check_upcoming_events(uint32_t const tick)
 int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 {
 	if(MAX_EVENT_NUMBER == s_upcoming_event_number){
-		CHIPTUNE_PRINTF(cDeveloping, "No event are available\r\n");
+		CHIPTUNE_PRINTF(cDeveloping, "No unused event are available\r\n");
 		return -1;
 	}
 
@@ -170,22 +176,27 @@ void process_events(uint32_t const tick)
 		}
 		switch(s_events[s_event_head_index].type)
 		{
-		case ACTIVATE_EVENT:
+		case EVENT_ACTIVATE:
 			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, ACTIVATE oscillator = %u, voice = %u, note = %u, amplitude = 0x%04x %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, &addition_string[0]);
+			p_oscillator->envelope_same_index_count = 0;
+			p_oscillator->envelope_table_index = 0;
+			p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
 			SET_ACTIVATED_ON(p_oscillator->state_bits);
 			break;
-		case RELEASE_EVENT:
+		case EVENT_RELEASE:
 			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, RELEASE oscillator = %u, voice = %u, note = %u, amplitude = 0x%04x %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, &addition_string[0]);
-			put_event(DISCARD_EVENT, s_events[s_event_head_index].oscillator, tick);
+			p_oscillator->envelope_state = ENVELOPE_RELEASE;
+			put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
+					  tick + get_channel_controller_pointer_from_index(p_oscillator->voice)->envelepe_release_tick_number);
 			break;
-		case DISCARD_EVENT:
-			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, DISCARD oscillator = %u, voice = %u, note = %u, amplitude = 0x%04x %s\r\n",
+		case EVENT_DISCARD:
+			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, DISCARD oscillator = %u, voice = %u, note = %u, loudness = 0x%04x %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
-							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, &addition_string[0]);
+							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness, &addition_string[0]);
 			discard_oscillator(s_events[s_event_head_index].oscillator);
 			break;
 		default:

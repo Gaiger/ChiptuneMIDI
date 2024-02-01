@@ -116,6 +116,13 @@ uint32_t get_sampling_rate(void) { return s_sampling_rate; }
 
 /**********************************************************************************/
 
+uint32_t second_to_tick(float time_interval)
+{
+	return (uint32_t)(time_interval * s_sampling_rate *s_delta_tick_per_sample + 0.5);
+}
+
+/**********************************************************************************/
+
 static void process_program_change_message(uint32_t const tick, int8_t const voice, uint8_t const number)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: ", tick);
@@ -307,7 +314,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 		}
 	} while(0);
 
-	int8_t event_type = (true == is_note_on) ? ACTIVATE_EVENT : RELEASE_EVENT;
+	int8_t event_type = (true == is_note_on) ? EVENT_ACTIVATE : EVENT_RELEASE;
 	for(int16_t j = 0; j  < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; j++){
 		put_event(event_type, oscillator_indexes[j], tick + (j + 1) * s_chorus_delta_tick);
 	}
@@ -345,7 +352,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 							break;
 						}
-						put_event(RELEASE_EVENT, oscillator_index, tick);
+						put_event(EVENT_RELEASE, oscillator_index, tick);
 						process_chorus_effect(tick, false, voice, note, velocity, oscillator_index);
 					} while(0);
 
@@ -387,7 +394,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->vibrato_table_index = 0;
 			p_oscillator->vibrato_same_index_count = 0;
 			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
-			put_event(ACTIVATE_EVENT, ii, tick);
+			put_event(EVENT_ACTIVATE, ii, tick);
 			process_chorus_effect(tick, is_note_on, voice, note, velocity, ii);
 			break;
 		}
@@ -416,7 +423,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
 						break;
 					}
-					put_event(RELEASE_EVENT, oscillator_index, tick);
+					put_event(EVENT_RELEASE, oscillator_index, tick);
 					process_chorus_effect(tick, is_note_on, voice, note, velocity, oscillator_index);
 					is_found = true;
 					is_leave_loop = true;
@@ -622,7 +629,7 @@ static void release_all_channels_damper_pedal(const uint32_t tick)
 			for(int16_t i = 0; i < occupied_oscillator_number; i++){
 				oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 				if(k == p_oscillator->voice){
-					put_event(RELEASE_EVENT, oscillator_index, tick);
+					put_event(EVENT_RELEASE, oscillator_index, tick);
 				}
 				oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 			}
@@ -849,6 +856,8 @@ static int8_t s_vibrato_phase_table[VIBRATO_PHASE_TABLE_LENGTH] = {0};
 #define CALCULATE_VIBRATO_TABLE_INDEX_REMAINDER(INDEX) \
 													((INDEX) & (VIBRATO_PHASE_TABLE_LENGTH - 1))
 
+static int8_t s_envelope_release_table[ENVELOPE_TABLE_LENGTH];
+
 void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
 {
 	s_sampling_rate = sampling_rate;
@@ -856,6 +865,10 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	s_total_message_number = total_message_number;
 	for(int16_t i = 0; i < VIBRATO_PHASE_TABLE_LENGTH; i++){
 		s_vibrato_phase_table[i] = (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)VIBRATO_PHASE_TABLE_LENGTH));
+	}
+
+	for(int16_t i = 0; i < VIBRATO_PHASE_TABLE_LENGTH; i++){
+		s_envelope_release_table[i] = (int8_t)(INT8_MAX * ((ENVELOPE_TABLE_LENGTH - 1) - i)/(float)ENVELOPE_TABLE_LENGTH);
 	}
 
 	RESET_CURRENT_TIME();
@@ -951,6 +964,54 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 
 /**********************************************************************************/
 
+void perform_envelope(oscillator_t * const p_oscillator)
+{
+	do
+	{
+		//if(ENVELOPE_SUSTAIN == p_oscillator->envelope_state){
+		//	break;
+		//}
+
+		if(ENVELOPE_TABLE_LENGTH == p_oscillator->envelope_table_index){
+			break;
+		}
+
+		channel_controller_t *p_channel_controller = get_channel_controller_pointer_from_index(p_oscillator->voice);
+		uint16_t envelope_same_index_number = 0;
+		switch(p_oscillator->envelope_state)
+		{
+		case ENVELOPE_ATTACK:
+			p_oscillator->loudness = p_oscillator->amplitude;
+			break;
+		case ENVELOPE_DECAY:
+			p_oscillator->loudness = p_oscillator->amplitude;
+			break;
+		case ENVELOPE_SUSTAIN:
+			p_oscillator->loudness = p_oscillator->amplitude;
+			break;
+		case ENVELOPE_RELEASE:
+			envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
+			p_oscillator->loudness = DIVIDE_BY_128(p_oscillator->amplitude * (int32_t)s_envelope_release_table[p_oscillator->envelope_table_index]);
+			p_oscillator->envelope_same_index_count += 1;
+			if(envelope_same_index_number == p_oscillator->envelope_same_index_count){
+#if(0)
+				if(63 == p_oscillator->note && UNUSED_OSCILLATOR == p_oscillator->native_oscillator){
+					printf("voice = %d, note = %d, table_index = %d, amplitude = %d, loudness = %d\r\n",
+					   p_oscillator->voice, p_oscillator->note, p_oscillator->envelope_table_index,
+						   p_oscillator->amplitude, p_oscillator->loudness);
+					printf("\r\n");
+				}
+#endif
+				p_oscillator->envelope_same_index_count = 0;
+				p_oscillator->envelope_table_index += 1;
+			}
+			break;
+		}
+	} while(0);
+}
+
+/**********************************************************************************/
+
 #ifdef _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
 #define NORMALIZE_AMPLITUDE(VALUE)					((int32_t)((VALUE) >> g_amplitude_nomalization_right_shift))
 #else
@@ -979,6 +1040,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 
 		int16_t value = 0;
 		perform_vibrato(p_oscillator);
+		perform_envelope(p_oscillator);
 		switch(p_oscillator->waveform)
 		{
 		case WAVEFORM_SQUARE:
@@ -1001,7 +1063,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 		default:
 			break;
 		}
-		accumulated_value += (value * p_oscillator->amplitude);
+		accumulated_value += (value * p_oscillator->loudness);
 
 		p_oscillator->current_phase += p_oscillator->delta_phase;
 Flag_oscillator_take_effect_end:

@@ -130,7 +130,7 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 			if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
 				break;
 			}
-			put_event(RELEASE_EVENT, oscillator_index, tick);
+			put_event(EVENT_RELEASE, oscillator_index, tick);
 			process_chorus_effect(tick, false, voice, p_oscillator->note,
 						  p_oscillator->amplitude/p_channel_controller->playing_volume,
 								  oscillator_index);
@@ -161,7 +161,7 @@ static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const v
 	for(int16_t i = 0; i < occupied_oscillator_number; i++){
 		oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 		if( voice == p_oscillator->voice){
-			put_event(RELEASE_EVENT, oscillator_index, tick);
+			put_event(EVENT_RELEASE, oscillator_index, tick);
 		}
 		oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 	}

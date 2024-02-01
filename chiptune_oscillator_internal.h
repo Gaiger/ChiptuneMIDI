@@ -3,11 +3,18 @@
 
 #include <stdint.h>
 
+enum EnvelopeType
+{
+	ENVELOPE_ATTACK,
+	ENVELOPE_DECAY,
+	ENVELOPE_SUSTAIN,
+	ENVELOPE_RELEASE,
+};
 
 typedef struct _oscillator
 {
 	uint8_t		state_bits;
-	uint8_t		: 8;
+	uint8_t		envelope_state;
 
 	int8_t		voice;
 
@@ -26,6 +33,10 @@ typedef struct _oscillator
 	uint16_t	delta_vibrato_phase;
 	uint16_t	vibrato_table_index;
 	uint16_t	vibrato_same_index_count;
+
+	int16_t		loudness;
+	uint16_t	envelope_table_index;
+	uint16_t	envelope_same_index_count;
 
 	int16_t		native_oscillator;
 } oscillator_t;

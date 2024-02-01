@@ -46,6 +46,11 @@ void reset_channel_controller_from_index(int8_t const index)
 	p_channel_controller->chorus = 0;
 	p_channel_controller->max_pitch_chorus_bend_in_semitones = DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
 
+#define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.03f)
+	p_channel_controller->envelepe_release_tick_number = second_to_tick(DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND);
+	p_channel_controller->envelope_release_same_index_number
+			= (uint16_t)((get_sampling_rate() * DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND)/(float)ENVELOPE_TABLE_LENGTH + 0.5);
+
 	p_channel_controller->registered_parameter_number = MIDI_CC_RPN_NULL;
 	p_channel_controller->registered_parameter_value = 0;
 }
