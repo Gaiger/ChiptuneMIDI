@@ -979,9 +979,9 @@ void perform_envelope(oscillator_t * const p_oscillator)
 {
 	do
 	{
-		//if(ENVELOPE_SUSTAIN == p_oscillator->envelope_state){
-		//	break;
-		//}
+		if(ENVELOPE_SUSTAIN == p_oscillator->envelope_state){
+			break;
+		}
 
 		if(ENVELOPE_TABLE_LENGTH == p_oscillator->envelope_table_index){
 			break;
@@ -993,71 +993,72 @@ void perform_envelope(oscillator_t * const p_oscillator)
 		{
 		case ENVELOPE_ATTACK:
 			envelope_same_index_number = p_channel_controller->envelope_attack_same_index_number;
-			p_oscillator->envelope_same_index_count += 1;
-			if(envelope_same_index_number == p_oscillator->envelope_same_index_count){
-				p_oscillator->envelope_same_index_count = 0;
-				p_oscillator->envelope_table_index += 1;
-				p_oscillator->amplitude = DIVIDE_BY_128(p_oscillator->loudness
-														* (int32_t)p_channel_controller->p_envelope_attack_table[
-														p_oscillator->envelope_table_index]);
-				if( ENVELOPE_TABLE_LENGTH == p_oscillator->envelope_table_index){
-					p_oscillator->envelope_same_index_count = 0;
-					p_oscillator->envelope_table_index = 0;
-					p_oscillator->amplitude = p_oscillator->loudness;
-					p_oscillator->envelope_state = ENVELOPE_DECAY;
-				}
-			}
 			break;
 		case ENVELOPE_DECAY:
 			envelope_same_index_number = p_channel_controller->envelope_decay_same_index_number;
-			p_oscillator->envelope_same_index_count += 1;
-			if(envelope_same_index_number == p_oscillator->envelope_same_index_count){
-				p_oscillator->envelope_same_index_count = 0;
-				p_oscillator->envelope_table_index += 1;
-				int16_t sustain_ampitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-															 p_channel_controller->envelope_sustain_level);
-#if(0)
-				if(0 >sustain_ampitude || sustain_ampitude > p_oscillator->loudness){
-					printf("AA\r\n");
-					printf("\r\n");
-				}
-#endif
-				int16_t delta_ampitude = p_oscillator->loudness - sustain_ampitude;
-
-				p_oscillator->amplitude = DIVIDE_BY_128(delta_ampitude
-														* (int32_t)p_channel_controller->p_envelope_decay_table[
-														p_oscillator->envelope_table_index]) + sustain_ampitude;
-#if(0)
-				if(0 > p_oscillator->amplitude || sustain_ampitude > p_oscillator->loudness){
-					printf("AA\r\n");
-					printf("\r\n");
-				}
-#endif
-				if( ENVELOPE_TABLE_LENGTH == p_oscillator->envelope_table_index){
-					p_oscillator->envelope_same_index_count = 0;
-					p_oscillator->envelope_table_index = 0;
-					p_oscillator->amplitude = sustain_ampitude;
-					p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
-				}
-			}
-			break;
-		case ENVELOPE_SUSTAIN:
-			//p_oscillator->amplitude = p_oscillator->loudness;
 			break;
 		case ENVELOPE_RELEASE:
 			envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
-			p_oscillator->envelope_same_index_count += 1;
-			if(envelope_same_index_number == p_oscillator->envelope_same_index_count){
-				int16_t sustain_ampitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-															 p_channel_controller->envelope_sustain_level);
-				p_oscillator->amplitude = DIVIDE_BY_128(sustain_ampitude
-														* (int32_t)p_channel_controller->p_envelope_release_table[
-														p_oscillator->envelope_table_index]);
-				p_oscillator->envelope_same_index_count = 0;
-				p_oscillator->envelope_table_index += 1;
-			}
+			break;
+		};
+
+		p_oscillator->envelope_same_index_count += 1;
+		if(envelope_same_index_number < p_oscillator->envelope_same_index_count){
 			break;
 		}
+
+		p_oscillator->envelope_same_index_count = 0;
+		p_oscillator->envelope_table_index += 1;
+		if(ENVELOPE_TABLE_LENGTH == p_oscillator->envelope_table_index){
+			do {
+				if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
+					break;
+				}
+
+				p_oscillator->envelope_table_index = 0;
+				switch(p_oscillator->envelope_state)
+				{
+				case ENVELOPE_ATTACK:
+					p_oscillator->envelope_state = ENVELOPE_DECAY;
+					p_oscillator->amplitude = p_oscillator->loudness;
+					break;
+				case ENVELOPE_DECAY:
+					p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
+					p_oscillator->amplitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
+									  p_channel_controller->envelope_sustain_level);
+					break;
+				}
+			} while(0);
+			break;
+		}
+
+		int8_t const * p_envelope_table = NULL;
+		int16_t delta_amplitude = p_oscillator->loudness;
+		int16_t shift_amplitude = 0;
+		switch(p_oscillator->envelope_state)
+		{
+		case ENVELOPE_ATTACK:
+			p_envelope_table = p_channel_controller->p_envelope_attack_table;
+			delta_amplitude = p_oscillator->loudness;
+			shift_amplitude = 0;
+			break;
+		case ENVELOPE_DECAY: {
+			p_envelope_table = p_channel_controller->p_envelope_decay_table;
+			int16_t sustain_ampitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
+														 p_channel_controller->envelope_sustain_level);
+			delta_amplitude = p_oscillator->loudness - sustain_ampitude;
+			shift_amplitude = sustain_ampitude;
+			} break;
+		case ENVELOPE_RELEASE: {
+			p_envelope_table = p_channel_controller->p_envelope_release_table;
+			delta_amplitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
+												p_channel_controller->envelope_sustain_level);
+			} break;
+		}
+
+		p_oscillator->amplitude = REDUDE_AMPLITUDE_BY_ENVELOPE_TABLE_VALUE(delta_amplitude,
+																		   p_envelope_table[p_oscillator->envelope_table_index]);
+		p_oscillator->amplitude	+= shift_amplitude;
 	} while(0);
 }
 

@@ -45,6 +45,7 @@ void update_channel_controller_envelope(int8_t const index)
 
 #define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(7)
 	p_channel_controller->envelope_sustain_level = DEFAULT_ENVELOPE_SUSTAIN_LEVEL;
+
 #define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.03f)
 	p_channel_controller->envelope_release_tick_number
 		= (uint16_t)(DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5f);

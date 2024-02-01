@@ -75,9 +75,8 @@ channel_controller_t * const get_channel_controller_pointer_from_index(int8_t co
 #define SUSTAIN_AMPLITUDE(LOUNDNESS, SUSTAIN_LEVEL)	\
 													((int16_t)(((int32_t)(LOUNDNESS) << (SUSTAIN_LEVEL)) >> 8))
 
-static inline int16_t  get_sustain_amplitude(int16_t loudness, uint8_t envelope_sustain_level)
-{
-	return (int16_t)(((int32_t)loudness << envelope_sustain_level) >> 8);
-}
+#define CHANNEL_CONTROLLER_DIVIDE_BY_128(VALUE)		((VALUE) >> 7)
+#define REDUDE_AMPLITUDE_BY_ENVELOPE_TABLE_VALUE(AMPLITUDE, TABLE_VALUE)	\
+													(CHANNEL_CONTROLLER_DIVIDE_BY_128((AMPLITUDE) * (int32_t)(TABLE_VALUE)))
 
 #endif // _CHIPTUNE_CHANNEL_CONTROLLER_INTERNAL_H_
