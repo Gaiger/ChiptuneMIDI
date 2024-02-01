@@ -11,7 +11,7 @@
 
 static inline void process_modulation_wheel(uint32_t const tick, int8_t const voice, int8_t const value)
 {
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_MODULATION_WHEEL :: voice = %u, value = %u\r\n",
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_MODULATION_WHEEL :: voice = %d, value = %d\r\n",
 					tick, voice, value);
 	get_channel_controller_pointer_from_index(voice)->modulation_wheel = value;
 }
@@ -38,44 +38,44 @@ static void process_cc_registered_parameter(uint32_t const tick, int8_t const vo
 	{
 	case MIDI_CC_RPN_PITCH_BEND_SENSITIVY:
 		p_channel_controller->pitch_wheel_bend_range_in_semitones = SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value >> 8);
-		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %u, semitones = %u\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %d, semitones = %d\r\n",
 						voice, p_channel_controller->pitch_wheel_bend_range_in_semitones);
 		if(0 != SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value)){
-			CHIPTUNE_PRINTF(cMidiSetup, "----  MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %u, cents = %u (%s)\r\n",
+			CHIPTUNE_PRINTF(cMidiSetup, "----  MIDI_CC_RPN_PITCH_BEND_SENSITIVY :: voice = %d, cents = %d (%s)\r\n",
 						voice, SEVEN_BITS_VALID(p_channel_controller->registered_parameter_number), "(NOT IMPLEMENTED YET)");
 		}
 		break;
 	case MIDI_CC_RPN_CHANNEL_FINE_TUNING:
-		CHIPTUNE_PRINTF(cMidiSetup, "----  MIDI_CC_RPN_CHANNEL_FINE_TUNING(%u) :: voice = %u, value = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "----  MIDI_CC_RPN_CHANNEL_FINE_TUNING(%d) :: voice = %d, value = %d %s\r\n",
 						voice, p_channel_controller->registered_parameter_number, p_channel_controller->registered_parameter_value,
 						"(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_RPN_CHANNEL_COARSE_TUNING:
 		p_channel_controller->tuning_in_semitones = SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value >> 8) - MIDI_CC_CENTER_VALUE;
-		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_CHANNEL_COARSE_TUNING(%u) :: voice = %u, tuning in semitones = %+d\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_CHANNEL_COARSE_TUNING(%d) :: voice = %d, tuning in semitones = %+d\r\n",
 						voice, p_channel_controller->registered_parameter_number, p_channel_controller->tuning_in_semitones);
 		break;
 	case MIDI_CC_RPN_TURNING_PROGRAM_CHANGE:
-		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_TURNING_PROGRAM_CHANGE(%u) :: voice = %u, value = %u, value = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_TURNING_PROGRAM_CHANGE(%d) :: voice = %d, value = %d, value = %d %s\r\n",
 						voice, p_channel_controller->registered_parameter_number, p_channel_controller->registered_parameter_value,
 						"(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_RPN_TURNING_BANK_SELECT:
-		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_TURNING_BANK_SELECT(%u) :: voice = %u, value = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_TURNING_BANK_SELECT(%d) :: voice = %d, value = %d %s\r\n",
 						voice, p_channel_controller->registered_parameter_number, p_channel_controller->registered_parameter_value,
 						"(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_RPN_MODULATION_DEPTH_RANGE:
-		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_MODULATION_DEPTH_RANGE(%u) :: voice = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_MODULATION_DEPTH_RANGE(%d) :: voice = %d %s\r\n",
 						voice, p_channel_controller->registered_parameter_number, p_channel_controller->registered_parameter_value,
 						"(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_RPN_NULL:
-		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_NULL :: voice = %u\r\n", voice);
+		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN_NULL :: voice = %d\r\n", voice);
 		p_channel_controller->registered_parameter_value = 0;
 		break;
 	default:
-		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN code = %d :: voice = %u, value = %u \r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "---- MIDI_CC_RPN code = %d :: voice = %d, value = %d \r\n",
 						p_channel_controller->registered_parameter_number, voice, p_channel_controller->registered_parameter_value);
 		break;
 	}
@@ -85,7 +85,7 @@ static void process_cc_registered_parameter(uint32_t const tick, int8_t const vo
 
 static inline void process_cc_volume(uint32_t const tick, int8_t const voice, int8_t const value)
 {
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_VOLUME :: voice = %u, value = %u\r\n", tick, voice, value);
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_VOLUME :: voice = %d, value = %d\r\n", tick, voice, value);
 	get_channel_controller_pointer_from_index(voice)->max_volume = value;
 }
 
@@ -93,7 +93,7 @@ static inline void process_cc_volume(uint32_t const tick, int8_t const voice, in
 
 static inline void process_cc_expression(uint32_t const tick, int8_t const voice, int8_t const value)
 {
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EXPRESSION :: voice = %u, value = %u\r\n", tick, voice, value);
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EXPRESSION :: voice = %d, value = %d\r\n", tick, voice, value);
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	p_channel_controller->playing_volume = (value * p_channel_controller->max_volume)/INT8_MAX;
 }
@@ -107,7 +107,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uint8_t const value)
 {
 	bool is_damper_pedal_on = (value < MIDI_CC_CENTER_VALUE) ? false : true;
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %u, %s\r\n",
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DAMPER_PEDAL :: voice = %d, %s\r\n",
 					tick, voice, is_damper_pedal_on? "on" : "off");
 
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
@@ -143,7 +143,7 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 
 static void process_cc_chorus_effect(uint32_t const tick, int8_t const voice, int8_t const value)
 {
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_CHORUS_EFFECT :: voice = %u, value = %u\r\n", tick, voice, value);
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_CHORUS_EFFECT :: voice = %d, value = %d\r\n", tick, voice, value);
 	get_channel_controller_pointer_from_index(voice)->chorus = value;
 }
 
@@ -153,7 +153,7 @@ static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const v
 {
 	(void)voice;
 	(void)value;
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RESET_ALL_CONTROLLERS :: voices = %u \r\n", tick, voice);
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RESET_ALL_CONTROLLERS :: voices = %d\r\n", tick, voice);
 	reset_channel_controller_from_index(voice);
 
 	int16_t oscillator_index = get_head_occupied_oscillator_index();
@@ -204,7 +204,7 @@ int process_control_change_message(uint32_t const tick, int8_t const voice, int8
 		process_modulation_wheel(tick, voice, value);
 		break;
 	case MIDI_CC_DATA_ENTRY_MSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DATA_ENTRY_MSB :: voice = %u, value = %u\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DATA_ENTRY_MSB :: voice = %d, value = %d\r\n",
 						tick, voice, value);
 		p_channel_controller->registered_parameter_value
 				= ((value & 0xFF) << 8) | (p_channel_controller->registered_parameter_value & (0xFF << 0));
@@ -214,7 +214,7 @@ int process_control_change_message(uint32_t const tick, int8_t const voice, int8
 		process_cc_volume(tick, voice, value);
 		break;
 	case MIDI_CC_PAN:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_PAN(%u) :: voice = %u, value = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_PAN(%d) :: voice = %d, value = %d %s\r\n",
 						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		p_channel_controller->pan = value;
 		break;
@@ -222,7 +222,7 @@ int process_control_change_message(uint32_t const tick, int8_t const voice, int8
 		process_cc_expression(tick, voice, value);
 		break;
 	case MIDI_CC_DATA_ENTRY_LSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DATA_ENTRY_LSB :: voice = %u, value = %u\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_DATA_ENTRY_LSB :: voice = %d, value = %d\r\n",
 						tick, voice, value);
 		p_channel_controller->registered_parameter_value
 				= (p_channel_controller->registered_parameter_value & (0xFF << 8)) | ((value & 0xFF) << 0);
@@ -232,40 +232,40 @@ int process_control_change_message(uint32_t const tick, int8_t const voice, int8
 		process_cc_damper_pedal(tick, voice, value);
 		break;
 	case MIDI_CC_EFFECT_1_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_1_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_1_DEPTH(%d) :: voice = %d, value = %d %s\r\n",
 						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_EFFECT_2_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_2_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_2_DEPTH(%d) :: voice = %d, value = %d %s\r\n",
 						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_CHORUS_EFFECT:
 		process_cc_chorus_effect(tick, voice, value);
 		break;
 	case MIDI_CC_EFFECT_4_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_4_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_4_DEPTH(%d) :: voice = %d, value = %d %s\r\n",
 						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_EFFECT_5_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_5_DEPTH(%u) :: voice = %u, value = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_5_DEPTH(%d) :: voice = %d, value = %d %s\r\n",
 						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_NRPN_LSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_NRPN_LSB(%u) :: voice = %u, value = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_NRPN_LSB(%d) :: voice = %d, value = %d %s\r\n",
 						tick, voice, number, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_NRPN_MSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_NRPN_MSB(%u) :: voice = %u, value = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_NRPN_MSB(%d) :: voice = %d, value = %d %s\r\n",
 						tick, voice, number, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_RPN_LSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RPN_LSB :: voice = %u, value = %u\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RPN_LSB :: voice = %d, value = %d\r\n",
 						tick, voice, value);
 		p_channel_controller->registered_parameter_number
 				= (p_channel_controller->registered_parameter_number & (0xFF << 8)) | ((value & 0xFF) << 0);
 		break;
 	case MIDI_CC_RPN_MSB:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RPN_MSB :: voice = %u, value = %u\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RPN_MSB :: voice = %d, value = %d\r\n",
 						tick, voice, value);
 		p_channel_controller->registered_parameter_number
 				= ((value & 0xFF) << 8) | (p_channel_controller->registered_parameter_number & (0xFF << 0));
@@ -274,7 +274,7 @@ int process_control_change_message(uint32_t const tick, int8_t const voice, int8
 		process_cc_reset_all_controllers(tick, voice, value);
 		break;
 	default:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC code = %u :: voice = %u, value = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC code = %d :: voice = %d, value = %d %s\r\n",
 						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	}

@@ -78,7 +78,7 @@ static void check_upcoming_events(uint32_t const tick)
 		index = s_event_head_index;
 		for(int16_t i = 0; i < s_upcoming_event_number; i++){
 
-			CHIPTUNE_PRINTF(cDeveloping, "type = %d, oscillator = %u, triggerring_tick = %u\r\n",
+			CHIPTUNE_PRINTF(cDeveloping, "type = %d, oscillator = %d, triggerring_tick = %u\r\n",
 							s_events[index].type, s_events[index].oscillator, s_events[index].triggerring_tick);
 			index = s_events[index].next_event;
 		}
@@ -177,24 +177,33 @@ void process_events(uint32_t const tick)
 		switch(s_events[s_event_head_index].type)
 		{
 		case EVENT_ACTIVATE:
-			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, ACTIVATE oscillator = %u, voice = %u, note = %u, loudness = 0x%04x %s\r\n",
+
+			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, ACTIVATE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness, &addition_string[0]);
+			if(true == IS_ACTIVATED(p_oscillator->state_bits)){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: activate an activated oscillator = %d\r\n");
+				return ;
+			}
+			SET_ACTIVATED_ON(p_oscillator->state_bits);
 			p_oscillator->envelope_same_index_count = 0;
 			p_oscillator->envelope_table_index = 0;
 			p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
-			SET_ACTIVATED_ON(p_oscillator->state_bits);
 			break;
 		case EVENT_RELEASE:
-			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, RELEASE oscillator = %u, voice = %u, note = %u, loudness = 0x%04x %s\r\n",
+			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, RELEASE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness, &addition_string[0]);
+			if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: release a releasing oscillator = %d\r\n");
+				return ;
+			}
 			p_oscillator->envelope_state = ENVELOPE_RELEASE;
 			put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
 					  tick + get_channel_controller_pointer_from_index(p_oscillator->voice)->envelepe_release_tick_number);
 			break;
 		case EVENT_DISCARD:
-			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, DISCARD oscillator = %u, voice = %u, note = %u, amplitude = 0x%04x(%3.2f%%) %s\r\n",
+			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, DISCARD oscillator = %d, voice = %d, note = %d, amplitude = 0x%04x(%3.2f%%) %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, p_oscillator->amplitude/(float)p_oscillator->loudness , &addition_string[0]);
 			discard_oscillator(s_events[s_event_head_index].oscillator);

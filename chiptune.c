@@ -140,20 +140,20 @@ static void process_program_change_message(uint32_t const tick, int8_t const voi
 	switch(p_channel_controller->waveform)
 	{
 	case WAVEFORM_SQUARE:
-		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, is WAVEFORM_SQUARE\r\n", voice, number);
+		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %d instrument = %d, is WAVEFORM_SQUARE\r\n", voice, number);
 		break;
 	case WAVEFORM_TRIANGLE:
-		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, is WAVEFORM_TRIANGLE\r\n", voice, number);
+		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %d instrument = %d, is WAVEFORM_TRIANGLE\r\n", voice, number);
 		break;
 	case WAVEFORM_SAW:
-		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, is WAVEFORM_SAW\r\n", voice, number);
+		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %d instrument = %d, is WAVEFORM_SAW\r\n", voice, number);
 		break;
 	case WAVEFORM_NOISE:
-		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %u instrument = %u, is WAVEFORM_NOISE\r\n", voice, number);
+		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %d instrument = %d, is WAVEFORM_NOISE\r\n", voice, number);
 		break;
 	default:
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: "
-									 " %voice = %u instrument = %u, is WAVEFORM_UNKOWN\r\n", voice, number);
+									 " %voice = %d instrument = %d, is WAVEFORM_UNKOWN\r\n", voice, number);
 	}
 }
 
@@ -447,7 +447,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}
 
 		if(false == is_found){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR::no corresponding note for off :: tick = %u, voice = %u,  note = %u\r\n",
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR::no corresponding note for off :: tick = %u, voice = %d,  note = %u\r\n",
 							tick, voice, note);
 			return -2;
 		}
@@ -459,18 +459,18 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			", pitch wheel bend = %+3.2f", pitch_wheel_bend_in_semitone);
 	}
 
-	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u\r\n",
+	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, note = %d, velocity = %d\r\n",
 					tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" ,
 					voice, note, velocity, velocity, &pitch_wheel_bend_string[0]);
 
 #ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
 	#ifdef _INCREMENTAL_SAMPLE_INDEX
 	if(TICK_TO_SAMPLE_INDEX(818880) < s_current_sample_index){
-		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u\r\n",
+		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, note = %d, velocity = %d\r\n",
 						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
 	#else
 	if(818880 < s_current_tick){
-		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %u, note = %u, velocity = %u\r\n",
+		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, note = %d, velocity = %d\r\n",
 						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
 	}
 	#endif
@@ -494,7 +494,7 @@ static void process_pitch_wheel_message(uint32_t const tick, int8_t const voice,
 		}
 		snprintf(&delta_hex_string[0], sizeof(delta_hex_string),"(-0x%04x)", MIDI_PITCH_WHEEL_CENTER - value);
 	} while(0);
-	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %u, value = 0x%04x %s\r\n",
+	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %d, value = 0x%04x %s\r\n",
 					tick, voice, value, &delta_hex_string[0]);
 
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
@@ -515,7 +515,7 @@ static void process_pitch_wheel_message(uint32_t const tick, int8_t const voice,
 															   p_channel_controller->pitch_wheel, p_oscillator->pitch_chorus_bend_in_semitone,
 															  &pitch_bend_in_semitone);
 
-			CHIPTUNE_PRINTF(cNoteOperation, "---- voice = %u, note = %u, pitch bend in semitone = %+3.2f\r\n",
+			CHIPTUNE_PRINTF(cNoteOperation, "---- voice = %d, note = %d, pitch bend in semitone = %+3.2f\r\n",
 							voice, p_oscillator->note, pitch_bend_in_semitone);
 		} while(0);
 		oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
@@ -576,7 +576,7 @@ static void process_midi_message(struct _tick_message const tick_message)
 			voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]));
 	 break;
 	case MIDI_MESSAGE_KEY_PRESSURE:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: note = %u, amount = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: note = %d, amount = %d %s\r\n",
 						tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_CONTROL_CHANGE:
@@ -586,7 +586,7 @@ static void process_midi_message(struct _tick_message const tick_message)
 		process_program_change_message(tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]));
 		break;
 	case MIDI_MESSAGE_CHANNEL_PRESSURE:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %u, amount = %u %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %d, amount = %d %s\r\n",
 						tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_PITCH_WHEEL:
@@ -595,8 +595,8 @@ static void process_midi_message(struct _tick_message const tick_message)
 		process_pitch_wheel_message(tick, voice, COMBINE_AS_PITCH_WHEEL_14BITS(u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	default:
-		//CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE code = %u :: voice = %u, byte 1 = %u, byte 2 = %u %s\r\n",
-		//				tick, type, voice, u.data_as_bytes[1], u.data_as_bytes[2], "(NOT IMPLEMENTED YET)");
+		//CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE code = %u :: voice = %d, byte 1 = %d, byte 2 = %d %s\r\n",
+		//				tick, type, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]), "(NOT IMPLEMENTED YET)");
 		break;
 	}
 }
@@ -809,7 +809,7 @@ static int32_t get_max_simultaneous_loudness(void)
 		for(int16_t i = 0; i < occupied_oscillator_number; i++){
 			oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 
-			CHIPTUNE_PRINTF(cDeveloping, "oscillators = %u, voice = %u, note = 0x%02x(%u)\r\n",
+			CHIPTUNE_PRINTF(cDeveloping, "oscillator = %d, voice = %d, note = 0x%02x(%d)\r\n",
 							oscillator_index, p_oscillator->voice, p_oscillator->note, p_oscillator->note);
 
 			oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
