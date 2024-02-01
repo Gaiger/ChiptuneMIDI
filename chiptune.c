@@ -402,6 +402,11 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 																		&pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
 			p_oscillator->vibrato_table_index = 0;
 			p_oscillator->vibrato_same_index_count = 0;
+
+			p_oscillator->amplitude = 0;
+			p_oscillator->envelope_same_index_count = 0;
+			p_oscillator->envelope_table_index = 0;
+
 			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
 			put_event(EVENT_ACTIVATE, ii, tick);
 			process_chorus_effect(tick, is_note_on, voice, note, velocity, ii);
@@ -878,11 +883,11 @@ static void initialize_tables(void)
 	}
 
 	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
-		s_envelope_release_table[i] = (int8_t)(INT8_MAX * ((ENVELOPE_TABLE_LENGTH - 1) - i)/(float)ENVELOPE_TABLE_LENGTH);
+		s_envelope_attack_table[i] = (int8_t)(INT8_MAX * (i/(float)ENVELOPE_TABLE_LENGTH));
 	}
 
 	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
-		s_envelope_attack_table[i] = (int8_t)(INT8_MAX * (i + 1)/(float)ENVELOPE_TABLE_LENGTH);
+		s_envelope_release_table[i] = (int8_t)(INT8_MAX * ((ENVELOPE_TABLE_LENGTH - i)/(float)ENVELOPE_TABLE_LENGTH));
 	}
 }
 
@@ -1007,15 +1012,15 @@ void perform_envelope(oscillator_t * const p_oscillator)
 		{
 		case ENVELOPE_ATTACK:
 			envelope_same_index_number = p_channel_controller->envelope_attack_same_index_number;
-			p_oscillator->amplitude = DIVIDE_BY_128(p_oscillator->loudness * (int32_t)s_envelope_attack_table[p_oscillator->envelope_table_index]);
 			p_oscillator->envelope_same_index_count += 1;
 			if(envelope_same_index_number == p_oscillator->envelope_same_index_count){
 				p_oscillator->envelope_same_index_count = 0;
 				p_oscillator->envelope_table_index += 1;
 				if( ENVELOPE_TABLE_LENGTH == p_oscillator->envelope_table_index){
-					p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
+					p_oscillator->amplitude = DIVIDE_BY_128(p_oscillator->loudness * (int32_t)s_envelope_attack_table[p_oscillator->envelope_table_index]);
 					p_oscillator->envelope_same_index_count = 0;
 					p_oscillator->envelope_table_index = 0;
+					p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
 				}
 			}
 			break;
@@ -1027,9 +1032,9 @@ void perform_envelope(oscillator_t * const p_oscillator)
 			break;
 		case ENVELOPE_RELEASE:
 			envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
-			p_oscillator->amplitude = DIVIDE_BY_128(p_oscillator->loudness * (int32_t)s_envelope_release_table[p_oscillator->envelope_table_index]);
 			p_oscillator->envelope_same_index_count += 1;
 			if(envelope_same_index_number == p_oscillator->envelope_same_index_count){
+				p_oscillator->amplitude = DIVIDE_BY_128(p_oscillator->loudness * (int32_t)s_envelope_release_table[p_oscillator->envelope_table_index]);
 				p_oscillator->envelope_same_index_count = 0;
 				p_oscillator->envelope_table_index += 1;
 			}

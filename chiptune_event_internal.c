@@ -185,8 +185,6 @@ void process_events(uint32_t const tick)
 				return ;
 			}
 			SET_ACTIVATED_ON(p_oscillator->state_bits);
-			p_oscillator->envelope_same_index_count = 0;
-			p_oscillator->envelope_table_index = 0;
 			p_oscillator->envelope_state = ENVELOPE_ATTACK;
 			break;
 		case EVENT_RELEASE:
