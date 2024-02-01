@@ -6,7 +6,11 @@
 
 static channel_controller_t s_channel_controllers[MIDI_MAX_CHANNEL_NUMBER];
 
+static int8_t s_envelope_release_table[ENVELOPE_TABLE_LENGTH];
+static int8_t s_envelope_attack_table[ENVELOPE_TABLE_LENGTH];
+
 /**********************************************************************************/
+
 
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index)
 {
@@ -73,16 +77,9 @@ void reset_channel_controller_from_index(int8_t const index)
 	p_channel_controller->chorus = 0;
 	p_channel_controller->max_pitch_chorus_bend_in_semitones = DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
 
+	p_channel_controller->p_envelope_attack_table = &s_envelope_attack_table[0];
+	p_channel_controller->p_envelope_release_table = &s_envelope_release_table[0];
 	update_channel_controller_envelope(index);
-}
-
-/**********************************************************************************/
-
-void reset_all_channel_controllers(void)
-{
-	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		reset_channel_controller_from_index(i);
-	}
 }
 
 /**********************************************************************************/
@@ -94,3 +91,25 @@ void update_all_channel_controllers_envelope(void)
 	}
 }
 
+/**********************************************************************************/
+
+static void initialize_envelope_tables(void)
+{
+	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
+		s_envelope_attack_table[i] = (int8_t)(INT8_MAX * (i/(float)ENVELOPE_TABLE_LENGTH));
+	}
+
+	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
+		s_envelope_release_table[i] = (int8_t)(INT8_MAX * ((ENVELOPE_TABLE_LENGTH - i)/(float)ENVELOPE_TABLE_LENGTH));
+	}
+}
+
+/**********************************************************************************/
+
+void initialize_channel_controller(void)
+{
+	initialize_envelope_tables();
+	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
+		reset_channel_controller_from_index(i);
+	}
+}

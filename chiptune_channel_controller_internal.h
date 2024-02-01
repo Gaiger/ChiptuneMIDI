@@ -25,42 +25,44 @@ enum
 
 typedef struct _channel_controller
 {
-	int8_t		tuning_in_semitones;
+	int8_t				tuning_in_semitones;
 
-	int8_t		max_volume;
-	int8_t		playing_volume;
-	int8_t		pan;
+	int8_t				max_volume;
+	int8_t				playing_volume;
+	int8_t				pan;
 
-	int8_t		waveform;
-	uint8_t		: 8;
-	uint16_t	duty_cycle_critical_phase;
+	int8_t				waveform;
+	uint8_t				: 8;
+	uint16_t			duty_cycle_critical_phase;
 
-	int8_t		pitch_wheel_bend_range_in_semitones;
-	int16_t		pitch_wheel;
+	int8_t				pitch_wheel_bend_range_in_semitones;
+	int16_t				pitch_wheel;
 
-	bool		is_damper_pedal_on;
-	uint8_t		: 8;
+	bool				is_damper_pedal_on;
+	uint8_t				: 8;
 
-	int8_t		modulation_wheel;
-	int8_t		vibrato_modulation_in_semitone;
-	uint16_t	vibrato_same_index_number;
+	int8_t				modulation_wheel;
+	int8_t				vibrato_modulation_in_semitone;
+	uint16_t			vibrato_same_index_number;
 
-	int8_t		chorus;
-	float		max_pitch_chorus_bend_in_semitones;
+	int8_t				chorus;
+	float				max_pitch_chorus_bend_in_semitones;
 
-	uint16_t	envelope_attack_tick_number;
-	uint16_t	envelope_attack_same_index_number;
+	int8_t const *		p_envelope_attack_table;
+	uint16_t			envelope_attack_tick_number;
+	uint16_t			envelope_attack_same_index_number;
 
-	uint16_t	envelope_release_tick_number;
-	uint16_t	envelope_release_same_index_number;
+	int8_t const *		p_envelope_release_table;
+	uint16_t			envelope_release_tick_number;
+	uint16_t			envelope_release_same_index_number;
 
-	uint16_t	registered_parameter_number;
-	uint16_t	registered_parameter_value;
+	uint16_t			registered_parameter_number;
+	uint16_t			registered_parameter_value;
 } channel_controller_t;
 
+void initialize_channel_controller(void);
 void reset_channel_controller_from_index(int8_t const index);
-void reset_all_channel_controllers(void);
-channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index);
 void update_all_channel_controllers_envelope(void);
+channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index);
 
 #endif // _CHIPTUNE_CHANNEL_CONTROLLER_INTERNAL_H_
