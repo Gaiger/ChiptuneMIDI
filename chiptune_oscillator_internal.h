@@ -22,7 +22,7 @@ typedef struct _oscillator
 	uint16_t	delta_phase;
 	uint16_t	current_phase;
 
-	int16_t		amplitude;
+	int16_t		loudness;
 
 	int8_t		waveform;
 	uint8_t		: 8;
@@ -34,7 +34,7 @@ typedef struct _oscillator
 	uint16_t	vibrato_table_index;
 	uint16_t	vibrato_same_index_count;
 
-	int16_t		loudness;
+	int16_t		amplitude;
 	uint16_t	envelope_table_index;
 	uint16_t	envelope_same_index_count;
 

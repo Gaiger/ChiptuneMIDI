@@ -177,26 +177,26 @@ void process_events(uint32_t const tick)
 		switch(s_events[s_event_head_index].type)
 		{
 		case EVENT_ACTIVATE:
-			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, ACTIVATE oscillator = %u, voice = %u, note = %u, amplitude = 0x%04x %s\r\n",
+			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, ACTIVATE oscillator = %u, voice = %u, note = %u, loudness = 0x%04x %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
-							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, &addition_string[0]);
+							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness, &addition_string[0]);
 			p_oscillator->envelope_same_index_count = 0;
 			p_oscillator->envelope_table_index = 0;
 			p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
 			SET_ACTIVATED_ON(p_oscillator->state_bits);
 			break;
 		case EVENT_RELEASE:
-			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, RELEASE oscillator = %u, voice = %u, note = %u, amplitude = 0x%04x %s\r\n",
+			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, RELEASE oscillator = %u, voice = %u, note = %u, loudness = 0x%04x %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
-							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, &addition_string[0]);
+							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness, &addition_string[0]);
 			p_oscillator->envelope_state = ENVELOPE_RELEASE;
 			put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
 					  tick + get_channel_controller_pointer_from_index(p_oscillator->voice)->envelepe_release_tick_number);
 			break;
 		case EVENT_DISCARD:
-			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, DISCARD oscillator = %u, voice = %u, note = %u, loudness = 0x%04x %s\r\n",
+			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, DISCARD oscillator = %u, voice = %u, note = %u, amplitude = 0x%04x(%3.2f%%) %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
-							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness, &addition_string[0]);
+							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, p_oscillator->amplitude/(float)p_oscillator->loudness , &addition_string[0]);
 			discard_oscillator(s_events[s_event_head_index].oscillator);
 			break;
 		default:

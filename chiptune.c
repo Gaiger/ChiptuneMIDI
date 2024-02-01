@@ -219,7 +219,7 @@ static float pitch_chorus_bend_in_semitone(int8_t const voice)
 /**********************************************************************************/
 
 #define DIVIDE_BY_8(VALUE)							((VALUE) >> 3)
-#define REDUCE_AMPLITUDE_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(VALUE)	\
+#define REDUCE_LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(VALUE)	\
 													DIVIDE_BY_8(VALUE)
 
 #define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
@@ -240,17 +240,17 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 
 	do {
 		if(true == is_note_on){
-			int16_t const amplitude = p_native_oscillator->amplitude;
-			int16_t averaged_amplitude = DIVIDE_BY_16(amplitude);
+			int16_t const loudness = p_native_oscillator->loudness;
+			int16_t averaged_loudness = DIVIDE_BY_16(loudness);
 			// oscillator 1 : 4 * averaged_volume
 			// oscillator 2 : 5 * averaged_volume
 			// oscillator 3 : 6 * averaged_volume
 			// oscillator 0 : volume - (4 + 5  + 6) * averaged_volume
-			int16_t oscillator_amplitude = amplitude - (4 + 5 + 6) * averaged_amplitude;
-			p_native_oscillator->amplitude = oscillator_amplitude;
+			int16_t oscillator_loudness = loudness - (4 + 5 + 6) * averaged_loudness;
+			p_native_oscillator->loudness = oscillator_loudness;
 
 			float pitch_wheel_bend_in_semitone = 0.0f;
-			oscillator_amplitude = 4 * averaged_amplitude;
+			oscillator_loudness = 4 * averaged_loudness;
 			int16_t i;
 			for(int16_t j = 0; j < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER;j++){
 				oscillator_t * const p_oscillator = acquire_oscillator(&i);
@@ -259,7 +259,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 				}
 				int8_t const vibrato_modulation_in_semitone = p_channel_controller->vibrato_modulation_in_semitone;
 				memcpy(p_oscillator, p_native_oscillator, sizeof(oscillator_t));
-				p_oscillator->amplitude = oscillator_amplitude;
+				p_oscillator->loudness = oscillator_loudness;
 				p_oscillator->pitch_chorus_bend_in_semitone = pitch_chorus_bend_in_semitone(voice);
 				p_oscillator->delta_phase = calculate_delta_phase(p_oscillator->note, p_channel_controller->tuning_in_semitones,
 																  p_channel_controller->pitch_wheel_bend_range_in_semitones,
@@ -356,11 +356,11 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						process_chorus_effect(tick, false, voice, note, velocity, oscillator_index);
 					} while(0);
 
-					// TODO : the associate chorus oscillators amplitude should be decreased
-					actual_velocity -= p_oscillator->amplitude/p_channel_controller->playing_volume;
+					// TODO : the associate chorus oscillators loudness should be decreased
+					actual_velocity -= p_oscillator->loudness/p_channel_controller->playing_volume;
 					if(0 > actual_velocity){
 						actual_velocity = DIVIDE_BY_2(velocity);
-						p_oscillator->amplitude = (actual_velocity + (actual_velocity & 0x01))
+						p_oscillator->loudness = (actual_velocity + (actual_velocity & 0x01))
 								* p_channel_controller->playing_volume;
 					}
 				} while(0);
@@ -382,7 +382,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 															  p_oscillator->pitch_chorus_bend_in_semitone,
 															  &pitch_wheel_bend_in_semitone);
 			p_oscillator->current_phase = 0;
-			p_oscillator->amplitude = (uint16_t)actual_velocity * (uint16_t)p_channel_controller->playing_volume;
+			p_oscillator->loudness = (uint16_t)actual_velocity * (uint16_t)p_channel_controller->playing_volume;
 			p_oscillator->waveform = p_channel_controller->waveform;
 			p_oscillator->duty_cycle_critical_phase = p_oscillator->duty_cycle_critical_phase;
 			p_oscillator->delta_vibrato_phase = calculate_delta_phase(p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitone,
@@ -415,8 +415,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				do {
 					if(true == p_channel_controller->is_damper_pedal_on){
 						SET_NOTE_OFF(p_oscillator->state_bits);
-						p_oscillator->amplitude
-								= REDUCE_AMPLITUDE_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->amplitude);
+						p_oscillator->loudness
+								= REDUCE_LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->loudness);
 						is_found = true;
 						break;
 					}
@@ -710,11 +710,11 @@ static int process_timely_midi_message(void)
 
 /**********************************************************************************/
 
-static int32_t get_max_simultaneous_amplitude(void)
+static int32_t get_max_simultaneous_loudness(void)
 {
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(false);
 	uint32_t midi_messge_index = 0;
-	int32_t max_amplitude = 0;
+	int32_t max_loudness = 0;
 	uint32_t previous_tick;
 
 	struct _tick_message tick_message;
@@ -757,18 +757,18 @@ static int32_t get_max_simultaneous_amplitude(void)
 			}
 			previous_tick = tick;
 
-			int32_t sum_amplitude = 0;
+			int32_t sum_loudness = 0;
 
 			int16_t oscillator_index = get_head_occupied_oscillator_index();
 			int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 			for(int16_t i = 0; i < occupied_oscillator_number; i++){
 				oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
-				sum_amplitude += p_oscillator->amplitude;
+				sum_loudness += p_oscillator->loudness;
 				oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 			}
 
-			if(sum_amplitude > max_amplitude){
-				max_amplitude = sum_amplitude;
+			if(sum_loudness > max_loudness){
+				max_loudness = sum_loudness;
 			}
 		}while(0);
 
@@ -806,10 +806,10 @@ static int32_t get_max_simultaneous_amplitude(void)
 		}
 	}
 
-	return max_amplitude;
+	return max_loudness;
 }
 
-#ifdef _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
+#ifdef _RIGHT_SHIFT_FOR_NORMALIZING_LOUNDNESS
 
 /**********************************************************************************/
 
@@ -835,18 +835,18 @@ uint32_t number_of_roundup_to_power2_left_shift_bits(uint32_t const value)
 	return i;
 }
 
-int32_t g_amplitude_nomalization_right_shift = 16;
-#define UPDATE_AMPLITUDE_NORMALIZER()				\
+int32_t g_loudness_nomalization_right_shift = 16;
+#define UPDATE_LOUNDNESS_NORMALIZER()				\
 													do { \
-														uint32_t max_amplitude = get_max_simultaneous_amplitude(); \
-														g_amplitude_nomalization_right_shift \
-															= number_of_roundup_to_power2_left_shift_bits(max_amplitude);\
+														uint32_t max_loudness = get_max_simultaneous_loudness(); \
+														g_loudness_nomalization_right_shift \
+															= number_of_roundup_to_power2_left_shift_bits(max_loudness);\
 													} while(0)
 #else
-int32_t g_max_amplitude = 1 << 16;
-#define UPDATE_AMPLITUDE_NORMALIZER()				\
+int32_t g_max_loudness = 1 << 16;
+#define UPDATE_LOUNDNESS_NORMALIZER()				\
 													do { \
-														g_max_amplitude = get_max_simultaneous_amplitude(); \
+														g_max_loudness = get_max_simultaneous_loudness(); \
 													} while(0)
 #endif
 
@@ -880,7 +880,7 @@ void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution
 	clean_all_events();
 
 	UPDATE_TIME_BASE_UNIT();
-	UPDATE_AMPLITUDE_NORMALIZER();
+	UPDATE_LOUNDNESS_NORMALIZER();
 	process_timely_midi_message();
 	return ;
 }
@@ -981,24 +981,24 @@ void perform_envelope(oscillator_t * const p_oscillator)
 		switch(p_oscillator->envelope_state)
 		{
 		case ENVELOPE_ATTACK:
-			p_oscillator->loudness = p_oscillator->amplitude;
+			p_oscillator->amplitude = p_oscillator->loudness;
 			break;
 		case ENVELOPE_DECAY:
-			p_oscillator->loudness = p_oscillator->amplitude;
+			p_oscillator->amplitude = p_oscillator->loudness;
 			break;
 		case ENVELOPE_SUSTAIN:
-			p_oscillator->loudness = p_oscillator->amplitude;
+			p_oscillator->amplitude = p_oscillator->loudness;
 			break;
 		case ENVELOPE_RELEASE:
 			envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
-			p_oscillator->loudness = DIVIDE_BY_128(p_oscillator->amplitude * (int32_t)s_envelope_release_table[p_oscillator->envelope_table_index]);
+			p_oscillator->amplitude = DIVIDE_BY_128(p_oscillator->loudness * (int32_t)s_envelope_release_table[p_oscillator->envelope_table_index]);
 			p_oscillator->envelope_same_index_count += 1;
 			if(envelope_same_index_number == p_oscillator->envelope_same_index_count){
 #if(0)
 				if(63 == p_oscillator->note && UNUSED_OSCILLATOR == p_oscillator->native_oscillator){
-					printf("voice = %d, note = %d, table_index = %d, amplitude = %d, loudness = %d\r\n",
+					printf("voice = %d, note = %d, table_index = %d, loudness = %d, amplitude = %d\r\n",
 					   p_oscillator->voice, p_oscillator->note, p_oscillator->envelope_table_index,
-						   p_oscillator->amplitude, p_oscillator->loudness);
+						   p_oscillator->loudness, p_oscillator->amplitude);
 					printf("\r\n");
 				}
 #endif
@@ -1012,10 +1012,10 @@ void perform_envelope(oscillator_t * const p_oscillator)
 
 /**********************************************************************************/
 
-#ifdef _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
-#define NORMALIZE_AMPLITUDE(VALUE)					((int32_t)((VALUE) >> g_amplitude_nomalization_right_shift))
+#ifdef _RIGHT_SHIFT_FOR_NORMALIZING_LOUNDNESS
+#define NORMALIZE_LOUNDNESS(VALUE)					((int32_t)((VALUE) >> g_loudness_nomalization_right_shift))
 #else
-#define NORMALIZE_AMPLITUDE(VALUE)					((int32_t)((VALUE)/(int32_t)g_max_amplitude))
+#define NORMALIZE_LOUNDNESS(VALUE)					((int32_t)((VALUE)/(int32_t)g_max_loudness))
 #endif
 
 #define INT16_MAX_PLUS_1							(INT16_MAX + 1)
@@ -1063,7 +1063,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 		default:
 			break;
 		}
-		accumulated_value += (value * p_oscillator->loudness);
+		accumulated_value += (value * p_oscillator->amplitude);
 
 		p_oscillator->current_phase += p_oscillator->delta_phase;
 Flag_oscillator_take_effect_end:
@@ -1075,7 +1075,7 @@ Flag_oscillator_take_effect_end:
 	increase_time_base_for_fast_to_ending();
 #endif
 
-	int32_t out_value = NORMALIZE_AMPLITUDE(accumulated_value);
+	int32_t out_value = NORMALIZE_LOUNDNESS(accumulated_value);
 	do {
 		if(INT16_MAX < out_value){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, greater than UINT8_MAX\r\n",
