@@ -298,6 +298,10 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 				if(voice != p_oscillator->voice){
 					break;
 				}
+				// it is accociate oscillator, not directly related to scores
+				//if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
+				//	break;
+				//	}
 				oscillator_indexes[kk] = oscillator_index;
 				kk += 1;
 			} while(0);
@@ -333,6 +337,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	int16_t ii = 0;
 	do {
 		if(true == is_note_on){
+#if(0)
 			int16_t oscillator_index = get_head_occupied_oscillator_index();
 			int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 			for(ii = 0; ii < occupied_oscillator_number; ii++){
@@ -352,6 +357,9 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 							break;
 						}
+						if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
+							break;
+						}
 						put_event(EVENT_RELEASE, oscillator_index, tick);
 						process_chorus_effect(tick, false, voice, note, velocity, oscillator_index);
 					} while(0);
@@ -366,7 +374,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				} while(0);
 				oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 			}
-
+#endif
 			oscillator_t * const p_oscillator = acquire_oscillator(&ii);
 			if(NULL == p_oscillator){
 				return -1;
@@ -421,6 +429,9 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						break;
 					}
 					if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
+						break;
+					}
+					if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
 						break;
 					}
 					put_event(EVENT_RELEASE, oscillator_index, tick);
@@ -635,7 +646,6 @@ static void release_all_channels_damper_pedal(const uint32_t tick)
 			}
 		}while(0);
 	}
-
 }
 
 /**********************************************************************************/
