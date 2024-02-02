@@ -151,11 +151,9 @@ static void process_cc_chorus_effect(uint32_t const tick, int8_t const voice, in
 
 static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const voice, int8_t const value)
 {
-	(void)voice;
 	(void)value;
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RESET_ALL_CONTROLLERS :: voices = %d\r\n", tick, voice);
-	// TODO : some parameters NOT related to mini protocol should not be reset.
-	reset_channel_controller_from_index(voice);
+	reset_channel_controller_midi_parameters_from_index(voice);
 
 	int16_t oscillator_index = get_head_occupied_oscillator_index();
 	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();

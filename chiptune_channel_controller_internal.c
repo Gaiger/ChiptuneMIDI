@@ -51,9 +51,6 @@ void update_channel_controller_envelope(int8_t const index)
 	p_channel_controller->envelope_decay_same_index_number
 				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND)/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
-#define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(6)
-	p_channel_controller->envelope_sustain_level = DEFAULT_ENVELOPE_SUSTAIN_LEVEL;
-
 #define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.03f)
 	p_channel_controller->envelope_release_tick_number
 		= (uint16_t)(DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5f);
@@ -64,10 +61,8 @@ void update_channel_controller_envelope(int8_t const index)
 
 /**********************************************************************************/
 
-void reset_channel_controller_from_index(int8_t const index)
+void reset_channel_controller_midi_parameters_from_index(int8_t const index)
 {
-	uint32_t const sampling_rate = get_sampling_rate();
-
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
 	p_channel_controller->tuning_in_semitones = 0;
 
@@ -75,23 +70,36 @@ void reset_channel_controller_from_index(int8_t const index)
 	p_channel_controller->playing_volume = (p_channel_controller->max_volume * INT8_MAX)/INT8_MAX;
 	p_channel_controller->pan = MIDI_CC_CENTER_VALUE;
 
-	p_channel_controller->waveform = WAVEFORM_TRIANGLE;
-
 	p_channel_controller->pitch_wheel_bend_range_in_semitones = MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES;
 	p_channel_controller->pitch_wheel = MIDI_PITCH_WHEEL_CENTER;
+
+	p_channel_controller->is_damper_pedal_on = false;
+	p_channel_controller->modulation_wheel = 0;
+	p_channel_controller->chorus = 0;
+}
+
+/**********************************************************************************/
+
+void reset_channel_controller_all_parameters_from_index(int8_t const index)
+{
+	uint32_t const sampling_rate = get_sampling_rate();
+
+	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
+	p_channel_controller->waveform = WAVEFORM_TRIANGLE;
 
 	p_channel_controller->is_damper_pedal_on = false;
 
 #define	DEFAULT_VIBRATO_MODULATION_IN_SEMITINE		(1)
 #define DEFAULT_VIBRATO_FREQUENCY					(4)
-	p_channel_controller->modulation_wheel = 0;
 	p_channel_controller->vibrato_modulation_in_semitone = DEFAULT_VIBRATO_MODULATION_IN_SEMITINE;
 	p_channel_controller->p_vibrato_phase_table = &s_vibrato_phase_table[0];
 	p_channel_controller->vibrato_same_index_number
 			= (uint16_t)(sampling_rate/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_FREQUENCY);
 
+#define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(7)
+	p_channel_controller->envelope_sustain_level = DEFAULT_ENVELOPE_SUSTAIN_LEVEL;
+
 #define	DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE	(0.25f)
-	p_channel_controller->chorus = 0;
 	p_channel_controller->max_pitch_chorus_bend_in_semitones = DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
 
 	/*
@@ -103,6 +111,8 @@ void reset_channel_controller_from_index(int8_t const index)
 	p_channel_controller->p_envelope_decay_table  = &s_gaussian_decline_table[0];
 	p_channel_controller->p_envelope_release_table = &s_exponential_decline_table[0];
 	update_channel_controller_envelope(index);
+
+	reset_channel_controller_midi_parameters_from_index(index);
 }
 
 /**********************************************************************************/
@@ -172,6 +182,6 @@ void initialize_channel_controller(void)
 	}
 	initialize_envelope_tables();
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		reset_channel_controller_from_index(i);
+		reset_channel_controller_all_parameters_from_index(i);
 	}
 }
