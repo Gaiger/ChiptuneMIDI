@@ -1002,7 +1002,7 @@ void perform_envelope(oscillator_t * const p_oscillator)
 		};
 
 		p_oscillator->envelope_same_index_count += 1;
-		if(envelope_same_index_number < p_oscillator->envelope_same_index_count){
+		if(envelope_same_index_number > p_oscillator->envelope_same_index_count){
 			break;
 		}
 
@@ -1037,10 +1037,11 @@ void perform_envelope(oscillator_t * const p_oscillator)
 		}
 #endif
 		int8_t const * p_envelope_table = NULL;
-		int16_t delta_amplitude = p_oscillator->loudness;
+		int16_t delta_amplitude = 0;
 		int16_t shift_amplitude = 0;
 		switch(p_oscillator->envelope_state)
 		{
+		default:
 		case ENVELOPE_ATTACK:
 			p_envelope_table = p_channel_controller->p_envelope_attack_table;
 			delta_amplitude = p_oscillator->loudness;
@@ -1052,7 +1053,7 @@ void perform_envelope(oscillator_t * const p_oscillator)
 														 p_channel_controller->envelope_sustain_level);
 			delta_amplitude = p_oscillator->loudness - sustain_ampitude;
 			shift_amplitude = sustain_ampitude;
-			} break;
+		} break;
 		case ENVELOPE_RELEASE: {
 			p_envelope_table = p_channel_controller->p_envelope_release_table;
 			delta_amplitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
