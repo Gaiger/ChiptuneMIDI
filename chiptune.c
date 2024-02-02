@@ -405,6 +405,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->amplitude = 0;
 			p_oscillator->envelope_same_index_count = 0;
 			p_oscillator->envelope_table_index = 0;
+			p_oscillator->release_reference_amplitude = 0;
 
 			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
 			put_event(EVENT_ACTIVATE, ii, tick);
@@ -1027,7 +1028,7 @@ void perform_envelope(oscillator_t * const p_oscillator)
 									  p_channel_controller->envelope_sustain_level);
 					break;
 				}
-				p_oscillator->transition_amplitude = p_oscillator->amplitude;
+				p_oscillator->release_reference_amplitude = p_oscillator->amplitude;
 			} while(0);
 			break;
 		}
@@ -1049,10 +1050,10 @@ void perform_envelope(oscillator_t * const p_oscillator)
 														 p_channel_controller->envelope_sustain_level);
 			delta_amplitude = p_oscillator->loudness - sustain_ampitude;
 			shift_amplitude = sustain_ampitude;
-		} break;
+		}	break;
 		case ENVELOPE_RELEASE: {
 			p_envelope_table = p_channel_controller->p_envelope_release_table;
-			delta_amplitude = p_oscillator->transition_amplitude;
+			delta_amplitude = p_oscillator->release_reference_amplitude;
 			} break;
 		}
 
@@ -1062,7 +1063,7 @@ void perform_envelope(oscillator_t * const p_oscillator)
 		if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
 			break;
 		}
-		p_oscillator->transition_amplitude = p_oscillator->amplitude;
+		p_oscillator->release_reference_amplitude = p_oscillator->amplitude;
 	} while(0);
 }
 

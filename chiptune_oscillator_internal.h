@@ -34,7 +34,7 @@ typedef struct _oscillator
 	uint16_t	envelope_table_index;
 	uint16_t	envelope_same_index_count;
 
-	int16_t		transition_amplitude;
+	int16_t		release_reference_amplitude;
 
 	int16_t		native_oscillator;
 } oscillator_t;
@@ -45,7 +45,7 @@ typedef struct _oscillator
 #define STATE_ACTIVATED_BIT							(0)
 #define SET_ACTIVATED_ON(STATE_BITS)				( (STATE_BITS) |= (0x01 << STATE_ACTIVATED_BIT) )
 #define SET_ACTIVATED_OFF(STATE_BITS)				( (STATE_BITS) &= (~(0x01 << STATE_ACTIVATED_BIT)) )
-#define IS_ACTIVATED(STATE_BITS)				(((0x01 << STATE_ACTIVATED_BIT) & (STATE_BITS) ) ? true : false)
+#define IS_ACTIVATED(STATE_BITS)					(((0x01 << STATE_ACTIVATED_BIT) & (STATE_BITS) ) ? true : false)
 
 #define STATE_NOTE_BIT								(1)
 #define SET_NOTE_ON(STATE_BITS)						( (STATE_BITS) |= (0x01 << STATE_NOTE_BIT) )
