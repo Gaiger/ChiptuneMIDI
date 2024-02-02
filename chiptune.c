@@ -393,7 +393,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->current_phase = 0;
 			p_oscillator->loudness = (uint16_t)actual_velocity * (uint16_t)p_channel_controller->playing_volume;
 			p_oscillator->waveform = p_channel_controller->waveform;
-			p_oscillator->duty_cycle_critical_phase = p_oscillator->duty_cycle_critical_phase;
+			p_oscillator->duty_cycle_critical_phase = p_channel_controller->duty_cycle_critical_phase;
 			p_oscillator->delta_vibrato_phase = calculate_delta_phase(p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitone,
 																		p_channel_controller->tuning_in_semitones,
 																		p_channel_controller->pitch_wheel_bend_range_in_semitones,
@@ -1031,7 +1031,12 @@ void perform_envelope(oscillator_t * const p_oscillator)
 			} while(0);
 			break;
 		}
-
+#if(0)
+		if(78 ==  p_oscillator->note){
+			printf("envelope_state = %d voice = %d, note = %d, p_oscillator->amplitude = %d\r\n",
+				   p_oscillator->envelope_state, p_oscillator->voice,  p_oscillator->note, p_oscillator->amplitude);
+		}
+#endif
 		int8_t const * p_envelope_table = NULL;
 		int16_t delta_amplitude = p_oscillator->loudness;
 		int16_t shift_amplitude = 0;
@@ -1056,7 +1061,7 @@ void perform_envelope(oscillator_t * const p_oscillator)
 			} break;
 		}
 
-		p_oscillator->amplitude = REDUDE_AMPLITUDE_BY_ENVELOPE_TABLE_VALUE(delta_amplitude,
+		p_oscillator->amplitude = REDUCE_AMPLITUDE_BY_ENVELOPE_TABLE_VALUE(delta_amplitude,
 																		   p_envelope_table[p_oscillator->envelope_table_index]);
 		p_oscillator->amplitude	+= shift_amplitude;
 	} while(0);

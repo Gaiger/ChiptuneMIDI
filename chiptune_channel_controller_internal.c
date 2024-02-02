@@ -1,15 +1,20 @@
+#include <math.h>
+
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
 
 #include "chiptune_channel_controller_internal.h"
-
 
 static channel_controller_t s_channel_controllers[MIDI_MAX_CHANNEL_NUMBER];
 
 static int8_t s_linear_decline_table[ENVELOPE_TABLE_LENGTH];
 static int8_t s_linear_growth_table[ENVELOPE_TABLE_LENGTH];
 
-/**********************************************************************************/
+static int8_t s_exponential_decline_table[ENVELOPE_TABLE_LENGTH];
+static int8_t s_exponential_growth_table[ENVELOPE_TABLE_LENGTH];
+
+static int8_t s_gaussian_decline_table[ENVELOPE_TABLE_LENGTH];
+static int8_t s_gaussian_growth_table[ENVELOPE_TABLE_LENGTH];
 
 
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index)
@@ -43,7 +48,7 @@ void update_channel_controller_envelope(int8_t const index)
 	p_channel_controller->envelope_decay_same_index_number
 				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND)/(float)ENVELOPE_TABLE_LENGTH + 0.5);
 
-#define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(7)
+#define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(6)
 	p_channel_controller->envelope_sustain_level = DEFAULT_ENVELOPE_SUSTAIN_LEVEL;
 
 #define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.03f)
@@ -86,9 +91,15 @@ void reset_channel_controller_from_index(int8_t const index)
 	p_channel_controller->chorus = 0;
 	p_channel_controller->max_pitch_chorus_bend_in_semitones = DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
 
+	/*
+	 * s_linear_decline_table s_linear_growth_table
+	 * s_exponential_decline_table s_exponential_growth_table
+	 * s_gaussian_decline_table s_gaussian_growth_table
+	*/
+
 	p_channel_controller->p_envelope_attack_table = &s_linear_growth_table[0];
-	p_channel_controller->p_envelope_decay_table  = &s_linear_decline_table[0];
-	p_channel_controller->p_envelope_release_table = &s_linear_decline_table[0];
+	p_channel_controller->p_envelope_decay_table  = &s_gaussian_decline_table[0];
+	p_channel_controller->p_envelope_release_table = &s_exponential_decline_table[0];
 	update_channel_controller_envelope(index);
 }
 
@@ -106,12 +117,48 @@ void update_all_channel_controllers_envelope(void)
 static void initialize_envelope_tables(void)
 {
 	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
+		s_linear_decline_table[i] = (int8_t)(INT8_MAX * ((ENVELOPE_TABLE_LENGTH - i)/(float)ENVELOPE_TABLE_LENGTH));
+	}
+	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
 		s_linear_growth_table[i] = (int8_t)(INT8_MAX * (i/(float)ENVELOPE_TABLE_LENGTH));
 	}
 
+	/*
+	 * exponential :
+	 *  INT8_MAX * exp(-alpha * 63) = 1 -> alpha = -ln(1/INT8_MAX)/63
+	*/
+
+#define ALPHA										(0.07689185851f)
+	s_exponential_decline_table[0] = INT8_MAX;
 	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
-		s_linear_decline_table[i] = (int8_t)(INT8_MAX * ((ENVELOPE_TABLE_LENGTH - i)/(float)ENVELOPE_TABLE_LENGTH));
+		s_exponential_decline_table[i] = (int8_t)(INT8_MAX * expf(-ALPHA * i));
+		//printf("i = %d, value = %d\r\n", i, s_exponential_decline_table[i]);
 	}
+
+	s_exponential_growth_table[0] = 0;
+	for(int16_t i = 1; i < ENVELOPE_TABLE_LENGTH; i++){
+		s_exponential_growth_table[i] = (int8_t)(expf(ALPHA * (ENVELOPE_TABLE_LENGTH - i)));
+		//printf("i = %d, value = %d\r\n", i, s_exponential_growth_table[i]);
+	}
+
+	/*
+	 * gaussian
+	 *  INT8_MAX * exp(-beta * 63**2) = 1 -> beta = -ln(INT8_MAX - 1)/(1 - 63**2)
+	*/
+#define BETA										(0.00121882104f)
+	s_gaussian_decline_table[0] = INT8_MAX;
+	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
+		s_gaussian_decline_table[i] = (int8_t)(INT8_MAX * expf(-BETA * i * i));
+		//printf("i = %d, value = %d\r\n", i, s_gaussian_decline_table[i]);
+	}
+
+	s_gaussian_growth_table[0] = 0;
+	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
+		s_gaussian_growth_table[i] = (int8_t)(INT8_MAX * expf(-BETA * (ENVELOPE_TABLE_LENGTH - i) * (ENVELOPE_TABLE_LENGTH - i)));
+		//printf("i = %d, value = %d\r\n", i, s_gaussian_growth_table[i]);
+	}
+
+	//printf("\r\n");
 }
 
 /**********************************************************************************/
