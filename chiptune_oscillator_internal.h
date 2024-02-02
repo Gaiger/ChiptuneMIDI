@@ -26,7 +26,7 @@ typedef struct _oscillator
 
 	float		pitch_chorus_bend_in_semitone;
 
-	uint16_t	delta_vibrato_phase;
+	uint16_t	max_delta_vibrato_phase;
 	uint16_t	vibrato_table_index;
 	uint16_t	vibrato_same_index_count;
 

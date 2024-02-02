@@ -4,6 +4,26 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH		(64)
+
+#define CHANNEL_CONTROLLER_DIVIDE_BY_128(VALUE)		((VALUE) >> 7)
+
+#define NORMALIZE_VIBRTO_DELTA_PHASE(VALUE)			\
+													CHANNEL_CONTROLLER_DIVIDE_BY_128(CHANNEL_CONTROLLER_DIVIDE_BY_128(((int32_t)(VALUE))))
+#define REGULATE_MODULATION_WHEEL(VALUE)			((VALUE) + 1)
+
+#define DELTA_VIBTRATO_PHASE(MODULATION_WHEEL, MAX_max_delta_vibrato_phase, VIBRATO_TABLE_VALUE) \
+							NORMALIZE_VIBRTO_DELTA_PHASE( \
+								((MAX_max_delta_vibrato_phase) * REGULATE_MODULATION_WHEEL(MODULATION_WHEEL)) * (VIBRATO_TABLE_VALUE) \
+							)
+
+#define REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(INDEX)		\
+															((INDEX) & (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1))
+#define SUSTAIN_AMPLITUDE(LOUNDNESS, SUSTAIN_LEVEL)	\
+													((int16_t)CHANNEL_CONTROLLER_DIVIDE_BY_128((int32_t)(LOUNDNESS) * (SUSTAIN_LEVEL) * 16))
+
+#define ENVELOPE_AMPLITUDE(AMPLITUDE, TABLE_VALUE)	\
+													(CHANNEL_CONTROLLER_DIVIDE_BY_128((AMPLITUDE) * (int32_t)(TABLE_VALUE)))
 
 enum
 {
@@ -43,6 +63,7 @@ typedef struct _channel_controller
 
 	int8_t				modulation_wheel;
 	int8_t				vibrato_modulation_in_semitone;
+	int8_t const *		p_vibrato_phase_table;
 	uint16_t			vibrato_same_index_number;
 
 	int8_t				chorus;
@@ -70,14 +91,5 @@ void initialize_channel_controller(void);
 void reset_channel_controller_from_index(int8_t const index);
 void update_all_channel_controllers_envelope(void);
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index);
-
-
-#define CHANNEL_CONTROLLER_DIVIDE_BY_128(VALUE)		((VALUE) >> 7)
-
-#define SUSTAIN_AMPLITUDE(LOUNDNESS, SUSTAIN_LEVEL)	\
-													((int16_t)CHANNEL_CONTROLLER_DIVIDE_BY_128((int32_t)(LOUNDNESS) * (SUSTAIN_LEVEL) * 16))
-
-#define REDUCE_AMPLITUDE_BY_ENVELOPE_TABLE_VALUE(AMPLITUDE, TABLE_VALUE)	\
-													(CHANNEL_CONTROLLER_DIVIDE_BY_128((AMPLITUDE) * (int32_t)(TABLE_VALUE)))
 
 #endif // _CHIPTUNE_CHANNEL_CONTROLLER_INTERNAL_H_

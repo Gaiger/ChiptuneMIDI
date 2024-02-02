@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include "chiptune_common_internal.h"
@@ -7,14 +8,16 @@
 
 static channel_controller_t s_channel_controllers[MIDI_MAX_CHANNEL_NUMBER];
 
-static int8_t s_linear_decline_table[ENVELOPE_TABLE_LENGTH];
-static int8_t s_linear_growth_table[ENVELOPE_TABLE_LENGTH];
+static int8_t s_vibrato_phase_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
 
-static int8_t s_exponential_decline_table[ENVELOPE_TABLE_LENGTH];
-static int8_t s_exponential_growth_table[ENVELOPE_TABLE_LENGTH];
+static int8_t s_linear_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+static int8_t s_linear_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
 
-static int8_t s_gaussian_decline_table[ENVELOPE_TABLE_LENGTH];
-static int8_t s_gaussian_growth_table[ENVELOPE_TABLE_LENGTH];
+static int8_t s_exponential_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+static int8_t s_exponential_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+
+static int8_t s_gaussian_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+static int8_t s_gaussian_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
 
 
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index)
@@ -40,13 +43,13 @@ void update_channel_controller_envelope(int8_t const index)
 	p_channel_controller->envelope_attack_tick_number
 		= (uint16_t)(DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5);
 	p_channel_controller->envelope_attack_same_index_number
-				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND)/(float)ENVELOPE_TABLE_LENGTH + 0.5);
+				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND)/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
 #define DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND	(0.01f)
 	p_channel_controller->envelope_decay_tick_number
 		= (uint16_t)(DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5);
 	p_channel_controller->envelope_decay_same_index_number
-				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND)/(float)ENVELOPE_TABLE_LENGTH + 0.5);
+				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND)/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
 #define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(6)
 	p_channel_controller->envelope_sustain_level = DEFAULT_ENVELOPE_SUSTAIN_LEVEL;
@@ -56,8 +59,7 @@ void update_channel_controller_envelope(int8_t const index)
 		= (uint16_t)(DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5f);
 
 	p_channel_controller->envelope_release_same_index_number
-				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND)/(float)ENVELOPE_TABLE_LENGTH + 0.5);
-
+				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND)/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 }
 
 /**********************************************************************************/
@@ -84,8 +86,9 @@ void reset_channel_controller_from_index(int8_t const index)
 #define DEFAULT_VIBRATO_FREQUENCY					(4)
 	p_channel_controller->modulation_wheel = 0;
 	p_channel_controller->vibrato_modulation_in_semitone = DEFAULT_VIBRATO_MODULATION_IN_SEMITINE;
+	p_channel_controller->p_vibrato_phase_table = &s_vibrato_phase_table[0];
 	p_channel_controller->vibrato_same_index_number
-			= (uint16_t)(sampling_rate/VIBRATO_PHASE_TABLE_LENGTH/(float)DEFAULT_VIBRATO_FREQUENCY);
+			= (uint16_t)(sampling_rate/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_FREQUENCY);
 
 #define	DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE	(0.25f)
 	p_channel_controller->chorus = 0;
@@ -96,7 +99,6 @@ void reset_channel_controller_from_index(int8_t const index)
 	 * s_exponential_decline_table s_exponential_growth_table
 	 * s_gaussian_decline_table s_gaussian_growth_table
 	*/
-
 	p_channel_controller->p_envelope_attack_table = &s_linear_growth_table[0];
 	p_channel_controller->p_envelope_decay_table  = &s_gaussian_decline_table[0];
 	p_channel_controller->p_envelope_release_table = &s_exponential_decline_table[0];
@@ -116,11 +118,11 @@ void update_all_channel_controllers_envelope(void)
 
 static void initialize_envelope_tables(void)
 {
-	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
-		s_linear_decline_table[i] = (int8_t)(INT8_MAX * ((ENVELOPE_TABLE_LENGTH - i)/(float)ENVELOPE_TABLE_LENGTH));
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		s_linear_decline_table[i] = (int8_t)(INT8_MAX * ((CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - i)/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
 	}
-	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
-		s_linear_growth_table[i] = (int8_t)(INT8_MAX * (i/(float)ENVELOPE_TABLE_LENGTH));
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		s_linear_growth_table[i] = (int8_t)(INT8_MAX * (i/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
 	}
 
 	/*
@@ -130,14 +132,14 @@ static void initialize_envelope_tables(void)
 
 #define ALPHA										(0.07689185851f)
 	s_exponential_decline_table[0] = INT8_MAX;
-	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
 		s_exponential_decline_table[i] = (int8_t)(INT8_MAX * expf(-ALPHA * i));
 		//printf("i = %d, value = %d\r\n", i, s_exponential_decline_table[i]);
 	}
 
 	s_exponential_growth_table[0] = 0;
-	for(int16_t i = 1; i < ENVELOPE_TABLE_LENGTH; i++){
-		s_exponential_growth_table[i] = (int8_t)(expf(ALPHA * (ENVELOPE_TABLE_LENGTH - i)));
+	for(int16_t i = 1; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		s_exponential_growth_table[i] = (int8_t)(expf(ALPHA * (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - i)));
 		//printf("i = %d, value = %d\r\n", i, s_exponential_growth_table[i]);
 	}
 
@@ -147,14 +149,14 @@ static void initialize_envelope_tables(void)
 	*/
 #define BETA										(0.00121882104f)
 	s_gaussian_decline_table[0] = INT8_MAX;
-	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
 		s_gaussian_decline_table[i] = (int8_t)(INT8_MAX * expf(-BETA * i * i));
 		//printf("i = %d, value = %d\r\n", i, s_gaussian_decline_table[i]);
 	}
 
 	s_gaussian_growth_table[0] = 0;
-	for(int16_t i = 0; i < ENVELOPE_TABLE_LENGTH; i++){
-		s_gaussian_growth_table[i] = (int8_t)(INT8_MAX * expf(-BETA * (ENVELOPE_TABLE_LENGTH - i) * (ENVELOPE_TABLE_LENGTH - i)));
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		s_gaussian_growth_table[i] = (int8_t)(INT8_MAX * expf(-BETA * (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - i) * (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - i)));
 		//printf("i = %d, value = %d\r\n", i, s_gaussian_growth_table[i]);
 	}
 
@@ -165,6 +167,9 @@ static void initialize_envelope_tables(void)
 
 void initialize_channel_controller(void)
 {
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		s_vibrato_phase_table[i] = (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
+	}
 	initialize_envelope_tables();
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 		reset_channel_controller_from_index(i);

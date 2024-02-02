@@ -1,5 +1,4 @@
 #include <string.h>
-#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include<stdarg.h>
@@ -267,7 +266,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 																  p_channel_controller->pitch_wheel,
 																  p_oscillator->pitch_chorus_bend_in_semitone,
 																  &pitch_wheel_bend_in_semitone);
-				p_oscillator->delta_vibrato_phase = calculate_delta_phase(p_oscillator->note + vibrato_modulation_in_semitone,
+				p_oscillator->max_delta_vibrato_phase = calculate_delta_phase(p_oscillator->note + vibrato_modulation_in_semitone,
 																			p_channel_controller->tuning_in_semitones,
 																			p_channel_controller->pitch_wheel_bend_range_in_semitones,
 																			p_channel_controller->pitch_wheel,
@@ -393,7 +392,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->current_phase = 0;
 			p_oscillator->loudness = (uint16_t)actual_velocity * (uint16_t)p_channel_controller->playing_volume;
 
-			p_oscillator->delta_vibrato_phase = calculate_delta_phase(p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitone,
+			p_oscillator->max_delta_vibrato_phase = calculate_delta_phase(p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitone,
 																		p_channel_controller->tuning_in_semitones,
 																		p_channel_controller->pitch_wheel_bend_range_in_semitones,
 																		p_channel_controller->pitch_wheel,
@@ -868,12 +867,6 @@ int32_t g_max_loudness = 1 << 16;
 
 /**********************************************************************************/
 
-static int8_t s_vibrato_phase_table[VIBRATO_PHASE_TABLE_LENGTH] = {0};
-#define CALCULATE_VIBRATO_TABLE_INDEX_REMAINDER(INDEX)		\
-															((INDEX) & (VIBRATO_PHASE_TABLE_LENGTH - 1))
-
-/**********************************************************************************/
-
 void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
 {
 	s_sampling_rate = sampling_rate;
@@ -943,11 +936,6 @@ inline static void increase_time_base_for_fast_to_ending(void)
 
 /**********************************************************************************/
 
-#define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
-#define NORMALIZE_VIBRTO_DELTA_PHASE(VALUE)			\
-													DIVIDE_BY_128(DIVIDE_BY_128(VALUE))
-#define REGULATE_MODULATION_WHEEL(VALUE)			((VALUE) + 1)
-
 void perform_vibrato(oscillator_t * const p_oscillator)
 {
 	do {
@@ -957,18 +945,15 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 			break;
 		}
 		uint16_t const vibrato_same_index_number = p_channel_controller->vibrato_same_index_number;
-		uint16_t delta_vibrato_phase = p_oscillator->delta_vibrato_phase;
-		uint32_t vibrato_modulation
-				= REGULATE_MODULATION_WHEEL(modulation_wheel)
-					* s_vibrato_phase_table[p_oscillator->vibrato_table_index];
-
-		delta_vibrato_phase = NORMALIZE_VIBRTO_DELTA_PHASE(vibrato_modulation * delta_vibrato_phase);
-		p_oscillator->current_phase += delta_vibrato_phase;
+		p_oscillator->current_phase += DELTA_VIBTRATO_PHASE(modulation_wheel, p_oscillator->max_delta_vibrato_phase,
+															p_channel_controller->p_vibrato_phase_table[
+																p_oscillator->vibrato_table_index]);
 
 		p_oscillator->vibrato_same_index_count += 1;
 		if(vibrato_same_index_number == p_oscillator->vibrato_same_index_count){
 			p_oscillator->vibrato_same_index_count = 0;
-			p_oscillator->vibrato_table_index = CALCULATE_VIBRATO_TABLE_INDEX_REMAINDER(p_oscillator->vibrato_table_index  + 1);
+			p_oscillator->vibrato_table_index = REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(
+						p_oscillator->vibrato_table_index  + 1);
 		}
 	} while(0);
 }
@@ -983,7 +968,7 @@ void perform_envelope(oscillator_t * const p_oscillator)
 			break;
 		}
 
-		if(ENVELOPE_TABLE_LENGTH == p_oscillator->envelope_table_index){
+		if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->envelope_table_index){
 			break;
 		}
 
@@ -1009,7 +994,7 @@ void perform_envelope(oscillator_t * const p_oscillator)
 
 		p_oscillator->envelope_same_index_count = 0;
 		p_oscillator->envelope_table_index += 1;
-		if(ENVELOPE_TABLE_LENGTH == p_oscillator->envelope_table_index){
+		if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->envelope_table_index){
 			do {
 				if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
 					break;
@@ -1057,7 +1042,7 @@ void perform_envelope(oscillator_t * const p_oscillator)
 			} break;
 		}
 
-		p_oscillator->amplitude = REDUCE_AMPLITUDE_BY_ENVELOPE_TABLE_VALUE(delta_amplitude,
+		p_oscillator->amplitude = ENVELOPE_AMPLITUDE(delta_amplitude,
 																		   p_envelope_table[p_oscillator->envelope_table_index]);
 		p_oscillator->amplitude	+= shift_amplitude;
 		if(ENVELOPE_RELEASE == p_oscillator->envelope_state){

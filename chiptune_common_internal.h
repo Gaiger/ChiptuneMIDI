@@ -26,9 +26,6 @@
 
 #define NULL_TICK									(UINT32_MAX)
 
-#define VIBRATO_PHASE_TABLE_LENGTH					(64)
-#define ENVELOPE_TABLE_LENGTH						(64)
-
 uint32_t get_sampling_rate(void);
 uint32_t get_resolution(void);
 float get_tempo(void);

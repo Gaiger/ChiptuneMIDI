@@ -154,6 +154,7 @@ static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const v
 	(void)voice;
 	(void)value;
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RESET_ALL_CONTROLLERS :: voices = %d\r\n", tick, voice);
+	// TODO : some parameters NOT related to mini protocol should not be reset.
 	reset_channel_controller_from_index(voice);
 
 	int16_t oscillator_index = get_head_occupied_oscillator_index();
