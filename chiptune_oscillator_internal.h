@@ -24,10 +24,6 @@ typedef struct _oscillator
 
 	int16_t		loudness;
 
-	int8_t		waveform;
-	uint8_t		: 8;
-	uint16_t	duty_cycle_critical_phase;
-
 	float		pitch_chorus_bend_in_semitone;
 
 	uint16_t	delta_vibrato_phase;

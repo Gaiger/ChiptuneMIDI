@@ -392,8 +392,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 															  &pitch_wheel_bend_in_semitone);
 			p_oscillator->current_phase = 0;
 			p_oscillator->loudness = (uint16_t)actual_velocity * (uint16_t)p_channel_controller->playing_volume;
-			p_oscillator->waveform = p_channel_controller->waveform;
-			p_oscillator->duty_cycle_critical_phase = p_channel_controller->duty_cycle_critical_phase;
+
 			p_oscillator->delta_vibrato_phase = calculate_delta_phase(p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitone,
 																		p_channel_controller->tuning_in_semitones,
 																		p_channel_controller->pitch_wheel_bend_range_in_semitones,
@@ -1098,10 +1097,11 @@ int16_t chiptune_fetch_16bit_wave(void)
 		int16_t value = 0;
 		perform_vibrato(p_oscillator);
 		perform_envelope(p_oscillator);
-		switch(p_oscillator->waveform)
+		channel_controller_t *p_channel_controller = get_channel_controller_pointer_from_index(p_oscillator->voice);
+		switch(p_channel_controller->waveform)
 		{
 		case WAVEFORM_SQUARE:
-			value = (p_oscillator->current_phase > p_oscillator->duty_cycle_critical_phase) ? -INT16_MAX_PLUS_1 : INT16_MAX;
+			value = (p_oscillator->current_phase > p_channel_controller->duty_cycle_critical_phase) ? -INT16_MAX_PLUS_1 : INT16_MAX;
 			break;
 		case WAVEFORM_TRIANGLE:
 			do {
