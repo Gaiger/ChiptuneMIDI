@@ -34,6 +34,8 @@ typedef struct _oscillator
 	uint16_t	envelope_table_index;
 	uint16_t	envelope_same_index_count;
 
+	int16_t		transition_amplitude;
+
 	int16_t		native_oscillator;
 } oscillator_t;
 

@@ -1027,15 +1027,11 @@ void perform_envelope(oscillator_t * const p_oscillator)
 									  p_channel_controller->envelope_sustain_level);
 					break;
 				}
+				p_oscillator->transition_amplitude = p_oscillator->amplitude;
 			} while(0);
 			break;
 		}
-#if(0)
-		if(78 ==  p_oscillator->note){
-			printf("envelope_state = %d voice = %d, note = %d, p_oscillator->amplitude = %d\r\n",
-				   p_oscillator->envelope_state, p_oscillator->voice,  p_oscillator->note, p_oscillator->amplitude);
-		}
-#endif
+
 		int8_t const * p_envelope_table = NULL;
 		int16_t delta_amplitude = 0;
 		int16_t shift_amplitude = 0;
@@ -1056,14 +1052,17 @@ void perform_envelope(oscillator_t * const p_oscillator)
 		} break;
 		case ENVELOPE_RELEASE: {
 			p_envelope_table = p_channel_controller->p_envelope_release_table;
-			delta_amplitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-												p_channel_controller->envelope_sustain_level);
+			delta_amplitude = p_oscillator->transition_amplitude;
 			} break;
 		}
 
 		p_oscillator->amplitude = REDUCE_AMPLITUDE_BY_ENVELOPE_TABLE_VALUE(delta_amplitude,
 																		   p_envelope_table[p_oscillator->envelope_table_index]);
 		p_oscillator->amplitude	+= shift_amplitude;
+		if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
+			break;
+		}
+		p_oscillator->transition_amplitude = p_oscillator->amplitude;
 	} while(0);
 }
 
