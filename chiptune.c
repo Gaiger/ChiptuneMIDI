@@ -421,6 +421,9 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				if(false == IS_NOTE_ON(p_oscillator->state_bits)){
 					break;
 				}
+				if(true == IS_FREEING(p_oscillator->state_bits)){
+					break;
+				}
 				put_event(EVENT_FREE, oscillator_index, tick);
 				process_chorus_effect(tick, EVENT_FREE, voice, note, velocity, oscillator_index);
 				is_found = true;
