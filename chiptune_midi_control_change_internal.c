@@ -100,9 +100,9 @@ static inline void process_cc_expression(uint32_t const tick, int8_t const voice
 
 /**********************************************************************************/
 
-int process_chorus_effect(uint32_t const tick, bool const is_note_on,
-						   int8_t const voice, int8_t const note, int8_t const velocity,
-						   int16_t const original_oscillator_index);
+int process_chorus_effect(uint32_t const tick, int8_t const event_type,
+						  int8_t const voice, int8_t const note, int8_t const velocity,
+						  int16_t const native_oscillator_index);
 
 static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uint8_t const value)
 {
@@ -130,8 +130,8 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 			if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
 				break;
 			}
-			put_event(EVENT_RELEASE, oscillator_index, tick);
-			process_chorus_effect(tick, false, voice, p_oscillator->note,
+			put_event(EVENT_FREE, oscillator_index, tick);
+			process_chorus_effect(tick, EVENT_FREE, voice, p_oscillator->note,
 						  p_oscillator->loudness/p_channel_controller->playing_volume,
 								  oscillator_index);
 		} while(0);
@@ -160,7 +160,7 @@ static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const v
 	for(int16_t i = 0; i < occupied_oscillator_number; i++){
 		oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 		if( voice == p_oscillator->voice){
-			put_event(EVENT_RELEASE, oscillator_index, tick);
+			put_event(EVENT_FREE, oscillator_index, tick);
 		}
 		oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 	}

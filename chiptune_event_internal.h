@@ -6,8 +6,8 @@
 enum EventType
 {
 	EVENT_ACTIVATE = 1,
-	EVENT_RELEASE,
-
+	EVENT_FREE,
+	EVENT_REST,
 	EVENT_TYPE_MAX,
 };
 

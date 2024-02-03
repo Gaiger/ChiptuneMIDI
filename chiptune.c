@@ -225,7 +225,7 @@ static float pitch_chorus_bend_in_semitone(int8_t const voice)
 #define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
 #define OSCILLATOR_NUMBER_FOR_CHORUS(VALUE)			(DIVIDE_BY_16(((VALUE) + 15)))
 
-int process_chorus_effect(uint32_t const tick, bool const is_note_on,
+int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 						  int8_t const voice, int8_t const note, int8_t const velocity,
 						  int16_t const native_oscillator_index)
 {
@@ -239,7 +239,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 	int oscillator_indexes[ASSOCIATE_CHORUS_OSCILLATOR_NUMBER] = {UNUSED_OSCILLATOR, UNUSED_OSCILLATOR, UNUSED_OSCILLATOR};
 
 	do {
-		if(true == is_note_on){
+		if(EVENT_ACTIVATE == event_type){
 			int16_t const loudness = p_native_oscillator->loudness;
 			int16_t averaged_loudness = DIVIDE_BY_16(loudness);
 			// oscillator 1 : 4 * averaged_volume
@@ -273,7 +273,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 																			p_oscillator->pitch_chorus_bend_in_semitone,
 																			&pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
 				p_oscillator->native_oscillator = native_oscillator_index;
-				SET_CHORUS_OSCILLATOR(p_oscillator->state_bits);
+				SET_CHORUS_ASSOCIATE(p_oscillator->state_bits);
 				oscillator_indexes[j] = i;
 			}
 			break;
@@ -286,7 +286,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 		for(ii = 0; ii < occupied_oscillator_number; ii++){
 			oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 			do {
-				if(true != IS_CHORUS_OSCILLATOR(p_oscillator->state_bits)){
+				if(true != IS_CHORUS_ASSOCIATE(p_oscillator->state_bits)){
 					break;
 				}
 				if(native_oscillator_index != p_oscillator->native_oscillator){
@@ -299,7 +299,7 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 					break;
 				}
 				// it is accociate oscillator, not directly related to scores
-				//if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
+				//if(true == IS_FREEING(p_oscillator->state_bits)){
 				//	break;
 				//	}
 				oscillator_indexes[kk] = oscillator_index;
@@ -318,7 +318,6 @@ int process_chorus_effect(uint32_t const tick, bool const is_note_on,
 		}
 	} while(0);
 
-	int8_t event_type = (true == is_note_on) ? EVENT_ACTIVATE : EVENT_RELEASE;
 	for(int16_t j = 0; j  < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; j++){
 		put_event(event_type, oscillator_indexes[j], tick + (j + 1) * s_chorus_delta_tick);
 	}
@@ -350,27 +349,14 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						break;
 					}
 
-					do {
-						if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
-							break;
-						}
-						if(true == IS_NOTE_ON(p_oscillator->state_bits)){
-							break;
-						}
-						if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
-							break;
-						}
-						put_event(EVENT_RELEASE, oscillator_index, tick);
-						process_chorus_effect(tick, false, voice, note, velocity, oscillator_index);
-					} while(0);
-
-					// TODO : the associate chorus oscillators loudness should be decreased
-					actual_velocity -= p_oscillator->loudness/p_channel_controller->playing_volume;
-					if(0 > actual_velocity){
-						actual_velocity = DIVIDE_BY_2(velocity);
-						p_oscillator->loudness = (actual_velocity + (actual_velocity & 0x01))
-								* p_channel_controller->playing_volume;
+					if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
+						break;
 					}
+					if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
+						break;
+					}
+					put_event(EVENT_REST, oscillator_index, tick);
+					process_chorus_effect(tick, EVENT_REST, voice, note, velocity, oscillator_index);
 				} while(0);
 				oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 			}
@@ -408,7 +394,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
 			put_event(EVENT_ACTIVATE, ii, tick);
-			process_chorus_effect(tick, is_note_on, voice, note, velocity, ii);
+			process_chorus_effect(tick, EVENT_ACTIVATE, voice, note, velocity, ii);
 			break;
 		}
 
@@ -425,7 +411,9 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				if(voice != p_oscillator->voice){
 					break;
 				}
+
 				do {
+
 					if(true == p_channel_controller->is_damper_pedal_on){
 						SET_NOTE_OFF(p_oscillator->state_bits);
 						p_oscillator->loudness
@@ -436,11 +424,19 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
 						break;
 					}
-					if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
+					if(false == IS_NOTE_ON(p_oscillator->state_bits)){
 						break;
 					}
-					put_event(EVENT_RELEASE, oscillator_index, tick);
-					process_chorus_effect(tick, is_note_on, voice, note, velocity, oscillator_index);
+
+					if(true == IS_FREEING(p_oscillator->state_bits)){
+						break;
+					}
+
+					//SET_NOTE_OFF(p_oscillator->state_bits);
+					put_event(EVENT_FREE, oscillator_index, tick);
+					//if(false == IS_REST(p_oscillator->state_bits)){
+						process_chorus_effect(tick, EVENT_FREE, voice, note, velocity, oscillator_index);
+					//}
 					is_found = true;
 					is_leave_loop = true;
 				} while(0);
@@ -645,7 +641,7 @@ static void release_all_channels_damper_pedal(const uint32_t tick)
 			for(int16_t i = 0; i < occupied_oscillator_number; i++){
 				oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 				if(k == p_oscillator->voice){
-					put_event(EVENT_RELEASE, oscillator_index, tick);
+					put_event(EVENT_FREE, oscillator_index, tick);
 				}
 				oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 			}
@@ -658,7 +654,14 @@ static void release_all_channels_damper_pedal(const uint32_t tick)
 void process_ending(const uint32_t tick)
 {
 	release_all_channels_damper_pedal(tick);
-	process_events(tick);
+	while(1)
+	{
+		uint32_t next_triggering_tick = get_next_event_triggering_tick();
+		if(NULL_TICK == next_triggering_tick){
+			break;
+		}
+		process_events(next_triggering_tick);
+	}
 }
 
 /**********************************************************************************/
@@ -803,7 +806,8 @@ static int32_t get_max_simultaneous_loudness(void)
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
 
 	if(0 != get_upcoming_event_number()){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: not all events are released\r\n");
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: not all events are released, remain %d events\r\n",
+						get_upcoming_event_number());
 	}
 
 	if(0 != get_occupied_oscillator_number()){
