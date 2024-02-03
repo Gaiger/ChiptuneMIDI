@@ -336,7 +336,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	int16_t ii = 0;
 	do {
 		if(true == is_note_on){
-#if(0)
+#if(1)
+			//the same voice note
 			int16_t oscillator_index = get_head_occupied_oscillator_index();
 			int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 			for(ii = 0; ii < occupied_oscillator_number; ii++){
@@ -352,9 +353,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
 						break;
 					}
-					if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
+					if(true == IS_RESTING(p_oscillator->state_bits)){
 						break;
 					}
+
 					put_event(EVENT_REST, oscillator_index, tick);
 					process_chorus_effect(tick, EVENT_REST, voice, note, velocity, oscillator_index);
 				} while(0);
@@ -427,16 +429,12 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					if(false == IS_NOTE_ON(p_oscillator->state_bits)){
 						break;
 					}
-
 					if(true == IS_FREEING(p_oscillator->state_bits)){
 						break;
 					}
 
-					//SET_NOTE_OFF(p_oscillator->state_bits);
 					put_event(EVENT_FREE, oscillator_index, tick);
-					//if(false == IS_REST(p_oscillator->state_bits)){
-						process_chorus_effect(tick, EVENT_FREE, voice, note, velocity, oscillator_index);
-					//}
+					process_chorus_effect(tick, EVENT_FREE, voice, note, velocity, oscillator_index);
 					is_found = true;
 					is_leave_loop = true;
 				} while(0);

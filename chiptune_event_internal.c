@@ -171,7 +171,7 @@ void process_events(uint32_t const tick)
 
 		oscillator_t *p_oscillator = get_oscillator_pointer_from_index(s_events[s_event_head_index].oscillator);
 		char addition_string[16] = "";
-		if(IS_CHORUS_ASSOCIATE(p_oscillator->state_bits)){
+		if(true == IS_CHORUS_ASSOCIATE(p_oscillator->state_bits)){
 			snprintf(&addition_string[0], sizeof(addition_string), "(chorus)");
 		}
 		int8_t const event_type = s_events[s_event_head_index].type;
@@ -188,40 +188,50 @@ void process_events(uint32_t const tick)
 			SET_ACTIVATED(p_oscillator->state_bits);
 			p_oscillator->envelope_state = ENVELOPE_ATTACK;
 			break;
+
 		case EVENT_FREE:
-		case EVENT_REST:
-			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, %s oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
-							tick, (EVENT_FREE == event_type)? "FREE" : "REST",
-							s_events[s_event_head_index].oscillator,
+			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, FREE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
+							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness, &addition_string[0]);
-			if(ENVELOPE_RELEASE == p_oscillator->envelope_state) {
-#if(1)
-				if(false == IS_REST(p_oscillator->state_bits) && true == IS_ACTIVATED(p_oscillator->state_bits)) {
-					CHIPTUNE_PRINTF(cDeveloping, "ERROR :: release a releasing oscillator = %d\r\n",
-								s_events[s_event_head_index].oscillator);
-					return ;
-				}
-#endif
-				put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator, tick);
-				break;
+			if(true == IS_FREEING(p_oscillator->state_bits)) {
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: free a freeing oscillator = %d\r\n",
+							s_events[s_event_head_index].oscillator);
+				return ;
 			}
-			p_oscillator->envelope_state = ENVELOPE_RELEASE;
 			do {
-				if(EVENT_REST == event_type){
-					SET_REST(p_oscillator->state_bits);
-					break;
+				int16_t release_tick_number =
+						get_channel_controller_pointer_from_index(p_oscillator->voice)->envelope_release_tick_number;
+				if(false == IS_RESTING(p_oscillator->state_bits)){
+					release_tick_number = 0;
 				}
 				SET_FREEING(p_oscillator->state_bits);
+				p_oscillator->envelope_state = ENVELOPE_RELEASE;
 				put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
-					  tick + get_channel_controller_pointer_from_index(p_oscillator->voice)->envelope_release_tick_number);
+					tick + release_tick_number);
 			} while(0);
 			break;
+
+		case EVENT_REST:
+			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, REST oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
+							tick, s_events[s_event_head_index].oscillator,
+							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness, &addition_string[0]);
+
+			if(true == IS_RESTING(p_oscillator->state_bits)){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: rest a resting oscillator = %d\r\n",
+							s_events[s_event_head_index].oscillator);
+				return ;
+			}
+			SET_RESTING(p_oscillator->state_bits);
+			p_oscillator->envelope_state = ENVELOPE_RELEASE;
+			break;
+
 		case EVENT_DISCARD:
 			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, DISCARD oscillator = %d, voice = %d, note = %d, amplitude = 0x%04x(%3.2f%%) %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, p_oscillator->amplitude/(float)p_oscillator->loudness , &addition_string[0]);
 			discard_oscillator(s_events[s_event_head_index].oscillator);
 			break;
+
 		default:
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: UNKOWN event type = %d\r\n");
 			break;
