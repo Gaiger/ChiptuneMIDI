@@ -50,18 +50,20 @@ typedef struct _oscillator
 #define SET_RESTING(STATE_BITS)						( (STATE_BITS) |= (0x01 << STATE_RESTING_BIT) )
 #define IS_RESTING(STATE_BITS)						(((0x01 << STATE_RESTING_BIT) & (STATE_BITS) ) ? true : false)
 
-#define STATE_NOTE_BIT								(2)
+#define STATE_FREEING_BIT							(2)
+#define SET_FREEING(STATE_BITS)						( (STATE_BITS) |= ((0x01)<< STATE_FREEING_BIT))
+#define IS_FREEING(STATE_BITS)						(((0x01 << STATE_FREEING_BIT) & (STATE_BITS)) ? true : false)
+
+#define STATE_NOTE_BIT								(3)
 #define SET_NOTE_ON(STATE_BITS)						( (STATE_BITS) |= (0x01 << STATE_NOTE_BIT) )
 #define SET_NOTE_OFF(STATE_BITS)					( (STATE_BITS) &= (~(0x01 << STATE_NOTE_BIT)) )
 #define IS_NOTE_ON(STATE_BITS)						(((0x01 << STATE_NOTE_BIT) & (STATE_BITS) ) ? true : false)
 
-#define STATE_CHORUS_ASSOCIATE_BIT					(3)
+#define STATE_CHORUS_ASSOCIATE_BIT					(4)
 #define SET_CHORUS_ASSOCIATE(STATE_BITS)			( (STATE_BITS) |= ((0x01)<< STATE_CHORUS_ASSOCIATE_BIT))
 #define IS_CHORUS_ASSOCIATE(STATE_BITS)				(((0x01 << STATE_CHORUS_ASSOCIATE_BIT) & (STATE_BITS)) ? true : false)
 
-#define STATE_FREEING_BIT							(4)
-#define SET_FREEING(STATE_BITS)						( (STATE_BITS) |= ((0x01)<< STATE_FREEING_BIT))
-#define IS_FREEING(STATE_BITS)						(((0x01 << STATE_FREEING_BIT) & (STATE_BITS)) ? true : false)
+
 
 void reset_all_oscillators(void);
 

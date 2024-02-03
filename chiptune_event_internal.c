@@ -199,24 +199,17 @@ void process_events(uint32_t const tick)
 							s_events[s_event_head_index].oscillator);
 				return ;
 			}
-			do {
-				int16_t release_tick_number =
-						get_channel_controller_pointer_from_index(p_oscillator->voice)->envelope_release_tick_number;
-				if(false == IS_RESTING(p_oscillator->state_bits)){
-					release_tick_number = 0;
-				}
-				SET_FREEING(p_oscillator->state_bits);
-				p_oscillator->envelope_state = ENVELOPE_RELEASE;
-				put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
-					tick + release_tick_number);
-			} while(0);
+			SET_FREEING(p_oscillator->state_bits);
+			/*It does not a matter there is a postponement to discard the resting oscillator*/
+			p_oscillator->envelope_state = ENVELOPE_RELEASE;
+			put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
+				tick + get_channel_controller_pointer_from_index(p_oscillator->voice)->envelope_release_tick_number);
 			break;
 
 		case EVENT_REST:
 			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, REST oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness, &addition_string[0]);
-
 			if(true == IS_RESTING(p_oscillator->state_bits)){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: rest a resting oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
