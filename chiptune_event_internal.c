@@ -161,7 +161,7 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 
 /**********************************************************************************/
 
-void process_events(uint32_t const tick)
+int process_events(uint32_t const tick)
 {
 	while(NO_EVENT != s_event_head_index)
 	{
@@ -184,7 +184,7 @@ void process_events(uint32_t const tick)
 			if(true == IS_ACTIVATED(p_oscillator->state_bits)){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: activate an activated oscillator = %d\r\n",
 								s_events[s_event_head_index].oscillator);
-				return ;
+				return -1;
 			}
 			SET_ACTIVATED(p_oscillator->state_bits);
 			p_oscillator->envelope_state = ENVELOPE_ATTACK;
@@ -197,7 +197,7 @@ void process_events(uint32_t const tick)
 			if(true == IS_FREEING(p_oscillator->state_bits)) {
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: free a freeing oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
-				return ;
+				return -1;
 			}
 			SET_FREEING(p_oscillator->state_bits);
 			/*It does not a matter there is a postponement to discard the resting oscillator*/
@@ -213,7 +213,7 @@ void process_events(uint32_t const tick)
 			if(true == IS_RESTING(p_oscillator->state_bits)){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: rest a resting oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
-				return ;
+				return -1;
 			}
 			SET_RESTING(p_oscillator->state_bits);
 			p_oscillator->envelope_state = ENVELOPE_RELEASE;
@@ -235,6 +235,7 @@ void process_events(uint32_t const tick)
 		s_upcoming_event_number -= 1;
 	}
 	CHECK_UPCOMING_EVENTS(tick);
+	return 0;
 }
 
 /**********************************************************************************/

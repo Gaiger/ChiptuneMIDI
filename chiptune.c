@@ -123,7 +123,7 @@ float get_tempo(void) { return s_tempo; }
 
 /**********************************************************************************/
 
-static void process_program_change_message(uint32_t const tick, int8_t const voice, uint8_t const number)
+static int process_program_change_message(uint32_t const tick, int8_t const voice, uint8_t const number)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: ", tick);
 #define MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0		(9)
@@ -155,6 +155,7 @@ static void process_program_change_message(uint32_t const tick, int8_t const voi
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: "
 									 " %voice = %d instrument = %d, is WAVEFORM_UNKOWN\r\n", voice, number);
 	}
+	return 0;
 }
 
 /**********************************************************************************/
@@ -483,7 +484,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 /**********************************************************************************/
 
-static void process_pitch_wheel_message(uint32_t const tick, int8_t const voice, int16_t const value)
+static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, int16_t const value)
 {
 	char delta_hex_string[12] = "";
 	do {
@@ -522,6 +523,7 @@ static void process_pitch_wheel_message(uint32_t const tick, int8_t const voice,
 		} while(0);
 		oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
 	}
+	return 0;
 }
 
 /**********************************************************************************/
@@ -547,10 +549,10 @@ struct _tick_message
 
 #define SEVEN_BITS_VALID(VALUE)						((0x7F) & (VALUE))
 
-static void process_midi_message(struct _tick_message const tick_message)
+static int process_midi_message(struct _tick_message const tick_message)
 {
 	if(true == IS_NULL_TICK_MESSAGE(tick_message)){
-		return ;
+		return 1;
 	}
 
 	union {
@@ -601,6 +603,7 @@ static void process_midi_message(struct _tick_message const tick_message)
 		//				tick, type, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]), "(NOT IMPLEMENTED YET)");
 		break;
 	}
+	return 0;
 }
 
 /**********************************************************************************/
@@ -652,7 +655,7 @@ static void release_all_channels_damper_pedal(const uint32_t tick)
 
 /**********************************************************************************/
 
-void process_ending(const uint32_t tick)
+int process_ending(const uint32_t tick)
 {
 	release_all_channels_damper_pedal(tick);
 	while(1)
@@ -663,6 +666,7 @@ void process_ending(const uint32_t tick)
 		}
 		process_events(next_triggering_tick);
 	}
+	return 0;
 }
 
 /**********************************************************************************/
@@ -903,7 +907,7 @@ void chiptune_set_tempo(float const tempo)
 	UPDATE_TIME_BASE_UNIT();
 	UPDATE_DAMPER_PEDAL_ATTENUATION_TICK();
 	UPDATE_CHORUS_DELTA_TICK();
-	update_all_channel_controllers_envelope();
+	update_channel_controller_parameters_related_to_tempo();
 }
 
 /**********************************************************************************/

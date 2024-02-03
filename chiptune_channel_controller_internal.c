@@ -90,11 +90,11 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 	p_channel_controller->is_damper_pedal_on = false;
 
 #define	DEFAULT_VIBRATO_MODULATION_IN_SEMITINE		(1)
-#define DEFAULT_VIBRATO_FREQUENCY					(4)
+#define DEFAULT_VIBRATO_RATE						(4)
 	p_channel_controller->vibrato_modulation_in_semitone = DEFAULT_VIBRATO_MODULATION_IN_SEMITINE;
 	p_channel_controller->p_vibrato_phase_table = &s_vibrato_phase_table[0];
 	p_channel_controller->vibrato_same_index_number
-			= (uint16_t)(sampling_rate/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_FREQUENCY);
+			= (uint16_t)(sampling_rate/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_RATE);
 
 #define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(7)
 	p_channel_controller->envelope_sustain_level = DEFAULT_ENVELOPE_SUSTAIN_LEVEL;
@@ -117,7 +117,7 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 
 /**********************************************************************************/
 
-void update_all_channel_controllers_envelope(void)
+void update_channel_controller_parameters_related_to_tempo(void)
 {
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 		update_channel_controller_envelope(i);

@@ -88,9 +88,9 @@ typedef struct _channel_controller
 } channel_controller_t;
 
 void initialize_channel_controller(void);
-void reset_channel_controller_midi_parameters_from_index(int8_t const index);
-void reset_channel_controller_all_parameters_from_index(int8_t const index);
-void update_all_channel_controllers_envelope(void);
+void update_channel_controller_parameters_related_to_tempo(void);
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index);
 
+void reset_channel_controller_midi_parameters_from_index(int8_t const index);
+void reset_channel_controller_all_parameters_from_index(int8_t const index);
 #endif // _CHIPTUNE_CHANNEL_CONTROLLER_INTERNAL_H_
