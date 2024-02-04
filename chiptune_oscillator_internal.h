@@ -64,15 +64,9 @@ typedef struct _oscillator
 #define IS_CHORUS_ASSOCIATE(STATE_BITS)				(((0x01 << STATE_CHORUS_ASSOCIATE_BIT) & (STATE_BITS)) ? true : false)
 
 
+uint16_t calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_semitones,
+							   int8_t const pitch_wheel_bend_range_in_semitones, int16_t const pitch_wheel,
+							   float pitch_chorus_bend_in_semitones, float *p_pitch_wheel_bend_in_semitone);
 
-void reset_all_oscillators(void);
-
-oscillator_t * const acquire_oscillator(int16_t * const p_index);
-int discard_oscillator(int16_t const index);
-
-int16_t const get_occupied_oscillator_number(void);
-int16_t get_head_occupied_oscillator_index();
-int16_t get_next_occupied_oscillator_index(int16_t const index);
-oscillator_t * const get_oscillator_pointer_from_index(int16_t const index);
-
+float obtain_oscillator_pitch_chorus_bend_in_semitone(int8_t const voice);
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_

@@ -26,8 +26,8 @@
 
 #define NULL_TICK									(UINT32_MAX)
 
-uint32_t get_sampling_rate(void);
-uint32_t get_resolution(void);
-float get_tempo(void);
+uint32_t const get_sampling_rate(void);
+uint32_t const get_resolution(void);
+float const get_tempo(void);
 
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_

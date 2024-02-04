@@ -35,7 +35,7 @@ void update_channel_controller_envelope(int8_t const index)
 {
 	uint32_t const sampling_rate = get_sampling_rate();
 	uint32_t const resolution = get_resolution();
-	float tempo = get_tempo();
+	float const tempo = get_tempo();
 
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
 

@@ -116,10 +116,10 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 		return ;
 	}
 
-	int16_t oscillator_index = get_head_occupied_oscillator_index();
-	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
+	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
+	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
 	for(int16_t i = 0; i < occupied_oscillator_number; i++){
-		oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
 		do {
 			if(voice != p_oscillator->voice){
 				break;
@@ -135,7 +135,7 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 						  p_oscillator->loudness/p_channel_controller->playing_volume,
 								  oscillator_index);
 		} while(0);
-		oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
+		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 	}
 }
 
@@ -155,14 +155,14 @@ static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const v
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RESET_ALL_CONTROLLERS :: voices = %d\r\n", tick, voice);
 	reset_channel_controller_midi_parameters_from_index(voice);
 
-	int16_t oscillator_index = get_head_occupied_oscillator_index();
-	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
+	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
+	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
 	for(int16_t i = 0; i < occupied_oscillator_number; i++){
-		oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
 		if( voice == p_oscillator->voice){
 			put_event(EVENT_FREE, oscillator_index, tick);
 		}
-		oscillator_index = get_next_occupied_oscillator_index(oscillator_index);
+		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 	}
 }
 

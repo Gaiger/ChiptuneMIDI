@@ -1,224 +1,66 @@
+#include <math.h>
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
+#include "chiptune_channel_controller_internal.h"
+
 #include "chiptune_oscillator_internal.h"
 
-#define MAX_OSCILLATOR_NUMBER						(MIDI_MAX_CHANNEL_NUMBER * 256)
-
-static oscillator_t s_oscillators[MAX_OSCILLATOR_NUMBER];
-static int16_t s_occupied_oscillator_number = 0;
-
-struct _occupied_oscillator_node
-{
-	int16_t previous;
-	int16_t next;
-}s_occupied_oscillator_nodes[MAX_OSCILLATOR_NUMBER];
-
-int16_t s_head_occupied_oscillator_index = UNUSED_OSCILLATOR;
-int16_t s_last_occupied_oscillator_index = UNUSED_OSCILLATOR;
-
-#ifdef _CHECK_OCCUPIED_OSCILLATOR_LIST
-/**********************************************************************************/
-
-void check_occupied_oscillator_list(void)
-{
-	if(0 > s_occupied_oscillator_number){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number = %d", s_occupied_oscillator_number);
-		return ;
-	}
-
-	if(0 == s_occupied_oscillator_number){
-		if(UNUSED_OSCILLATOR != s_head_occupied_oscillator_index){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number = 0"
-										 " but s_head_occupied_oscillator_index is not UNUSED_OSCILLATOR\r\n");
-		}
-		return ;
-	}
-
-	int16_t current_index;
-	int16_t counter;
-
-	current_index = s_head_occupied_oscillator_index;
-	counter= 1;
-	while(UNUSED_OSCILLATOR != s_occupied_oscillator_nodes[current_index].next)
-	{
-		counter += 1;
-		current_index = s_occupied_oscillator_nodes[current_index].next;
-	}
-	if(counter != s_occupied_oscillator_number){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: FORWARDING occupied_oscillators list length = %d"
-						", not matches s_occupied_oscillator_number = %d\r\n", counter, s_occupied_oscillator_number);
-
-		return ;
-	}
-
-	current_index = s_last_occupied_oscillator_index;
-	counter = 1;
-	while(UNUSED_OSCILLATOR != s_occupied_oscillator_nodes[current_index].previous)
-	{
-		counter += 1;
-		current_index = s_occupied_oscillator_nodes[current_index].previous;
-	}
-
-	if(counter != s_occupied_oscillator_number){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: BACKWARDING occupied_oscillators list length = %d"
-						", not matches s_occupied_oscillator_number = %d\r\n", counter, s_occupied_oscillator_number);
-
-		return ;
-	}
-}
-#define CHECK_OCCUPIED_OSCILLATOR_LIST()			\
-													do { \
-														check_occupied_oscillator_list(); \
-													} while(0)
-#else
-#define CHECK_OCCUPIED_OSCILLATOR_LIST()			\
-													do { \
-														(void)0; \
-													} while(0)
-#endif
 
 /**********************************************************************************/
 
-oscillator_t * const acquire_oscillator(int16_t * const p_index)
+#define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
+
+uint16_t calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_semitones,
+							   int8_t const pitch_wheel_bend_range_in_semitones, int16_t const pitch_wheel,
+							   float pitch_chorus_bend_in_semitones, float *p_pitch_wheel_bend_in_semitone)
 {
-	if(MAX_OSCILLATOR_NUMBER == s_occupied_oscillator_number){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillators are used\r\n");
-		return NULL;
-	}
-
-	int16_t i;
-	do {
-		if(0 == s_occupied_oscillator_number){
-			s_occupied_oscillator_nodes[0].previous = UNUSED_OSCILLATOR;
-			s_occupied_oscillator_nodes[0].next = UNUSED_OSCILLATOR;
-			s_head_occupied_oscillator_index = 0;
-			s_last_occupied_oscillator_index = 0;
-			i = 0;
-			break;
-		}
-
-		bool is_found = false;
-		for(i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-			if(UNUSED_OSCILLATOR == s_oscillators[i].voice){
-				s_occupied_oscillator_nodes[s_last_occupied_oscillator_index].next = i;
-				s_occupied_oscillator_nodes[i].previous = s_last_occupied_oscillator_index;
-				s_occupied_oscillator_nodes[i].next = UNUSED_OSCILLATOR;
-				s_last_occupied_oscillator_index = i;
-				is_found = true;
-				break;
-			}
-		}
-		if(false == is_found){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR::available oscillator is not found\r\n");
-			*p_index = UNUSED_OSCILLATOR;
-		}
-	} while(0);
-
-	s_occupied_oscillator_number += 1;
-	*p_index = i;
-	CHECK_OCCUPIED_OSCILLATOR_LIST();
-	return &s_oscillators[i];
+	// TO DO : too many float variable
+	float pitch_wheel_bend_in_semitone = ((pitch_wheel - MIDI_PITCH_WHEEL_CENTER)/(float)MIDI_PITCH_WHEEL_CENTER) * DIVIDE_BY_2(pitch_wheel_bend_range_in_semitones);
+	float corrected_note = (float)(note + (int16_t)tuning_in_semitones) + pitch_wheel_bend_in_semitone + pitch_chorus_bend_in_semitones;
+	/*
+	 * freq = 440 * 2**((note - 69)/12)
+	*/
+	float frequency = 440.0f * powf(2.0f, (corrected_note - 69.0f)/12.0f);
+	frequency = roundf(frequency * 100.0f + 0.5f)/100.0f;
+	/*
+	 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX + 1)/phase
+	*/
+	uint16_t delta_phase = (uint16_t)((UINT16_MAX + 1) * frequency / get_sampling_rate());
+	*p_pitch_wheel_bend_in_semitone = pitch_wheel_bend_in_semitone;
+	return delta_phase;
 }
 
 /**********************************************************************************/
 
-int discard_oscillator(int16_t const index)
+//xor-shift pesudo random https://en.wikipedia.org/wiki/Xorshift
+static uint32_t s_chorus_random_seed = 20240129;
+
+static uint16_t chorus_ramdom(void)
 {
-	int16_t previous_index = s_occupied_oscillator_nodes[index].previous;
-	int16_t next_index = s_occupied_oscillator_nodes[index].next;
-
-	do {
-		if(0 == s_occupied_oscillator_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all oscillators have been discarded\r\n");
-			return -1;
-		}
-
-		if(1 != s_occupied_oscillator_number
-				&& (UNUSED_OSCILLATOR == previous_index && UNUSED_OSCILLATOR == next_index)){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator %d is not in the occupied list\r\n", index);
-			return -2;
-		}
-	} while(0);
-
-	do {
-		if(index == s_head_occupied_oscillator_index){
-			s_head_occupied_oscillator_index = next_index;
-			s_occupied_oscillator_nodes[s_head_occupied_oscillator_index].previous = UNUSED_OSCILLATOR;
-			break;
-		}
-
-		if(index == s_last_occupied_oscillator_index){
-			s_last_occupied_oscillator_index = previous_index;
-			s_occupied_oscillator_nodes[s_last_occupied_oscillator_index].next = UNUSED_OSCILLATOR;
-			break;
-		}
-
-		s_occupied_oscillator_nodes[previous_index].next = next_index;
-		s_occupied_oscillator_nodes[next_index].previous = previous_index;
-	} while (0);
-
-	s_occupied_oscillator_nodes[index].previous = UNUSED_OSCILLATOR;
-	s_occupied_oscillator_nodes[index].next = UNUSED_OSCILLATOR;
-	s_oscillators[index].voice = UNUSED_OSCILLATOR;
-	s_occupied_oscillator_number -= 1;
-	CHECK_OCCUPIED_OSCILLATOR_LIST();
-	return 0;
+	s_chorus_random_seed ^= s_chorus_random_seed << 13;
+	s_chorus_random_seed ^= s_chorus_random_seed >> 17;
+	s_chorus_random_seed ^= s_chorus_random_seed << 5;
+	return (uint16_t)(s_chorus_random_seed);
 }
 
 /**********************************************************************************/
 
-int16_t const get_occupied_oscillator_number(void)
-{
-	return s_occupied_oscillator_number;
-}
+#define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
+												(((DIVIDE_BY_2(UINT16_MAX) + 1) - (VALUE))/(float)(DIVIDE_BY_2(UINT16_MAX) + 1))
 
-/**********************************************************************************/
-
-int16_t get_head_occupied_oscillator_index()
+float obtain_oscillator_pitch_chorus_bend_in_semitone(int8_t const voice)
 {
-	if(-1 == s_head_occupied_oscillator_index && 0 != s_occupied_oscillator_number){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_head_occupied_oscillator_index = -1:: but s_occupied_oscillator_number = %d\r\n",
-						s_occupied_oscillator_number);
+	channel_controller_t *p_channel_controller =  get_channel_controller_pointer_from_index(voice);
+	int8_t const chorus = p_channel_controller->chorus;
+	if(0 == chorus){
+		return 0.0;
 	}
-	return s_head_occupied_oscillator_index;
+	float const max_pitch_chorus_bend_in_semitones = p_channel_controller->max_pitch_chorus_bend_in_semitones;
+
+	uint16_t random = chorus_ramdom();
+	float pitch_chorus_bend_in_semitone;
+	pitch_chorus_bend_in_semitone = RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) *  chorus/(float)INT8_MAX;
+	pitch_chorus_bend_in_semitone *= max_pitch_chorus_bend_in_semitones;
+	//CHIPTUNE_PRINTF(cDeveloping, "pitch_chorus_bend_in_semitone = %3.2f\r\n", pitch_chorus_bend_in_semitone);
+	return pitch_chorus_bend_in_semitone;
 }
-
-/**********************************************************************************/
-
-int16_t get_next_occupied_oscillator_index(int16_t const index)
-{
-	if(false == (index >= 0 && index < MAX_OSCILLATOR_NUMBER)){
-		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
-		return UNUSED_OSCILLATOR;
-	}
-
-	return 	s_occupied_oscillator_nodes[index].next;
-}
-
-/**********************************************************************************/
-
-oscillator_t * const get_oscillator_pointer_from_index(int16_t const index)
-{
-	if(false == (index >= 0 && index < MAX_OSCILLATOR_NUMBER)){
-		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
-		return NULL;
-	}
-
-	return &s_oscillators[index];
-}
-
-/**********************************************************************************/
-
-void reset_all_oscillators(void)
-{
-	for(int16_t i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		s_oscillators[i].voice = UNUSED_OSCILLATOR;
-		s_occupied_oscillator_nodes[i]
-				= (struct _occupied_oscillator_node){.previous = UNUSED_OSCILLATOR, .next = UNUSED_OSCILLATOR};
-	}
-	s_head_occupied_oscillator_index = UNUSED_OSCILLATOR;
-	s_last_occupied_oscillator_index = UNUSED_OSCILLATOR;
-	s_occupied_oscillator_number = 0;
-}
-
-/**********************************************************************************/
