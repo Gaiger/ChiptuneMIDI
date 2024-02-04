@@ -271,6 +271,36 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 
 /**********************************************************************************/
 
+static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
+														  int8_t const voice, int8_t const note, int8_t const velocity)
+{
+	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
+	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+	for(int16_t i = 0; i < occupied_oscillator_number; i++){
+		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+		do {
+			if(note != p_oscillator->note){
+				break;
+			}
+			if(voice != p_oscillator->voice){
+				break;
+			}
+			if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
+				break;
+			}
+			if(true == IS_RESTING(p_oscillator->state_bits)){
+				break;
+			}
+
+			put_event(EVENT_REST, oscillator_index, tick);
+			process_chorus_effect(tick, EVENT_REST, voice, note, velocity, oscillator_index);
+		} while(0);
+		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+	}
+}
+
+/**********************************************************************************/
+
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 int8_t const voice, int8_t const note, int8_t const velocity)
 {
@@ -279,33 +309,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	int8_t actual_velocity = velocity;
 	do {
 		if(true == is_note_on){
-#if(1)
-			do {
-				int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-				int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
-				for(int16_t i = 0; i < occupied_oscillator_number; i++){
-					oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-					do {
-						if(note != p_oscillator->note){
-							break;
-						}
-						if(voice != p_oscillator->voice){
-							break;
-						}
-						if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
-							break;
-						}
-						if(true == IS_RESTING(p_oscillator->state_bits)){
-							break;
-						}
-
-						put_event(EVENT_REST, oscillator_index, tick);
-						process_chorus_effect(tick, EVENT_REST, voice, note, velocity, oscillator_index);
-					} while(0);
-					oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
-				}
-			} while(0);
-#endif
+			rest_occupied_oscillator_with_same_voice_note(tick, voice, note, velocity);
 			int16_t oscillator_index;
 			oscillator_t * const p_oscillator = acquire_event_freed_oscillator(&oscillator_index);
 			if(NULL == p_oscillator){
