@@ -19,11 +19,18 @@
 
 #define REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(INDEX)		\
 															((INDEX) & (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1))
+
 #define SUSTAIN_AMPLITUDE(LOUNDNESS, SUSTAIN_LEVEL)	\
 													((int16_t)CHANNEL_CONTROLLER_DIVIDE_BY_128((int32_t)(LOUNDNESS) * (SUSTAIN_LEVEL) * 16))
 
 #define ENVELOPE_AMPLITUDE(AMPLITUDE, TABLE_VALUE)	\
 													(CHANNEL_CONTROLLER_DIVIDE_BY_128((AMPLITUDE) * (int32_t)(TABLE_VALUE)))
+
+#define LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(NOTE_ON_LOUNDNESS, DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL) \
+													(\
+														(int16_t)CHANNEL_CONTROLLER_DIVIDE_BY_128((int32_t)(NOTE_ON_LOUNDNESS) \
+														* (DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL) * 32)\
+													)
 
 enum
 {
@@ -58,9 +65,6 @@ typedef struct _channel_controller
 	int8_t				pitch_wheel_bend_range_in_semitones;
 	int16_t				pitch_wheel;
 
-	bool				is_damper_pedal_on;
-	uint8_t				: 8;
-
 	int8_t				modulation_wheel;
 	int8_t				vibrato_modulation_in_semitone;
 	int8_t const *		p_vibrato_phase_table;
@@ -82,6 +86,9 @@ typedef struct _channel_controller
 	int8_t const *		p_envelope_release_table;
 	uint16_t			envelope_release_tick_number;
 	uint16_t			envelope_release_same_index_number;
+
+	bool				is_damper_pedal_on;
+	uint8_t				damper_on_but_note_off_loudness_level;
 
 	uint16_t			registered_parameter_number;
 	uint16_t			registered_parameter_value;

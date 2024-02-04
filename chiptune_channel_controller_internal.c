@@ -73,9 +73,9 @@ void reset_channel_controller_midi_parameters_from_index(int8_t const index)
 	p_channel_controller->pitch_wheel_bend_range_in_semitones = MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES;
 	p_channel_controller->pitch_wheel = MIDI_PITCH_WHEEL_CENTER;
 
-	p_channel_controller->is_damper_pedal_on = false;
 	p_channel_controller->modulation_wheel = 0;
 	p_channel_controller->chorus = 0;
+	p_channel_controller->is_damper_pedal_on = false;
 }
 
 /**********************************************************************************/
@@ -87,8 +87,6 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
 	p_channel_controller->waveform = WAVEFORM_TRIANGLE;
 
-	p_channel_controller->is_damper_pedal_on = false;
-
 #define	DEFAULT_VIBRATO_MODULATION_IN_SEMITINE		(1)
 #define DEFAULT_VIBRATO_RATE						(4)
 	p_channel_controller->vibrato_modulation_in_semitone = DEFAULT_VIBRATO_MODULATION_IN_SEMITINE;
@@ -96,6 +94,7 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 	p_channel_controller->vibrato_same_index_number
 			= (uint16_t)(sampling_rate/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_RATE);
 
+	//100% = level 8
 #define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(7)
 	p_channel_controller->envelope_sustain_level = DEFAULT_ENVELOPE_SUSTAIN_LEVEL;
 
@@ -110,8 +109,12 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 	p_channel_controller->p_envelope_attack_table = &s_linear_growth_table[0];
 	p_channel_controller->p_envelope_decay_table  = &s_gaussian_decline_table[0];
 	p_channel_controller->p_envelope_release_table = &s_exponential_decline_table[0];
-	update_channel_controller_envelope(index);
 
+	//100% = level 32
+#define DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL	(4)
+	p_channel_controller->damper_on_but_note_off_loudness_level = DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL;
+
+	update_channel_controller_envelope(index);
 	reset_channel_controller_midi_parameters_from_index(index);
 }
 

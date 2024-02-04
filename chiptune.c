@@ -160,10 +160,6 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 
 /**********************************************************************************/
 
-#define DIVIDE_BY_8(VALUE)							((VALUE) >> 3)
-#define REDUCE_LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(VALUE)	\
-													DIVIDE_BY_8(VALUE)
-
 #define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
 #define OSCILLATOR_NUMBER_FOR_CHORUS(VALUE)			(DIVIDE_BY_16(((VALUE) + 15)))
 
@@ -394,8 +390,9 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				   sizeof(oscillator_t));
 			RESET_STATE_BITES(p_oscillator->state_bits);
 			SET_NOTE_OFF(p_oscillator->state_bits);
-			p_oscillator->loudness
-					= REDUCE_LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->loudness);
+			p_oscillator->loudness =
+					LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->loudness,
+															   p_channel_controller->damper_on_but_note_off_loudness_level);
 			put_event(EVENT_ACTIVATE, reduced_loundness_oscillator_index, tick);
 			process_chorus_effect(tick, EVENT_ACTIVATE, voice, note, velocity, reduced_loundness_oscillator_index);
 		}
