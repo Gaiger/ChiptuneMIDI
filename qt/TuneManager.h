@@ -30,6 +30,7 @@ public:
 	int GetSamplingSize(void);
 
 	QByteArray FetchWave(int const length);
+	bool IsTuneEnding(void);
 public:
 	signals:
 	void TuneEnded(void);

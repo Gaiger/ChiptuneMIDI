@@ -38,6 +38,10 @@ public:
 		QByteArray generated_bytearray;
 		generated_bytearray.reserve(length);
 		for(int i = 0; i < length; i++) {
+			if(true == chiptune_is_tune_ending()){
+				break;
+			}
+
 			do
 			{
 				if(TuneManager::SamplingSize16Bit == m_sampling_size){
@@ -66,11 +70,11 @@ public:
 
 /**********************************************************************************/
 
-static TuneManagerPrivate *s_p_private = nullptr;
+static TuneManagerPrivate *s_p_private_instance = nullptr;
 
 extern "C" int get_midi_message(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message)
 {
-	return s_p_private->GetMidiMessage((int)index, p_tick, p_message);
+	return s_p_private_instance->GetMidiMessage((int)index, p_tick, p_message);
 }
 
 /**********************************************************************************/
@@ -96,7 +100,7 @@ TuneManager::TuneManager(int const sampling_rate, int const sampling_size, QObje
 	m_p_private->m_p_midi_file = nullptr;
 	m_p_private->m_p_public = this;
 
-	s_p_private = m_p_private;
+	s_p_private_instance = m_p_private;
 	chiptune_set_midi_message_callback(get_midi_message);
 }
 
@@ -150,7 +154,7 @@ int TuneManager::InitializeTune(void)
 	QObject::connect(&m_p_private->m_inquiring_tune_ending_timer, &QTimer::timeout, this, [&](){
 		do
 		{
-			if(false == chiptune_is_tune_ending()){
+			if(false == IsTuneEnding()){
 				break;
 			}
 			m_p_private->m_inquiring_tune_ending_timer.stop();
@@ -227,4 +231,22 @@ QByteArray TuneManager::FetchWave(int const length)
 
 	emit WaveFetched(fetched_wave_bytearray);
 	return fetched_wave_bytearray;
+}
+
+/**********************************************************************************/
+
+bool TuneManager::IsTuneEnding(void)
+{
+	do {
+		if(false == chiptune_is_tune_ending()){
+			break;
+		}
+		if(0 < m_p_private->m_wave_bytearray.size()){
+			break;
+		}
+
+		return true;
+	} while(0);
+
+	return false;
 }
