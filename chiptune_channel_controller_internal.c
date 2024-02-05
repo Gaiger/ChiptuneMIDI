@@ -31,7 +31,7 @@ channel_controller_t * const get_channel_controller_pointer_from_index(int8_t co
 
 /**********************************************************************************/
 
-void update_channel_controller_envelope(int8_t const index)
+static void update_channel_controller_envelope_parameters_related_to_tempo(int8_t const index)
 {
 	uint32_t const sampling_rate = get_sampling_rate();
 	uint32_t const resolution = get_resolution();
@@ -43,20 +43,29 @@ void update_channel_controller_envelope(int8_t const index)
 	p_channel_controller->envelope_attack_tick_number
 		= (uint16_t)(DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5);
 	p_channel_controller->envelope_attack_same_index_number
-				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND)/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
+		= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND)/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
 #define DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND	(0.01f)
 	p_channel_controller->envelope_decay_tick_number
 		= (uint16_t)(DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5);
 	p_channel_controller->envelope_decay_same_index_number
-				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND)/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
+		= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND)/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
 #define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.03f)
 	p_channel_controller->envelope_release_tick_number
 		= (uint16_t)(DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5f);
 
 	p_channel_controller->envelope_release_same_index_number
-				= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND)/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
+		= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND)/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
+
+#define DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND \
+													(8.0)
+	//p_channel_controller->envelope_damper_on_but_note_off_sustain_tick_number
+	//	= (uint32_t)(DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND * resolution * tempo/60.0f + 0.5f);
+	p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number
+		= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND)
+					 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
+	//p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number = UINT16_MAX;
 }
 
 /**********************************************************************************/
@@ -111,10 +120,11 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 	p_channel_controller->p_envelope_release_table = &s_exponential_decline_table[0];
 
 	//100% = level 32
-#define DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL	(4)
+#define DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL	(6)
 	p_channel_controller->damper_on_but_note_off_loudness_level = DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL;
+	p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table = &s_linear_decline_table[0];
 
-	update_channel_controller_envelope(index);
+	update_channel_controller_envelope_parameters_related_to_tempo(index);
 	reset_channel_controller_midi_parameters_from_index(index);
 }
 
@@ -123,7 +133,7 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 void update_channel_controller_parameters_related_to_tempo(void)
 {
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		update_channel_controller_envelope(i);
+		update_channel_controller_envelope_parameters_related_to_tempo(i);
 	}
 }
 

@@ -393,6 +393,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->loudness =
 					LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->loudness,
 															   p_channel_controller->damper_on_but_note_off_loudness_level);
+			p_oscillator->amplitude = 0;
+			p_oscillator->envelope_same_index_count = 0;
+			p_oscillator->envelope_table_index = 0;
+			p_oscillator->release_reference_amplitude = 0;
 			put_event(EVENT_ACTIVATE, reduced_loundness_oscillator_index, tick);
 			process_chorus_effect(tick, EVENT_ACTIVATE, voice, note, velocity, reduced_loundness_oscillator_index);
 		}
@@ -912,17 +916,27 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 
 void perform_envelope(oscillator_t * const p_oscillator)
 {
-	do
-	{
+	do {
+		channel_controller_t *p_channel_controller
+				= get_channel_controller_pointer_from_index(p_oscillator->voice);
 		if(ENVELOPE_SUSTAIN == p_oscillator->envelope_state){
+			if(true == IS_NOTE_ON(p_oscillator->state_bits)){
+				break;
+			}
+
+			if(UINT16_MAX == p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number){
+				break;
+			}
+		}
+#if(0)
+		if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 			break;
 		}
-
+#endif
 		if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->envelope_table_index){
 			break;
 		}
 
-		channel_controller_t *p_channel_controller = get_channel_controller_pointer_from_index(p_oscillator->voice);
 		uint16_t envelope_same_index_number = 0;
 		switch(p_oscillator->envelope_state)
 		{
@@ -931,6 +945,9 @@ void perform_envelope(oscillator_t * const p_oscillator)
 			break;
 		case ENVELOPE_DECAY:
 			envelope_same_index_number = p_channel_controller->envelope_decay_same_index_number;
+			break;
+		case ENVELOPE_SUSTAIN:
+			envelope_same_index_number = p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number;
 			break;
 		case ENVELOPE_RELEASE:
 			envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
@@ -946,6 +963,10 @@ void perform_envelope(oscillator_t * const p_oscillator)
 		p_oscillator->envelope_table_index += 1;
 		if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->envelope_table_index){
 			do {
+				if(ENVELOPE_SUSTAIN == p_oscillator->envelope_state){
+					break;
+				}
+
 				if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
 					break;
 				}
@@ -986,6 +1007,11 @@ void perform_envelope(oscillator_t * const p_oscillator)
 			delta_amplitude = p_oscillator->loudness - sustain_ampitude;
 			shift_amplitude = sustain_ampitude;
 		}	break;
+		case ENVELOPE_SUSTAIN :
+			p_envelope_table = p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table;
+			delta_amplitude = p_oscillator->loudness;
+			shift_amplitude = 0;
+			break;
 		case ENVELOPE_RELEASE: {
 			p_envelope_table = p_channel_controller->p_envelope_release_table;
 			delta_amplitude = p_oscillator->release_reference_amplitude;
@@ -993,7 +1019,7 @@ void perform_envelope(oscillator_t * const p_oscillator)
 		}
 
 		p_oscillator->amplitude = ENVELOPE_AMPLITUDE(delta_amplitude,
-																		   p_envelope_table[p_oscillator->envelope_table_index]);
+													 p_envelope_table[p_oscillator->envelope_table_index]);
 		p_oscillator->amplitude	+= shift_amplitude;
 		if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
 			break;

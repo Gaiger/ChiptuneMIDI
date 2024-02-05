@@ -88,7 +88,11 @@ typedef struct _channel_controller
 	uint16_t			envelope_release_same_index_number;
 
 	bool				is_damper_pedal_on;
+
 	uint8_t				damper_on_but_note_off_loudness_level;
+	int8_t const *		p_envelope_damper_on_but_note_off_sustain_table;
+	//uint32_t			envelope_damper_on_but_note_off_sustain_tick_number;
+	uint16_t			envelope_damper_on_but_note_off_sustain_same_index_number;
 
 	uint16_t			registered_parameter_number;
 	uint16_t			registered_parameter_value;
