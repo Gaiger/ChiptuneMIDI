@@ -130,6 +130,9 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 			if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
 				break;
 			}
+			if(true == IS_FREEING(p_oscillator->state_bits)){
+				break;
+			}
 			put_event(EVENT_FREE, oscillator_index, tick);
 			process_chorus_effect(tick, EVENT_FREE, voice, p_oscillator->note,
 						  p_oscillator->loudness/p_channel_controller->playing_volume,
