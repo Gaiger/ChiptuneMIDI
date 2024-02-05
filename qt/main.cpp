@@ -103,6 +103,7 @@ unsigned char const * const wav_file_header(unsigned int const number_of_channel
 }
 
 /**********************************************************************************/
+#include <QElapsedTimer>
 #include <QFile>
 
 int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
@@ -112,6 +113,9 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 	}
 	qDebug() << "saving as wav file " << filename;
 
+	QElapsedTimer elasped_timer;
+
+	elasped_timer.start();
 	p_tune_manager->InitializeTune();
 	int data_buffer_size =  1 * p_tune_manager->GetSamplingRate() * p_tune_manager->GetSamplingSize()/8;
 	QByteArray wave_data;
@@ -122,7 +126,7 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 			break;
 		}
 	}
-
+	qDebug() << "Generate wave data elpased" << elasped_timer.elapsed() << "ms";
 	int header_size = 0;
 	char *p_wav_header = (char*)wav_file_header(
 				1, p_tune_manager->GetSamplingRate(),
@@ -190,8 +194,8 @@ int main(int argc, char* argv[])
 #if(1)
 	TuneManager tune_manager(16000, 16);
 	QThread tune_manager_working_thread;
-	tune_manager.moveToThread(&tune_manager_working_thread);
-	tune_manager_working_thread.start(QThread::HighPriority);
+	//tune_manager.moveToThread(&tune_manager_working_thread);
+	//tune_manager_working_thread.start(QThread::HighPriority);
 	tune_manager.SetMidiFile(filename);
 	SaveAsWavFile(&tune_manager, "20240206ankokuButo.wav");
 	//SaveAsWavFile(&tune_manager, "20240205Laputa.wav");
