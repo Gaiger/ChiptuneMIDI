@@ -723,7 +723,19 @@ static int32_t get_max_simultaneous_loudness(void)
 			int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
 			for(int16_t i = 0; i < occupied_oscillator_number; i++){
 				oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-				sum_loudness += p_oscillator->loudness;
+				if(false == IS_ACTIVATED(p_oscillator->state_bits)){
+					continue;
+				}
+				int16_t loudness = p_oscillator->loudness;
+				if(false == IS_NOTE_ON(p_oscillator->state_bits)){
+					channel_controller_t const *p_channel_controller
+							= get_channel_controller_pointer_from_index(p_oscillator->voice);
+					uint8_t damper_on_but_note_off_loudness_level
+							= p_channel_controller->damper_on_but_note_off_loudness_level;
+					loudness = LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(loudness,
+																		  damper_on_but_note_off_loudness_level);
+				}
+				sum_loudness += loudness;
 				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 			}
 
@@ -949,13 +961,6 @@ void perform_envelope(oscillator_t * const p_oscillator)
 		p_oscillator->envelope_table_index += 1;
 		if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->envelope_table_index){
 			do {
-				if(ENVELOPE_SUSTAIN == p_oscillator->envelope_state){
-					break;
-				}
-
-				if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
-					break;
-				}
 
 				p_oscillator->envelope_table_index = 0;
 				switch(p_oscillator->envelope_state)
@@ -968,6 +973,10 @@ void perform_envelope(oscillator_t * const p_oscillator)
 					p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
 					p_oscillator->amplitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
 									  p_channel_controller->envelope_sustain_level);
+					break;
+				case ENVELOPE_SUSTAIN:
+				case ENVELOPE_RELEASE:
+					SET_DEACTIVATED(p_oscillator->state_bits);
 					break;
 				}
 				p_oscillator->release_reference_amplitude = p_oscillator->amplitude;

@@ -44,6 +44,7 @@ typedef struct _oscillator
 
 #define STATE_ACTIVATED_BIT							(0)
 #define SET_ACTIVATED(STATE_BITS)					( (STATE_BITS) |= (0x01 << STATE_ACTIVATED_BIT) )
+#define SET_DEACTIVATED(STATE_BITS)					( (STATE_BITS) &= (~(0x01 << STATE_ACTIVATED_BIT)) )
 #define IS_ACTIVATED(STATE_BITS)					(((0x01 << STATE_ACTIVATED_BIT) & (STATE_BITS) ) ? true : false)
 
 #define STATE_RESTING_BIT							(1)

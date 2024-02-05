@@ -29,7 +29,7 @@
 #define LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(NOTE_ON_LOUNDNESS, DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL) \
 													(\
 														(int16_t)CHANNEL_CONTROLLER_DIVIDE_BY_128((int32_t)(NOTE_ON_LOUNDNESS) \
-														* (DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL) * 32)\
+														* (DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL) * 4)\
 													)
 
 enum
@@ -83,14 +83,16 @@ typedef struct _channel_controller
 
 	float				envelope_release_duration_in_second;
 	int8_t const *		p_envelope_release_table;
-	uint16_t			envelope_release_tick_number;
 	uint16_t			envelope_release_same_index_number;
+	uint16_t			envelope_release_tick_number;
 
 	bool				is_damper_pedal_on;
 
+	float				envelope_damper_on_but_note_off_sustain_duration_in_second;
 	uint8_t				damper_on_but_note_off_loudness_level;
 	int8_t const *		p_envelope_damper_on_but_note_off_sustain_table;
 	uint16_t			envelope_damper_on_but_note_off_sustain_same_index_number;
+	uint16_t			envelope_damper_on_but_note_off_sustain_tick_number;
 
 	uint16_t			registered_parameter_number;
 	uint16_t			registered_parameter_value;
