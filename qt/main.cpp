@@ -194,8 +194,8 @@ int main(int argc, char* argv[])
 #if(1)
 	TuneManager tune_manager(16000, 16);
 	QThread tune_manager_working_thread;
-	//tune_manager.moveToThread(&tune_manager_working_thread);
-	//tune_manager_working_thread.start(QThread::HighPriority);
+	tune_manager.moveToThread(&tune_manager_working_thread);
+	tune_manager_working_thread.start(QThread::HighPriority);
 	tune_manager.SetMidiFile(filename);
 	SaveAsWavFile(&tune_manager, "20240206ankokuButo.wav");
 	//SaveAsWavFile(&tune_manager, "20240205Laputa.wav");
