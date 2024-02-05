@@ -138,48 +138,40 @@ void update_channel_controller_parameters_related_to_tempo(void)
 static void initialize_envelope_tables(void)
 {
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
-		s_linear_decline_table[i] = (int8_t)(INT8_MAX * ((CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - i)/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
+		int ii = (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH  - i);
+		s_linear_decline_table[i] = (int8_t)(INT8_MAX * (ii/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
 	}
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
-		s_linear_growth_table[i] = (int8_t)(INT8_MAX * (i/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
+		s_linear_growth_table[i]
+				= s_linear_decline_table[(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1) - i];
 	}
 
 	/*
 	 * exponential :
-	 *  INT8_MAX * exp(-alpha * 63) = 1 -> alpha = -ln(1/INT8_MAX)/63
+	 *  INT8_MAX * exp(-alpha * (TABLE_LENGTH -1)) = 1 -> alpha = -ln(1/INT8_MAX)/(TABLE_LENGTH -1)
 	*/
-
-#define ALPHA										(0.07689185851f)
+	const float alpha = -logf(1/(float)INT8_MAX)/(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1);
 	s_exponential_decline_table[0] = INT8_MAX;
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
-		s_exponential_decline_table[i] = (int8_t)(INT8_MAX * expf(-ALPHA * i));
-		//printf("i = %d, value = %d\r\n", i, s_exponential_decline_table[i]);
+		s_exponential_decline_table[i] = (int8_t)(INT8_MAX * expf( -alpha * i) + 0.5);
 	}
-
-	s_exponential_growth_table[0] = 0;
-	for(int16_t i = 1; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
-		s_exponential_growth_table[i] = (int8_t)(expf(ALPHA * (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - i)));
-		//printf("i = %d, value = %d\r\n", i, s_exponential_growth_table[i]);
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		s_exponential_growth_table[i]
+				= s_exponential_decline_table[(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1) - i];
 	}
 
 	/*
 	 * gaussian
-	 *  INT8_MAX * exp(-beta * 63**2) = 1 -> beta = -ln(INT8_MAX - 1)/(1 - 63**2)
+	 *  INT8_MAX * exp(-beta * (TABLE_LENGTH -1)**2) = 1 -> beta = -ln(INT8_MAX - 1)/(1 - (TABLE_LENGTH -1)**2)
 	*/
-#define BETA										(0.00121882104f)
+	const float beta = -logf(INT8_MAX - 1)/(1 - powf((float)(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1), 2.0f));
 	s_gaussian_decline_table[0] = INT8_MAX;
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
-		s_gaussian_decline_table[i] = (int8_t)(INT8_MAX * expf(-BETA * i * i));
-		//printf("i = %d, value = %d\r\n", i, s_gaussian_decline_table[i]);
+		s_gaussian_decline_table[i] = (int8_t)(INT8_MAX * expf(-beta * i * i) + 0.5);
 	}
-
-	s_gaussian_growth_table[0] = 0;
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
-		s_gaussian_growth_table[i] = (int8_t)(INT8_MAX * expf(-BETA * (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - i) * (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - i)));
-		//printf("i = %d, value = %d\r\n", i, s_gaussian_growth_table[i]);
+		s_gaussian_growth_table[i] = s_gaussian_decline_table[(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1) - i];
 	}
-
-	//printf("\r\n");
 }
 
 /**********************************************************************************/
