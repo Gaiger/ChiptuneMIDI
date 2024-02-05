@@ -165,7 +165,6 @@ static void initialize_envelope_tables(void)
 	 *  INT8_MAX * exp(-beta * (TABLE_LENGTH -1)**2) = 1 -> beta = -ln(INT8_MAX - 1)/(1 - (TABLE_LENGTH -1)**2)
 	*/
 	const float beta = -logf(INT8_MAX - 1)/(1 - powf((float)(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1), 2.0f));
-	s_gaussian_decline_table[0] = INT8_MAX;
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
 		s_gaussian_decline_table[i] = (int8_t)(INT8_MAX * expf(-beta * i * i) + 0.5);
 	}
