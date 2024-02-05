@@ -89,15 +89,6 @@ uint32_t s_chorus_delta_tick = (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_
 															= (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ 60.0 + 0.5); \
 													} while(0)
 
-#define DEMPER_PEDAL_ATTENUATION_TIME_IN_SECOND						(4.0)
-static uint32_t s_damper_pedal_attenuation_tick	= (uint32_t)((DEMPER_PEDAL_ATTENUATION_TIME_IN_SECOND) * (DEFAULT_RESOLUTION) * (DEFAULT_TEMPO / 60.0) + 0.5);
-
-#define UPDATE_DAMPER_PEDAL_ATTENUATION_TICK()		\
-													do { \
-														s_damper_pedal_attenuation_tick \
-															= (uint32_t)(DEMPER_PEDAL_ATTENUATION_TIME_IN_SECOND * (s_resolution) * (s_tempo/60.0) + 0.5); \
-													} while(0)
-
 static int(*s_handler_get_midi_message)(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message) = NULL;
 
 static bool s_is_tune_ending = false;
@@ -850,7 +841,6 @@ void chiptune_set_tempo(float const tempo)
 	CORRECT_TIME_BASE();
 	s_tempo = tempo;
 	UPDATE_TIME_BASE_UNIT();
-	UPDATE_DAMPER_PEDAL_ATTENUATION_TICK();
 	UPDATE_CHORUS_DELTA_TICK();
 	update_channel_controller_parameters_related_to_tempo();
 }
@@ -917,22 +907,18 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 void perform_envelope(oscillator_t * const p_oscillator)
 {
 	do {
-		channel_controller_t *p_channel_controller
+		channel_controller_t const *p_channel_controller
 				= get_channel_controller_pointer_from_index(p_oscillator->voice);
+
 		if(ENVELOPE_SUSTAIN == p_oscillator->envelope_state){
 			if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 				break;
 			}
-
 			if(UINT16_MAX == p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number){
 				break;
 			}
 		}
-#if(0)
-		if(true == IS_NOTE_ON(p_oscillator->state_bits)){
-			break;
-		}
-#endif
+
 		if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->envelope_table_index){
 			break;
 		}

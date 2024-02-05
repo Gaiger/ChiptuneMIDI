@@ -74,15 +74,14 @@ typedef struct _channel_controller
 	float				max_pitch_chorus_bend_in_semitones;
 
 	int8_t const *		p_envelope_attack_table;
-	uint16_t			envelope_attack_tick_number;
 	uint16_t			envelope_attack_same_index_number;
 
 	int8_t const *		p_envelope_decay_table;
-	uint16_t			envelope_decay_tick_number;
 	uint16_t			envelope_decay_same_index_number;
 
 	uint8_t				envelope_sustain_level;
 
+	float				envelope_release_duration_in_second;
 	int8_t const *		p_envelope_release_table;
 	uint16_t			envelope_release_tick_number;
 	uint16_t			envelope_release_same_index_number;
@@ -91,7 +90,6 @@ typedef struct _channel_controller
 
 	uint8_t				damper_on_but_note_off_loudness_level;
 	int8_t const *		p_envelope_damper_on_but_note_off_sustain_table;
-	//uint32_t			envelope_damper_on_but_note_off_sustain_tick_number;
 	uint16_t			envelope_damper_on_but_note_off_sustain_same_index_number;
 
 	uint16_t			registered_parameter_number;
