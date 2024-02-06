@@ -129,16 +129,13 @@ static inline void swap_processing_channel() { s_is_processing_left_channel = !s
 static int process_program_change_message(uint32_t const tick, int8_t const voice, uint8_t const number)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: ", tick);
+	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 #define MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0		(9)
 #define MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1		(10)
-	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-	do
-	{
-		if(false == (MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice || MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice)){
-			break;
-		}
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice
+			|| MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
 		p_channel_controller->waveform = WAVEFORM_NOISE;
-	}while(0);
+	}
 
 	switch(p_channel_controller->waveform)
 	{
@@ -406,7 +403,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	} while(0);
 
 	char pitch_wheel_bend_string[32] = "";
-	if(true == is_note_on && 0.0f != pitch_wheel_bend_in_semitone){
+	if(true == is_note_on
+			&& 0.0f != pitch_wheel_bend_in_semitone){
 		snprintf(&pitch_wheel_bend_string[0], sizeof(pitch_wheel_bend_string),
 			", pitch wheel bend = %+3.2f", pitch_wheel_bend_in_semitone);
 	}
@@ -580,51 +578,46 @@ static int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_
 
 /**********************************************************************************/
 
-static void release_all_channels_damper_pedal(const uint32_t tick)
+static int release_all_channels_damper_pedal(const uint32_t tick)
 {
-	for(int8_t k = 0; k < MIDI_MAX_CHANNEL_NUMBER; k++){
-		do {
-			channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(k);
-			if(false == p_channel_controller->is_damper_pedal_on){
-				break;
-			}
+	int ret = 0;
+	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
+	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+	for(int16_t i = 0; i < occupied_oscillator_number; i++){
+		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+		channel_controller_t * const p_channel_controller
+				= get_channel_controller_pointer_from_index(p_oscillator->voice);
 
-			int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-			int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
-			for(int16_t i = 0; i < occupied_oscillator_number; i++){
-				oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-				if(k == p_oscillator->voice){
-					put_event(EVENT_FREE, oscillator_index, tick);
-				}
-				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
-			}
-		}while(0);
+		if(true == p_channel_controller->is_damper_pedal_on){
+			ret = 1;
+			put_event(EVENT_FREE, oscillator_index, tick);
+		}
+		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 	}
+
+	return ret;
 }
 
 /**********************************************************************************/
 
 int process_ending(const uint32_t tick)
 {
-	release_all_channels_damper_pedal(tick);
-	while(1)
-	{
-		uint32_t next_triggering_tick = get_next_event_triggering_tick();
-		if(NULL_TICK == next_triggering_tick){
-			break;
-		}
-		process_events(next_triggering_tick);
-	}
-	return 0;
+	return release_all_channels_damper_pedal(tick);
 }
 
 /**********************************************************************************/
+
+uint32_t s_previous_run_timely_tick = NULL_TICK;
 
 struct _tick_message s_fetched_tick_message = {NULL_TICK, NULL_MESSAGE};
 uint32_t s_fetched_event_tick = NULL_TICK;
 
 static int process_timely_midi_message(void)
 {
+	if(CURRENT_TICK() == s_previous_run_timely_tick){
+		return 1;
+	}
+
 	int ret = 0;
 	while(1)
 	{
@@ -642,15 +635,15 @@ static int process_timely_midi_message(void)
 
 		if(true == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)
 				&& NULL_TICK == s_fetched_event_tick){
-			process_ending(CURRENT_TICK());
-			ret = -1;
-			break;
+			if(0 == process_ending(CURRENT_TICK())){
+				ret = -1;
+				break;
+			}
 		}
 
 		bool is_both_after_current_tick = true;
 
-		do
-		{
+		do {
 			if(true == IS_AFTER_CURRENT_TIME(s_fetched_tick_message.tick)){
 				break;
 			}
@@ -677,6 +670,8 @@ static int process_timely_midi_message(void)
 			break;
 		}
 	}
+
+	s_previous_run_timely_tick = CURRENT_TICK();
 	return ret;
 }
 
@@ -716,8 +711,9 @@ static int32_t get_max_simultaneous_loudness(void)
 
 		if(true == IS_NULL_TICK_MESSAGE(tick_message)
 				&& NULL_TICK == event_tick){
-			process_ending(tick);
-			break;
+			if(0 == process_ending(tick)){
+				break;
+			}
 		}
 
 		tick = (tick_message.tick < event_tick) ? tick_message.tick : event_tick;
@@ -794,7 +790,7 @@ static int32_t get_max_simultaneous_loudness(void)
 	return max_loudness;
 }
 
-#ifdef _RIGHT_SHIFT_FOR_NORMALIZING_LOUNDNESS
+#ifdef _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
 
 /**********************************************************************************/
 
@@ -821,7 +817,7 @@ uint32_t number_of_roundup_to_power2_left_shift_bits(uint32_t const value)
 }
 
 int32_t g_loudness_nomalization_right_shift = 16;
-#define UPDATE_LOUNDNESS_NORMALIZER()				\
+#define UPDATE_AMPLITUDE_NORMALIZER()				\
 													do { \
 														uint32_t max_loudness = get_max_simultaneous_loudness(); \
 														g_loudness_nomalization_right_shift \
@@ -829,7 +825,7 @@ int32_t g_loudness_nomalization_right_shift = 16;
 													} while(0)
 #else
 int32_t g_max_loudness = 1 << 16;
-#define UPDATE_LOUNDNESS_NORMALIZER()				\
+#define UPDATE_AMPLITUDE_NORMALIZER()				\
 													do { \
 														g_max_loudness = get_max_simultaneous_loudness(); \
 													} while(0)
@@ -849,13 +845,14 @@ void chiptune_initialize(bool is_stereo,
 	RESET_CURRENT_TIME();
 	s_is_tune_ending = false;
 	s_midi_messge_index = 0;
+	s_previous_run_timely_tick = NULL_TICK;
 	SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
 
 	initialize_channel_controller();
 	clean_all_events();
 
 	UPDATE_TIME_BASE_UNIT();
-	UPDATE_LOUNDNESS_NORMALIZER();
+	UPDATE_AMPLITUDE_NORMALIZER();
 	process_timely_midi_message();
 	return ;
 }
@@ -891,10 +888,9 @@ void chiptune_set_tempo(float const tempo)
 void perform_vibrato(oscillator_t * const p_oscillator)
 {
 	do {
-		if(true == is_stereo()){
-			if(false == is_processing_left_channel()){
-				break;
-			}
+		if(true == is_stereo()
+				&& false == is_processing_left_channel()){
+			break;
 		}
 
 		channel_controller_t *p_channel_controller = get_channel_controller_pointer_from_index(p_oscillator->voice);
@@ -921,10 +917,9 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 void perform_envelope(oscillator_t * const p_oscillator)
 {
 	do {
-		if(true == is_stereo()){
-			if(false == is_processing_left_channel()){
-				break;
-			}
+		if(true == is_stereo()
+				&& false == is_processing_left_channel()){
+			break;
 		}
 
 		channel_controller_t const *p_channel_controller
@@ -967,28 +962,35 @@ void perform_envelope(oscillator_t * const p_oscillator)
 
 		p_oscillator->envelope_same_index_count = 0;
 		p_oscillator->envelope_table_index += 1;
-		if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->envelope_table_index){
-			do {
 
-				p_oscillator->envelope_table_index = 0;
-				switch(p_oscillator->envelope_state)
-				{
-				case ENVELOPE_ATTACK:
-					p_oscillator->envelope_state = ENVELOPE_DECAY;
-					p_oscillator->amplitude = p_oscillator->loudness;
-					break;
-				case ENVELOPE_DECAY:
-					p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
-					p_oscillator->amplitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-									  p_channel_controller->envelope_sustain_level);
-					break;
-				case ENVELOPE_SUSTAIN:
-				case ENVELOPE_RELEASE:
-					SET_DEACTIVATED(p_oscillator->state_bits);
-					break;
-				}
-				p_oscillator->release_reference_amplitude = p_oscillator->amplitude;
-			} while(0);
+		bool is_out_of_lookup_table_range = false;
+		do
+		{
+			if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH > p_oscillator->envelope_table_index){
+				break;
+			}
+
+			p_oscillator->envelope_table_index = 0;
+			switch(p_oscillator->envelope_state)
+			{
+			case ENVELOPE_ATTACK:
+				p_oscillator->envelope_state = ENVELOPE_DECAY;
+				p_oscillator->amplitude = p_oscillator->loudness;
+				break;
+			case ENVELOPE_DECAY:
+				p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
+				p_oscillator->amplitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
+								  p_channel_controller->envelope_sustain_level);
+				break;
+			case ENVELOPE_SUSTAIN:
+			case ENVELOPE_RELEASE:
+				SET_DEACTIVATED(p_oscillator->state_bits);
+				break;
+			}
+			p_oscillator->release_reference_amplitude = p_oscillator->amplitude;
+			is_out_of_lookup_table_range = true;
+		} while(0);
+		if(true == is_out_of_lookup_table_range){
 			break;
 		}
 
@@ -1115,7 +1117,7 @@ int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
 
 /**********************************************************************************/
 
-#ifdef _RIGHT_SHIFT_FOR_NORMALIZING_LOUNDNESS
+#ifdef _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
 #define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE) >> g_loudness_nomalization_right_shift))
 #else
 #define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE)/(int32_t)g_max_loudness))
@@ -1123,12 +1125,8 @@ int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
 
 int16_t chiptune_fetch_16bit_wave(void)
 {
-	if(true == is_processing_left_channel()){
-		if(-1 == process_timely_midi_message()){
-			if(0 == get_event_occupied_oscillator_number()){
-				s_is_tune_ending = true;
-			}
-		}
+	if(-1 == process_timely_midi_message()){
+		s_is_tune_ending = true;
 	}
 
 	int64_t accumulated_wave_amplitude = 0;
