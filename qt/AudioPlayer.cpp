@@ -70,13 +70,13 @@ void AudioPlayer::CleanAudioResources(void)
 
 /**********************************************************************************/
 
-void AudioPlayer::InitializeAudioResources(int const filling_buffer_time_interval,
-										   int const sampling_rate, int const sampling_size, int const channel_counts)
+void AudioPlayer::InitializeAudioResources(int const channel_counts, int const sampling_rate, int const sampling_size,
+										   int const fetching_wave_interval_in_milliseconds)
 {
 	CleanAudioResources();
 	QAudioFormat format;
-	format.setSampleRate(sampling_rate);
 	format.setChannelCount((int)channel_counts);
+	format.setSampleRate(sampling_rate);
 	format.setCodec("audio/pcm");
 	format.setByteOrder(QAudioFormat::LittleEndian);
 
@@ -109,10 +109,9 @@ void AudioPlayer::InitializeAudioResources(int const filling_buffer_time_interva
 	QObject::connect(m_p_audio_output, &QAudioOutput::stateChanged, this, &AudioPlayer::HandleAudioStateChanged);
 	m_p_audio_output->setVolume(1.00);
 
-
-	int audio_buffer_size = 2.0 * filling_buffer_time_interval
+	int audio_buffer_size = 2.0 * fetching_wave_interval_in_milliseconds
 			* format.sampleRate() * format.channelCount() * format.sampleSize()/8/1000;
-	m_p_audio_output->setNotifyInterval(filling_buffer_time_interval);
+	m_p_audio_output->setNotifyInterval(fetching_wave_interval_in_milliseconds);
 
 	m_p_audio_output->setBufferSize(audio_buffer_size);
 	qDebug() <<" m_p_audio_output->bufferSize() = " << m_p_audio_output->bufferSize();
@@ -127,7 +126,8 @@ void AudioPlayer::Play(bool const is_blocking)
 {
 	m_p_tune_manager->InitializeTune();
 
-	InitializeAudioResources(100, m_p_tune_manager->GetSamplingRate(), m_p_tune_manager->GetSamplingSize(), 1);
+	InitializeAudioResources(m_p_tune_manager->GetNumberOfChannels(),
+							 m_p_tune_manager->GetSamplingRate(), m_p_tune_manager->GetSamplingSize(), 100);
 	AudioPlayer::AppendWave(m_p_tune_manager->FetchWave(m_p_audio_output->bufferSize()));
 	m_p_audio_output->start(m_p_audio_io_device);
 

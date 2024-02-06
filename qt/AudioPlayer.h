@@ -34,8 +34,8 @@ private slots:
 	void HandleAudioStateChanged(QAudio::State state);
 
 private :
-	void InitializeAudioResources(int const filling_buffer_time_interval,
-								  int const sampling_rate, int const sampling_size, int const channel_counts);
+	void InitializeAudioResources(int const channel_counts, int const sampling_rate, int const sampling_size,
+								  int fetching_wave_interval_in_milliseconds);
 	void AppendWave(QByteArray wave_bytearray);
 	void CleanAudioResources();
 private:

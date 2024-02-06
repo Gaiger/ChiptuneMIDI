@@ -27,6 +27,8 @@ typedef double chiptune_float;
 static float s_tempo = DEFAULT_TEMPO;
 static uint32_t s_sampling_rate = DEFAULT_SAMPLING_RATE;
 static uint32_t s_resolution = DEFAULT_RESOLUTION;
+static bool s_is_stereo = false;
+bool s_is_left_channel = true;
 
 #ifdef _INCREMENTAL_SAMPLE_INDEX
 static uint32_t s_current_sample_index = 0;
@@ -825,8 +827,11 @@ int32_t g_max_loudness = 1 << 16;
 
 /**********************************************************************************/
 
-void chiptune_initialize(uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
+void chiptune_initialize(bool is_stereo,
+						 uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
 {
+	s_is_stereo = is_stereo;
+	s_is_left_channel = true;
 	s_sampling_rate = sampling_rate;
 	s_resolution = resolution;
 	s_total_message_number = total_message_number;
@@ -993,7 +998,6 @@ void perform_envelope(oscillator_t * const p_oscillator)
 		case ENVELOPE_ATTACK:
 			p_envelope_table = p_channel_controller->p_envelope_attack_table;
 			delta_amplitude = p_oscillator->loudness;
-			shift_amplitude = 0;
 			break;
 		case ENVELOPE_DECAY: {
 			p_envelope_table = p_channel_controller->p_envelope_decay_table;
@@ -1005,12 +1009,11 @@ void perform_envelope(oscillator_t * const p_oscillator)
 		case ENVELOPE_SUSTAIN :
 			p_envelope_table = p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table;
 			delta_amplitude = p_oscillator->loudness;
-			shift_amplitude = 0;
 			break;
-		case ENVELOPE_RELEASE: {
+		case ENVELOPE_RELEASE:
 			p_envelope_table = p_channel_controller->p_envelope_release_table;
 			delta_amplitude = p_oscillator->release_reference_amplitude;
-			} break;
+			break;
 		}
 
 		p_oscillator->amplitude = ENVELOPE_AMPLITUDE(delta_amplitude,
@@ -1034,11 +1037,14 @@ void perform_envelope(oscillator_t * const p_oscillator)
 #define INT16_MAX_PLUS_1							(INT16_MAX + 1)
 #define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
 
+
 int16_t chiptune_fetch_16bit_wave(void)
 {
-	if(-1 == process_timely_midi_message()){
-		if(0 == get_event_occupied_oscillator_number()){
-			s_is_tune_ending = true;
+	if(true == s_is_left_channel){
+		if(-1 == process_timely_midi_message()){
+			if(0 == get_event_occupied_oscillator_number()){
+				s_is_tune_ending = true;
+			}
 		}
 	}
 
@@ -1047,47 +1053,50 @@ int16_t chiptune_fetch_16bit_wave(void)
 	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
 	for(int16_t k = 0; k < occupied_oscillator_number; k++){
 		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-		if(false == IS_ACTIVATED(p_oscillator->state_bits)){
-			goto Flag_oscillator_take_effect_end;
-		}
-
-		int16_t value = 0;
-		perform_vibrato(p_oscillator);
-		perform_envelope(p_oscillator);
-		channel_controller_t *p_channel_controller = get_channel_controller_pointer_from_index(p_oscillator->voice);
-		switch(p_channel_controller->waveform)
-		{
-		case WAVEFORM_SQUARE:
-			value = (p_oscillator->current_phase > p_channel_controller->duty_cycle_critical_phase) ? -INT16_MAX_PLUS_1 : INT16_MAX;
-			break;
-		case WAVEFORM_TRIANGLE:
+		do {
+			if(false == IS_ACTIVATED(p_oscillator->state_bits)){
+				break;
+			}
 			do {
-				if(p_oscillator->current_phase < INT16_MAX_PLUS_1){
-					value = -INT16_MAX_PLUS_1 + MULTIPLY_BY_2(p_oscillator->current_phase);
+				if(false == s_is_left_channel){
 					break;
 				}
-				value = INT16_MAX - MULTIPLY_BY_2(p_oscillator->current_phase - INT16_MAX_PLUS_1);
+				perform_vibrato(p_oscillator);
+				perform_envelope(p_oscillator);
 			} while(0);
-			break;
-		case WAVEFORM_SAW:
-			value =  -INT16_MAX_PLUS_1 + p_oscillator->current_phase;
-			break;
-		case WAVEFORM_NOISE:
-			break;
-		default:
-			break;
-		}
-		accumulated_value += (value * p_oscillator->amplitude);
+			channel_controller_t *p_channel_controller = get_channel_controller_pointer_from_index(p_oscillator->voice);
+			int16_t value = 0;
+			switch(p_channel_controller->waveform)
+			{
+			case WAVEFORM_SQUARE:
+				value = (p_oscillator->current_phase > p_channel_controller->duty_cycle_critical_phase)
+						? -INT16_MAX_PLUS_1 : INT16_MAX;
+				break;
+			case WAVEFORM_TRIANGLE:
+				do {
+					if(p_oscillator->current_phase < INT16_MAX_PLUS_1){
+						value = -INT16_MAX_PLUS_1 + MULTIPLY_BY_2(p_oscillator->current_phase);
+						break;
+					}
+					value = INT16_MAX - MULTIPLY_BY_2(p_oscillator->current_phase - INT16_MAX_PLUS_1);
+				} while(0);
+				break;
+			case WAVEFORM_SAW:
+				value = -INT16_MAX_PLUS_1 + p_oscillator->current_phase;
+				break;
+			case WAVEFORM_NOISE:
+				break;
+			default:
+				break;
+			}
+			accumulated_value += (value * p_oscillator->amplitude);
 
-		p_oscillator->current_phase += p_oscillator->delta_phase;
-Flag_oscillator_take_effect_end:
+			if(true == s_is_left_channel){
+				p_oscillator->current_phase += p_oscillator->delta_phase;
+			}
+		} while(0);
 		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 	}
-
-	INCREMENT_TIME_BASE();
-#ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
-	increase_time_base_for_fast_to_ending();
-#endif
 
 	int32_t out_value = NORMALIZE_LOUNDNESS(accumulated_value);
 	do {
@@ -1104,6 +1113,17 @@ Flag_oscillator_take_effect_end:
 		}
 	}while(0);
 
+	if(true == s_is_left_channel)
+	{
+		INCREMENT_TIME_BASE();
+#ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
+		increase_time_base_for_fast_to_ending();
+#endif
+	}
+
+	if(true == s_is_stereo){
+		s_is_left_channel = !s_is_left_channel;
+	}
 	return (int16_t)out_value;
 }
 

@@ -58,6 +58,7 @@ public:
 
 public:
 	QMidiFile *m_p_midi_file;
+	int m_number_of_channels;
 	int m_sampling_rate;
 	int m_sampling_size;
 
@@ -79,7 +80,8 @@ extern "C" int get_midi_message(uint32_t index, uint32_t * const p_tick, uint32_
 
 /**********************************************************************************/
 
-TuneManager::TuneManager(int const sampling_rate, int const sampling_size, QObject *parent)
+TuneManager::TuneManager(bool is_stereo,
+						 int const sampling_rate, int const sampling_size, QObject *parent)
 	: QObject(parent)
 {
 	QMutexLocker locker(&m_mutex);
@@ -97,6 +99,13 @@ TuneManager::TuneManager(int const sampling_rate, int const sampling_size, QObje
 		m_p_private->m_sampling_size = SamplingSize8Bit;
 	}while(0);
 
+	do {
+		if(true == is_stereo){
+			m_p_private->m_number_of_channels = 2;
+			break;
+		}
+		m_p_private->m_number_of_channels = 1;
+	} while(0);
 	m_p_private->m_p_midi_file = nullptr;
 	m_p_private->m_p_public = this;
 
@@ -146,7 +155,8 @@ int TuneManager::InitializeTune(void)
 		return -1;
 	}
 
-	chiptune_initialize((uint32_t)m_p_private->m_sampling_rate,
+	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
+						(uint32_t)m_p_private->m_sampling_rate,
 						m_p_private->m_p_midi_file->resolution(), m_p_private->m_p_midi_file->events().size());
 
 	m_p_private->m_inquiring_tune_ending_timer.disconnect();
@@ -199,6 +209,10 @@ void TuneManager::GenerateWave(int const length, bool const is_synchronized)
 					 this, &TuneManager::HandleGenerateWaveRequested, type);
 	emit GenerateWaveRequested(length);
 }
+
+/**********************************************************************************/
+
+int TuneManager::GetNumberOfChannels(void){return m_p_private->m_number_of_channels; }
 
 /**********************************************************************************/
 

@@ -20,12 +20,15 @@ public:
 		SamplingSizeMax				= 255,
 	}; Q_ENUM(SamplingSize)
 
-	explicit TuneManager(int const sampling_rate = 16000, int const sampling_size = SamplingSize8Bit, QObject * parent = nullptr);
+	explicit TuneManager(bool is_stereo = true,
+						 int const sampling_rate = 16000, int const sampling_size = SamplingSize8Bit,
+						 QObject * parent = nullptr);
 	~TuneManager(void);
 
 	int SetMidiFile(QString const midi_file_name_string);
 
 	int InitializeTune(void);
+	int GetNumberOfChannels(void);
 	int GetSamplingRate(void);
 	int GetSamplingSize(void);
 

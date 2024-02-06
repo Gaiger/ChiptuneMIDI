@@ -117,7 +117,8 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 
 	elasped_timer.start();
 	p_tune_manager->InitializeTune();
-	int data_buffer_size =  1 * p_tune_manager->GetSamplingRate() * p_tune_manager->GetSamplingSize()/8;
+	int data_buffer_size = p_tune_manager->GetNumberOfChannels()
+			* p_tune_manager->GetSamplingRate() * p_tune_manager->GetSamplingSize()/8;
 	QByteArray wave_data;
 	while(1)
 	{
@@ -129,7 +130,7 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 	qDebug() << "Generate wave data elpased" << elasped_timer.elapsed() << "ms";
 	int header_size = 0;
 	char *p_wav_header = (char*)wav_file_header(
-				1, p_tune_manager->GetSamplingRate(),
+				p_tune_manager->GetNumberOfChannels(), p_tune_manager->GetSamplingRate(),
 				p_tune_manager->GetSamplingSize(), wave_data.size(), &header_size);
 
 	QFile file(filename);
@@ -192,7 +193,7 @@ int main(int argc, char* argv[])
 #endif
 
 #if(1)
-	TuneManager tune_manager(16000, 16);
+	TuneManager tune_manager(true, 16000, 16);
 	QThread tune_manager_working_thread;
 	tune_manager.moveToThread(&tune_manager_working_thread);
 	tune_manager_working_thread.start(QThread::HighPriority);
