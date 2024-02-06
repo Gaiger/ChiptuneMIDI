@@ -1036,7 +1036,7 @@ void perform_envelope(oscillator_t * const p_oscillator)
 
 #define INT16_MAX_PLUS_1							(INT16_MAX + 1)
 #define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
-
+#define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
 
 int16_t chiptune_fetch_16bit_wave(void)
 {
@@ -1089,7 +1089,19 @@ int16_t chiptune_fetch_16bit_wave(void)
 			default:
 				break;
 			}
-			accumulated_value += (value * p_oscillator->amplitude);
+			int64_t channel_value = (value * p_oscillator->amplitude);
+			do{
+				if(false == s_is_stereo){
+					break;
+				}
+
+				int8_t channel_panning_weight = p_channel_controller->pan;
+				if(true == s_is_left_channel){
+					channel_panning_weight = (2 * MIDI_CC_CENTER_VALUE - 1) - p_channel_controller->pan;
+				}
+				channel_value = MULTIPLY_BY_2(DIVIDE_BY_128(channel_value * channel_panning_weight));
+			} while(0);
+			accumulated_value += (int32_t)channel_value;
 
 			if(true == s_is_left_channel){
 				p_oscillator->current_phase += p_oscillator->delta_phase;

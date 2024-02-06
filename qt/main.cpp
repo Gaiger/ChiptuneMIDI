@@ -40,7 +40,7 @@ static void ListAvailableMidiDevices(void)
 	}
 }
 
-
+/**********************************************************************************/
 
 struct wav_header_t
 {
@@ -58,8 +58,6 @@ struct wav_header_t
 	char subchunk2_id[4];						// DATA string or FLLR string
 	unsigned int subchunk2_size;				// NumSamples * NumChannels * BitsPerSample/8 - size of the next chunk that will be read
 };
-
-/**********************************************************************************/
 
 static struct wav_header_t s_wave_header;
 
@@ -146,6 +144,25 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 	return 0;
 }
 
+void PilotRun(TuneManager *p_tune_manager)
+{
+	QElapsedTimer elasped_timer;
+
+	elasped_timer.start();
+	p_tune_manager->InitializeTune();
+	int data_buffer_size = p_tune_manager->GetNumberOfChannels()
+			* p_tune_manager->GetSamplingRate() * p_tune_manager->GetSamplingSize()/8;
+	QByteArray wave_data;
+	while(1)
+	{
+		wave_data = p_tune_manager->FetchWave(data_buffer_size);
+		if(true == p_tune_manager->IsTuneEnding()){
+			break;
+		}
+	}
+	qDebug() <<Q_FUNC_INFO << " elpased" << elasped_timer.elapsed() << "ms";
+
+}
 /**********************************************************************************/
 
 int main(int argc, char* argv[])
@@ -161,12 +178,12 @@ int main(int argc, char* argv[])
 
 	QCoreApplication a(argc, argv);
 
-	QString filename = "8bit(bpm185)v0727T1.mid";
+	//QString filename = "8bit(bpm185)v0727T1.mid";
 	//QString filename = "totoro.mid";
 	//QString filename = "evil_eye.mid";
 	//QString filename = "black_star.mid";
 	//QString filename = "requiem.mid";
-	//QString filename = "Laputa.mid";
+	QString filename = "Laputa.mid";
 	//QString filename = "Ironforge.mid";
 	//QString filename = "23401.mid";
 
@@ -193,12 +210,13 @@ int main(int argc, char* argv[])
 #endif
 
 #if(1)
-	TuneManager tune_manager(true, 16000, 16);
+	TuneManager tune_manager(false, 16000, 16);
 	QThread tune_manager_working_thread;
 	tune_manager.moveToThread(&tune_manager_working_thread);
 	tune_manager_working_thread.start(QThread::HighPriority);
 	tune_manager.SetMidiFile(filename);
-	SaveAsWavFile(&tune_manager, "20240206ankokuButo.wav");
+	PilotRun(&tune_manager);
+	//SaveAsWavFile(&tune_manager, "20240206ankokuButo.wav");
 	//SaveAsWavFile(&tune_manager, "20240205Laputa.wav");
 	//SaveAsWavFile(&tune_manager, "20240205Ironforge.wav");
 	AudioPlayer audio_player(&tune_manager, &a);
