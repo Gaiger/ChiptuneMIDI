@@ -1027,6 +1027,65 @@ void perform_envelope(oscillator_t * const p_oscillator)
 }
 
 /**********************************************************************************/
+#define INT16_MAX_PLUS_1							(INT16_MAX + 1)
+#define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
+
+void perform_wave(oscillator_t * const p_oscillator, int32_t * const p_wave_amplitude)
+{
+	channel_controller_t const *p_channel_controller
+			= get_channel_controller_pointer_from_index(p_oscillator->voice);
+	int16_t wave = 0;
+	switch(p_channel_controller->waveform)
+	{
+	case WAVEFORM_SQUARE:
+		wave = (p_oscillator->current_phase > p_channel_controller->duty_cycle_critical_phase)
+				? -INT16_MAX_PLUS_1 : INT16_MAX;
+		break;
+	case WAVEFORM_TRIANGLE:
+		do {
+			if(p_oscillator->current_phase < INT16_MAX_PLUS_1){
+				wave = -INT16_MAX_PLUS_1 + MULTIPLY_BY_2(p_oscillator->current_phase);
+				break;
+			}
+			wave = INT16_MAX - MULTIPLY_BY_2(p_oscillator->current_phase - INT16_MAX_PLUS_1);
+		} while(0);
+		break;
+	case WAVEFORM_SAW:
+		wave = -INT16_MAX_PLUS_1 + p_oscillator->current_phase;
+		break;
+	case WAVEFORM_NOISE:
+		break;
+	default:
+		break;
+	}
+	*p_wave_amplitude = wave * p_oscillator->amplitude;
+}
+
+/**********************************************************************************/
+#define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
+
+void perform_stero(oscillator_t * const p_oscillator,
+				   int32_t const mono_wave_amplitude, int32_t * const p_channel_wave_amplitude)
+{
+	int32_t channel_wave_amplitude = mono_wave_amplitude;
+	do{
+		channel_controller_t const *p_channel_controller
+				= get_channel_controller_pointer_from_index(p_oscillator->voice);
+
+		if(false == s_is_stereo){
+			break;
+		}
+
+		int8_t channel_panning_weight = p_channel_controller->pan;
+		if(true == s_is_left_channel){
+			channel_panning_weight = (2 * MIDI_CC_CENTER_VALUE - 1) - p_channel_controller->pan;
+		}
+		channel_wave_amplitude = MULTIPLY_BY_2(DIVIDE_BY_128((int64_t)mono_wave_amplitude * channel_panning_weight));
+	} while(0);
+	*p_channel_wave_amplitude = channel_wave_amplitude;
+}
+
+/**********************************************************************************/
 
 #ifdef _RIGHT_SHIFT_FOR_NORMALIZING_LOUNDNESS
 #define NORMALIZE_LOUNDNESS(VALUE)					((int32_t)((VALUE) >> g_loudness_nomalization_right_shift))
@@ -1034,9 +1093,6 @@ void perform_envelope(oscillator_t * const p_oscillator)
 #define NORMALIZE_LOUNDNESS(VALUE)					((int32_t)((VALUE)/(int32_t)g_max_loudness))
 #endif
 
-#define INT16_MAX_PLUS_1							(INT16_MAX + 1)
-#define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
-#define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
 
 int16_t chiptune_fetch_16bit_wave(void)
 {
@@ -1064,45 +1120,11 @@ int16_t chiptune_fetch_16bit_wave(void)
 				perform_vibrato(p_oscillator);
 				perform_envelope(p_oscillator);
 			} while(0);
-			channel_controller_t *p_channel_controller = get_channel_controller_pointer_from_index(p_oscillator->voice);
-			int16_t value = 0;
-			switch(p_channel_controller->waveform)
-			{
-			case WAVEFORM_SQUARE:
-				value = (p_oscillator->current_phase > p_channel_controller->duty_cycle_critical_phase)
-						? -INT16_MAX_PLUS_1 : INT16_MAX;
-				break;
-			case WAVEFORM_TRIANGLE:
-				do {
-					if(p_oscillator->current_phase < INT16_MAX_PLUS_1){
-						value = -INT16_MAX_PLUS_1 + MULTIPLY_BY_2(p_oscillator->current_phase);
-						break;
-					}
-					value = INT16_MAX - MULTIPLY_BY_2(p_oscillator->current_phase - INT16_MAX_PLUS_1);
-				} while(0);
-				break;
-			case WAVEFORM_SAW:
-				value = -INT16_MAX_PLUS_1 + p_oscillator->current_phase;
-				break;
-			case WAVEFORM_NOISE:
-				break;
-			default:
-				break;
-			}
-			int64_t channel_value = (value * p_oscillator->amplitude);
-			do{
-				if(false == s_is_stereo){
-					break;
-				}
-
-				int8_t channel_panning_weight = p_channel_controller->pan;
-				if(true == s_is_left_channel){
-					channel_panning_weight = (2 * MIDI_CC_CENTER_VALUE - 1) - p_channel_controller->pan;
-				}
-				channel_value = MULTIPLY_BY_2(DIVIDE_BY_128(channel_value * channel_panning_weight));
-			} while(0);
-			accumulated_value += (int32_t)channel_value;
-
+			int32_t mono_wave_amplitude;
+			perform_wave(p_oscillator, &mono_wave_amplitude);
+			int32_t channel_wave_amplitude = 0;
+			perform_stero(p_oscillator, mono_wave_amplitude, &channel_wave_amplitude);
+			accumulated_value += (int32_t)channel_wave_amplitude;
 			if(true == s_is_left_channel){
 				p_oscillator->current_phase += p_oscillator->delta_phase;
 			}
