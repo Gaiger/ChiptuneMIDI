@@ -28,7 +28,7 @@ static float s_tempo = DEFAULT_TEMPO;
 static uint32_t s_sampling_rate = DEFAULT_SAMPLING_RATE;
 static uint32_t s_resolution = DEFAULT_RESOLUTION;
 static bool s_is_stereo = false;
-bool s_is_left_channel = true;
+bool s_is_processing_left_channel = true;
 
 #ifdef _INCREMENTAL_SAMPLE_INDEX
 static uint32_t s_current_sample_index = 0;
@@ -113,6 +113,16 @@ uint32_t const get_resolution(void) { return s_resolution; }
 /**********************************************************************************/
 
 float const get_tempo(void) { return s_tempo; }
+
+/**********************************************************************************/
+
+static inline bool const is_stereo() { return s_is_stereo;}
+
+/**********************************************************************************/
+
+static inline bool const is_processing_left_channel() { return s_is_processing_left_channel; }
+
+static inline void swap_processing_channel() { s_is_processing_left_channel = !s_is_processing_left_channel; }
 
 /**********************************************************************************/
 
@@ -831,7 +841,7 @@ void chiptune_initialize(bool is_stereo,
 						 uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
 {
 	s_is_stereo = is_stereo;
-	s_is_left_channel = true;
+	s_is_processing_left_channel = true;
 	s_sampling_rate = sampling_rate;
 	s_resolution = resolution;
 	s_total_message_number = total_message_number;
@@ -876,30 +886,17 @@ void chiptune_set_tempo(float const tempo)
 													} while(0)
 #endif
 
-#ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
-
-/**********************************************************************************/
-
-inline static void increase_time_base_for_fast_to_ending(void)
-{
-#ifdef _INCREMENTAL_SAMPLE_INDEX
-	if(TICK_TO_SAMPLE_INDEX(818880) > s_current_sample_index){
-		s_current_sample_index += 99;
-	}
-#else
-	if(818880 > s_current_tick){
-		s_current_tick += 99.0 * s_delta_tick_per_sample;
-	}
-#endif
-}
-
-#endif
-
 /**********************************************************************************/
 
 void perform_vibrato(oscillator_t * const p_oscillator)
 {
 	do {
+		if(true == is_stereo()){
+			if(false == is_processing_left_channel()){
+				break;
+			}
+		}
+
 		channel_controller_t *p_channel_controller = get_channel_controller_pointer_from_index(p_oscillator->voice);
 		int8_t const modulation_wheel = p_channel_controller->modulation_wheel;
 		if(0 >= modulation_wheel){
@@ -924,6 +921,12 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 void perform_envelope(oscillator_t * const p_oscillator)
 {
 	do {
+		if(true == is_stereo()){
+			if(false == is_processing_left_channel()){
+				break;
+			}
+		}
+
 		channel_controller_t const *p_channel_controller
 				= get_channel_controller_pointer_from_index(p_oscillator->voice);
 
@@ -1030,7 +1033,7 @@ void perform_envelope(oscillator_t * const p_oscillator)
 #define INT16_MAX_PLUS_1							(INT16_MAX + 1)
 #define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
 
-void perform_wave(oscillator_t * const p_oscillator, int32_t * const p_wave_amplitude)
+int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 {
 	channel_controller_t const *p_channel_controller
 			= get_channel_controller_pointer_from_index(p_oscillator->voice);
@@ -1058,45 +1061,68 @@ void perform_wave(oscillator_t * const p_oscillator, int32_t * const p_wave_ampl
 	default:
 		break;
 	}
-	*p_wave_amplitude = wave * p_oscillator->amplitude;
+
+#if(0)
+	bool is_to_increment_current_phrase = true;
+	do {
+		if(false == is_stereo()){
+			break;
+		}
+		if(false == is_processing_left_channel()){
+			break;
+		}
+		is_to_increment_current_phrase = false;
+	} while(0);
+	if(true == is_to_increment_current_phrase){
+		p_oscillator->current_phase += p_oscillator->delta_phase;
+	}
+#else
+	if(false == is_stereo() || false == is_processing_left_channel()){
+		p_oscillator->current_phase += p_oscillator->delta_phase;
+	}
+#endif
+	return wave * p_oscillator->amplitude;;
 }
 
 /**********************************************************************************/
 #define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
+#define CHANNEL_WAVE_AMPLITUDE(MONO_WAVE_AMPLITUDE, CHANNEL_PANNING_WEIGHT) \
+													MULTIPLY_BY_2( \
+														DIVIDE_BY_128((int64_t)(MONO_WAVE_AMPLITUDE) * (CHANNEL_PANNING_WEIGHT)) \
+													)
 
-void perform_stero(oscillator_t * const p_oscillator,
-				   int32_t const mono_wave_amplitude, int32_t * const p_channel_wave_amplitude)
+int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
+				   int32_t const mono_wave_amplitude)
 {
 	int32_t channel_wave_amplitude = mono_wave_amplitude;
 	do{
-		channel_controller_t const *p_channel_controller
-				= get_channel_controller_pointer_from_index(p_oscillator->voice);
-
-		if(false == s_is_stereo){
+		if(false == is_stereo()){
 			break;
 		}
 
+		channel_controller_t const *p_channel_controller
+				= get_channel_controller_pointer_from_index(p_oscillator->voice);
 		int8_t channel_panning_weight = p_channel_controller->pan;
-		if(true == s_is_left_channel){
-			channel_panning_weight = (2 * MIDI_CC_CENTER_VALUE - 1) - p_channel_controller->pan;
+		if(true == is_processing_left_channel()){
+			channel_panning_weight = (2 * MIDI_CC_CENTER_VALUE - 1) - channel_panning_weight;
 		}
-		channel_wave_amplitude = MULTIPLY_BY_2(DIVIDE_BY_128((int64_t)mono_wave_amplitude * channel_panning_weight));
+		channel_wave_amplitude = CHANNEL_WAVE_AMPLITUDE(mono_wave_amplitude, channel_panning_weight);
 	} while(0);
-	*p_channel_wave_amplitude = channel_wave_amplitude;
+
+	return channel_wave_amplitude;
 }
 
 /**********************************************************************************/
 
 #ifdef _RIGHT_SHIFT_FOR_NORMALIZING_LOUNDNESS
-#define NORMALIZE_LOUNDNESS(VALUE)					((int32_t)((VALUE) >> g_loudness_nomalization_right_shift))
+#define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE) >> g_loudness_nomalization_right_shift))
 #else
-#define NORMALIZE_LOUNDNESS(VALUE)					((int32_t)((VALUE)/(int32_t)g_max_loudness))
+#define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE)/(int32_t)g_max_loudness))
 #endif
-
 
 int16_t chiptune_fetch_16bit_wave(void)
 {
-	if(true == s_is_left_channel){
+	if(true == is_processing_left_channel()){
 		if(-1 == process_timely_midi_message()){
 			if(0 == get_event_occupied_oscillator_number()){
 				s_is_tune_ending = true;
@@ -1104,7 +1130,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 		}
 	}
 
-	int64_t accumulated_value = 0;
+	int64_t accumulated_wave_amplitude = 0;
 	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
 	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
 	for(int16_t k = 0; k < occupied_oscillator_number; k++){
@@ -1113,52 +1139,57 @@ int16_t chiptune_fetch_16bit_wave(void)
 			if(false == IS_ACTIVATED(p_oscillator->state_bits)){
 				break;
 			}
-			do {
-				if(false == s_is_left_channel){
-					break;
-				}
-				perform_vibrato(p_oscillator);
-				perform_envelope(p_oscillator);
-			} while(0);
-			int32_t mono_wave_amplitude;
-			perform_wave(p_oscillator, &mono_wave_amplitude);
-			int32_t channel_wave_amplitude = 0;
-			perform_stero(p_oscillator, mono_wave_amplitude, &channel_wave_amplitude);
-			accumulated_value += (int32_t)channel_wave_amplitude;
-			if(true == s_is_left_channel){
-				p_oscillator->current_phase += p_oscillator->delta_phase;
-			}
+
+			perform_vibrato(p_oscillator);
+			perform_envelope(p_oscillator);
+			int32_t mono_wave_amplitude = generate_mono_wave_amplitude(p_oscillator);
+			int32_t channel_wave_amplitude
+					= generate_channel_wave_amplitude(p_oscillator, mono_wave_amplitude);
+			accumulated_wave_amplitude += (int32_t)channel_wave_amplitude;
 		} while(0);
 		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 	}
 
-	int32_t out_value = NORMALIZE_LOUNDNESS(accumulated_value);
+	int32_t out_wave = NORMALIZE_WAVE_AMPLITUDE(accumulated_wave_amplitude);
 	do {
-		if(INT16_MAX < out_value){
+		if(INT16_MAX < out_wave){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, greater than UINT8_MAX\r\n",
-							out_value);
+							out_wave);
 			break;
 		}
 
-		if(-INT16_MAX_PLUS_1 > out_value){
+		if(-INT16_MAX_PLUS_1 > out_wave){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, less than 0\r\n",
-							out_value);
+							out_wave);
 			break;
 		}
 	}while(0);
 
-	if(true == s_is_left_channel)
+	//printf("is_left = %d, out_wave = %d\r\n", is_processing_left_channel(), (int16_t)out_wave);
+#if(0)
+	bool is_to_increment_time_base = true;
+	do
 	{
+		if(false == is_stereo()){
+			break;
+		}
+		if(false == is_processing_left_channel()){
+			break;
+		}
+		is_to_increment_time_base = false;
+	}while(0);
+	if(true == is_to_increment_time_base){
 		INCREMENT_TIME_BASE();
-#ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
-		increase_time_base_for_fast_to_ending();
+	}
+#else
+	if(false == is_stereo() || false == is_processing_left_channel()){
+		INCREMENT_TIME_BASE();
+	}
 #endif
+	if(true == is_stereo()){
+		swap_processing_channel();
 	}
-
-	if(true == s_is_stereo){
-		s_is_left_channel = !s_is_left_channel;
-	}
-	return (int16_t)out_value;
+	return (int16_t)out_wave;
 }
 
 /**********************************************************************************/
