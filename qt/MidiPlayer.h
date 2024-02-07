@@ -70,10 +70,12 @@ private:
 
 				qint32 waitTime = event_time - t.elapsed();
 				//qDebug() <<"track = "<< e->track() << "type = " << e->type();
-
-
+#if(1)
+				if(8 != e->track()){
+					continue;
+				}
+#endif
 				switch(e->type()){
-
 				case QMidiEvent::ControlChange:
 					qDebug() << "QMidiEvent::ControlChange";
 					qDebug().nospace() << "tick = "<< e->tick() <<
@@ -85,7 +87,7 @@ private:
 					qDebug().nospace() << "tick = "<< e->tick() <<
 										  ", tick = "<< e->tick() << ", track = "<< e->track() << ", voice = "<< e->voice()  << ", number = "<< e->number();
 					break;
-
+#if(1)
 				case QMidiEvent::PitchWheel:
 					qDebug() << "QMidiEvent::PitchWheel";
 					qDebug().nospace() << "tick = "<< e->tick() <<
@@ -93,16 +95,21 @@ private:
 					//e->setValue(0x2000*6/12);
 					//continue;
 					break;
+#endif
+#if(1)
 				case QMidiEvent::NoteOn:
 					qDebug() << "QMidiEvent::NoteOn";
 					qDebug().nospace() << "tick = "<< e->tick() <<
 										", track = "<< e->track() <<", voice = "<< e->voice()  <<", note = " << e->note();
+
 					break;
+
 				case QMidiEvent::NoteOff:
 					qDebug() << "QMidiEvent::NoteOff";
 					qDebug().nospace() << "tick = "<< e->tick() <<
 										  ", track = "<< e->track() <<", voice = "<< e->voice()  <<", note = " << e->note();
 					break;
+#endif
 				default:
 					break;
 				}

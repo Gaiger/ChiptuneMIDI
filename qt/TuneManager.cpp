@@ -134,6 +134,7 @@ int TuneManager::SetMidiFile(QString const midi_file_name_string)
 	QMutexLocker locker(&m_mutex);
 	QFileInfo file_info(midi_file_name_string);
 	if(false == file_info.isFile()){
+		qDebug() << Q_FUNC_INFO << midi_file_name_string << "is not a file";
 		return -1;
 	}
 

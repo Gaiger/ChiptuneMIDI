@@ -11,8 +11,8 @@
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 
 uint16_t calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_semitones,
-							   int8_t const pitch_wheel_bend_range_in_semitones, int16_t const pitch_wheel,
-							   float pitch_chorus_bend_in_semitones, float *p_pitch_wheel_bend_in_semitone)
+										  int8_t const pitch_wheel_bend_range_in_semitones, int16_t const pitch_wheel,
+										  float pitch_chorus_bend_in_semitones, float *p_pitch_wheel_bend_in_semitone)
 {
 	// TO DO : too many float variable
 	float pitch_wheel_bend_in_semitone = ((pitch_wheel - MIDI_PITCH_WHEEL_CENTER)/(float)MIDI_PITCH_WHEEL_CENTER) * DIVIDE_BY_2(pitch_wheel_bend_range_in_semitones);
@@ -50,7 +50,8 @@ static uint16_t chorus_ramdom(void)
 
 float obtain_oscillator_pitch_chorus_bend_in_semitone(int8_t const voice)
 {
-	channel_controller_t *p_channel_controller =  get_channel_controller_pointer_from_index(voice);
+	channel_controller_t * const p_channel_controller
+			= get_channel_controller_pointer_from_index(voice);
 	int8_t const chorus = p_channel_controller->chorus;
 	if(0 == chorus){
 		return 0.0;
@@ -59,7 +60,7 @@ float obtain_oscillator_pitch_chorus_bend_in_semitone(int8_t const voice)
 
 	uint16_t random = chorus_ramdom();
 	float pitch_chorus_bend_in_semitone;
-	pitch_chorus_bend_in_semitone = RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) *  chorus/(float)INT8_MAX;
+	pitch_chorus_bend_in_semitone = RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) * chorus/(float)INT8_MAX;
 	pitch_chorus_bend_in_semitone *= max_pitch_chorus_bend_in_semitones;
 	//CHIPTUNE_PRINTF(cDeveloping, "pitch_chorus_bend_in_semitone = %3.2f\r\n", pitch_chorus_bend_in_semitone);
 	return pitch_chorus_bend_in_semitone;

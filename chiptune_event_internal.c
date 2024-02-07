@@ -330,7 +330,7 @@ static void check_upcoming_events(uint32_t const tick)
 int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 {
 	if(MAX_EVENT_NUMBER == s_upcoming_event_number){
-		CHIPTUNE_PRINTF(cDeveloping, "No unused event are available\r\n");
+		CHIPTUNE_PRINTF(cDeveloping, "No unused event is available\r\n");
 		return -1;
 	}
 
@@ -341,6 +341,11 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 				break;
 			}
 		}
+		if(MAX_EVENT_NUMBER == current_index){
+			CHIPTUNE_PRINTF(cDeveloping, "No available event is found\r\n");
+			return -2;
+		}
+
 		s_events[current_index].type = type;
 		s_events[current_index].oscillator = oscillator_index;
 		s_events[current_index].triggerring_tick = triggerring_tick;
@@ -349,11 +354,6 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 		if(0 == s_upcoming_event_number){
 			s_event_head_index = current_index;
 			break;
-		}
-
-		if(MAX_EVENT_NUMBER == current_index){
-			CHIPTUNE_PRINTF(cDeveloping, "No available event is found\r\n");
-			return -2;
 		}
 
 		if(s_events[current_index].triggerring_tick < s_events[s_event_head_index].triggerring_tick){
@@ -450,7 +450,7 @@ int process_events(uint32_t const tick)
 		}
 
 		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(s_events[s_event_head_index].oscillator);
-		channel_controller_t  * const p_channel_controller =
+		channel_controller_t * const p_channel_controller =
 				get_channel_controller_pointer_from_index(p_oscillator->voice);
 
 		int8_t const event_type = s_events[s_event_head_index].type;

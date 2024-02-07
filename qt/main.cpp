@@ -178,14 +178,16 @@ int main(int argc, char* argv[])
 
 	QCoreApplication a(argc, argv);
 
-	//QString filename = "8bit(bpm185)v0727T1.mid";
+	QString filename = "8bit(bpm185)v0727T1.mid";
 	//QString filename = "totoro.mid";
 	//QString filename = "evil_eye.mid";
 	//QString filename = "black_star.mid";
+	//QString filename = "triligy.mid";
 	//QString filename = "requiem.mid";
-	QString filename = "Laputa.mid";
+	//QString filename = "Laputa.mid";
 	//QString filename = "Ironforge.mid";
 	//QString filename = "23401.mid";
+	//QString filename = "never_enough.mid";
 
 	//QString filename = "67573.mid";
 	//QString filename = "79538.mid";
@@ -210,12 +212,12 @@ int main(int argc, char* argv[])
 #endif
 
 #if(1)
-	TuneManager tune_manager(false, 16000, 16);
+	TuneManager tune_manager(true, 16000, 16);
 	QThread tune_manager_working_thread;
 	tune_manager.moveToThread(&tune_manager_working_thread);
 	tune_manager_working_thread.start(QThread::HighPriority);
 	tune_manager.SetMidiFile(filename);
-	PilotRun(&tune_manager);
+	//PilotRun(&tune_manager);
 	//SaveAsWavFile(&tune_manager, "20240206ankokuButo.wav");
 	//SaveAsWavFile(&tune_manager, "20240205Laputa.wav");
 	//SaveAsWavFile(&tune_manager, "20240205Ironforge.wav");

@@ -415,19 +415,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" ,
 					voice, note, velocity, velocity, &pitch_wheel_bend_string[0]);
 
-#ifdef _DEBUG_ANKOKU_BUTOUKAI_FAST_TO_ENDING
-	#ifdef _INCREMENTAL_SAMPLE_INDEX
-	if(TICK_TO_SAMPLE_INDEX(818880) < s_current_sample_index){
-		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, note = %d, velocity = %d\r\n",
-						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
-	#else
-	if(818880 < s_current_tick){
-		CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, note = %d, velocity = %d\r\n",
-						tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" , voice, note, velocity);
-	}
-	#endif
-#endif
-
 	return 0;
 }
 
@@ -1090,7 +1077,7 @@ int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
 			break;
 		}
 
-		channel_controller_t const *p_channel_controller
+		channel_controller_t * const p_channel_controller
 				= get_channel_controller_pointer_from_index(p_oscillator->voice);
 		int8_t channel_panning_weight = p_channel_controller->pan;
 		channel_panning_weight += !channel_panning_weight;//if zero, as 1
