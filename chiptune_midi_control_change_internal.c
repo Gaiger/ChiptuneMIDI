@@ -123,7 +123,7 @@ static inline void process_cc_volume(uint32_t const tick, int8_t const voice, in
 
 static inline void process_pan_volume(uint32_t const tick, int8_t const voice, int8_t const value)
 {
-	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_PAN_VOLUME(%d) :: voice = %d, value = %d\r\n",
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_PAN_VOLUME(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_PAN, voice, value);
 	get_channel_controller_pointer_from_index(voice)->pan = value;
 }

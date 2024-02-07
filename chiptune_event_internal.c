@@ -1,4 +1,5 @@
-#include  <stdio.h>
+#include <stdio.h>
+#include  <string.h>
 
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
@@ -384,6 +385,61 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 }
 
 /**********************************************************************************/
+static char s_event_additional_string[32];
+
+static inline char const * const event_additional_string(int16_t const event_index)
+{
+	oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(s_events[event_index].oscillator);
+	channel_controller_t  * const p_channel_controller =
+			get_channel_controller_pointer_from_index(p_oscillator->voice);
+	snprintf(&s_event_additional_string[0], sizeof(s_event_additional_string), "");
+	bool is_empty_string = false;
+	do {
+		if(true == IS_CHORUS_ASSOCIATE(p_oscillator->state_bits)){
+			break;
+		}
+		if(true == p_channel_controller->is_damper_pedal_on
+				&& false == IS_NOTE_ON(p_oscillator->state_bits)){
+			break;
+		}
+		is_empty_string = true;
+	} while(0);
+
+	do {
+		if(true == is_empty_string){
+			break;
+		}
+
+		snprintf(&s_event_additional_string[0], sizeof(s_event_additional_string), "(");
+		bool is_empty_content = true;
+		if(true == IS_CHORUS_ASSOCIATE(p_oscillator->state_bits)){
+			size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
+			snprintf(&s_event_additional_string[event_addition_string_length], sizeof(s_event_additional_string)
+					 - event_addition_string_length, "chorus");
+			is_empty_content = false;
+		}
+
+		if(true == p_channel_controller->is_damper_pedal_on
+				&& false == IS_NOTE_ON(p_oscillator->state_bits)){
+			size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
+			if(false == is_empty_content){
+				snprintf(&s_event_additional_string[event_addition_string_length],
+						 sizeof(s_event_additional_string) - event_addition_string_length,"|");
+			}
+			event_addition_string_length = strlen(&s_event_additional_string[0]);
+			snprintf(&s_event_additional_string[event_addition_string_length],
+					 sizeof(s_event_additional_string) - event_addition_string_length,"damper_on_note_off");
+		}
+		{
+			size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
+			snprintf(&s_event_additional_string[event_addition_string_length],
+				 sizeof(s_event_additional_string) - event_addition_string_length,")");
+		}
+	} while(0);
+	return &s_event_additional_string[0];
+}
+
+/**********************************************************************************/
 
 int process_events(uint32_t const tick)
 {
@@ -393,18 +449,19 @@ int process_events(uint32_t const tick)
 			break;
 		}
 
-		oscillator_t *p_oscillator = get_event_oscillator_pointer_from_index(s_events[s_event_head_index].oscillator);
-		char addition_string[16] = "";
-		if(true == IS_CHORUS_ASSOCIATE(p_oscillator->state_bits)){
-			snprintf(&addition_string[0], sizeof(addition_string), "(chorus)");
-		}
+		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(s_events[s_event_head_index].oscillator);
+		channel_controller_t  * const p_channel_controller =
+				get_channel_controller_pointer_from_index(p_oscillator->voice);
+
 		int8_t const event_type = s_events[s_event_head_index].type;
 		switch(event_type)
 		{
 		case EVENT_ACTIVATE:
-			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, ACTIVATE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
+			CHIPTUNE_PRINTF(cEventTriggering,
+							"tick = %u, ACTIVATE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
-							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness, &addition_string[0]);
+							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness,
+							event_additional_string(s_event_head_index));
 			if(true == IS_ACTIVATED(p_oscillator->state_bits)){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: activate an activated oscillator = %d\r\n",
 								s_events[s_event_head_index].oscillator);
@@ -415,9 +472,12 @@ int process_events(uint32_t const tick)
 			break;
 
 		case EVENT_FREE:
-			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, FREE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
+			CHIPTUNE_PRINTF(cEventTriggering,
+							"tick = %u, FREE oscillator = %d, voice = %d, note = %d, amplitude = %2.1f%% of loudness %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
-							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness, &addition_string[0]);
+							p_oscillator->voice, p_oscillator->note,
+							100.0f * p_oscillator->release_reference_amplitude/(float)p_oscillator->loudness,
+							event_additional_string(s_event_head_index));
 			if(true == IS_FREEING(p_oscillator->state_bits)) {
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: free a freeing oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
@@ -427,13 +487,16 @@ int process_events(uint32_t const tick)
 			/*It does not a matter there is a postponement to discard the resting oscillator*/
 			p_oscillator->envelope_state = ENVELOPE_RELEASE;
 			put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
-				tick + get_channel_controller_pointer_from_index(p_oscillator->voice)->envelope_release_tick_number);
+				tick + p_channel_controller->envelope_release_tick_number);
 			break;
 
 		case EVENT_REST:
-			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, REST oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
+			CHIPTUNE_PRINTF(cEventTriggering,
+							"tick = %u, REST oscillator = %d, voice = %d, note = %d, amplitude = %2.1f%% of loudness %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
-							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness, &addition_string[0]);
+							p_oscillator->voice, p_oscillator->note,
+							100.0f * p_oscillator->release_reference_amplitude/(float)p_oscillator->loudness,
+							event_additional_string(s_event_head_index));
 			if(true == IS_RESTING(p_oscillator->state_bits)){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: rest a resting oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
@@ -444,9 +507,12 @@ int process_events(uint32_t const tick)
 			break;
 
 		case EVENT_DISCARD:
-			CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, DISCARD oscillator = %d, voice = %d, note = %d, amplitude = 0x%04x(%3.2f%%) %s\r\n",
+			CHIPTUNE_PRINTF(cEventTriggering,
+							"tick = %u, DISCARD oscillator = %d, voice = %d, note = %d, amplitude = %1.2f%% of loudness %s\r\n",
 							tick, s_events[s_event_head_index].oscillator,
-							p_oscillator->voice, p_oscillator->note, p_oscillator->amplitude, p_oscillator->amplitude/(float)p_oscillator->loudness , &addition_string[0]);
+							p_oscillator->voice, p_oscillator->note,
+							100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness,
+							event_additional_string(s_event_head_index));
 			discard_oscillator(s_events[s_event_head_index].oscillator);
 			break;
 
