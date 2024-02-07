@@ -140,7 +140,7 @@ static int discard_oscillator(int16_t const index)
 		}
 
 		if(1 != s_occupied_oscillator_number
-				&& (UNUSED_OSCILLATOR == previous_index && UNUSED_OSCILLATOR == next_index)){
+				&& (UNUSED_OSCILLATOR == previous_index && UNUSED_OSCILLATOR == next_index) ){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator %d is not in the occupied list\r\n", index);
 			return -2;
 		}
@@ -182,7 +182,8 @@ int16_t const get_event_occupied_oscillator_number(void)
 
 int16_t get_event_occupied_oscillator_head_index()
 {
-	if(-1 == s_occupied_oscillator_head_index && 0 != s_occupied_oscillator_number){
+	if(-1 == s_occupied_oscillator_head_index
+			&& 0 != s_occupied_oscillator_number){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_head_index = -1:: but s_occupied_oscillator_number = %d\r\n",
 						s_occupied_oscillator_number);
 	}
@@ -193,7 +194,7 @@ int16_t get_event_occupied_oscillator_head_index()
 
 int16_t get_event_occupied_oscillator_next_index(int16_t const index)
 {
-	if(false == (index >= 0 && index < MAX_OSCILLATOR_NUMBER)){
+	if(false == (index >= 0 && index < MAX_OSCILLATOR_NUMBER) ){
 		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
 		return UNUSED_OSCILLATOR;
 	}
@@ -205,7 +206,7 @@ int16_t get_event_occupied_oscillator_next_index(int16_t const index)
 
 oscillator_t * const get_event_oscillator_pointer_from_index(int16_t const index)
 {
-	if(false == (index >= 0 && index < MAX_OSCILLATOR_NUMBER)){
+	if(false == (index >= 0 && index < MAX_OSCILLATOR_NUMBER) ){
 		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
 		return NULL;
 	}

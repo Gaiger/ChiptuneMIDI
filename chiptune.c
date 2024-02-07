@@ -122,6 +122,8 @@ static inline bool const is_stereo() { return s_is_stereo;}
 
 static inline bool const is_processing_left_channel() { return s_is_processing_left_channel; }
 
+/**********************************************************************************/
+
 static inline void swap_processing_channel() { s_is_processing_left_channel = !s_is_processing_left_channel; }
 
 /**********************************************************************************/
@@ -555,7 +557,6 @@ static int process_midi_message(struct _tick_message const tick_message)
 
 /**********************************************************************************/
 
-uint32_t s_midi_messge_index = 0;
 uint32_t s_total_message_number = 0;
 
 static int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_message)
@@ -609,10 +610,11 @@ int process_ending(const uint32_t tick)
 
 uint32_t s_previous_run_timely_tick = NULL_TICK;
 
+uint32_t s_midi_messge_index = 0;
 struct _tick_message s_fetched_tick_message = {NULL_TICK, NULL_MESSAGE};
 uint32_t s_fetched_event_tick = NULL_TICK;
 
-static int process_timely_midi_message(void)
+static int process_timely_midi_message_and_event(void)
 {
 	if(CURRENT_TICK() == s_previous_run_timely_tick){
 		return 1;
@@ -853,7 +855,7 @@ void chiptune_initialize(bool is_stereo,
 
 	UPDATE_TIME_BASE_UNIT();
 	UPDATE_AMPLITUDE_NORMALIZER();
-	process_timely_midi_message();
+	process_timely_midi_message_and_event();
 	return ;
 }
 
@@ -1064,25 +1066,11 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 		break;
 	}
 
-#if(0)
-	bool is_to_increment_current_phrase = true;
-	do {
-		if(false == is_stereo()){
-			break;
-		}
-		if(false == is_processing_left_channel()){
-			break;
-		}
-		is_to_increment_current_phrase = false;
-	} while(0);
-	if(true == is_to_increment_current_phrase){
+	if(false == is_stereo()
+			|| false == is_processing_left_channel()){
 		p_oscillator->current_phase += p_oscillator->delta_phase;
 	}
-#else
-	if(false == is_stereo() || false == is_processing_left_channel()){
-		p_oscillator->current_phase += p_oscillator->delta_phase;
-	}
-#endif
+
 	return wave * p_oscillator->amplitude;;
 }
 
@@ -1125,7 +1113,7 @@ int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
 
 int16_t chiptune_fetch_16bit_wave(void)
 {
-	if(-1 == process_timely_midi_message()){
+	if(-1 == process_timely_midi_message_and_event()){
 		s_is_tune_ending = true;
 	}
 
@@ -1165,26 +1153,11 @@ int16_t chiptune_fetch_16bit_wave(void)
 	}while(0);
 
 	//printf("is_left = %d, out_wave = %d\r\n", is_processing_left_channel(), (int16_t)out_wave);
-#if(0)
-	bool is_to_increment_time_base = true;
-	do
-	{
-		if(false == is_stereo()){
-			break;
-		}
-		if(false == is_processing_left_channel()){
-			break;
-		}
-		is_to_increment_time_base = false;
-	}while(0);
-	if(true == is_to_increment_time_base){
+	if(false == is_stereo()
+			|| false == is_processing_left_channel()){
 		INCREMENT_TIME_BASE();
 	}
-#else
-	if(false == is_stereo() || false == is_processing_left_channel()){
-		INCREMENT_TIME_BASE();
-	}
-#endif
+
 	if(true == is_stereo()){
 		swap_processing_channel();
 	}
