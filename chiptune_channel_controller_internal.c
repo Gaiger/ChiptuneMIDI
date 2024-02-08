@@ -19,6 +19,8 @@ static int8_t s_exponential_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH]
 static int8_t s_gaussian_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
 static int8_t s_gaussian_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
 
+static int8_t s_fermi_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+static int8_t s_fermi_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
 
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index)
 {
@@ -83,6 +85,7 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 	 * s_linear_decline_table s_linear_growth_table
 	 * s_exponential_decline_table s_exponential_growth_table
 	 * s_gaussian_decline_table s_gaussian_growth_table
+	 * s_fermi_decline_table s_fermi_growth_table
 	*/
 
 	p_channel_controller->p_envelope_attack_table = &s_linear_growth_table[0];
@@ -91,14 +94,14 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 		= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND)
 					 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
-	p_channel_controller->p_envelope_decay_table  = &s_gaussian_decline_table[0];
-	#define DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND	(0.01f)
+	p_channel_controller->p_envelope_decay_table  = &s_fermi_decline_table[0];
+	#define DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND	(0.05f)
 	p_channel_controller->envelope_decay_same_index_number
 		= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND)
 					 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
 	//100% = level 8
-#define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(7)
+#define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(6)
 	p_channel_controller->envelope_sustain_level = DEFAULT_ENVELOPE_SUSTAIN_LEVEL;
 
 #define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.03f)
@@ -171,6 +174,22 @@ static void initialize_envelope_tables(void)
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
 		s_gaussian_growth_table[i] = s_gaussian_decline_table[(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1) - i];
 	}
+
+	/*
+	 *  fermi
+	 *  INT8_MAX * 1/(exp( -gamma*((TABLE_LENGTH - 1) - TABLE_LENGTH/2)) + 1) = 1
+	 *   -> gamma = -ln(INT8_MAX - 1)/((TABLE_LENGTH -1) - TABLE_LENGTH/2)
+	*/
+	const float gamma = -logf(INT8_MAX - 1)
+			/ ((CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1) - CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/2);
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		float exp_x = expf(-gamma * (i - CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/2));
+		s_fermi_decline_table[i] = (int8_t)(INT8_MAX * 1.0f/(exp_x + 1.0f) + 0.5);
+	}
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		s_fermi_growth_table[i] = s_fermi_decline_table[(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1) - i];
+	}
+
 }
 
 /**********************************************************************************/
