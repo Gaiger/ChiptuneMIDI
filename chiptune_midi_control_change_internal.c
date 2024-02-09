@@ -124,7 +124,7 @@ static inline void process_cc_volume(uint32_t const tick, int8_t const voice, in
 
 /**********************************************************************************/
 
-static inline void process_pan_volume(uint32_t const tick, int8_t const voice, int8_t const value)
+static inline void process_cc_pan(uint32_t const tick, int8_t const voice, int8_t const value)
 {
 #define PAN_BAR_SCALE_NUMBER						(16)
 #define PAN_BAR_DELTA_TICK							((INT8_MAX + 1)/PAN_BAR_SCALE_NUMBER)
@@ -250,7 +250,7 @@ int process_control_change_message(uint32_t const tick, int8_t const voice, int8
 		process_cc_volume(tick, voice, value);
 		break;
 	case MIDI_CC_PAN:
-		process_pan_volume(tick, voice, value);
+		process_cc_pan(tick, voice, value);
 		break;
 	case MIDI_CC_EXPRESSION:
 		process_cc_expression(tick, voice, value);
