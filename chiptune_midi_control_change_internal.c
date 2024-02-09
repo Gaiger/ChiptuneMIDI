@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <string.h>
+
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
 
@@ -123,11 +126,26 @@ static inline void process_cc_volume(uint32_t const tick, int8_t const voice, in
 
 static inline void process_pan_volume(uint32_t const tick, int8_t const voice, int8_t const value)
 {
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_PAN_VOLUME(%d) :: voice = %d, value = %d\r\n",
-					tick, MIDI_CC_PAN, voice, value);
+#define PAN_BAR_SCALE_NUMBER						(16)
+#define PAN_BAR_DELTA_TICK							((INT8_MAX + 1)/PAN_BAR_SCALE_NUMBER)
+	char panning_bar_string[PAN_BAR_SCALE_NUMBER] = "";
+	do {
+		int location = (value + PAN_BAR_DELTA_TICK/2)/PAN_BAR_DELTA_TICK;
+		for(int i = 0; i < location - 1; i++){
+			snprintf(&panning_bar_string[strlen(&panning_bar_string[0])],
+					sizeof(panning_bar_string) - strlen(&panning_bar_string[0]), "-");
+		}
+		snprintf(&panning_bar_string[strlen(&panning_bar_string[0])],
+				sizeof(panning_bar_string) - strlen(&panning_bar_string[0]), "+");
+		for(int i = location + 1; i < (INT8_MAX + 1)/8; i++){
+			snprintf(&panning_bar_string[strlen(&panning_bar_string[0])],
+					sizeof(panning_bar_string) - strlen(&panning_bar_string[0]), "-");
+		}
+	} while (0);
+	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_PAN_VOLUME(%d) :: voice = %2d, value = %3d  %s\r\n",
+					tick, MIDI_CC_PAN, voice, value, &panning_bar_string);
 	get_channel_controller_pointer_from_index(voice)->pan = value;
 }
-
 /**********************************************************************************/
 
 static inline void process_cc_expression(uint32_t const tick, int8_t const voice, int8_t const value)

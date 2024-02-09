@@ -9,7 +9,7 @@
 #include "chiptune_event_internal.h"
 
 
-#define MAX_OSCILLATOR_NUMBER						(MIDI_MAX_CHANNEL_NUMBER * 16)
+#define MAX_OSCILLATOR_NUMBER						(MIDI_MAX_CHANNEL_NUMBER * 8)
 
 static oscillator_t s_oscillators[MAX_OSCILLATOR_NUMBER];
 static int16_t s_occupied_oscillator_number = 0;
@@ -232,7 +232,7 @@ static void reset_all_oscillators(void)
 /**********************************************************************************/
 /**********************************************************************************/
 
-#define MAX_EVENT_NUMBER							(16 * MIDI_MAX_CHANNEL_NUMBER)
+#define MAX_EVENT_NUMBER							(MIDI_MAX_CHANNEL_NUMBER * 8)
 
 enum
 {
