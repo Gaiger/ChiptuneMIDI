@@ -288,6 +288,9 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
 			if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
 				break;
 			}
+			if(true == IS_FREEING(p_oscillator->state_bits)){
+				break;
+			}
 			if(true == IS_RESTING(p_oscillator->state_bits)){
 				break;
 			}

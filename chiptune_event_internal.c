@@ -497,6 +497,11 @@ int process_events(uint32_t const tick)
 							p_oscillator->voice, p_oscillator->note,
 							100.0f * p_oscillator->release_reference_amplitude/(float)p_oscillator->loudness,
 							event_additional_string(s_event_head_index));
+			if(true == IS_FREEING(p_oscillator->state_bits)){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: rest a freeing oscillator = %d\r\n",
+							s_events[s_event_head_index].oscillator);
+				break;
+			}
 			if(true == IS_RESTING(p_oscillator->state_bits)){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: rest a resting oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
