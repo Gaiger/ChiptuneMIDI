@@ -7,7 +7,6 @@
 
 
 /**********************************************************************************/
-
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 
 uint16_t calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_semitones,
@@ -15,8 +14,11 @@ uint16_t calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_s
 										  float pitch_chorus_bend_in_semitones, float *p_pitch_wheel_bend_in_semitone)
 {
 	// TO DO : too many float variable
-	float pitch_wheel_bend_in_semitone = ((pitch_wheel - MIDI_PITCH_WHEEL_CENTER)/(float)MIDI_PITCH_WHEEL_CENTER) * DIVIDE_BY_2(pitch_wheel_bend_range_in_semitones);
-	float corrected_note = (float)(note + (int16_t)tuning_in_semitones) + pitch_wheel_bend_in_semitone + pitch_chorus_bend_in_semitones;
+	float pitch_wheel_bend_in_semitone
+			= ((pitch_wheel - MIDI_PITCH_WHEEL_CENTER)/(float)MIDI_PITCH_WHEEL_CENTER)
+			* DIVIDE_BY_2(pitch_wheel_bend_range_in_semitones);
+	float corrected_note = (float)(note + (int16_t)tuning_in_semitones)
+			+ pitch_wheel_bend_in_semitone + pitch_chorus_bend_in_semitones;
 	/*
 	 * freq = 440 * 2**((note - 69)/12)
 	*/
@@ -35,7 +37,7 @@ uint16_t calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_s
 //xor-shift pesudo random https://en.wikipedia.org/wiki/Xorshift
 static uint32_t s_chorus_random_seed = 20240129;
 
-static uint16_t chorus_ramdom(void)
+static uint16_t chorus_random(void)
 {
 	s_chorus_random_seed ^= s_chorus_random_seed << 13;
 	s_chorus_random_seed ^= s_chorus_random_seed >> 17;
@@ -58,7 +60,7 @@ float obtain_oscillator_pitch_chorus_bend_in_semitone(int8_t const voice)
 	}
 	float const max_pitch_chorus_bend_in_semitones = p_channel_controller->max_pitch_chorus_bend_in_semitones;
 
-	uint16_t random = chorus_ramdom();
+	uint16_t random = chorus_random();
 	float pitch_chorus_bend_in_semitone;
 	pitch_chorus_bend_in_semitone = RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) * chorus/(float)INT8_MAX;
 	pitch_chorus_bend_in_semitone *= max_pitch_chorus_bend_in_semitones;
