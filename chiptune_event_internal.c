@@ -84,6 +84,7 @@ static void check_occupied_oscillator_list(void)
 													} while(0)
 #endif
 
+
 /**********************************************************************************/
 
 oscillator_t * const acquire_event_freed_oscillator(int16_t * const p_index)
@@ -92,39 +93,36 @@ oscillator_t * const acquire_event_freed_oscillator(int16_t * const p_index)
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillators are used\r\n");
 		return NULL;
 	}
-	// TODO : Move the linking to put_event ?
-	int16_t i;
-	do {
+	for(int16_t i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+		if(UNUSED_OSCILLATOR == s_oscillators[i].voice){
+			*p_index = i;
+			return &s_oscillators[i];
+		}
+	}
+	CHIPTUNE_PRINTF(cDeveloping, "ERROR::available oscillator is not found\r\n");
+	*p_index = UNUSED_OSCILLATOR;
+	return NULL;
+}
+
+/**********************************************************************************/
+
+static int occupy_oscillator(int16_t const index)
+{
+	do{
 		if(0 == s_occupied_oscillator_number){
-			s_occupied_oscillator_nodes[0].previous = UNUSED_OSCILLATOR;
-			s_occupied_oscillator_nodes[0].next = UNUSED_OSCILLATOR;
-			s_occupied_oscillator_head_index = 0;
-			s_occupied_oscillator_last_index = 0;
-			i = 0;
+			s_occupied_oscillator_nodes[index].previous = UNUSED_OSCILLATOR;
+			s_occupied_oscillator_nodes[index].next = UNUSED_OSCILLATOR;
+			s_occupied_oscillator_head_index = index;
 			break;
 		}
-
-		bool is_found = false;
-		for(i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-			if(UNUSED_OSCILLATOR == s_oscillators[i].voice){
-				s_occupied_oscillator_nodes[s_occupied_oscillator_last_index].next = i;
-				s_occupied_oscillator_nodes[i].previous = s_occupied_oscillator_last_index;
-				s_occupied_oscillator_nodes[i].next = UNUSED_OSCILLATOR;
-				s_occupied_oscillator_last_index = i;
-				is_found = true;
-				break;
-			}
-		}
-		if(false == is_found){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR::available oscillator is not found\r\n");
-			*p_index = UNUSED_OSCILLATOR;
-		}
+		s_occupied_oscillator_nodes[s_occupied_oscillator_last_index].next = index;
+		s_occupied_oscillator_nodes[index].previous = s_occupied_oscillator_last_index;
+		s_occupied_oscillator_nodes[index].next = UNUSED_OSCILLATOR;
 	} while(0);
-
+	s_occupied_oscillator_last_index = index;
 	s_occupied_oscillator_number += 1;
-	*p_index = i;
 	CHECK_OCCUPIED_OSCILLATOR_LIST();
-	return &s_oscillators[i];
+	return 0;
 }
 
 /**********************************************************************************/
@@ -332,6 +330,17 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 	if(MAX_EVENT_NUMBER == s_upcoming_event_number){
 		CHIPTUNE_PRINTF(cDeveloping, "No unused event is available\r\n");
 		return -1;
+	}
+
+	switch(type)
+	{
+	case EVENT_ACTIVATE:
+		occupy_oscillator(oscillator_index);
+		break;
+	case EVENT_FREE:
+	case EVENT_REST:
+	default:
+		break;
 	}
 
 	do {
