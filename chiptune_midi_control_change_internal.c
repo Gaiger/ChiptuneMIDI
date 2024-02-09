@@ -142,10 +142,11 @@ static inline void process_cc_pan(uint32_t const tick, int8_t const voice, int8_
 					sizeof(panning_bar_string) - strlen(&panning_bar_string[0]), "-");
 		}
 	} while (0);
-	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_PAN_VOLUME(%d) :: voice = %2d, value = %3d  %s\r\n",
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_PAN_VOLUME(%d) :: voice = %2d, value = %3d  %s\r\n",
 					tick, MIDI_CC_PAN, voice, value, &panning_bar_string);
 	get_channel_controller_pointer_from_index(voice)->pan = value;
 }
+
 /**********************************************************************************/
 
 static inline void process_cc_expression(uint32_t const tick, int8_t const voice, int8_t const value)
