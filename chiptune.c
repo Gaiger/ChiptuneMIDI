@@ -870,12 +870,12 @@ void chiptune_set_tempo(float const tempo)
 /**********************************************************************************/
 
 #ifdef _INCREMENTAL_SAMPLE_INDEX
-#define INCREMENT_TIME_BASE()						\
+#define INCREMENT_TIME()						\
 													do { \
 														s_current_sample_index += 1; \
 													} while(0)
 #else
-#define INCREMENT_TIME_BASE()						\
+#define INCREMENT_TIME()						\
 													do { \
 														s_current_tick += s_delta_tick_per_sample; \
 													} while(0)
@@ -1148,10 +1148,9 @@ int16_t chiptune_fetch_16bit_wave(void)
 		}
 	}while(0);
 
-	//printf("is_left = %d, out_wave = %d\r\n", is_processing_left_channel(), (int16_t)out_wave);
 	if(false == is_stereo()
 			|| false == is_processing_left_channel()){
-		INCREMENT_TIME_BASE();
+		INCREMENT_TIME();
 	}
 
 	if(true == is_stereo()){
