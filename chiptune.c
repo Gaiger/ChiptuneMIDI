@@ -1,4 +1,5 @@
 #include <string.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include<stdarg.h>
@@ -45,12 +46,12 @@ static chiptune_float s_tick_to_sample_index_ratio = (chiptune_float)(DEFAULT_SA
 														= (chiptune_float)(s_sampling_rate * 60.0/s_tempo/s_resolution); \
 													} while(0)
 
-#define CORRECT_TIME_BASE()							\
+#define CORRECT_BASE_TIME()							\
 													do { \
 														s_current_sample_index = (uint32_t)(s_current_sample_index * s_tempo/tempo); \
 													} while(0)
 
-#define UPDATE_TIME_BASE_UNIT()						UPDATE_SAMPLES_TO_TICK_RATIO()
+#define UPDATE_BASE_TIME_UNIT()						UPDATE_SAMPLES_TO_TICK_RATIO()
 
 #define TICK_TO_SAMPLE_INDEX(TICK)					((uint32_t)(s_tick_to_sample_index_ratio * (chiptune_float)(TICK) + 0.5 ))
 
@@ -70,12 +71,12 @@ static chiptune_float s_delta_tick_per_sample = (DEFAULT_RESOLUTION / ( (chiptun
 														s_delta_tick_per_sample = ( s_resolution * s_tempo / (chiptune_float)s_sampling_rate/ 60.0 ); \
 													} while(0)
 
-#define CORRECT_TIME_BASE()							\
+#define CORRECT_BASE_TIME()							\
 													do { \
 														(void)0; \
 													} while(0)
 
-#define UPDATE_TIME_BASE_UNIT()						UPDATE_DELTA_TICK_PER_SAMPLE()
+#define UPDATE_BASE_TIME_UNIT()						UPDATE_DELTA_TICK_PER_SAMPLE()
 
 #define	IS_AFTER_CURRENT_TIME(TICK)					(((chiptune_float)(TICK) > s_current_tick) ? true : false)
 #define CURRENT_TICK()								((uint32_t)(s_current_tick + 0.5))
@@ -90,6 +91,9 @@ uint32_t s_chorus_delta_tick = (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_
 														 s_chorus_delta_tick \
 															= (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ 60.0 + 0.5); \
 													} while(0)
+
+#define SINE_TABLE_LENGTH							(2048)
+static int16_t s_sine_table[SINE_TABLE_LENGTH]		= {0};
 
 static int(*s_handler_get_midi_message)(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message) = NULL;
 
@@ -846,10 +850,13 @@ void chiptune_initialize(bool is_stereo,
 	s_previous_run_timely_tick = NULL_TICK;
 	SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
 
+	for(int i = 0; i < SINE_TABLE_LENGTH; i++){
+		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
+	}
 	initialize_channel_controller();
 	clean_all_events();
 
-	UPDATE_TIME_BASE_UNIT();
+	UPDATE_BASE_TIME_UNIT();
 	UPDATE_AMPLITUDE_NORMALIZER();
 	process_timely_midi_message_and_event();
 	return ;
@@ -860,9 +867,9 @@ void chiptune_initialize(bool is_stereo,
 void chiptune_set_tempo(float const tempo)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "%s :: tempo = %3.1f\r\n", __FUNCTION__,tempo);
-	CORRECT_TIME_BASE();
+	CORRECT_BASE_TIME();
 	s_tempo = tempo;
-	UPDATE_TIME_BASE_UNIT();
+	UPDATE_BASE_TIME_UNIT();
 	UPDATE_CHORUS_DELTA_TICK();
 	update_channel_controller_parameters_related_to_tempo();
 }
@@ -870,12 +877,12 @@ void chiptune_set_tempo(float const tempo)
 /**********************************************************************************/
 
 #ifdef _INCREMENTAL_SAMPLE_INDEX
-#define INCREMENT_TIME()						\
+#define INCREMENT_BASE_TIME()						\
 													do { \
 														s_current_sample_index += 1; \
 													} while(0)
 #else
-#define INCREMENT_TIME()						\
+#define INCREMENT_BASE_TIME()						\
 													do { \
 														s_current_tick += s_delta_tick_per_sample; \
 													} while(0)
@@ -1030,6 +1037,17 @@ void perform_envelope(oscillator_t * const p_oscillator)
 }
 
 /**********************************************************************************/
+
+static inline int16_t obtain_sine_wave(uint16_t phase)
+{
+#define DIVIDE_BY_UINT16_MAX_PLUS_ONE(VALUE)		(((int32_t)(VALUE)) >> 16)
+	return s_sine_table[DIVIDE_BY_UINT16_MAX_PLUS_ONE(phase * SINE_TABLE_LENGTH)];
+}
+
+/**********************************************************************************/
+
+#define SINE_WAVE(PHASE)							(obtain_sine_wave(PHASE))
+
 #define INT16_MAX_PLUS_1							(INT16_MAX + 1)
 #define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
 
@@ -1055,6 +1073,9 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 		break;
 	case WAVEFORM_SAW:
 		wave = -INT16_MAX_PLUS_1 + p_oscillator->current_phase;
+		break;
+	case WAVEFORM_SINE:
+		wave = SINE_WAVE(p_oscillator->current_phase);
 		break;
 	case WAVEFORM_NOISE:
 		break;
@@ -1150,7 +1171,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 
 	if(false == is_stereo()
 			|| false == is_processing_left_channel()){
-		INCREMENT_TIME();
+		INCREMENT_BASE_TIME();
 	}
 
 	if(true == is_stereo()){
