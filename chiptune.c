@@ -95,6 +95,23 @@ uint32_t s_chorus_delta_tick = (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_
 #define SINE_TABLE_LENGTH							(2048)
 static int16_t s_sine_table[SINE_TABLE_LENGTH]		= {0};
 
+// https://www.nesdev.org/wiki/APU_Noise
+// https://forums.nesdev.org/viewtopic.php?t=14355
+#if(0)
+static float const s_noise_frequency_table[16] =
+{
+	4811.2, 2405.6, 1202.8, 601.4, 300.7, 200.5, 150.4, 120.3,
+	95.3, 75.8, 50.6, 37.9, 25.3, 18.9, 9.5, 4.7
+};
+#else
+static float const s_noise_frequency_table[16] =
+{
+	4.7, 9.5, 18.9, 25.3, 37.9, 50.6, 75.8, 95.3,
+	120.3, 150.4, 200.5, 300.7, 601.4, 1202.8, 2405.6, 4811.2
+};
+#endif
+/**********************************************************************************/
+
 static int(*s_handler_get_midi_message)(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message) = NULL;
 
 static bool s_is_tune_ending = false;
@@ -141,6 +158,7 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice
 			|| MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
 		p_channel_controller->waveform = WAVEFORM_NOISE;
+		p_channel_controller->envelope_sustain_level = 8;
 	}
 
 	switch(p_channel_controller->waveform)
@@ -307,6 +325,8 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
 }
 
 /**********************************************************************************/
+#define NOISE_DECLINE_TABLE_LENGTH					(64)
+static int16_t s_linear_decline_table[NOISE_DECLINE_TABLE_LENGTH];
 
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 int8_t const voice, int8_t const note, int8_t const velocity)
@@ -326,27 +346,102 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			SET_NOTE_ON(p_oscillator->state_bits);
 			p_oscillator->voice = voice;
 			p_oscillator->note = note;
-			p_oscillator->pitch_chorus_bend_in_semitone = 0;
-			p_oscillator->delta_phase
-					= calculate_oscillator_delta_phase(p_oscillator->note,
-													   p_channel_controller->tuning_in_semitones,
-													   p_channel_controller->pitch_wheel_bend_range_in_semitones,
-													   p_channel_controller->pitch_wheel,
-													   p_oscillator->pitch_chorus_bend_in_semitone,
-													   &pitch_wheel_bend_in_semitone);
-			p_oscillator->current_phase = 0;
+			do
+			{
+				if(WAVEFORM_NOISE == p_channel_controller->waveform){
+					float frequency = 100;
+					float noise_sustain_time_in_second = 0.01;
+#define BASS_DRUM_2									(35)
+#define BASS_DRUM_1									(36)
+#define SIDE_STICK									(37)
+#define SNARE_DRUM_1								(38)
+#define SNARE_DRUM_2								(40)
+#define OPEN_HI_HAT									(46)
+#define CLOSED_HI_HAT								(42)
+#define RIDE_CYMBAL									(59)
+#define CRASH_CYMBAL								(57)
+#define LOW_TOM										(45)
+#define MID_TOM										(47)
+#define HIGH_TOM									(50)
+					switch(note){
+					case BASS_DRUM_1:
+					case BASS_DRUM_2:
+						frequency = 200.5;
+						noise_sustain_time_in_second = 0.005f;
+						break;
+					case SIDE_STICK:
+						frequency = 8 * 200.5;
+						noise_sustain_time_in_second = 0.003;
+						break;
+					case SNARE_DRUM_1:
+					case SNARE_DRUM_2:
+						frequency = 300.7f;
+						noise_sustain_time_in_second = 0.005f;
+						break;
+					case OPEN_HI_HAT:
+						frequency = 1202.8f;
+						noise_sustain_time_in_second = 0.015f;
+						break;
+					case CLOSED_HI_HAT:
+						frequency  = 601.4f;
+						noise_sustain_time_in_second = 0.01f;
+						break;
+					case RIDE_CYMBAL:
+						frequency = 4811.2f;
+						noise_sustain_time_in_second = 0.005f;
+						break;
+					case CRASH_CYMBAL:
+						frequency = 2405.6f;
+						noise_sustain_time_in_second = 0.01f;
+						break;
+					case LOW_TOM:
+						frequency = 1.5 * 200.5f;
+						noise_sustain_time_in_second = 0.01f;
+						break;
+					case MID_TOM:
+						frequency = 2 * 200.5f;
+						noise_sustain_time_in_second = 0.013f;
+						break;
+					case HIGH_TOM:
+						frequency = 2.5 * 200.5f;
+						noise_sustain_time_in_second = 0.01f;
+						break;
+					default:
+						break;
+					}
+					//noise_sustain_time_in_second = 0.01;
+					p_oscillator->noise_dice_sample_number
+							= (uint16_t)(get_sampling_rate()/frequency + 0.5f);
+					p_oscillator->noise_dice_sample_count = 0;
+
+					p_oscillator->noise_decline_table_index = 0;
+					p_oscillator->noise_same_index_count = 0;
+					p_oscillator->noise_same_index_number = (uint16_t)(get_sampling_rate() * noise_sustain_time_in_second + 0.5f);
+					break;
+				}
+				p_oscillator->pitch_chorus_bend_in_semitone = 0;
+				p_oscillator->delta_phase
+						= calculate_oscillator_delta_phase(p_oscillator->note,
+														   p_channel_controller->tuning_in_semitones,
+														   p_channel_controller->pitch_wheel_bend_range_in_semitones,
+														   p_channel_controller->pitch_wheel,
+														   p_oscillator->pitch_chorus_bend_in_semitone,
+														   &pitch_wheel_bend_in_semitone);
+				p_oscillator->current_phase = 0;
+
+				p_oscillator->max_delta_vibrato_phase
+						= calculate_oscillator_delta_phase(
+							p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitone,
+							p_channel_controller->tuning_in_semitones,
+							p_channel_controller->pitch_wheel_bend_range_in_semitones,
+							p_channel_controller->pitch_wheel,
+							p_oscillator->pitch_chorus_bend_in_semitone, &pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
+				p_oscillator->vibrato_table_index = 0;
+				p_oscillator->vibrato_same_index_count = 0;
+				p_oscillator->is_noise_negative = false;
+			} while(0);
+
 			p_oscillator->loudness = (uint16_t)actual_velocity * (uint16_t)p_channel_controller->playing_volume;
-
-			p_oscillator->max_delta_vibrato_phase
-					= calculate_oscillator_delta_phase(
-						p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitone,
-						p_channel_controller->tuning_in_semitones,
-						p_channel_controller->pitch_wheel_bend_range_in_semitones,
-						p_channel_controller->pitch_wheel,
-						p_oscillator->pitch_chorus_bend_in_semitone, &pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
-			p_oscillator->vibrato_table_index = 0;
-			p_oscillator->vibrato_same_index_count = 0;
-
 			p_oscillator->amplitude = 0;
 			p_oscillator->envelope_same_index_count = 0;
 			p_oscillator->envelope_table_index = 0;
@@ -424,10 +519,11 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}
 	}
 
+	if(voice == 9){
 	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, note = %d, velocity = %d%s\r\n",
 					tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" ,
 					voice, note, velocity, &pitch_wheel_bend_string[0]);
-
+	}
 	return 0;
 }
 
@@ -853,6 +949,13 @@ void chiptune_initialize(bool is_stereo,
 	for(int i = 0; i < SINE_TABLE_LENGTH; i++){
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
 	}
+	for(int16_t i = 0; i < NOISE_DECLINE_TABLE_LENGTH; i++){
+		int ii = (NOISE_DECLINE_TABLE_LENGTH  - i);
+		float body = 0.9;
+		s_linear_decline_table[i] = (int16_t)((INT16_MAX * (ii/(float)NOISE_DECLINE_TABLE_LENGTH))*body + INT16_MAX*(1 - body));
+		//printf("value = %d\r\n", s_linear_decline_table[i]);
+	}
+
 	initialize_channel_controller();
 	clean_all_events();
 
@@ -1046,6 +1149,24 @@ static inline int16_t obtain_sine_wave(uint16_t phase)
 
 /**********************************************************************************/
 
+static uint16_t s_noise_random_seed = 1;
+
+static uint16_t obtain_noise_random(void)
+{
+	uint8_t feedback;
+	feedback=((s_noise_random_seed>>13)&1)^((s_noise_random_seed>>14)&1);
+	s_noise_random_seed = (s_noise_random_seed<<1)+feedback;
+	s_noise_random_seed &= 0x7fff;
+	return s_noise_random_seed;
+}
+
+static bool is_flip_noise_wave(void)
+{
+	return (obtain_noise_random() & 0x01) ? true : false;
+}
+
+
+/**********************************************************************************/
 #define SINE_WAVE(PHASE)							(obtain_sine_wave(PHASE))
 
 #define INT16_MAX_PLUS_1							(INT16_MAX + 1)
@@ -1078,6 +1199,28 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 		wave = SINE_WAVE(p_oscillator->current_phase);
 		break;
 	case WAVEFORM_NOISE:
+		wave = s_linear_decline_table[p_oscillator->noise_decline_table_index];
+		if(true == p_oscillator->is_noise_negative){
+			wave *= -1;
+		}
+
+		p_oscillator->noise_dice_sample_count += 1;
+		if(p_oscillator->noise_dice_sample_number == p_oscillator->noise_dice_sample_count){
+			p_oscillator->noise_dice_sample_count = 0;
+
+			if(true == is_flip_noise_wave()){
+				p_oscillator->is_noise_negative = !p_oscillator->is_noise_negative;
+			}
+		}
+
+		p_oscillator->noise_same_index_count += 1;
+		if(p_oscillator->noise_same_index_number == p_oscillator->noise_same_index_count){
+			p_oscillator->noise_same_index_count = 0;
+			p_oscillator->noise_decline_table_index += 1;
+			if(p_oscillator->noise_decline_table_index == NOISE_DECLINE_TABLE_LENGTH){
+				p_oscillator->noise_decline_table_index = NOISE_DECLINE_TABLE_LENGTH - 1;
+			}
+		}
 		break;
 	default:
 		break;
@@ -1088,7 +1231,7 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 		p_oscillator->current_phase += p_oscillator->delta_phase;
 	}
 
-	return wave * p_oscillator->amplitude;;
+	return wave * p_oscillator->amplitude;
 }
 
 /**********************************************************************************/

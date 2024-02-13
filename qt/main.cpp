@@ -178,11 +178,13 @@ int main(int argc, char* argv[])
 
 	QCoreApplication a(argc, argv);
 
-	QString filename = "8bit(bpm185)v0727T1.mid";
+	//QString filename = "8bit(bpm185)v0727T1.mid";
 	//QString filename = "totoro.mid";
 	//QString filename = "evil_eye.mid";
 	//QString filename = "black_star.mid";
+	//QString filename = "crying.mid";
 	//QString filename = "triligy.mid";
+	QString filename = "6Oclock.mid";
 	//QString filename = "requiem.mid";
 	//QString filename = "Laputa.mid";
 	//QString filename = "Ironforge.mid";

@@ -30,6 +30,14 @@ typedef struct _oscillator
 	uint16_t	vibrato_table_index;
 	uint16_t	vibrato_same_index_count;
 
+	uint16_t	noise_dice_sample_number;
+	uint16_t	noise_dice_sample_count;
+	bool		is_noise_negative;
+
+	uint16_t	noise_decline_table_index;
+	uint16_t	noise_same_index_number;
+	uint16_t	noise_same_index_count;
+
 	int16_t		amplitude;
 	uint16_t	envelope_table_index;
 	uint16_t	envelope_same_index_count;
