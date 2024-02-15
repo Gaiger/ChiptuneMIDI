@@ -194,6 +194,10 @@ static void initialize_envelope_tables(void)
 }
 
 /**********************************************************************************/
+#define BASS_DRUM_2									(35)
+#define OPEN_TRIANGLE								(81)
+
+void reset_percussion_all_parameters_from_index(int8_t const index);
 
 void initialize_channel_controller(void)
 {
@@ -204,4 +208,301 @@ void initialize_channel_controller(void)
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 		reset_channel_controller_all_parameters_from_index(i);
 	}
+
+	for(int i = BASS_DRUM_2; i <= OPEN_TRIANGLE; i++){
+		reset_percussion_all_parameters_from_index(i);
+	}
+}
+
+/**********************************************************************************/
+
+percussion_t s_percussion[OPEN_TRIANGLE - BASS_DRUM_2 + 1];
+
+percussion_t * const get_percussion_pointer_from_index(int8_t const index)
+{
+	if(false == (BASS_DRUM_2 <= index && OPEN_TRIANGLE >= index)){
+		CHIPTUNE_PRINTF(cDeveloping, "percussion = %d, out of range\r\n");
+		return NULL;
+	}
+	return &s_percussion[index - BASS_DRUM_2];
+}
+
+/**********************************************************************************/
+
+
+#define BASS_DRUM_2									(35)
+#define BASS_DRUM_1									(36)
+#define SIDE_STICK									(37)
+#define SNARE_DRUM_1								(38)
+#define SNARE_DRUM_2								(40)
+#define LOW_FLOOR_TOM								(41)
+#define CLOSED_HI_HAT								(42)
+#define HIGH_FLOOR_TOM								(43)
+#define PADEL_HI_HAT								(44)
+#define LOW_TOM										(45)
+#define OPEN_HI_HAT									(46)
+#define LOW_MID_TOM									(47)
+#define HIGH_MID_TOM								(48)
+#define CRASH_CYMBAL_1								(49)
+#define HIGH_TOM									(50)
+#define RIDE_CYMBAL_1								(51)
+#define CHINESE_CYMBAL								(52)
+#define TAMBOURINE									(54)
+#define SPLASH_CYMBAL								(55)
+#define CRASH_CYMBAL_2								(57)
+#define RIDE_CYMBAL_2								(59)
+
+
+void reset_percussion_all_parameters_from_index(int8_t const index)
+{
+	if(false == (BASS_DRUM_2 <= index && OPEN_TRIANGLE >= index)){
+		CHIPTUNE_PRINTF(cDeveloping, "percussion = %d, out of range\r\n");;
+		return;
+	}
+
+	float start_frequency = 150;
+	float end_frequency = 120;
+	float total_druation_time_in_second = 0.3f;
+	float waveform_duration_time_in_second[3];
+
+	percussion_t * const p_percussion = get_percussion_pointer_from_index(index);
+	p_percussion->waveform[0] = WAVEFORM_NOISE;
+	waveform_duration_time_in_second[0] = 0.02f;
+	p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+	waveform_duration_time_in_second[1] = 0.1f;
+	p_percussion->waveform[2] = WAVEFORM_NOISE;
+	waveform_duration_time_in_second[2] = total_druation_time_in_second
+			- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+
+	p_percussion->p_modulation_envelope_table = s_linear_decline_table;
+	p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
+
+
+	switch(index){
+	case BASS_DRUM_2:
+	case BASS_DRUM_1:
+		start_frequency = 80;
+		end_frequency = 50;
+		total_druation_time_in_second = 1.2f;
+		//p_oscillator->p_percussion_modulation_table = s_linear_decline_table;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.04f;
+		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.3f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = 0.1f;
+		p_percussion->waveform[3] = WAVEFORM_SQUARE;
+		break;
+	case SNARE_DRUM_1:
+	case SNARE_DRUM_2:
+		start_frequency = 170;
+		end_frequency = 170;
+		total_druation_time_in_second = 0.35f;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.15f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case OPEN_HI_HAT:
+		start_frequency = 7600;
+		end_frequency = 7000;
+		total_druation_time_in_second = 0.4f;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.12f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				-waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case CLOSED_HI_HAT:
+		start_frequency = 6800;
+		end_frequency = 6800;
+		total_druation_time_in_second = 0.3f;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.05f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case RIDE_CYMBAL_1:
+	case RIDE_CYMBAL_2:
+		start_frequency = 7200;
+		end_frequency = 7000;
+		total_druation_time_in_second = 0.4f;
+		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.12f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case PADEL_HI_HAT:
+		start_frequency = 6000;
+		end_frequency = 5800;
+		total_druation_time_in_second = 0.3f;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.15f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case CRASH_CYMBAL_1:
+	case CRASH_CYMBAL_2:
+		start_frequency = 90;
+		end_frequency = 85;
+		total_druation_time_in_second = 0.7f;
+		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_SQUARE;
+		waveform_duration_time_in_second[1] = 0.3f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second;
+		break;
+	case LOW_FLOOR_TOM:
+		start_frequency = 200;
+		end_frequency = start_frequency + 150;
+		total_druation_time_in_second = 0.5f;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.025f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[1] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case HIGH_FLOOR_TOM:
+		start_frequency = 250;
+		end_frequency = start_frequency + 150;
+		total_druation_time_in_second = 0.5f;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.3f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[1] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case LOW_TOM:
+		start_frequency = 300;
+		end_frequency = start_frequency + 150;
+		total_druation_time_in_second = 0.4f;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.2f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[1] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case LOW_MID_TOM:
+		start_frequency = 350;
+		end_frequency = start_frequency + 150;
+		total_druation_time_in_second = 0.35f;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.15f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case HIGH_MID_TOM:
+		start_frequency = 400;
+		end_frequency = start_frequency + 150;
+		total_druation_time_in_second = 0.35f;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.15f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case HIGH_TOM:
+		start_frequency = 450;
+		end_frequency = start_frequency + 150;
+		total_druation_time_in_second = 0.3f;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.18f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[1] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case CHINESE_CYMBAL:
+		start_frequency = 70;
+		end_frequency = 85;
+		total_druation_time_in_second = 1.5f;
+		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_SQUARE;
+		waveform_duration_time_in_second[1] = 0.3f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second;
+		break;
+	case TAMBOURINE:
+		start_frequency = 200;
+		end_frequency = 210;
+		total_druation_time_in_second = 0.4f;
+		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_SQUARE;
+		waveform_duration_time_in_second[1] = 0.35f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second;
+		break;
+	case SPLASH_CYMBAL:
+		start_frequency = 50;
+		end_frequency = 60;
+		total_druation_time_in_second = 2.0f;
+		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_SQUARE;
+		waveform_duration_time_in_second[1] = 0.5f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second;
+		break;
+	default:
+		CHIPTUNE_PRINTF(cNoteOperation, "percussion note = %d NOT IMPLEMENT YET\r\n", index);
+		break;
+	}
+
+	float remain_druation_time_in_second = total_druation_time_in_second;
+	uint32_t const sampling_rate = get_sampling_rate();
+	p_percussion->delta_phase = (uint16_t)((UINT16_MAX + 1) * start_frequency / get_sampling_rate());
+	p_percussion->max_delta_modulation_phase = p_percussion->delta_phase
+			- (uint16_t)((UINT16_MAX + 1) * end_frequency / get_sampling_rate()) ;
+
+	p_percussion->waveform_duration_sample_number[0]
+			= (uint32_t)(waveform_duration_time_in_second[0] * sampling_rate + 0.5f);
+	remain_druation_time_in_second -= waveform_duration_time_in_second[0];
+
+	p_percussion->waveform_duration_sample_number[1]
+			= (uint32_t)(waveform_duration_time_in_second[1] * sampling_rate + 0.5f);
+	remain_druation_time_in_second -= waveform_duration_time_in_second[1];
+
+	p_percussion->waveform_duration_sample_number[2]
+			= (uint32_t)(waveform_duration_time_in_second[2] * sampling_rate + 0.5f);
+	remain_druation_time_in_second -= waveform_duration_time_in_second[2];
+
+	p_percussion->waveform_duration_sample_number[3]
+			= (uint32_t)(remain_druation_time_in_second * sampling_rate + 0.5);
+
+	p_percussion->envelope_same_index_number =
+			(uint32_t)((total_druation_time_in_second * sampling_rate)/(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH) + 0.5);
 }

@@ -99,10 +99,26 @@ typedef struct _channel_controller
 	uint16_t			registered_parameter_value;
 } channel_controller_t;
 
+
+#define MAX_WVEFORM_CHANGE_NUMBER					(4)
+typedef struct _percussion
+{
+	int8_t		waveform[MAX_WVEFORM_CHANGE_NUMBER];
+	uint32_t	waveform_duration_sample_number[MAX_WVEFORM_CHANGE_NUMBER];
+	uint16_t	delta_phase;
+	int16_t		max_delta_modulation_phase;
+	int8_t		*p_modulation_envelope_table;
+	int8_t		*p_amplitude_envelope_table;
+	uint16_t	envelope_same_index_number;
+} percussion_t;
+
 void initialize_channel_controller(void);
 void update_channel_controller_parameters_related_to_tempo(void);
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index);
 
 void reset_channel_controller_midi_parameters_from_index(int8_t const index);
 void reset_channel_controller_all_parameters_from_index(int8_t const index);
+
+percussion_t * const get_percussion_pointer_from_index(int8_t const index);
+
 #endif // _CHIPTUNE_CHANNEL_CONTROLLER_INTERNAL_H_

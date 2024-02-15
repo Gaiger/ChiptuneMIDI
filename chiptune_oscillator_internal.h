@@ -23,35 +23,27 @@ typedef struct _oscillator
 	uint16_t	current_phase;
 
 	int16_t		loudness;
-
-	float		pitch_chorus_bend_in_semitone;
-
-	uint16_t	max_delta_vibrato_phase;
-	uint16_t	vibrato_table_index;
-	uint16_t	vibrato_same_index_count;
-
-	int8_t		percussion_waveform_index;
-
-	int8_t		percussion_waveform[4];
-	uint32_t	percussion_duration_sample_number[4];
-	uint32_t	percussion_duration_sample_count;
-
-	int8_t		*p_percussion_modulation_table;
-	int8_t		*p_percussion_amplitude_table;
-	int16_t		percussion_max_delta_modulation_phase;
-	uint16_t	percussion_table_index;
-	uint16_t	percussion_same_index_number;
-	uint16_t	percussion_same_index_count;
-
-
-
-
 	int16_t		amplitude;
-	uint16_t	envelope_table_index;
-	uint16_t	envelope_same_index_count;
 
-	int16_t		release_reference_amplitude;
+union{
+	struct {
+		uint16_t	envelope_table_index;
+		uint16_t	envelope_same_index_count;
+		int16_t		release_reference_amplitude;
 
+		uint16_t	max_delta_vibrato_phase;
+		uint16_t	vibrato_table_index;
+		uint16_t	vibrato_same_index_count;
+
+		float		pitch_chorus_bend_in_semitone;
+	};
+	struct {
+		int8_t		percussion_waveform_index;
+		uint32_t	percussion_duration_sample_count;
+		uint16_t	percussion_table_index;
+		uint16_t	percussion_same_index_count;
+	};
+};
 	int16_t		native_oscillator;
 } oscillator_t;
 
