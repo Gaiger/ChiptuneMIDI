@@ -95,21 +95,6 @@ uint32_t s_chorus_delta_tick = (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_
 #define SINE_TABLE_LENGTH							(2048)
 static int16_t s_sine_table[SINE_TABLE_LENGTH]		= {0};
 
-// https://www.nesdev.org/wiki/APU_Noise
-// https://forums.nesdev.org/viewtopic.php?t=14355
-#if(0)
-static float const s_noise_frequency_table[16] =
-{
-	4811.2, 2405.6, 1202.8, 601.4, 300.7, 200.5, 150.4, 120.3,
-	95.3, 75.8, 50.6, 37.9, 25.3, 18.9, 9.5, 4.7
-};
-#else
-static float const s_noise_frequency_table[16] =
-{
-	4.7, 9.5, 18.9, 25.3, 37.9, 50.6, 75.8, 95.3,
-	120.3, 150.4, 200.5, 300.7, 601.4, 1202.8, 2405.6, 4811.2
-};
-#endif
 /**********************************************************************************/
 
 static int(*s_handler_get_midi_message)(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message) = NULL;
@@ -153,8 +138,6 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: ", tick);
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-#define MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0		(9)
-#define MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1		(10)
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice
 			|| MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
 		p_channel_controller->waveform = WAVEFORM_NOISE;
@@ -279,7 +262,7 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 		}
 
 		if(false == is_all_found){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR::targeted oscillator could not be found\r\n");
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR::targeted oscillator voice = %d, note = %d could not be found\r\n", voice, note);
 			return -2;
 		}
 	} while(0);
@@ -288,6 +271,323 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 		put_event(event_type, oscillator_indexes[i], tick + (i + 1) * s_chorus_delta_tick);
 	}
 
+	return 0;
+}
+
+
+
+#define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
+#define OSCILLATOR_NU
+
+static int8_t s_flat_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+
+static int8_t s_linear_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+static int8_t s_linear_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+
+static int8_t s_exponential_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+static int8_t s_exponential_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+
+
+int process_percussion_effect(uint32_t const tick,
+									int8_t const voice, int8_t const note, int8_t const velocity,
+									oscillator_t * const p_oscillator)
+{
+	if(false == (MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
+			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice)){
+		return 1;
+	}
+	(void)velocity;
+
+	p_oscillator->percussion_waveform_index = 0;
+	memset(&p_oscillator->percussion_waveform[0], -1, 4 * sizeof(int8_t));
+	memset(&p_oscillator->percussion_duration_sample_number[0], 0, 4 * sizeof (uint32_t));
+	memset(&p_oscillator->percussion_duration_sample_count, 0, 1 * sizeof (uint32_t));
+	memset(&p_oscillator->percussion_modulation_same_index_number, 0, 1 * sizeof (uint16_t));
+	memset(&p_oscillator->percussion_modulation_same_index_count, 0, 1 * sizeof (uint16_t));
+	memset(&p_oscillator->percussion_modulation_table_index, 0, 1 * sizeof (uint16_t));
+	memset(&p_oscillator->percussion_amplitude_same_index_number, 0, 1 * sizeof (uint16_t));
+	memset(&p_oscillator->percussion_amplitude_same_index_count, 0, 1 * sizeof (uint16_t));
+	memset(&p_oscillator->percussion_amplitude_table_index, 0, 1 * sizeof (uint16_t));
+	float start_frequency = 80;
+	float end_frequency = 30;
+	float total_druation_time_in_second = 2.0;
+	float waveform_duration_time_in_second[3];
+	p_oscillator->p_percussion_modulation_table = s_linear_decline_table;
+	p_oscillator->p_percussion_amplitude_table = s_exponential_decline_table;
+
+#if(1)
+	p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+	waveform_duration_time_in_second[0] = 0.02f;
+	p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
+	waveform_duration_time_in_second[1] = 0.1f;
+	p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+	waveform_duration_time_in_second[2] = 0.5f;
+	p_oscillator->percussion_waveform[3] = WAVEFORM_SQUARE;
+#endif
+#define BASS_DRUM_2									(35)
+#define BASS_DRUM_1									(36)
+#define SIDE_STICK									(37)
+#define SNARE_DRUM_1								(38)
+#define SNARE_DRUM_2								(40)
+#define OPEN_HI_HAT									(46)
+#define LOW_FLOOR_TOM								(41)
+#define CLOSED_HI_HAT								(42)
+#define HIGH_FLOOR_TOM								(43)
+#define PADEL_HI_HAT								(44)
+#define LOW_TOM										(45)
+#define LOW_MID_TOM									(47)
+#define HIGH_MID_TOM								(48)
+#define CRASH_CYMBAL_1								(49)
+#define HIGH_TOM									(50)
+#define RIDE_CYMBAL_1								(51)
+#define CHINESE_CYMBAL								(52)
+#define TAMBOURINE									(54)
+#define SPLASH_CYMBAL								(55)
+#define CRASH_CYMBAL_2								(57)
+#define RIDE_CYMBAL_2								(59)
+
+
+
+
+	switch(note){
+	case BASS_DRUM_2:
+	case BASS_DRUM_1:
+		start_frequency = 50;
+		end_frequency = 80;
+		total_druation_time_in_second = 1.5;
+		//p_oscillator->p_percussion_modulation_table = s_linear_decline_table;
+
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.1f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = 0.02f;
+		p_oscillator->percussion_waveform[3] = WAVEFORM_SQUARE;
+		break;
+	case SNARE_DRUM_1:
+	case SNARE_DRUM_2:
+		start_frequency = 170;
+		end_frequency = 170;
+		total_druation_time_in_second = 0.35;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.04f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.07f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case OPEN_HI_HAT:
+#if(1)
+		start_frequency = 7600;
+		end_frequency = 7600;
+		total_druation_time_in_second = 0.4;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.07f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				-waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+#endif
+#if(1)
+	case CLOSED_HI_HAT:
+		start_frequency = 6800;
+		end_frequency = 6800;
+		total_druation_time_in_second = 0.3;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.01f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.05f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+#endif
+#if(1)
+	case RIDE_CYMBAL_1:
+	case RIDE_CYMBAL_2:
+		start_frequency = 7200;
+		end_frequency = 7000;
+		total_druation_time_in_second = 0.35f;
+		p_oscillator->p_percussion_amplitude_table = s_linear_decline_table;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.03f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case PADEL_HI_HAT:
+		start_frequency = 2400;
+		end_frequency = 2400;
+		total_druation_time_in_second = 0.3;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.01f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.05f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case CRASH_CYMBAL_1:
+	case CRASH_CYMBAL_2:
+		start_frequency = 90;
+		end_frequency = 85;
+		total_druation_time_in_second = 0.7f;
+		p_oscillator->p_percussion_amplitude_table = s_exponential_decline_table;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_SQUARE;
+		waveform_duration_time_in_second[1] = 0.05f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second;
+		break;
+	case LOW_FLOOR_TOM:
+		start_frequency = 200;
+		end_frequency = start_frequency + 150;
+		total_druation_time_in_second = 0.5;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.03f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[1] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+
+	case HIGH_FLOOR_TOM:
+		start_frequency = 250;
+		end_frequency = start_frequency + 150;
+		total_druation_time_in_second = 0.5;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.04f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[1] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case LOW_TOM:
+		start_frequency = 300;
+		end_frequency = start_frequency + 150;
+		total_druation_time_in_second = 0.4;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.04f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[1] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case LOW_MID_TOM:
+		start_frequency = 350;
+		end_frequency = start_frequency + 150;
+		total_druation_time_in_second = 0.35;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.05f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case HIGH_MID_TOM:
+		start_frequency = 400;
+		end_frequency = start_frequency + 150;
+		total_druation_time_in_second = 0.35;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.05f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case HIGH_TOM:
+		start_frequency = 450;
+		end_frequency = start_frequency + 150;
+		total_druation_time_in_second = 0.3;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.07f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[1] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		break;
+	case CHINESE_CYMBAL:
+		start_frequency = 70;
+		end_frequency = 85;
+		total_druation_time_in_second = 1.5f;
+		p_oscillator->p_percussion_amplitude_table = s_exponential_decline_table;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_SQUARE;
+		waveform_duration_time_in_second[1] = 0.3f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second;
+		break;
+	case TAMBOURINE:
+		start_frequency = 200;
+		end_frequency = 210;
+		total_druation_time_in_second = 0.4f;
+		p_oscillator->p_percussion_amplitude_table = s_exponential_decline_table;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_SQUARE;
+		waveform_duration_time_in_second[1] = 0.35f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second;
+		break;
+	case SPLASH_CYMBAL:
+		start_frequency = 50;
+		end_frequency = 60;
+		total_druation_time_in_second = 2.0f;
+		p_oscillator->p_percussion_amplitude_table = s_exponential_decline_table;
+		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_oscillator->percussion_waveform[1] = WAVEFORM_SQUARE;
+		waveform_duration_time_in_second[1] = 0.5f;
+		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second;
+		break;
+#endif
+	default:
+		CHIPTUNE_PRINTF(cNoteOperation, "percussion note = %d NOT IMPLEMENT YET\r\n", note);
+		break;
+	}
+
+	float remain_druation_time_in_second = total_druation_time_in_second;
+
+	p_oscillator->delta_phase = (uint16_t)((UINT16_MAX + 1) * start_frequency / get_sampling_rate());
+	p_oscillator->percussion_max_delta_modulation_phase = p_oscillator->delta_phase
+			- (uint16_t)((UINT16_MAX + 1) * end_frequency / get_sampling_rate());
+
+	p_oscillator->percussion_duration_sample_number[0]
+			= (uint32_t)(waveform_duration_time_in_second[0] * s_sampling_rate + 0.5);
+	remain_druation_time_in_second -= waveform_duration_time_in_second[0];
+
+	p_oscillator->percussion_duration_sample_number[1]
+			= (uint32_t)(waveform_duration_time_in_second[1] * s_sampling_rate + 0.5);
+	remain_druation_time_in_second -= waveform_duration_time_in_second[1];
+
+	p_oscillator->percussion_duration_sample_number[2]
+			= (uint32_t)(waveform_duration_time_in_second[2] * s_sampling_rate + 0.5);
+	remain_druation_time_in_second -= waveform_duration_time_in_second[2];
+
+	p_oscillator->percussion_duration_sample_number[3]
+			= (uint32_t)(remain_druation_time_in_second * s_sampling_rate + 0.5);
+
+	p_oscillator->percussion_modulation_same_index_number
+			= (uint32_t)((total_druation_time_in_second * s_sampling_rate)/(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH) + 0.5);
+
+	p_oscillator->percussion_amplitude_same_index_number
+			= (uint32_t)((total_druation_time_in_second * s_sampling_rate)/(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH) + 0.5);
+	//p_oscillator->percussion_amplitude_same_index_number = 25;
 	return 0;
 }
 
@@ -325,8 +625,7 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
 }
 
 /**********************************************************************************/
-#define NOISE_DECLINE_TABLE_LENGTH					(64)
-static int16_t s_linear_decline_table[NOISE_DECLINE_TABLE_LENGTH];
+
 
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 int8_t const voice, int8_t const note, int8_t const velocity)
@@ -337,6 +636,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	do {
 		if(true == is_note_on){
 			rest_occupied_oscillator_with_same_voice_note(tick, voice, note, velocity);
+
 			int16_t oscillator_index;
 			oscillator_t * const p_oscillator = acquire_event_freed_oscillator(&oscillator_index);
 			if(NULL == p_oscillator){
@@ -348,77 +648,12 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->note = note;
 			do
 			{
-				if(WAVEFORM_NOISE == p_channel_controller->waveform){
-					float frequency = 100;
-					float noise_sustain_time_in_second = 0.01;
-#define BASS_DRUM_2									(35)
-#define BASS_DRUM_1									(36)
-#define SIDE_STICK									(37)
-#define SNARE_DRUM_1								(38)
-#define SNARE_DRUM_2								(40)
-#define OPEN_HI_HAT									(46)
-#define CLOSED_HI_HAT								(42)
-#define RIDE_CYMBAL									(59)
-#define CRASH_CYMBAL								(57)
-#define LOW_TOM										(45)
-#define MID_TOM										(47)
-#define HIGH_TOM									(50)
-					switch(note){
-					case BASS_DRUM_1:
-					case BASS_DRUM_2:
-						frequency = 200.5;
-						noise_sustain_time_in_second = 0.005f;
-						break;
-					case SIDE_STICK:
-						frequency = 8 * 200.5;
-						noise_sustain_time_in_second = 0.003;
-						break;
-					case SNARE_DRUM_1:
-					case SNARE_DRUM_2:
-						frequency = 300.7f;
-						noise_sustain_time_in_second = 0.005f;
-						break;
-					case OPEN_HI_HAT:
-						frequency = 1202.8f;
-						noise_sustain_time_in_second = 0.015f;
-						break;
-					case CLOSED_HI_HAT:
-						frequency  = 601.4f;
-						noise_sustain_time_in_second = 0.01f;
-						break;
-					case RIDE_CYMBAL:
-						frequency = 4811.2f;
-						noise_sustain_time_in_second = 0.005f;
-						break;
-					case CRASH_CYMBAL:
-						frequency = 2405.6f;
-						noise_sustain_time_in_second = 0.01f;
-						break;
-					case LOW_TOM:
-						frequency = 1.5 * 200.5f;
-						noise_sustain_time_in_second = 0.01f;
-						break;
-					case MID_TOM:
-						frequency = 2 * 200.5f;
-						noise_sustain_time_in_second = 0.013f;
-						break;
-					case HIGH_TOM:
-						frequency = 2.5 * 200.5f;
-						noise_sustain_time_in_second = 0.01f;
-						break;
-					default:
-						break;
-					}
-					//noise_sustain_time_in_second = 0.01;
-					p_oscillator->noise_dice_sample_number
-							= (uint16_t)(get_sampling_rate()/frequency + 0.5f);
-					p_oscillator->noise_dice_sample_count = 0;
-
-					p_oscillator->noise_decline_table_index = 0;
-					p_oscillator->noise_same_index_count = 0;
-					p_oscillator->noise_same_index_number = (uint16_t)(get_sampling_rate() * noise_sustain_time_in_second + 0.5f);
+				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
+						MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
+					process_percussion_effect(tick, voice, note, velocity, p_oscillator);
 					break;
 				}
+
 				p_oscillator->pitch_chorus_bend_in_semitone = 0;
 				p_oscillator->delta_phase
 						= calculate_oscillator_delta_phase(p_oscillator->note,
@@ -427,7 +662,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 														   p_channel_controller->pitch_wheel,
 														   p_oscillator->pitch_chorus_bend_in_semitone,
 														   &pitch_wheel_bend_in_semitone);
-				p_oscillator->current_phase = 0;
 
 				p_oscillator->max_delta_vibrato_phase
 						= calculate_oscillator_delta_phase(
@@ -435,17 +669,21 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 							p_channel_controller->tuning_in_semitones,
 							p_channel_controller->pitch_wheel_bend_range_in_semitones,
 							p_channel_controller->pitch_wheel,
-							p_oscillator->pitch_chorus_bend_in_semitone, &pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
+							p_oscillator->pitch_chorus_bend_in_semitone, &pitch_wheel_bend_in_semitone)
+						- p_oscillator->delta_phase;
+
 				p_oscillator->vibrato_table_index = 0;
 				p_oscillator->vibrato_same_index_count = 0;
-				p_oscillator->is_noise_negative = false;
-			} while(0);
+
+				p_oscillator->envelope_same_index_count = 0;
+				p_oscillator->envelope_table_index = 0;
+				p_oscillator->release_reference_amplitude = 0;
+
+			}while(0);
 
 			p_oscillator->loudness = (uint16_t)actual_velocity * (uint16_t)p_channel_controller->playing_volume;
 			p_oscillator->amplitude = 0;
-			p_oscillator->envelope_same_index_count = 0;
-			p_oscillator->envelope_table_index = 0;
-			p_oscillator->release_reference_amplitude = 0;
+			p_oscillator->current_phase = 0;
 
 			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
 			put_event(EVENT_ACTIVATE, oscillator_index, tick);
@@ -466,6 +704,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				if(voice != p_oscillator->voice){
 					break;
 				}
+
 				if(UNUSED_OSCILLATOR != p_oscillator->native_oscillator){
 					break;
 				}
@@ -542,7 +781,7 @@ static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, 
 		}
 		snprintf(&delta_hex_string[0], sizeof(delta_hex_string),"(-0x%04x)", MIDI_PITCH_WHEEL_CENTER - value);
 	} while(0);
-	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %d, value = 0x%04x %s\r\n",
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %d, value = 0x%04x %s\r\n",
 					tick, voice, value, &delta_hex_string[0]);
 
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
@@ -563,7 +802,7 @@ static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, 
 																		 p_channel_controller->pitch_wheel_bend_range_in_semitones,
 																		 p_channel_controller->pitch_wheel, p_oscillator->pitch_chorus_bend_in_semitone,
 																		 &pitch_bend_in_semitone);
-			CHIPTUNE_PRINTF(cNoteOperation, "---- voice = %d, note = %d, pitch bend in semitone = %+3.2f\r\n",
+			CHIPTUNE_PRINTF(cMidiSetup, "---- voice = %d, note = %d, pitch bend in semitone = %+3.2f\r\n",
 							voice, p_oscillator->note, pitch_bend_in_semitone);
 		} while(0);
 		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
@@ -949,11 +1188,31 @@ void chiptune_initialize(bool is_stereo,
 	for(int i = 0; i < SINE_TABLE_LENGTH; i++){
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
 	}
-	for(int16_t i = 0; i < NOISE_DECLINE_TABLE_LENGTH; i++){
-		int ii = (NOISE_DECLINE_TABLE_LENGTH  - i);
-		float body = 0.9;
-		s_linear_decline_table[i] = (int16_t)((INT16_MAX * (ii/(float)NOISE_DECLINE_TABLE_LENGTH))*body + INT16_MAX*(1 - body));
-		//printf("value = %d\r\n", s_linear_decline_table[i]);
+
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		s_flat_table[i] = INT8_MAX;
+	}
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		int ii = (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH  - i);
+		s_linear_decline_table[i] = (int8_t)(INT8_MAX * (ii/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
+	}
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		s_linear_growth_table[i]
+				= s_linear_decline_table[(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1) - i];
+	}
+
+	/*
+	 * exponential :
+	 *  INT8_MAX * exp(-alpha * (TABLE_LENGTH -1)) = 1 -> alpha = -ln(1/INT8_MAX)/(TABLE_LENGTH -1)
+	*/
+	const float alpha = -logf(1/(float)INT8_MAX)/(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1);
+	s_exponential_decline_table[0] = INT8_MAX;
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		s_exponential_decline_table[i] = (int8_t)(INT8_MAX * expf( -alpha * i) + 0.5);
+	}
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		s_exponential_growth_table[i]
+				= s_exponential_decline_table[(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1) - i];
 	}
 
 	initialize_channel_controller();
@@ -1001,6 +1260,11 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 			break;
 		}
 
+		if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == p_oscillator->voice ||
+				MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == p_oscillator->voice){
+			break;
+		}
+
 		channel_controller_t *p_channel_controller = get_channel_controller_pointer_from_index(p_oscillator->voice);
 		int8_t const modulation_wheel = p_channel_controller->modulation_wheel;
 		if(0 >= modulation_wheel){
@@ -1020,13 +1284,19 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 	} while(0);
 }
 
+
 /**********************************************************************************/
 
-void perform_envelope(oscillator_t * const p_oscillator)
+void perform_melody_envelope(oscillator_t * const p_oscillator)
 {
 	do {
 		if(true == is_stereo()
 				&& false == is_processing_left_channel()){
+			break;
+		}
+
+		if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == p_oscillator->voice ||
+				MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == p_oscillator->voice){
 			break;
 		}
 
@@ -1141,6 +1411,66 @@ void perform_envelope(oscillator_t * const p_oscillator)
 
 /**********************************************************************************/
 
+void perform_percussion(oscillator_t * const p_oscillator)
+{
+	do {
+		if(true == is_stereo()
+				&& false == is_processing_left_channel()){
+			break;
+		}
+
+		if(false == (MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == p_oscillator->voice ||
+				MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == p_oscillator->voice)){
+			break;
+		}
+
+
+		uint16_t const modulation_same_index_number = p_oscillator->percussion_modulation_same_index_number;
+		p_oscillator->current_phase +=
+				(uint16_t)((((uint32_t)p_oscillator->percussion_max_delta_modulation_phase)
+				* p_oscillator->p_percussion_modulation_table[p_oscillator->percussion_modulation_table_index]) >> 7);
+
+		p_oscillator->percussion_modulation_same_index_count += 1;
+		if(modulation_same_index_number == p_oscillator->percussion_modulation_same_index_count){
+			p_oscillator->percussion_modulation_same_index_count = 0;
+			p_oscillator->percussion_modulation_table_index += 1;
+			if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->percussion_modulation_table_index){
+				p_oscillator->percussion_modulation_table_index = CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1;
+			}
+		}
+
+		p_oscillator->amplitude = p_oscillator->loudness;
+		uint16_t const amplitude_same_index_number = p_oscillator->percussion_amplitude_same_index_number;
+		p_oscillator->amplitude
+				= (int16_t)(((uint32_t)p_oscillator->loudness
+							 * p_oscillator->p_percussion_amplitude_table[p_oscillator->percussion_amplitude_table_index]) >> 7);
+
+		p_oscillator->percussion_amplitude_same_index_count += 1;
+		if(amplitude_same_index_number == p_oscillator->percussion_amplitude_same_index_count){
+			//printf("amp = %d, loudness = %d, %d\r\n", p_oscillator->amplitude, p_oscillator->loudness, p_oscillator->loudness
+			//	   * s_exponential_decline_table[p_oscillator->percussion_amplitude_table_index]);
+			p_oscillator->percussion_amplitude_same_index_count = 0;
+			p_oscillator->percussion_amplitude_table_index += 1;
+			if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->percussion_amplitude_table_index){
+				p_oscillator->percussion_amplitude_table_index = CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1;
+			}
+		}
+
+		p_oscillator->percussion_duration_sample_count += 1;
+		int8_t waveform_index = p_oscillator->percussion_waveform_index;
+		if (p_oscillator->percussion_duration_sample_number[waveform_index]
+				== p_oscillator->percussion_duration_sample_count){
+			p_oscillator->percussion_duration_sample_count = 0;
+			p_oscillator->percussion_waveform_index += 1;
+			if(4 == p_oscillator->percussion_waveform_index){
+				p_oscillator->percussion_waveform_index  = 3;
+			}
+		}
+	}while(0);
+}
+
+/**********************************************************************************/
+
 static inline int16_t obtain_sine_wave(uint16_t phase)
 {
 #define DIVIDE_BY_UINT16_MAX_PLUS_ONE(VALUE)		(((int32_t)(VALUE)) >> 16)
@@ -1160,11 +1490,6 @@ static uint16_t obtain_noise_random(void)
 	return s_noise_random_seed;
 }
 
-static bool is_flip_noise_wave(void)
-{
-	return (obtain_noise_random() & 0x01) ? true : false;
-}
-
 
 /**********************************************************************************/
 #define SINE_WAVE(PHASE)							(obtain_sine_wave(PHASE))
@@ -1177,7 +1502,13 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 	channel_controller_t const *p_channel_controller
 			= get_channel_controller_pointer_from_index(p_oscillator->voice);
 	int16_t wave = 0;
-	switch(p_channel_controller->waveform)
+	int8_t waveform = p_channel_controller->waveform;
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == p_oscillator->voice ||
+			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == p_oscillator->voice){
+		waveform = p_oscillator->percussion_waveform[p_oscillator->percussion_waveform_index];
+	}
+
+	switch(waveform)
 	{
 	case WAVEFORM_SQUARE:
 		wave = (p_oscillator->current_phase > p_channel_controller->duty_cycle_critical_phase)
@@ -1199,30 +1530,10 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 		wave = SINE_WAVE(p_oscillator->current_phase);
 		break;
 	case WAVEFORM_NOISE:
-		wave = s_linear_decline_table[p_oscillator->noise_decline_table_index];
-		if(true == p_oscillator->is_noise_negative){
-			wave *= -1;
-		}
-
-		p_oscillator->noise_dice_sample_count += 1;
-		if(p_oscillator->noise_dice_sample_number == p_oscillator->noise_dice_sample_count){
-			p_oscillator->noise_dice_sample_count = 0;
-
-			if(true == is_flip_noise_wave()){
-				p_oscillator->is_noise_negative = !p_oscillator->is_noise_negative;
-			}
-		}
-
-		p_oscillator->noise_same_index_count += 1;
-		if(p_oscillator->noise_same_index_number == p_oscillator->noise_same_index_count){
-			p_oscillator->noise_same_index_count = 0;
-			p_oscillator->noise_decline_table_index += 1;
-			if(p_oscillator->noise_decline_table_index == NOISE_DECLINE_TABLE_LENGTH){
-				p_oscillator->noise_decline_table_index = NOISE_DECLINE_TABLE_LENGTH - 1;
-			}
-		}
+		wave = (int16_t)obtain_noise_random();
 		break;
 	default:
+		wave = 0;
 		break;
 	}
 
@@ -1288,7 +1599,9 @@ int16_t chiptune_fetch_16bit_wave(void)
 			}
 
 			perform_vibrato(p_oscillator);
-			perform_envelope(p_oscillator);
+			perform_melody_envelope(p_oscillator);
+			perform_percussion(p_oscillator);
+
 			int32_t mono_wave_amplitude = generate_mono_wave_amplitude(p_oscillator);
 			int32_t channel_wave_amplitude
 					= generate_channel_wave_amplitude(p_oscillator, mono_wave_amplitude);
