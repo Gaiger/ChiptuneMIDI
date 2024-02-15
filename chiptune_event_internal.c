@@ -495,13 +495,14 @@ int process_events(uint32_t const tick)
 			SET_FREEING(p_oscillator->state_bits);
 			do
 			{
+#if(0)
 				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == p_oscillator->voice ||
 						MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == p_oscillator->voice){
 					put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
 					tick);
 					break;
 				}
-
+#endif
 				/*It does not a matter there is a postponement to discard the resting oscillator*/
 				p_oscillator->envelope_state = ENVELOPE_RELEASE;
 				put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,

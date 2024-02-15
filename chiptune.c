@@ -302,39 +302,34 @@ int process_percussion_effect(uint32_t const tick,
 	memset(&p_oscillator->percussion_waveform[0], -1, 4 * sizeof(int8_t));
 	memset(&p_oscillator->percussion_duration_sample_number[0], 0, 4 * sizeof (uint32_t));
 	memset(&p_oscillator->percussion_duration_sample_count, 0, 1 * sizeof (uint32_t));
-	memset(&p_oscillator->percussion_modulation_same_index_number, 0, 1 * sizeof (uint16_t));
-	memset(&p_oscillator->percussion_modulation_same_index_count, 0, 1 * sizeof (uint16_t));
-	memset(&p_oscillator->percussion_modulation_table_index, 0, 1 * sizeof (uint16_t));
-	memset(&p_oscillator->percussion_amplitude_same_index_number, 0, 1 * sizeof (uint16_t));
-	memset(&p_oscillator->percussion_amplitude_same_index_count, 0, 1 * sizeof (uint16_t));
-	memset(&p_oscillator->percussion_amplitude_table_index, 0, 1 * sizeof (uint16_t));
-	float start_frequency = 80;
-	float end_frequency = 30;
-	float total_druation_time_in_second = 2.0;
+	memset(&p_oscillator->percussion_same_index_number, 0, 1 * sizeof (uint16_t));
+	memset(&p_oscillator->percussion_same_index_count, 0, 1 * sizeof (uint16_t));
+	memset(&p_oscillator->percussion_table_index, 0, 1 * sizeof (uint16_t));
+	float start_frequency = 150;
+	float end_frequency = 120;
+	float total_druation_time_in_second = 0.3f;
 	float waveform_duration_time_in_second[3];
-	p_oscillator->p_percussion_modulation_table = s_linear_decline_table;
-	p_oscillator->p_percussion_amplitude_table = s_exponential_decline_table;
 
-#if(1)
 	p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
 	waveform_duration_time_in_second[0] = 0.02f;
 	p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
 	waveform_duration_time_in_second[1] = 0.1f;
 	p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
-	waveform_duration_time_in_second[2] = 0.5f;
-	p_oscillator->percussion_waveform[3] = WAVEFORM_SQUARE;
-#endif
+
+	p_oscillator->p_percussion_modulation_table = s_linear_decline_table;
+	p_oscillator->p_percussion_amplitude_table = s_exponential_decline_table;
+
 #define BASS_DRUM_2									(35)
 #define BASS_DRUM_1									(36)
 #define SIDE_STICK									(37)
 #define SNARE_DRUM_1								(38)
 #define SNARE_DRUM_2								(40)
-#define OPEN_HI_HAT									(46)
 #define LOW_FLOOR_TOM								(41)
 #define CLOSED_HI_HAT								(42)
 #define HIGH_FLOOR_TOM								(43)
 #define PADEL_HI_HAT								(44)
 #define LOW_TOM										(45)
+#define OPEN_HI_HAT									(46)
 #define LOW_MID_TOM									(47)
 #define HIGH_MID_TOM								(48)
 #define CRASH_CYMBAL_1								(49)
@@ -348,87 +343,80 @@ int process_percussion_effect(uint32_t const tick,
 
 
 
-
 	switch(note){
 	case BASS_DRUM_2:
 	case BASS_DRUM_1:
-		start_frequency = 50;
-		end_frequency = 80;
-		total_druation_time_in_second = 1.5;
+		start_frequency = 80;
+		end_frequency = 50;
+		total_druation_time_in_second = 1.2;
 		//p_oscillator->p_percussion_modulation_table = s_linear_decline_table;
-
 		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
-		waveform_duration_time_in_second[0] = 0.02f;
+		waveform_duration_time_in_second[0] = 0.04f;
 		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
-		waveform_duration_time_in_second[1] = 0.1f;
+		waveform_duration_time_in_second[1] = 0.3f;
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
-		waveform_duration_time_in_second[2] = 0.02f;
+		waveform_duration_time_in_second[2] = 0.1f;
 		p_oscillator->percussion_waveform[3] = WAVEFORM_SQUARE;
 		break;
 	case SNARE_DRUM_1:
 	case SNARE_DRUM_2:
 		start_frequency = 170;
 		end_frequency = 170;
-		total_druation_time_in_second = 0.35;
+		total_druation_time_in_second = 0.35f;
 		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
-		waveform_duration_time_in_second[0] = 0.04f;
+		waveform_duration_time_in_second[0] = 0.02f;
 		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
-		waveform_duration_time_in_second[1] = 0.07f;
+		waveform_duration_time_in_second[1] = 0.15f;
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		break;
 	case OPEN_HI_HAT:
-#if(1)
 		start_frequency = 7600;
-		end_frequency = 7600;
-		total_druation_time_in_second = 0.4;
+		end_frequency = 7000;
+		total_druation_time_in_second = 0.4f;
 		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
 		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
-		waveform_duration_time_in_second[1] = 0.07f;
+		waveform_duration_time_in_second[1] = 0.12f;
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				-waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		break;
-#endif
-#if(1)
 	case CLOSED_HI_HAT:
 		start_frequency = 6800;
 		end_frequency = 6800;
-		total_druation_time_in_second = 0.3;
+		total_druation_time_in_second = 0.3f;
 		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
-		waveform_duration_time_in_second[0] = 0.01f;
+		waveform_duration_time_in_second[0] = 0.02f;
 		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
 		waveform_duration_time_in_second[1] = 0.05f;
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		break;
-#endif
-#if(1)
 	case RIDE_CYMBAL_1:
 	case RIDE_CYMBAL_2:
 		start_frequency = 7200;
 		end_frequency = 7000;
-		total_druation_time_in_second = 0.35f;
-		p_oscillator->p_percussion_amplitude_table = s_linear_decline_table;
+		total_druation_time_in_second = 0.4f;
+		p_oscillator->p_percussion_amplitude_table = s_exponential_decline_table;
 		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
-		waveform_duration_time_in_second[0] = 0.02;
+		waveform_duration_time_in_second[0] = 0.02f;
 		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
-		waveform_duration_time_in_second[1] = 0.03f;
+		waveform_duration_time_in_second[1] = 0.12f;
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		break;
 	case PADEL_HI_HAT:
-		start_frequency = 2400;
-		end_frequency = 2400;
-		total_druation_time_in_second = 0.3;
+		start_frequency = 6000;
+		end_frequency = 5800;
+		total_druation_time_in_second = 0.3f;
 		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
-		waveform_duration_time_in_second[0] = 0.01f;
+		waveform_duration_time_in_second[0] = 0.02f;
 		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
-		waveform_duration_time_in_second[1] = 0.05f;
+		waveform_duration_time_in_second[1] = 0.15f;
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
@@ -442,31 +430,30 @@ int process_percussion_effect(uint32_t const tick,
 		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
 		p_oscillator->percussion_waveform[1] = WAVEFORM_SQUARE;
-		waveform_duration_time_in_second[1] = 0.05f;
+		waveform_duration_time_in_second[1] = 0.3f;
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second;
 		break;
 	case LOW_FLOOR_TOM:
 		start_frequency = 200;
 		end_frequency = start_frequency + 150;
-		total_druation_time_in_second = 0.5;
+		total_druation_time_in_second = 0.5f;
 		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
 		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
-		waveform_duration_time_in_second[1] = 0.03f;
+		waveform_duration_time_in_second[1] = 0.025f;
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[1] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		break;
-
 	case HIGH_FLOOR_TOM:
 		start_frequency = 250;
 		end_frequency = start_frequency + 150;
-		total_druation_time_in_second = 0.5;
+		total_druation_time_in_second = 0.5f;
 		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
 		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
-		waveform_duration_time_in_second[1] = 0.04f;
+		waveform_duration_time_in_second[1] = 0.3f;
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[1] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
@@ -474,11 +461,11 @@ int process_percussion_effect(uint32_t const tick,
 	case LOW_TOM:
 		start_frequency = 300;
 		end_frequency = start_frequency + 150;
-		total_druation_time_in_second = 0.4;
+		total_druation_time_in_second = 0.4f;
 		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
 		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
-		waveform_duration_time_in_second[1] = 0.04f;
+		waveform_duration_time_in_second[1] = 0.2f;
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[1] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
@@ -486,11 +473,11 @@ int process_percussion_effect(uint32_t const tick,
 	case LOW_MID_TOM:
 		start_frequency = 350;
 		end_frequency = start_frequency + 150;
-		total_druation_time_in_second = 0.35;
+		total_druation_time_in_second = 0.35f;
 		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
 		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
-		waveform_duration_time_in_second[1] = 0.05f;
+		waveform_duration_time_in_second[1] = 0.15f;
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
@@ -498,11 +485,11 @@ int process_percussion_effect(uint32_t const tick,
 	case HIGH_MID_TOM:
 		start_frequency = 400;
 		end_frequency = start_frequency + 150;
-		total_druation_time_in_second = 0.35;
+		total_druation_time_in_second = 0.35f;
 		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
 		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
-		waveform_duration_time_in_second[1] = 0.05f;
+		waveform_duration_time_in_second[1] = 0.15f;
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
@@ -510,11 +497,11 @@ int process_percussion_effect(uint32_t const tick,
 	case HIGH_TOM:
 		start_frequency = 450;
 		end_frequency = start_frequency + 150;
-		total_druation_time_in_second = 0.3;
+		total_druation_time_in_second = 0.3f;
 		p_oscillator->percussion_waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
 		p_oscillator->percussion_waveform[1] = WAVEFORM_TRIANGLE;
-		waveform_duration_time_in_second[1] = 0.07f;
+		waveform_duration_time_in_second[1] = 0.18f;
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[1] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
@@ -555,7 +542,6 @@ int process_percussion_effect(uint32_t const tick,
 		p_oscillator->percussion_waveform[2] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second;
 		break;
-#endif
 	default:
 		CHIPTUNE_PRINTF(cNoteOperation, "percussion note = %d NOT IMPLEMENT YET\r\n", note);
 		break;
@@ -582,11 +568,9 @@ int process_percussion_effect(uint32_t const tick,
 	p_oscillator->percussion_duration_sample_number[3]
 			= (uint32_t)(remain_druation_time_in_second * s_sampling_rate + 0.5);
 
-	p_oscillator->percussion_modulation_same_index_number
+	p_oscillator->percussion_same_index_number
 			= (uint32_t)((total_druation_time_in_second * s_sampling_rate)/(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH) + 0.5);
 
-	p_oscillator->percussion_amplitude_same_index_number
-			= (uint32_t)((total_druation_time_in_second * s_sampling_rate)/(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH) + 0.5);
 	//p_oscillator->percussion_amplitude_same_index_number = 25;
 	return 0;
 }
@@ -1423,37 +1407,26 @@ void perform_percussion(oscillator_t * const p_oscillator)
 				MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == p_oscillator->voice)){
 			break;
 		}
-
-
-		uint16_t const modulation_same_index_number = p_oscillator->percussion_modulation_same_index_number;
+		uint16_t const modulation_same_index_number = p_oscillator->percussion_same_index_number;
 		p_oscillator->current_phase +=
 				(uint16_t)((((uint32_t)p_oscillator->percussion_max_delta_modulation_phase)
-				* p_oscillator->p_percussion_modulation_table[p_oscillator->percussion_modulation_table_index]) >> 7);
+				* p_oscillator->p_percussion_modulation_table[p_oscillator->percussion_table_index]) >> 7);
 
-		p_oscillator->percussion_modulation_same_index_count += 1;
-		if(modulation_same_index_number == p_oscillator->percussion_modulation_same_index_count){
-			p_oscillator->percussion_modulation_same_index_count = 0;
-			p_oscillator->percussion_modulation_table_index += 1;
-			if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->percussion_modulation_table_index){
-				p_oscillator->percussion_modulation_table_index = CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1;
+
+		p_oscillator->percussion_same_index_count += 1;
+		if(modulation_same_index_number == p_oscillator->percussion_same_index_count){
+			p_oscillator->percussion_same_index_count = 0;
+			p_oscillator->percussion_table_index += 1;
+			p_oscillator->amplitude
+					= (int16_t)(((uint32_t)p_oscillator->loudness
+								 * p_oscillator->p_percussion_amplitude_table[p_oscillator->percussion_table_index]) >> 7);
+			p_oscillator->release_reference_amplitude = p_oscillator->amplitude;
+			if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->percussion_table_index){
+				SET_DEACTIVATED(p_oscillator->state_bits);
+				p_oscillator->percussion_table_index = CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1;
 			}
-		}
 
-		p_oscillator->amplitude = p_oscillator->loudness;
-		uint16_t const amplitude_same_index_number = p_oscillator->percussion_amplitude_same_index_number;
-		p_oscillator->amplitude
-				= (int16_t)(((uint32_t)p_oscillator->loudness
-							 * p_oscillator->p_percussion_amplitude_table[p_oscillator->percussion_amplitude_table_index]) >> 7);
-
-		p_oscillator->percussion_amplitude_same_index_count += 1;
-		if(amplitude_same_index_number == p_oscillator->percussion_amplitude_same_index_count){
-			//printf("amp = %d, loudness = %d, %d\r\n", p_oscillator->amplitude, p_oscillator->loudness, p_oscillator->loudness
-			//	   * s_exponential_decline_table[p_oscillator->percussion_amplitude_table_index]);
-			p_oscillator->percussion_amplitude_same_index_count = 0;
-			p_oscillator->percussion_amplitude_table_index += 1;
-			if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->percussion_amplitude_table_index){
-				p_oscillator->percussion_amplitude_table_index = CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1;
-			}
+			break;
 		}
 
 		p_oscillator->percussion_duration_sample_count += 1;

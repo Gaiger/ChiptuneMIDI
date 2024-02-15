@@ -37,15 +37,14 @@ typedef struct _oscillator
 	uint32_t	percussion_duration_sample_count;
 
 	int8_t		*p_percussion_modulation_table;
-	int16_t		percussion_max_delta_modulation_phase;
-	uint16_t	percussion_modulation_table_index;
-	uint16_t	percussion_modulation_same_index_number;
-	uint16_t	percussion_modulation_same_index_count;
-
 	int8_t		*p_percussion_amplitude_table;
-	uint16_t	percussion_amplitude_table_index;
-	uint16_t	percussion_amplitude_same_index_number;
-	uint16_t	percussion_amplitude_same_index_count;
+	int16_t		percussion_max_delta_modulation_phase;
+	uint16_t	percussion_table_index;
+	uint16_t	percussion_same_index_number;
+	uint16_t	percussion_same_index_count;
+
+
+
 
 	int16_t		amplitude;
 	uint16_t	envelope_table_index;
