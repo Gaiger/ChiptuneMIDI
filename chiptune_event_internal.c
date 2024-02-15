@@ -493,10 +493,20 @@ int process_events(uint32_t const tick)
 				return -1;
 			}
 			SET_FREEING(p_oscillator->state_bits);
-			/*It does not a matter there is a postponement to discard the resting oscillator*/
-			p_oscillator->envelope_state = ENVELOPE_RELEASE;
-			put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
+			do
+			{
+				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == p_oscillator->voice ||
+						MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == p_oscillator->voice){
+					put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
+					tick);
+					break;
+				}
+
+				/*It does not a matter there is a postponement to discard the resting oscillator*/
+				p_oscillator->envelope_state = ENVELOPE_RELEASE;
+				put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
 				tick + p_channel_controller->envelope_release_tick_number);
+			} while(0);
 			break;
 
 		case EVENT_REST:

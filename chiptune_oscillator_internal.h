@@ -30,13 +30,22 @@ typedef struct _oscillator
 	uint16_t	vibrato_table_index;
 	uint16_t	vibrato_same_index_count;
 
-	uint16_t	noise_dice_sample_number;
-	uint16_t	noise_dice_sample_count;
-	bool		is_noise_negative;
+	int8_t		percussion_waveform_index;
 
-	uint16_t	noise_decline_table_index;
-	uint16_t	noise_same_index_number;
-	uint16_t	noise_same_index_count;
+	int8_t		percussion_waveform[4];
+	uint32_t	percussion_duration_sample_number[4];
+	uint32_t	percussion_duration_sample_count;
+
+	int8_t		*p_percussion_modulation_table;
+	int16_t		percussion_max_delta_modulation_phase;
+	uint16_t	percussion_modulation_table_index;
+	uint16_t	percussion_modulation_same_index_number;
+	uint16_t	percussion_modulation_same_index_count;
+
+	int8_t		*p_percussion_amplitude_table;
+	uint16_t	percussion_amplitude_table_index;
+	uint16_t	percussion_amplitude_same_index_number;
+	uint16_t	percussion_amplitude_same_index_count;
 
 	int16_t		amplitude;
 	uint16_t	envelope_table_index;

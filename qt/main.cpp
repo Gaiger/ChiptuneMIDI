@@ -196,6 +196,7 @@ int main(int argc, char* argv[])
 
 	//QString filename = "2012111316917146.mid";
 	//QString filename = "25626oth34.mid";
+	//QString filename = "duck.mid";
 
 	//QString filename = "102473.mid";
 #if(0)
@@ -214,7 +215,7 @@ int main(int argc, char* argv[])
 #endif
 
 #if(1)
-	TuneManager tune_manager(true, 16000, 16);
+	TuneManager tune_manager(true, 16000, 8);
 	QThread tune_manager_working_thread;
 	tune_manager.moveToThread(&tune_manager_working_thread);
 	tune_manager_working_thread.start(QThread::HighPriority);
@@ -223,6 +224,8 @@ int main(int argc, char* argv[])
 	//SaveAsWavFile(&tune_manager, "20240206ankokuButo.wav");
 	//SaveAsWavFile(&tune_manager, "20240205Laputa.wav");
 	//SaveAsWavFile(&tune_manager, "20240205Ironforge.wav");
+	//SaveAsWavFile(&tune_manager, "202402156Oclock.wav");
+	//SaveAsWavFile(&tune_manager, "20240215never_enough.wav");
 	AudioPlayer audio_player(&tune_manager, &a);
 	audio_player.Play();
 #endif

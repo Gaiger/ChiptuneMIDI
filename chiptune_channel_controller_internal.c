@@ -123,25 +123,6 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 					 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 	//p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number = UINT16_MAX;
 
-	if(9 == index || 10 == index){
-		p_channel_controller->waveform = WAVEFORM_NOISE;
-		p_channel_controller->p_envelope_attack_table = &s_linear_growth_table[0];
-		p_channel_controller->envelope_attack_same_index_number
-			= (uint16_t)((sampling_rate * 0.01)
-						 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
-
-		p_channel_controller->envelope_decay_same_index_number
-			= (uint16_t)((sampling_rate * 5.0)
-						 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
-		p_channel_controller->p_envelope_decay_table = &s_linear_decline_table[0];
-
-		p_channel_controller->envelope_sustain_level = 8;
-		p_channel_controller->envelope_release_duration_in_second = 0.02f;
-		p_channel_controller->p_envelope_release_table = &s_fermi_decline_table[0];
-		p_channel_controller->envelope_release_same_index_number
-			= (uint16_t)((sampling_rate * p_channel_controller->envelope_release_duration_in_second)
-						 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.2);
-	}
 
 	update_channel_controller_envelope_parameters_related_to_tempo(index);
 	reset_channel_controller_midi_parameters_from_index(index);
