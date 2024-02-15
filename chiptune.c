@@ -308,6 +308,9 @@ int process_percussion_effect(uint32_t const tick,
 			= (int16_t)(((uint32_t)p_oscillator->loudness
 						 * p_percussion->p_modulation_envelope_table[p_oscillator->percussion_table_index]) >> 7);
 
+	if(false == p_percussion->is_implemented){
+		CHIPTUNE_PRINTF(cNoteOperation, "percussion note = %d has NOT IMPLEMENTED\r\n", note);
+	}
 	return 0;
 }
 

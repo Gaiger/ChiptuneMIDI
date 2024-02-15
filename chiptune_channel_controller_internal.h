@@ -110,6 +110,8 @@ typedef struct _percussion
 	int8_t		*p_modulation_envelope_table;
 	int8_t		*p_amplitude_envelope_table;
 	uint16_t	envelope_same_index_number;
+
+	bool		is_implemented;
 } percussion_t;
 
 void initialize_channel_controller(void);
