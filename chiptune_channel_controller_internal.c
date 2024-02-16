@@ -294,6 +294,20 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->waveform[3] = WAVEFORM_SQUARE;
 		p_percussion->is_implemented = true;
 		break;
+	case SIDE_STICK:
+		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
+		start_frequency = 350;
+		end_frequency = 345;
+		total_druation_time_in_second = 0.4f;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_SQUARE;
+		waveform_duration_time_in_second[1] = 0.25f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		p_percussion->is_implemented = true;
+		break;
 	case SNARE_DRUM_1:
 	case SNARE_DRUM_2:
 		start_frequency = 170;
