@@ -194,6 +194,10 @@ static void initialize_envelope_tables(void)
 }
 
 /**********************************************************************************/
+//https://usermanuals.finalemusic.com/SongWriter2012Win/Content/PercussionMaps.htm
+
+#define PERCUSSION_CODE_MIN							(27)
+#define PERCUSSION_CODE_MAX							(93)
 
 #define PERCUSSION_CODE_LIST(X)	\
 	X(BASS_DRUM_2, 35) \
@@ -216,8 +220,7 @@ static void initialize_envelope_tables(void)
 	X(TAMBOURINE, 54) \
 	X(SPLASH_CYMBAL, 55) \
 	X(CRASH_CYMBAL_2, 57) \
-	X(RIDE_CYMBAL_2, 59) \
-	X(OPEN_SURDO, 87)
+	X(RIDE_CYMBAL_2, 59)
 
 #define EXPAND_ENUM(ITEM, VAL)						ITEM = VAL,
 
@@ -238,29 +241,29 @@ void initialize_channel_controller(void)
 		reset_channel_controller_all_parameters_from_index(i);
 	}
 
-	for(int i = BASS_DRUM_2; i <= OPEN_SURDO; i++){
+	for(int i = PERCUSSION_CODE_MIN; i <= PERCUSSION_CODE_MAX; i++){
 		reset_percussion_all_parameters_from_index(i);
 	}
 }
 
 /**********************************************************************************/
 
-percussion_t s_percussion[OPEN_SURDO - BASS_DRUM_2 + 1];
+percussion_t s_percussion[PERCUSSION_CODE_MAX - PERCUSSION_CODE_MIN + 1];
 
 percussion_t * const get_percussion_pointer_from_index(int8_t const index)
 {
-	if(false == (BASS_DRUM_2 <= index && OPEN_SURDO >= index)){
+	if(false == (PERCUSSION_CODE_MIN <= index && PERCUSSION_CODE_MAX >= index)){
 		CHIPTUNE_PRINTF(cDeveloping, "percussion = %d, out of range\r\n");
 		return NULL;
 	}
-	return &s_percussion[index - BASS_DRUM_2];
+	return &s_percussion[index - PERCUSSION_CODE_MIN];
 }
 
 /**********************************************************************************/
 
 void reset_percussion_all_parameters_from_index(int8_t const index)
 {
-	if(false == (BASS_DRUM_2 <= index && OPEN_SURDO >= index)){
+	if(false == (PERCUSSION_CODE_MIN <= index && PERCUSSION_CODE_MAX >= index)){
 		CHIPTUNE_PRINTF(cDeveloping, "percussion = %d, out of range\r\n");;
 		return;
 	}
@@ -397,8 +400,8 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case LOW_FLOOR_TOM:
-		start_frequency = 200;
-		end_frequency = start_frequency - 150;
+		start_frequency = 220;
+		end_frequency = 210;
 		total_druation_time_in_second = 0.5f;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
@@ -411,7 +414,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		break;
 	case HIGH_FLOOR_TOM:
 		start_frequency = 250;
-		end_frequency = start_frequency - 150;
+		end_frequency = 240;
 		total_druation_time_in_second = 0.5f;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
@@ -423,8 +426,8 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case LOW_TOM:
-		start_frequency = 300;
-		end_frequency = start_frequency - 150;
+		start_frequency = 270;
+		end_frequency = 260;
 		total_druation_time_in_second = 0.4f;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
@@ -436,8 +439,8 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case LOW_MID_TOM:
-		start_frequency = 350;
-		end_frequency = start_frequency - 150;
+		start_frequency = 290;
+		end_frequency = 280;
 		total_druation_time_in_second = 0.35f;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
@@ -449,8 +452,8 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case HIGH_MID_TOM:
-		start_frequency = 400;
-		end_frequency = start_frequency - 150;
+		start_frequency = 310;
+		end_frequency = 300;
 		total_druation_time_in_second = 0.35f;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
@@ -462,8 +465,8 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case HIGH_TOM:
-		start_frequency = 450;
-		end_frequency = start_frequency - 150;
+		start_frequency = 330;
+		end_frequency = 320;
 		total_druation_time_in_second = 0.3f;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
