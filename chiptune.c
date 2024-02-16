@@ -275,38 +275,27 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 }
 
 
+/**********************************************************************************/
 
-#define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
-#define OSCILLATOR_NU
-
-static int8_t s_flat_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
-
-static int8_t s_linear_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
-static int8_t s_linear_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
-
-static int8_t s_exponential_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
-static int8_t s_exponential_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
-
-
-int process_percussion_effect(uint32_t const tick,
-									int8_t const voice, int8_t const note, int8_t const velocity,
+int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t const note, int8_t const velocity,
 									oscillator_t * const p_oscillator)
 {
 	if(false == (MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
 			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice)){
 		return 1;
 	}
-	(void)velocity;
+	percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
+	p_oscillator->amplitude
+			= (int16_t)(((uint32_t)p_oscillator->loudness
+						 * p_percussion->p_modulation_envelope_table[p_oscillator->percussion_table_index]) >> 7);
+
 	p_oscillator->percussion_waveform_index = 0;
 	p_oscillator->percussion_duration_sample_count = 0;
 	p_oscillator->percussion_same_index_count = 0;
 	p_oscillator->percussion_table_index = 0;
-
-	percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
 	p_oscillator->delta_phase = p_percussion->delta_phase;
-	p_oscillator->amplitude
-			= (int16_t)(((uint32_t)p_oscillator->loudness
-						 * p_percussion->p_modulation_envelope_table[p_oscillator->percussion_table_index]) >> 7);
+
+	p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
 
 	if(false == p_percussion->is_implemented){
 		CHIPTUNE_PRINTF(cNoteOperation, "percussion note = %d has NOT IMPLEMENTED\r\n", note);
@@ -349,7 +338,6 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
 
 /**********************************************************************************/
 
-
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 int8_t const voice, int8_t const note, int8_t const velocity)
 {
@@ -369,13 +357,19 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			SET_NOTE_ON(p_oscillator->state_bits);
 			p_oscillator->voice = voice;
 			p_oscillator->note = note;
+			p_oscillator->loudness = (uint16_t)actual_velocity * (uint16_t)p_channel_controller->playing_volume;
+			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
+			p_oscillator->current_phase = 0;
+
 			do
 			{
 				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
 						MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
-					process_percussion_effect(tick, voice, note, velocity, p_oscillator);
+					setup_percussion_oscillator(tick, voice, note, velocity, p_oscillator);
 					break;
 				}
+
+				p_oscillator->amplitude = 0;
 
 				p_oscillator->pitch_chorus_bend_in_semitone = 0;
 				p_oscillator->delta_phase
@@ -404,11 +398,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 			}while(0);
 
-			p_oscillator->loudness = (uint16_t)actual_velocity * (uint16_t)p_channel_controller->playing_volume;
-			p_oscillator->amplitude = 0;
-			p_oscillator->current_phase = 0;
-
-			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
 			put_event(EVENT_ACTIVATE, oscillator_index, tick);
 			process_chorus_effect(tick, EVENT_ACTIVATE, voice, note, velocity, oscillator_index);
 			break;
@@ -910,32 +899,6 @@ void chiptune_initialize(bool is_stereo,
 
 	for(int i = 0; i < SINE_TABLE_LENGTH; i++){
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
-	}
-
-	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
-		s_flat_table[i] = INT8_MAX;
-	}
-	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
-		int ii = (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH  - i);
-		s_linear_decline_table[i] = (int8_t)(INT8_MAX * (ii/(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
-	}
-	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
-		s_linear_growth_table[i]
-				= s_linear_decline_table[(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1) - i];
-	}
-
-	/*
-	 * exponential :
-	 *  INT8_MAX * exp(-alpha * (TABLE_LENGTH -1)) = 1 -> alpha = -ln(1/INT8_MAX)/(TABLE_LENGTH -1)
-	*/
-	const float alpha = -logf(1/(float)INT8_MAX)/(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1);
-	s_exponential_decline_table[0] = INT8_MAX;
-	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
-		s_exponential_decline_table[i] = (int8_t)(INT8_MAX * expf( -alpha * i) + 0.5);
-	}
-	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
-		s_exponential_growth_table[i]
-				= s_exponential_decline_table[(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1) - i];
 	}
 
 	initialize_channel_controller();
