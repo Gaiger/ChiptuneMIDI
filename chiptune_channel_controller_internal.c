@@ -194,8 +194,37 @@ static void initialize_envelope_tables(void)
 }
 
 /**********************************************************************************/
-#define BASS_DRUM_2									(35)
-#define OPEN_SURDO									(87)
+
+#define PERCUSSION_CODE_LIST(X)	\
+	X(BASS_DRUM_2, 35) \
+	X(BASS_DRUM_1, 36) \
+	X(SIDE_STICK, 37) \
+	X(SNARE_DRUM_1, 38) \
+	X(SNARE_DRUM_2, 40) \
+	X(LOW_FLOOR_TOM, 41) \
+	X(CLOSED_HI_HAT, 42) \
+	X(HIGH_FLOOR_TOM, 43) \
+	X(PADEL_HI_HAT, 44) \
+	X(LOW_TOM, 45) \
+	X(OPEN_HI_HAT, 46) \
+	X(LOW_MID_TOM, 47) \
+	X(HIGH_MID_TOM, 48) \
+	X(CRASH_CYMBAL_1, 49) \
+	X(HIGH_TOM, 50) \
+	X(RIDE_CYMBAL_1, 51) \
+	X(CHINESE_CYMBAL, 52) \
+	X(TAMBOURINE, 54) \
+	X(SPLASH_CYMBAL, 55) \
+	X(CRASH_CYMBAL_2, 57) \
+	X(RIDE_CYMBAL_2, 59) \
+	X(OPEN_SURDO, 87)
+
+#define EXPAND_ENUM(ITEM, VAL)						ITEM = VAL,
+
+enum PERCUSSION_CODE
+{
+	PERCUSSION_CODE_LIST(EXPAND_ENUM)
+};
 
 void reset_percussion_all_parameters_from_index(int8_t const index);
 
@@ -228,29 +257,6 @@ percussion_t * const get_percussion_pointer_from_index(int8_t const index)
 }
 
 /**********************************************************************************/
-
-#define BASS_DRUM_2									(35)
-#define BASS_DRUM_1									(36)
-#define SIDE_STICK									(37)
-#define SNARE_DRUM_1								(38)
-#define SNARE_DRUM_2								(40)
-#define LOW_FLOOR_TOM								(41)
-#define CLOSED_HI_HAT								(42)
-#define HIGH_FLOOR_TOM								(43)
-#define PADEL_HI_HAT								(44)
-#define LOW_TOM										(45)
-#define OPEN_HI_HAT									(46)
-#define LOW_MID_TOM									(47)
-#define HIGH_MID_TOM								(48)
-#define CRASH_CYMBAL_1								(49)
-#define HIGH_TOM									(50)
-#define RIDE_CYMBAL_1								(51)
-#define CHINESE_CYMBAL								(52)
-#define TAMBOURINE									(54)
-#define SPLASH_CYMBAL								(55)
-#define CRASH_CYMBAL_2								(57)
-#define RIDE_CYMBAL_2								(59)
-
 
 void reset_percussion_all_parameters_from_index(int8_t const index)
 {
@@ -535,4 +541,18 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 
 	p_percussion->envelope_same_index_number =
 			(uint32_t)((total_druation_time_in_second * sampling_rate)/(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH) + 0.5);
+}
+
+/**********************************************************************************/
+
+#define EXPAND_CASE_TO_STR(X, DUMMY_VAR)			case X:	return #X;
+
+char const * const get_percussion_name_string(int8_t const index)
+{
+	switch (index)
+	{
+		PERCUSSION_CODE_LIST(EXPAND_CASE_TO_STR)
+	}
+
+	return "NOT_IMPLEMENTED";
 }

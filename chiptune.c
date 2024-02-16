@@ -277,6 +277,58 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 
 /**********************************************************************************/
 
+int setup_pitch_oscillator(uint32_t const tick, int8_t const voice, int8_t const note, int8_t const velocity,
+									oscillator_t * const p_oscillator)
+{
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
+			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
+		return 1;
+	}
+	(void)tick;
+	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	float pitch_wheel_bend_in_semitone = 0.0f;
+
+	p_oscillator->amplitude = 0;
+
+	p_oscillator->pitch_chorus_bend_in_semitone = 0;
+	p_oscillator->delta_phase
+			= calculate_oscillator_delta_phase(p_oscillator->note,
+											   p_channel_controller->tuning_in_semitones,
+											   p_channel_controller->pitch_wheel_bend_range_in_semitones,
+											   p_channel_controller->pitch_wheel,
+											   p_oscillator->pitch_chorus_bend_in_semitone,
+											   &pitch_wheel_bend_in_semitone);
+
+	p_oscillator->max_delta_vibrato_phase
+			= calculate_oscillator_delta_phase(
+				p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitone,
+				p_channel_controller->tuning_in_semitones,
+				p_channel_controller->pitch_wheel_bend_range_in_semitones,
+				p_channel_controller->pitch_wheel,
+				p_oscillator->pitch_chorus_bend_in_semitone, &pitch_wheel_bend_in_semitone)
+			- p_oscillator->delta_phase;
+
+	p_oscillator->vibrato_table_index = 0;
+	p_oscillator->vibrato_same_index_count = 0;
+
+	p_oscillator->envelope_same_index_count = 0;
+	p_oscillator->envelope_table_index = 0;
+	p_oscillator->release_reference_amplitude = 0;
+
+	char pitch_wheel_bend_string[32] = "";
+	if(0.0f != pitch_wheel_bend_in_semitone){
+		snprintf(&pitch_wheel_bend_string[0], sizeof(pitch_wheel_bend_string),
+				", pitch wheel bend in semitone = %+3.2f", pitch_wheel_bend_in_semitone);
+	}
+
+	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, note = %d, velocity = %d%s\r\n",
+					tick,  "MIDI_MESSAGE_NOTE_ON",
+					voice, note, velocity, &pitch_wheel_bend_string[0]);
+	return 0;
+}
+
+/**********************************************************************************/
+
 int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t const note, int8_t const velocity,
 									oscillator_t * const p_oscillator)
 {
@@ -284,6 +336,8 @@ int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t 
 			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice)){
 		return 1;
 	}
+	(void)tick;
+
 	percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
 	p_oscillator->amplitude
 			= (int16_t)(((uint32_t)p_oscillator->loudness
@@ -297,6 +351,9 @@ int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t 
 
 	p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
 
+	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, %s, velocity = %d\r\n",
+					tick,  "MIDI_MESSAGE_NOTE_ON",
+					voice, get_percussion_name_string(note), velocity);
 	if(false == p_percussion->is_implemented){
 		CHIPTUNE_PRINTF(cNoteOperation, "percussion note = %d has NOT IMPLEMENTED\r\n", note);
 	}
@@ -342,8 +399,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 int8_t const voice, int8_t const note, int8_t const velocity)
 {
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-	float pitch_wheel_bend_in_semitone = 0.0f;
-	int8_t actual_velocity = velocity;
 	do {
 		if(true == is_note_on){
 			rest_occupied_oscillator_with_same_voice_note(tick, voice, note, velocity);
@@ -357,7 +412,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			SET_NOTE_ON(p_oscillator->state_bits);
 			p_oscillator->voice = voice;
 			p_oscillator->note = note;
-			p_oscillator->loudness = (uint16_t)actual_velocity * (uint16_t)p_channel_controller->playing_volume;
+			p_oscillator->loudness = (uint16_t)velocity * (uint16_t)p_channel_controller->playing_volume;
 			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
 			p_oscillator->current_phase = 0;
 
@@ -369,33 +424,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					break;
 				}
 
-				p_oscillator->amplitude = 0;
-
-				p_oscillator->pitch_chorus_bend_in_semitone = 0;
-				p_oscillator->delta_phase
-						= calculate_oscillator_delta_phase(p_oscillator->note,
-														   p_channel_controller->tuning_in_semitones,
-														   p_channel_controller->pitch_wheel_bend_range_in_semitones,
-														   p_channel_controller->pitch_wheel,
-														   p_oscillator->pitch_chorus_bend_in_semitone,
-														   &pitch_wheel_bend_in_semitone);
-
-				p_oscillator->max_delta_vibrato_phase
-						= calculate_oscillator_delta_phase(
-							p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitone,
-							p_channel_controller->tuning_in_semitones,
-							p_channel_controller->pitch_wheel_bend_range_in_semitones,
-							p_channel_controller->pitch_wheel,
-							p_oscillator->pitch_chorus_bend_in_semitone, &pitch_wheel_bend_in_semitone)
-						- p_oscillator->delta_phase;
-
-				p_oscillator->vibrato_table_index = 0;
-				p_oscillator->vibrato_same_index_count = 0;
-
-				p_oscillator->envelope_same_index_count = 0;
-				p_oscillator->envelope_table_index = 0;
-				p_oscillator->release_reference_amplitude = 0;
-
+				setup_pitch_oscillator(tick, voice, note, velocity, p_oscillator);
 			}while(0);
 
 			put_event(EVENT_ACTIVATE, oscillator_index, tick);
@@ -460,21 +489,23 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			put_event(EVENT_ACTIVATE, reduced_loundness_oscillator_index, tick);
 			process_chorus_effect(tick, EVENT_ACTIVATE, voice, note, velocity, reduced_loundness_oscillator_index);
 		}
+
+		do
+		{
+			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
+					MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
+				CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, %s, velocity = %d\r\n",
+								tick,  "MIDI_MESSAGE_NOTE_OFF",
+								voice, get_percussion_name_string(note), velocity);
+				break;
+			}
+
+			CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, note = %d, velocity = %d\r\n",
+							tick,  "MIDI_MESSAGE_NOTE_OFF",
+							voice, note, velocity);
+		}while(0);
 	} while(0);
 
-	char pitch_wheel_bend_string[32] = "";
-	if(true == is_note_on){
-		if(0.0f != pitch_wheel_bend_in_semitone){
-			snprintf(&pitch_wheel_bend_string[0], sizeof(pitch_wheel_bend_string),
-					", pitch wheel bend in semitone = %+3.2f", pitch_wheel_bend_in_semitone);
-		}
-	}
-
-	if(voice == 9){
-	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, note = %d, velocity = %d%s\r\n",
-					tick, is_note_on ? "MIDI_MESSAGE_NOTE_ON" : "MIDI_MESSAGE_NOTE_OFF" ,
-					voice, note, velocity, &pitch_wheel_bend_string[0]);
-	}
 	return 0;
 }
 
@@ -973,7 +1004,7 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 
 /**********************************************************************************/
 
-void perform_melody_envelope(oscillator_t * const p_oscillator)
+void perform_pitch_envelope(oscillator_t * const p_oscillator)
 {
 	do {
 		if(true == is_stereo()
@@ -1276,7 +1307,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 			}
 
 			perform_vibrato(p_oscillator);
-			perform_melody_envelope(p_oscillator);
+			perform_pitch_envelope(p_oscillator);
 			perform_percussion(p_oscillator);
 
 			int32_t mono_wave_amplitude = generate_mono_wave_amplitude(p_oscillator);
