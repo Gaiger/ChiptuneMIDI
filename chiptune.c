@@ -339,9 +339,8 @@ int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t 
 	(void)tick;
 
 	percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
-	p_oscillator->amplitude
-			= (int16_t)(((uint32_t)p_oscillator->loudness
-						 * p_percussion->p_modulation_envelope_table[p_oscillator->percussion_table_index]) >> 7);
+	p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
+					p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_table_index]);
 
 	p_oscillator->percussion_waveform_index = 0;
 	p_oscillator->percussion_duration_sample_count = 0;
@@ -1152,26 +1151,24 @@ void perform_percussion(oscillator_t * const p_oscillator)
 				p_oscillator->percussion_waveform_index = MAX_WVEFORM_CHANGE_NUMBER - 1;
 			}
 		}
-		p_oscillator->current_phase +=
-				(uint16_t)((((uint32_t)p_percussion->max_delta_modulation_phase)
-				* p_percussion->p_modulation_envelope_table[p_oscillator->percussion_table_index]) >> 7);
 
+		p_oscillator->current_phase += PERCUSSION_ENVELOPE(p_percussion->max_delta_modulation_phase,
+											p_percussion->p_modulation_envelope_table[p_oscillator->percussion_table_index]);
 		p_oscillator->percussion_same_index_count += 1;
 		if(p_percussion->envelope_same_index_number > p_oscillator->percussion_same_index_count){
 			break;
 		}
+
 		p_oscillator->percussion_same_index_count = 0;
 		p_oscillator->percussion_table_index += 1;
-		p_oscillator->amplitude
-				= (int16_t)(((uint32_t)p_oscillator->loudness
-							 * p_percussion->p_modulation_envelope_table[p_oscillator->percussion_table_index]) >> 7);
+		p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
+											p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_table_index]);
 
 		if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->percussion_table_index){
 			SET_DEACTIVATED(p_oscillator->state_bits);
 			p_oscillator->percussion_table_index = CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1;
 			break;
 		}
-
 	}while(0);
 
 }
@@ -1196,7 +1193,6 @@ static uint16_t obtain_noise_random(void)
 	s_noise_random_seed &= 0x7fff;
 	return s_noise_random_seed;
 }
-
 
 /**********************************************************************************/
 #define SINE_WAVE(PHASE)							(obtain_sine_wave(PHASE))

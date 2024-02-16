@@ -32,6 +32,9 @@
 														* (DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL) * 4)\
 													)
 
+#define PERCUSSION_ENVELOPE(XX, TABLE_VALUE)	\
+											((uint16_t)CHANNEL_CONTROLLER_DIVIDE_BY_128(((uint32_t)(XX))*(TABLE_VALUE)))
+
 enum
 {
 	WAVEFORM_SILENCE		= -1,
@@ -101,6 +104,7 @@ typedef struct _channel_controller
 
 
 #define MAX_WVEFORM_CHANGE_NUMBER					(4)
+
 typedef struct _percussion
 {
 	int8_t		waveform[MAX_WVEFORM_CHANGE_NUMBER];

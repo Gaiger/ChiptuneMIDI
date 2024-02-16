@@ -413,8 +413,8 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case HIGH_FLOOR_TOM:
-		start_frequency = 250;
-		end_frequency = 240;
+		start_frequency = 240;
+		end_frequency = 230;
 		total_druation_time_in_second = 0.5f;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
@@ -426,8 +426,8 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case LOW_TOM:
-		start_frequency = 270;
-		end_frequency = 260;
+		start_frequency = 250;
+		end_frequency = 240;
 		total_druation_time_in_second = 0.4f;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
@@ -439,6 +439,19 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case LOW_MID_TOM:
+		start_frequency = 270;
+		end_frequency = 260;
+		total_druation_time_in_second = 0.35f;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		waveform_duration_time_in_second[1] = 0.15f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second
+				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
+		p_percussion->is_implemented = true;
+		break;
+	case HIGH_MID_TOM:
 		start_frequency = 290;
 		end_frequency = 280;
 		total_druation_time_in_second = 0.35f;
@@ -451,22 +464,9 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
 		break;
-	case HIGH_MID_TOM:
+	case HIGH_TOM:
 		start_frequency = 310;
 		end_frequency = 300;
-		total_druation_time_in_second = 0.35f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
-		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
-		waveform_duration_time_in_second[1] = 0.15f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
-		waveform_duration_time_in_second[2] = total_druation_time_in_second
-				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
-		p_percussion->is_implemented = true;
-		break;
-	case HIGH_TOM:
-		start_frequency = 330;
-		end_frequency = 320;
 		total_druation_time_in_second = 0.3f;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
