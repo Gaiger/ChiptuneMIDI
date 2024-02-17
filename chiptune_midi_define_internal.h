@@ -143,8 +143,13 @@ enum PERCUSSION_CODE
 #define EXPAND_CASE_TO_STR(X, DUMMY_VAR)			case X:	return #X;
 
 #include <stdint.h>
+#ifdef __clang__
+	#define MAYBE_UNUSED_FUNCTION __attribute__((unused))
+#else
+	#define MAYBE_UNUSED_FUNCTION
+#endif
 
-static inline char const * const get_percussion_name_string(int8_t const index)
+MAYBE_UNUSED_FUNCTION static inline char const * const get_percussion_name_string(int8_t const index)
 {
 	switch (index)
 	{
