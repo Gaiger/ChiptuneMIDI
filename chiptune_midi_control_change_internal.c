@@ -218,16 +218,6 @@ static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const v
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_RESET_ALL_CONTROLLERS(%d) :: voices = %d\r\n",
 					tick, MIDI_CC_RESET_ALL_CONTROLLERS, voice);
 	reset_channel_controller_midi_parameters_from_index(voice);
-
-	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
-	for(int16_t i = 0; i < occupied_oscillator_number; i++){
-		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-		if( voice == p_oscillator->voice){
-			put_event(EVENT_FREE, oscillator_index, tick);
-		}
-		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
-	}
 }
 
 /**********************************************************************************/
