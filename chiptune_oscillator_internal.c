@@ -9,9 +9,9 @@
 /**********************************************************************************/
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 
-uint16_t calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_semitones,
+uint16_t const calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_semitones,
 										  int8_t const pitch_wheel_bend_range_in_semitones, int16_t const pitch_wheel,
-										  float pitch_chorus_bend_in_semitones, float *p_pitch_wheel_bend_in_semitone)
+										  float const pitch_chorus_bend_in_semitones, float * const p_pitch_wheel_bend_in_semitone)
 {
 	// TO DO : too many float variable
 	float pitch_wheel_bend_in_semitone
@@ -50,7 +50,7 @@ static uint16_t obtain_chorus_random(void)
 #define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
 												(((DIVIDE_BY_2(UINT16_MAX) + 1) - (VALUE))/(float)(DIVIDE_BY_2(UINT16_MAX) + 1))
 
-float obtain_oscillator_pitch_chorus_bend_in_semitone(int8_t const voice)
+float const obtain_oscillator_pitch_chorus_bend_in_semitone(int8_t const voice)
 {
 	channel_controller_t * const p_channel_controller
 			= get_channel_controller_pointer_from_index(voice);

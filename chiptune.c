@@ -944,7 +944,7 @@ void chiptune_initialize(bool is_stereo,
 
 void chiptune_set_tempo(float const tempo)
 {
-	CHIPTUNE_PRINTF(cMidiSetup, "%s :: tempo = %3.1f\r\n", __FUNCTION__,tempo);
+	CHIPTUNE_PRINTF(cMidiSetup, "%s :: tempo = %3.1f\r\n", __FUNCTION__, tempo);
 	CORRECT_BASE_TIME();
 	adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), tempo);
 	s_tempo = tempo;

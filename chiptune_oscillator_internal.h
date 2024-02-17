@@ -73,9 +73,9 @@ union{
 #define IS_CHORUS_ASSOCIATE(STATE_BITS)				(((0x01 << STATE_CHORUS_ASSOCIATE_BIT) & (STATE_BITS)) ? true : false)
 
 
-uint16_t calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_semitones,
+uint16_t const calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_semitones,
 							   int8_t const pitch_wheel_bend_range_in_semitones, int16_t const pitch_wheel,
-							   float pitch_chorus_bend_in_semitones, float *p_pitch_wheel_bend_in_semitone);
+							   float const pitch_chorus_bend_in_semitones, float * const p_pitch_wheel_bend_in_semitone);
 
-float obtain_oscillator_pitch_chorus_bend_in_semitone(int8_t const voice);
+float const obtain_oscillator_pitch_chorus_bend_in_semitone(int8_t const voice);
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_

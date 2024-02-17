@@ -179,7 +179,7 @@ int16_t const get_event_occupied_oscillator_number(void)
 
 /**********************************************************************************/
 
-int16_t get_event_occupied_oscillator_head_index()
+int16_t const get_event_occupied_oscillator_head_index()
 {
 	if(-1 == s_occupied_oscillator_head_index
 			&& 0 != s_occupied_oscillator_number){
@@ -191,7 +191,7 @@ int16_t get_event_occupied_oscillator_head_index()
 
 /**********************************************************************************/
 
-int16_t get_event_occupied_oscillator_next_index(int16_t const index)
+int16_t const get_event_occupied_oscillator_next_index(int16_t const index)
 {
 	if(false == (index >= 0 && index < MAX_OSCILLATOR_NUMBER) ){
 		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
@@ -243,7 +243,7 @@ struct _event
 	int8_t	type;
 	uint8_t : 8;
 	int16_t oscillator;
-	uint32_t triggerring_tick;
+	uint32_t triggering_tick;
 	int16_t next_event;
 } s_events[MAX_EVENT_NUMBER];
 
@@ -278,7 +278,7 @@ static void check_upcoming_events(uint32_t const tick)
 			is_error_occur = true;
 		}
 
-		if(previous_tick > s_events[index].triggerring_tick){
+		if(previous_tick > s_events[index].triggering_tick){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event is not in time order\r\n");
 			is_error_occur = true;
 		}
@@ -288,7 +288,7 @@ static void check_upcoming_events(uint32_t const tick)
 			is_error_occur = true;
 		}
 
-		previous_tick = s_events[index].triggerring_tick;
+		previous_tick = s_events[index].triggering_tick;
 		index = s_events[index].next_event;
 	}
 
@@ -301,8 +301,8 @@ static void check_upcoming_events(uint32_t const tick)
 		index = s_event_head_index;
 		for(int16_t i = 0; i < s_upcoming_event_number; i++){
 
-			CHIPTUNE_PRINTF(cDeveloping, "type = %d, oscillator = %d, triggerring_tick = %u\r\n",
-							s_events[index].type, s_events[index].oscillator, s_events[index].triggerring_tick);
+			CHIPTUNE_PRINTF(cDeveloping, "type = %d, oscillator = %d, triggering_tick = %u\r\n",
+							s_events[index].type, s_events[index].oscillator, s_events[index].triggering_tick);
 			index = s_events[index].next_event;
 		}
 
@@ -325,7 +325,7 @@ static void check_upcoming_events(uint32_t const tick)
 
 /**********************************************************************************/
 
-int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
+int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const triggering_tick)
 {
 	if(MAX_EVENT_NUMBER == s_upcoming_event_number){
 		CHIPTUNE_PRINTF(cDeveloping, "No unused event is available\r\n");
@@ -357,7 +357,7 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 
 		s_events[current_index].type = type;
 		s_events[current_index].oscillator = oscillator_index;
-		s_events[current_index].triggerring_tick = triggerring_tick;
+		s_events[current_index].triggering_tick = triggering_tick;
 		s_events[current_index].next_event = NO_EVENT;
 
 		if(0 == s_upcoming_event_number){
@@ -365,7 +365,7 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 			break;
 		}
 
-		if(s_events[current_index].triggerring_tick < s_events[s_event_head_index].triggerring_tick){
+		if(s_events[current_index].triggering_tick < s_events[s_event_head_index].triggering_tick){
 			s_events[current_index].next_event = s_event_head_index;
 			s_event_head_index = current_index;
 			break;
@@ -375,7 +375,7 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 		int16_t kk;
 		for(kk = 1; kk < s_upcoming_event_number; kk++){
 			int16_t next_index = s_events[previous_index].next_event;
-			if(s_events[current_index].triggerring_tick <= s_events[next_index].triggerring_tick){
+			if(s_events[current_index].triggering_tick <= s_events[next_index].triggering_tick){
 				s_events[previous_index].next_event = current_index;
 				s_events[current_index].next_event = next_index;
 				break;
@@ -389,7 +389,7 @@ int put_event(int8_t type, int16_t oscillator_index, uint32_t triggerring_tick)
 	} while(0);
 	s_upcoming_event_number += 1;
 
-	CHECK_UPCOMING_EVENTS(s_events[s_event_head_index].triggerring_tick);
+	CHECK_UPCOMING_EVENTS(s_events[s_event_head_index].triggering_tick);
 	return 0;
 }
 
@@ -454,7 +454,7 @@ int process_events(uint32_t const tick)
 {
 	while(NO_EVENT != s_event_head_index)
 	{
-		if(s_events[s_event_head_index].triggerring_tick > tick){
+		if(s_events[s_event_head_index].triggering_tick > tick){
 			break;
 		}
 
@@ -566,18 +566,18 @@ void clean_all_events(void)
 
 /**********************************************************************************/
 
-uint32_t get_next_event_triggering_tick(void)
+uint32_t const get_next_event_triggering_tick(void)
 {
 	if(0 == s_upcoming_event_number){
 			return NULL_TICK;
 	}
 
-	return s_events[s_event_head_index].triggerring_tick;
+	return s_events[s_event_head_index].triggering_tick;
 }
 
 /**********************************************************************************/
 
-uint32_t get_upcoming_event_number(void)
+uint32_t const get_upcoming_event_number(void)
 {
 	return s_upcoming_event_number;
 }
@@ -591,14 +591,14 @@ int adjust_event_triggering_tick_by_tempo(uint32_t const tick, float const new_t
 	for(int i = 0; i < s_upcoming_event_number; i++){
 		do
 		{
-			if(tick == s_events[event_index].triggerring_tick){
+			if(tick == s_events[event_index].triggering_tick){
 				break;
 			}
-			uint32_t triggerring_tick =
-					(uint32_t)((s_events[event_index].triggerring_tick - tick) * tempo_ratio) + tick;
-			//CHIPTUNE_PRINTF(cDeveloping, "tick = %u, triggerring_tick %u ->%u \r\n",
-			//				tick, s_events[event_index].triggerring_tick, triggerring_tick);
-			s_events[event_index].triggerring_tick = triggerring_tick;
+			uint32_t triggering_tick =
+					(uint32_t)((s_events[event_index].triggering_tick - tick) * tempo_ratio) + tick;
+			//CHIPTUNE_PRINTF(cDeveloping, "tick = %u, triggering_tick %u ->%u \r\n",
+			//				tick, s_events[event_index].triggering_tick, triggering_tick);
+			s_events[event_index].triggering_tick = triggering_tick;
 		} while(0);
 		event_index = s_events[event_index].next_event;
 	}
