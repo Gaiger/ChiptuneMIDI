@@ -26,53 +26,61 @@ int16_t s_occupied_oscillator_last_index = UNUSED_OSCILLATOR;
 #ifdef _CHECK_OCCUPIED_OSCILLATOR_LIST
 /**********************************************************************************/
 
-static void check_occupied_oscillator_list(void)
+static int check_occupied_oscillator_list(void)
 {
-	if(0 > s_occupied_oscillator_number){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number = %d", s_occupied_oscillator_number);
-		return ;
-	}
-
-	if(0 == s_occupied_oscillator_number){
-		if(UNUSED_OSCILLATOR != s_occupied_oscillator_head_index){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number = 0"
-										 " but s_occupied_oscillator_head_index is not UNUSED_OSCILLATOR\r\n");
+	int ret = 0;
+	do {
+		if(0 > s_occupied_oscillator_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number = %d\r\n", s_occupied_oscillator_number);
+			ret = -1;
+			break;
 		}
-		return ;
-	}
 
-	int16_t current_index;
-	int16_t counter;
+		if(0 == s_occupied_oscillator_number){
+			if(UNUSED_OSCILLATOR != s_occupied_oscillator_head_index){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number = 0"
+											 " but s_occupied_oscillator_head_index is not UNUSED_OSCILLATOR\r\n");
+				ret = -2;
+			}
+			break;
+		}
 
-	current_index = s_occupied_oscillator_head_index;
-	counter= 1;
-	while(UNUSED_OSCILLATOR != s_occupied_oscillator_nodes[current_index].next)
-	{
-		counter += 1;
-		current_index = s_occupied_oscillator_nodes[current_index].next;
-	}
-	if(counter != s_occupied_oscillator_number){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: FORWARDING occupied_oscillators list length = %d"
-						", not matches s_occupied_oscillator_number = %d\r\n", counter, s_occupied_oscillator_number);
+		int16_t current_index;
+		int16_t counter;
 
-		return ;
-	}
+		current_index = s_occupied_oscillator_head_index;
+		counter= 1;
+		while(UNUSED_OSCILLATOR != s_occupied_oscillator_nodes[current_index].next)
+		{
+			counter += 1;
+			current_index = s_occupied_oscillator_nodes[current_index].next;
+		}
+		if(counter != s_occupied_oscillator_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: FORWARDING occupied_oscillators list length = %d"
+							", not matches s_occupied_oscillator_number = %d\r\n", counter, s_occupied_oscillator_number);
+			ret = -3;
+			break;
+		}
 
-	current_index = s_occupied_oscillator_last_index;
-	counter = 1;
-	while(UNUSED_OSCILLATOR != s_occupied_oscillator_nodes[current_index].previous)
-	{
-		counter += 1;
-		current_index = s_occupied_oscillator_nodes[current_index].previous;
-	}
+		current_index = s_occupied_oscillator_last_index;
+		counter = 1;
+		while(UNUSED_OSCILLATOR != s_occupied_oscillator_nodes[current_index].previous)
+		{
+			counter += 1;
+			current_index = s_occupied_oscillator_nodes[current_index].previous;
+		}
 
-	if(counter != s_occupied_oscillator_number){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: BACKWARDING occupied_oscillators list length = %d"
-						", not matches s_occupied_oscillator_number = %d\r\n", counter, s_occupied_oscillator_number);
+		if(counter != s_occupied_oscillator_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: BACKWARDING occupied_oscillators list length = %d"
+							", not matches s_occupied_oscillator_number = %d\r\n", counter, s_occupied_oscillator_number);
 
-		return ;
-	}
+			ret = -4;
+			break;
+		}
+	} while(0);
+	return ret;
 }
+
 #define CHECK_OCCUPIED_OSCILLATOR_LIST()			\
 													do { \
 														check_occupied_oscillator_list(); \
@@ -140,7 +148,7 @@ static int discard_oscillator(int16_t const index)
 
 		if(1 != s_occupied_oscillator_number
 				&& (UNUSED_OSCILLATOR == previous_index && UNUSED_OSCILLATOR == next_index) ){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator %d is not in the occupied list\r\n", index);
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator %d is not on the occupied list\r\n", index);
 			return -2;
 		}
 	} while(0);
@@ -255,8 +263,9 @@ int16_t s_event_head_index = NO_EVENT;
 #ifdef _CHECK_EVENT_LIST
 /**********************************************************************************/
 
-static void check_upcoming_events(uint32_t const tick)
+static int check_upcoming_events(uint32_t const tick)
 {
+	int ret = 0;
 	int16_t index = s_event_head_index;
 	do {
 		if(NO_EVENT != s_event_head_index){
@@ -266,55 +275,61 @@ static void check_upcoming_events(uint32_t const tick)
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: tick = %u,"
 										 " event head is NO_EVENT but s_upcoming_event_number = %d\r\n",
 										s_upcoming_event_number);
-			return ;
-		}
-	} while(0);
-	bool is_error_occur = false;
-	uint32_t previous_tick = 0;
-	for(int16_t i = 0; i < s_upcoming_event_number; i++){
-
-		if(UNUSED_EVENT == s_events[index].type){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event element type error\r\n");
-			is_error_occur = true;
-		}
-
-		if(previous_tick > s_events[index].triggering_tick){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event is not in time order\r\n");
-			is_error_occur = true;
-		}
-
-		if(UNUSED_OSCILLATOR == s_events[index].oscillator){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR:: oscillator is UNUSED_OSCILLATOR\r\n");
-			is_error_occur = true;
-		}
-
-		if(UNUSED_OSCILLATOR == get_event_oscillator_pointer_from_index(s_events[index].oscillator)->voice){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR:: oscillator %d is UNUSED_OSCILLATOR\r\n", s_events[index].oscillator);
-			is_error_occur = true;
-		}
-
-		previous_tick = s_events[index].triggering_tick;
-		index = s_events[index].next_event;
-	}
-
-	do {
-		if(false == is_error_occur){
+			ret = -1;
 			break;
 		}
+	} while(0);
 
+	bool is_listing_error_occur = false;
+	do
+	{
+		if(-1 == ret){
+			break;
+		}
+		uint32_t previous_tick = 0;
+		for(int16_t i = 0; i < s_upcoming_event_number; i++){
+			if(UNUSED_EVENT == s_events[index].type){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event %d is UNUSED_EVENT but on the list\r\n", index);
+				is_listing_error_occur = true;
+			}
+			if(previous_tick > s_events[index].triggering_tick){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event is not in time order\r\n");
+				is_listing_error_occur = true;
+			}
+			if(UNUSED_OSCILLATOR == s_events[index].oscillator){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event %d oscillator is UNUSED_OSCILLATOR\r\n", index);
+				is_listing_error_occur = true;
+			}
+			if(UNUSED_OSCILLATOR == get_event_oscillator_pointer_from_index(s_events[index].oscillator)->voice){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: oscillator %d is UNUSED_OSCILLATOR\r\n", s_events[index].oscillator);
+				is_listing_error_occur = true;
+			}
+
+			if(true == is_listing_error_occur){
+				break;
+			}
+			previous_tick = s_events[index].triggering_tick;
+			index = s_events[index].next_event;
+		}
+	} while(0);
+
+	do {
+		if(false == is_listing_error_occur){
+			break;
+		}
 		CHIPTUNE_PRINTF(cDeveloping, "tick = %u\r\n", tick);
 		index = s_event_head_index;
 		for(int16_t i = 0; i < s_upcoming_event_number; i++){
-
-			CHIPTUNE_PRINTF(cDeveloping, "type = %d, oscillator = %d, triggering_tick = %u\r\n",
-							s_events[index].type, s_events[index].oscillator, s_events[index].triggering_tick);
+			CHIPTUNE_PRINTF(cDeveloping, "event = %d, type = %d, oscillator = %d, triggering_tick = %u\r\n",
+							index, s_events[index].type, s_events[index].oscillator, s_events[index].triggering_tick);
 			index = s_events[index].next_event;
 		}
-
 		CHIPTUNE_PRINTF(cDeveloping, "-------------------------------------------------\r\n");
 		CHIPTUNE_PRINTF(cDeveloping, "-------------------------------------------------\r\n");
+		ret = -2;
 	} while(0);
-	return ;
+
+	return ret;
 }
 #define CHECK_UPCOMING_EVENTS(TICK)					\
 													do { \
