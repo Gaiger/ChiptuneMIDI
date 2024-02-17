@@ -10,34 +10,6 @@
 
 #include "chiptune_midi_control_change_internal.h"
 
-//https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
-
-#define MIDI_CC_MODULATION_WHEEL					(1)
-
-#define MIDI_CC_DATA_ENTRY_MSB						(6)
-#define MIDI_CC_VOLUME								(7)
-#define MIDI_CC_PAN									(10)
-#define MIDI_CC_EXPRESSION							(11)
-
-#define MIDI_CC_DATA_ENTRY_LSB						(32 + MIDI_CC_DATA_ENTRY_MSB)
-
-#define MIDI_CC_DAMPER_PEDAL						(64)
-
-#define MIDI_CC_EFFECT_1_DEPTH						(91)
-#define MIDI_CC_EFFECT_2_DEPTH						(92)
-#define MIDI_CC_EFFECT_3_DEPTH						(93)
-#define MIDI_CC_CHORUS_EFFECT						(MIDI_CC_EFFECT_3_DEPTH)
-#define MIDI_CC_EFFECT_4_DEPTH						(94)
-#define MIDI_CC_EFFECT_5_DEPTH						(95)
-
-#define MIDI_CC_NRPN_LSB							(98)
-#define MIDI_CC_NRPN_MSB							(99)
-
-//https://zh.wikipedia.org/zh-tw/General_MIDI
-#define MIDI_CC_RPN_LSB								(100)
-#define MIDI_CC_RPN_MSB								(101)
-
-#define MIDI_CC_RESET_ALL_CONTROLLERS				(121)
 
 static inline void process_modulation_wheel(uint32_t const tick, int8_t const voice, int8_t const value)
 {
@@ -53,16 +25,6 @@ static inline void process_modulation_wheel(uint32_t const tick, int8_t const vo
 static void process_cc_registered_parameter(uint32_t const tick, int8_t const voice)
 {
 	(void)tick;
-//http://www.philrees.co.uk/nrpnq.htm
-#define MIDI_CC_RPN_PITCH_BEND_SENSITIVY			(0)
-#define MIDI_CC_RPN_CHANNEL_FINE_TUNING				(1)
-#define MIDI_CC_RPN_CHANNEL_COARSE_TUNING			(2)
-#define MIDI_CC_RPN_TURNING_PROGRAM_CHANGE			(3)
-#define MIDI_CC_RPN_TURNING_BANK_SELECT				(4)
-#define MIDI_CC_RPN_MODULATION_DEPTH_RANGE			(5)
-#ifndef MIDI_CC_RPN_NULL
-	#define MIDI_CC_RPN_NULL						((127 << 8) + 127)
-#endif
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	switch(p_channel_controller->registered_parameter_number)
 	{

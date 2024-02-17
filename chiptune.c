@@ -166,7 +166,6 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 }
 
 /**********************************************************************************/
-
 #define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
 #define OSCILLATOR_NUMBER_FOR_CHORUS(VALUE)			(DIVIDE_BY_16(((VALUE) + 15)))
 
@@ -175,8 +174,8 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 						  int16_t const native_oscillator_index)
 {
 	(void)velocity;
-	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-	if(0 >= p_channel_controller->chorus){
+	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	if(0 == p_channel_controller->chorus){
 		return 1;
 	}
 
@@ -285,7 +284,7 @@ int setup_pitch_oscillator(uint32_t const tick, int8_t const voice, int8_t const
 		return 1;
 	}
 	(void)tick;
-	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	float pitch_wheel_bend_in_semitone = 0.0f;
 
 	p_oscillator->amplitude = 0;
@@ -350,12 +349,13 @@ int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t 
 
 	p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
 
-	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, %s, velocity = %d\r\n",
-					tick,  "MIDI_MESSAGE_NOTE_ON",
-					voice, get_percussion_name_string(note), velocity);
+	char not_implemented_string[24] = {0};
 	if(false == p_percussion->is_implemented){
-		CHIPTUNE_PRINTF(cNoteOperation, "percussion note = %d has NOT IMPLEMENTED\r\n", note);
+		snprintf(&not_implemented_string[0], sizeof(not_implemented_string), "%s", "(NOT IMPLEMENTED)");
 	}
+	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, %s%s, velocity = %d\r\n",
+					tick,  "MIDI_MESSAGE_NOTE_ON",
+					voice, get_percussion_name_string(note), not_implemented_string, velocity);
 	return 0;
 }
 
@@ -397,7 +397,7 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
 static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 int8_t const voice, int8_t const note, int8_t const velocity)
 {
-	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	do {
 		if(true == is_note_on){
 			rest_occupied_oscillator_with_same_voice_note(tick, voice, note, velocity);
@@ -582,12 +582,12 @@ static int process_midi_message(struct _tick_message const tick_message)
 	}
 
 	union {
-		uint32_t data_as_uint32;
+		uint32_t data_as_uint32_t;
 		unsigned char data_as_bytes[4];
 	} u;
 
 	const uint32_t tick = tick_message.tick;
-	u.data_as_uint32 = tick_message.message;
+	u.data_as_uint32_t = tick_message.message;
 
 	uint8_t type = u.data_as_bytes[0] & 0xF0;
 	int8_t voice = u.data_as_bytes[0] & 0x0F;
@@ -663,7 +663,7 @@ static int release_all_channels_damper_pedal(const uint32_t tick)
 	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
 	for(int16_t i = 0; i < occupied_oscillator_number; i++){
 		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-		channel_controller_t * const p_channel_controller
+		channel_controller_t const * const p_channel_controller
 				= get_channel_controller_pointer_from_index(p_oscillator->voice);
 
 		if(true == p_channel_controller->is_damper_pedal_on){
@@ -1148,8 +1148,8 @@ void perform_percussion(oscillator_t * const p_oscillator)
 				== p_oscillator->percussion_duration_sample_count){
 			p_oscillator->percussion_duration_sample_count = 0;
 			p_oscillator->percussion_waveform_index += 1;
-			if(MAX_WVEFORM_CHANGE_NUMBER == p_oscillator->percussion_waveform_index){
-				p_oscillator->percussion_waveform_index = MAX_WVEFORM_CHANGE_NUMBER - 1;
+			if(MAX_WAVEFORM_CHANGE_NUMBER == p_oscillator->percussion_waveform_index){
+				p_oscillator->percussion_waveform_index = MAX_WAVEFORM_CHANGE_NUMBER - 1;
 			}
 		}
 
@@ -1266,7 +1266,7 @@ int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
 			break;
 		}
 
-		channel_controller_t * const p_channel_controller
+		channel_controller_t const * const p_channel_controller
 				= get_channel_controller_pointer_from_index(p_oscillator->voice);
 		int8_t channel_panning_weight = p_channel_controller->pan;
 		channel_panning_weight += !channel_panning_weight;//if zero, as 1

@@ -194,40 +194,6 @@ static void initialize_envelope_tables(void)
 }
 
 /**********************************************************************************/
-//https://usermanuals.finalemusic.com/SongWriter2012Win/Content/PercussionMaps.htm
-
-#define PERCUSSION_CODE_MIN							(27)
-#define PERCUSSION_CODE_MAX							(93)
-
-#define PERCUSSION_CODE_LIST(X)	\
-	X(BASS_DRUM_2, 35) \
-	X(BASS_DRUM_1, 36) \
-	X(SIDE_STICK, 37) \
-	X(SNARE_DRUM_1, 38) \
-	X(SNARE_DRUM_2, 40) \
-	X(LOW_FLOOR_TOM, 41) \
-	X(CLOSED_HI_HAT, 42) \
-	X(HIGH_FLOOR_TOM, 43) \
-	X(PADEL_HI_HAT, 44) \
-	X(LOW_TOM, 45) \
-	X(OPEN_HI_HAT, 46) \
-	X(LOW_MID_TOM, 47) \
-	X(HIGH_MID_TOM, 48) \
-	X(CRASH_CYMBAL_1, 49) \
-	X(HIGH_TOM, 50) \
-	X(RIDE_CYMBAL_1, 51) \
-	X(CHINESE_CYMBAL, 52) \
-	X(TAMBOURINE, 54) \
-	X(SPLASH_CYMBAL, 55) \
-	X(CRASH_CYMBAL_2, 57) \
-	X(RIDE_CYMBAL_2, 59)
-
-#define EXPAND_ENUM(ITEM, VAL)						ITEM = VAL,
-
-enum PERCUSSION_CODE
-{
-	PERCUSSION_CODE_LIST(EXPAND_ENUM)
-};
 
 void reset_percussion_all_parameters_from_index(int8_t const index);
 
@@ -288,8 +254,8 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 
 //http://kometbomb.net/2011/10/11/chiptune-drums/
 	switch(index){
-	case BASS_DRUM_2:
-	case BASS_DRUM_1:
+	case BASS_DRUM:
+	case KICK_DRUM:
 		start_frequency = 80;
 		end_frequency = 50;
 		total_druation_time_in_second = 1.2f;
@@ -516,6 +482,19 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		waveform_duration_time_in_second[2] = total_druation_time_in_second;
 		p_percussion->is_implemented = true;
 		break;
+	case CASTANETS:
+		start_frequency = 12000;
+		end_frequency = 12000;
+		total_druation_time_in_second = 0.08f;
+		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
+		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[0] = 0.02f;
+		p_percussion->waveform[1] = WAVEFORM_SQUARE;
+		waveform_duration_time_in_second[1] = 0.05f;
+		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		waveform_duration_time_in_second[2] = total_druation_time_in_second;
+		p_percussion->is_implemented = true;
+		break;
 	default:
 		//CHIPTUNE_PRINTF(cNoteOperation, "percussion note = %d NOT IMPLEMENT YET\r\n", index);
 		break;
@@ -544,18 +523,4 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 
 	p_percussion->envelope_same_index_number =
 			(uint32_t)((total_druation_time_in_second * sampling_rate)/(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH) + 0.5);
-}
-
-/**********************************************************************************/
-
-#define EXPAND_CASE_TO_STR(X, DUMMY_VAR)			case X:	return #X;
-
-char const * const get_percussion_name_string(int8_t const index)
-{
-	switch (index)
-	{
-		PERCUSSION_CODE_LIST(EXPAND_CASE_TO_STR)
-	}
-
-	return "NOT_IMPLEMENTED";
 }

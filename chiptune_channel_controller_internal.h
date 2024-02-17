@@ -126,6 +126,4 @@ void reset_channel_controller_midi_parameters_from_index(int8_t const index);
 void reset_channel_controller_all_parameters_from_index(int8_t const index);
 
 percussion_t * const get_percussion_pointer_from_index(int8_t const index);
-char const * const get_percussion_name_string(int8_t const index);
-
 #endif // _CHIPTUNE_CHANNEL_CONTROLLER_INTERNAL_H_

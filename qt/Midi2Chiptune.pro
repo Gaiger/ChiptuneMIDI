@@ -32,6 +32,7 @@ HEADERS += \
     ../chiptune_common_internal.h \
     ../chiptune_midi_control_change_internal.h \
     ../chiptune_event_internal.h \
+    ../chiptune_midi_define.h \
     ../chiptune_oscillator_internal.h \
     ../chiptune_printf_internal.h \
     MidiPlayer.h \
