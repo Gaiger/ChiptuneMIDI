@@ -591,13 +591,6 @@ static int process_midi_message(struct _tick_message const tick_message)
 
 	uint8_t type = u.data_as_bytes[0] & 0xF0;
 	int8_t voice = u.data_as_bytes[0] & 0x0F;
-#define MIDI_MESSAGE_NOTE_OFF						(0x80)
-#define MIDI_MESSAGE_NOTE_ON						(0x90)
-#define MIDI_MESSAGE_KEY_PRESSURE					(0xA0)
-#define MIDI_MESSAGE_CONTROL_CHANGE					(0xB0)
-#define MIDI_MESSAGE_PROGRAM_CHANGE					(0xC0)
-#define MIDI_MESSAGE_CHANNEL_PRESSURE				(0xD0)
-#define MIDI_MESSAGE_PITCH_WHEEL					(0xE0)
 	switch(type)
 	{
 	case MIDI_MESSAGE_NOTE_OFF:

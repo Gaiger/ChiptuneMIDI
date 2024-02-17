@@ -9,7 +9,14 @@
 															(2 * 2)
 
 /**********************************************************************************/
-
+#define MIDI_MESSAGE_NOTE_OFF						(0x80)
+#define MIDI_MESSAGE_NOTE_ON						(0x90)
+#define MIDI_MESSAGE_KEY_PRESSURE					(0xA0)
+#define MIDI_MESSAGE_CONTROL_CHANGE					(0xB0)
+#define MIDI_MESSAGE_PROGRAM_CHANGE					(0xC0)
+#define MIDI_MESSAGE_CHANNEL_PRESSURE				(0xD0)
+#define MIDI_MESSAGE_PITCH_WHEEL					(0xE0)
+/**********************************************************************************/
 //https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
 #define MIDI_CC_MODULATION_WHEEL					(1)
 
@@ -137,7 +144,7 @@ enum PERCUSSION_CODE
 
 #include <stdint.h>
 
-static char const * const get_percussion_name_string(int8_t const index)
+static inline char const * const get_percussion_name_string(int8_t const index)
 {
 	switch (index)
 	{

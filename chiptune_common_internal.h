@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "chiptune_midi_define.h"
+#include "chiptune_midi_define_internal.h"
 
 //#define _INCREMENTAL_SAMPLE_INDEX
 //#define _RIGHT_SHIFT_FOR_NORMALIZING_LOUNDNESS
