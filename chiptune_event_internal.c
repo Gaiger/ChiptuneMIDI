@@ -288,6 +288,11 @@ static void check_upcoming_events(uint32_t const tick)
 			is_error_occur = true;
 		}
 
+		if(UNUSED_OSCILLATOR == get_event_oscillator_pointer_from_index(s_events[index].oscillator)->voice){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR:: oscillator %d is UNUSED_OSCILLATOR\r\n", s_events[index].oscillator);
+			is_error_occur = true;
+		}
+
 		previous_tick = s_events[index].triggering_tick;
 		index = s_events[index].next_event;
 	}
@@ -591,9 +596,17 @@ int adjust_event_triggering_tick_by_tempo(uint32_t const tick, float const new_t
 	for(int i = 0; i < s_upcoming_event_number; i++){
 		do
 		{
-			if(tick == s_events[event_index].triggering_tick){
+			if(tick >= s_events[event_index].triggering_tick){
 				break;
 			}
+
+			oscillator_t const * const p_oscillator
+					= get_event_oscillator_pointer_from_index(s_events[event_index].oscillator);
+			if(true == IS_FREEING(p_oscillator->state_bits)
+					|| true ==  IS_RESTING(p_oscillator->state_bits)){
+				break;
+			}
+
 			uint32_t triggering_tick =
 					(uint32_t)((s_events[event_index].triggering_tick - tick) * tempo_ratio) + tick;
 			//CHIPTUNE_PRINTF(cDeveloping, "tick = %u, triggering_tick %u ->%u \r\n",

@@ -173,6 +173,10 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 						  int8_t const voice, int8_t const note, int8_t const velocity,
 						  int16_t const native_oscillator_index)
 {
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
+			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
+		return 1;
+	}
 	(void)velocity;
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	if(0 == p_channel_controller->chorus){
@@ -935,11 +939,11 @@ void chiptune_initialize(bool is_stereo,
 
 /**********************************************************************************/
 
-void chiptune_set_tempo(float const tempo)
+void chiptune_set_tempo(uint32_t const tick, float const tempo)
 {
-	CHIPTUNE_PRINTF(cMidiSetup, "%s :: tempo = %3.1f\r\n", __FUNCTION__, tempo);
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %d, set tempo = %3.1f\r\n", tick, tempo);
 	CORRECT_BASE_TIME();
-	adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), tempo);
+	adjust_event_triggering_tick_by_tempo(tick, tempo);
 	s_tempo = tempo;
 	UPDATE_BASE_TIME_UNIT();
 	UPDATE_CHORUS_DELTA_TICK();

@@ -25,7 +25,7 @@ static int8_t s_fermi_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index)
 {
 	if(false == (index >= 0 && index < MIDI_MAX_CHANNEL_NUMBER) ){
-		CHIPTUNE_PRINTF(cDeveloping, "channel_controller = %d, out of range\r\n");
+		CHIPTUNE_PRINTF(cDeveloping, "channel_controller = %d, out of range\r\n", index);
 		return NULL;
 	}
 	return &s_channel_controllers[index];
