@@ -103,19 +103,19 @@ typedef struct _channel_controller
 } channel_controller_t;
 
 
-#define MAX_WVEFORM_CHANGE_NUMBER					(4)
+#define MAX_WAVEFORM_CHANGE_NUMBER					(4)
 
 typedef struct _percussion
 {
-	int8_t		waveform[MAX_WVEFORM_CHANGE_NUMBER];
-	uint32_t	waveform_duration_sample_number[MAX_WVEFORM_CHANGE_NUMBER];
-	uint16_t	delta_phase;
-	int16_t		max_delta_modulation_phase;
-	int8_t		*p_modulation_envelope_table;
-	int8_t		*p_amplitude_envelope_table;
-	uint16_t	envelope_same_index_number;
+	int8_t				waveform[MAX_WAVEFORM_CHANGE_NUMBER];
+	uint32_t			waveform_duration_sample_number[MAX_WAVEFORM_CHANGE_NUMBER];
+	uint16_t			delta_phase;
+	int16_t				max_delta_modulation_phase;
+	int8_t const *		p_modulation_envelope_table;
+	int8_t const *		p_amplitude_envelope_table;
+	uint16_t			envelope_same_index_number;
 
-	bool		is_implemented;
+	bool				is_implemented;
 } percussion_t;
 
 void initialize_channel_controller(void);

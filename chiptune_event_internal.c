@@ -398,8 +398,8 @@ static char s_event_additional_string[32];
 
 static inline char const * const event_additional_string(int16_t const event_index)
 {
-	oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(s_events[event_index].oscillator);
-	channel_controller_t  * const p_channel_controller =
+	oscillator_t const * const p_oscillator = get_event_oscillator_pointer_from_index(s_events[event_index].oscillator);
+	channel_controller_t const * const p_channel_controller =
 			get_channel_controller_pointer_from_index(p_oscillator->voice);
 	snprintf(&s_event_additional_string[0], sizeof(s_event_additional_string), "");
 	bool is_empty_string = false;
@@ -459,7 +459,7 @@ int process_events(uint32_t const tick)
 		}
 
 		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(s_events[s_event_head_index].oscillator);
-		channel_controller_t * const p_channel_controller =
+		channel_controller_t const * const p_channel_controller =
 				get_channel_controller_pointer_from_index(p_oscillator->voice);
 
 		int8_t const event_type = s_events[s_event_head_index].type;

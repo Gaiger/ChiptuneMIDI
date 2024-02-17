@@ -52,7 +52,7 @@ static uint16_t obtain_chorus_random(void)
 
 float const obtain_oscillator_pitch_chorus_bend_in_semitone(int8_t const voice)
 {
-	channel_controller_t * const p_channel_controller
+	channel_controller_t const * const p_channel_controller
 			= get_channel_controller_pointer_from_index(voice);
 	int8_t const chorus = p_channel_controller->chorus;
 	if(0 == chorus){
