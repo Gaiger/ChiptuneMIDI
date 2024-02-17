@@ -3,10 +3,7 @@
 #include "chiptune_printf_internal.h"
 #include "chiptune_channel_controller_internal.h"
 
-#include "chiptune_oscillator_internal.h"
 
-
-/**********************************************************************************/
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 
 uint16_t const calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_semitones,
@@ -50,15 +47,12 @@ static uint16_t obtain_chorus_random(void)
 #define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
 												(((DIVIDE_BY_2(UINT16_MAX) + 1) - (VALUE))/(float)(DIVIDE_BY_2(UINT16_MAX) + 1))
 
-float const obtain_oscillator_pitch_chorus_bend_in_semitone(int8_t const voice)
+float const obtain_oscillator_pitch_chorus_bend_in_semitone(int8_t const chorus,
+															float const max_pitch_chorus_bend_in_semitones)
 {
-	channel_controller_t const * const p_channel_controller
-			= get_channel_controller_pointer_from_index(voice);
-	int8_t const chorus = p_channel_controller->chorus;
 	if(0 == chorus){
 		return 0.0;
 	}
-	float const max_pitch_chorus_bend_in_semitones = p_channel_controller->max_pitch_chorus_bend_in_semitones;
 
 	uint16_t random = obtain_chorus_random();
 	float pitch_chorus_bend_in_semitone;

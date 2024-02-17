@@ -82,16 +82,6 @@ static chiptune_float s_delta_tick_per_sample = (DEFAULT_RESOLUTION / ( (chiptun
 #define CURRENT_TICK()								((uint32_t)(s_current_tick + 0.5))
 #endif
 
-#define EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND				(0.008)
-
-uint32_t s_chorus_delta_tick = (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND * DEFAULT_TEMPO * DEFAULT_RESOLUTION / (60.0) + 0.5);
-
-#define	UPDATE_CHORUS_DELTA_TICK()					\
-													do { \
-														 s_chorus_delta_tick \
-															= (uint32_t)(EACH_CHORUS_OSCILLAOTER_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ 60.0 + 0.5); \
-													} while(0)
-
 #define SINE_TABLE_LENGTH							(2048)
 static int16_t s_sine_table[SINE_TABLE_LENGTH]		= {0};
 
@@ -166,6 +156,25 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 }
 
 /**********************************************************************************/
+
+#define EACH_CHORUS_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND	\
+													(0.0015)
+
+uint32_t s_min_chorus_delta_tick = (uint32_t)(EACH_CHORUS_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * DEFAULT_TEMPO * DEFAULT_RESOLUTION / (60.0) + 0.5);
+
+#define	UPDATE_MIN_CHORUS_DELTA_TICK()				\
+													do { \
+														 s_min_chorus_delta_tick \
+															= (uint32_t)(EACH_CHORUS_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ 60.0 + 0.5); \
+													} while(0)
+
+static inline uint32_t obtain_chorus_delta_tick(int8_t chorus)
+{
+	return ((chorus + 1) / 16) * s_min_chorus_delta_tick;
+}
+
+/**********************************************************************************/
+
 #define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
 #define OSCILLATOR_NUMBER_FOR_CHORUS(VALUE)			(DIVIDE_BY_16(((VALUE) + 15)))
 
@@ -209,7 +218,9 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 				int8_t const vibrato_modulation_in_semitone = p_channel_controller->vibrato_modulation_in_semitone;
 				memcpy(p_oscillator, p_native_oscillator, sizeof(oscillator_t));
 				p_oscillator->loudness = oscillator_loudness;
-				p_oscillator->pitch_chorus_bend_in_semitone = obtain_oscillator_pitch_chorus_bend_in_semitone(voice);
+				p_oscillator->pitch_chorus_bend_in_semitone
+						= obtain_oscillator_pitch_chorus_bend_in_semitone(p_channel_controller->chorus,
+																		  p_channel_controller->max_pitch_chorus_bend_in_semitones);
 				p_oscillator->delta_phase
 						= calculate_oscillator_delta_phase(p_oscillator->note, p_channel_controller->tuning_in_semitones,
 														   p_channel_controller->pitch_wheel_bend_range_in_semitones,
@@ -270,13 +281,13 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 		}
 	} while(0);
 
+	uint32_t chorus_delta_tick = obtain_chorus_delta_tick(p_channel_controller->chorus);
 	for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
-		put_event(event_type, oscillator_indexes[i], tick + (i + 1) * s_chorus_delta_tick);
+		put_event(event_type, oscillator_indexes[i], tick + (i + 1) * chorus_delta_tick);
 	}
 
 	return 0;
 }
-
 
 /**********************************************************************************/
 
@@ -946,7 +957,7 @@ void chiptune_set_tempo(uint32_t const tick, float const tempo)
 	adjust_event_triggering_tick_by_tempo(tick, tempo);
 	s_tempo = tempo;
 	UPDATE_BASE_TIME_UNIT();
-	UPDATE_CHORUS_DELTA_TICK();
+	UPDATE_MIN_CHORUS_DELTA_TICK();
 	update_channel_controller_parameters_related_to_tempo();
 }
 
