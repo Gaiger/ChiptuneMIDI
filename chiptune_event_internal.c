@@ -581,3 +581,27 @@ uint32_t get_upcoming_event_number(void)
 {
 	return s_upcoming_event_number;
 }
+
+/**********************************************************************************/
+
+int adjust_event_triggering_tick_by_tempo(uint32_t const tick, float const new_tempo)
+{
+	float tempo_ratio = new_tempo/get_tempo();
+	uint16_t event_index = s_event_head_index;
+	for(int i = 0; i < s_upcoming_event_number; i++){
+		do
+		{
+			if(tick == s_events[event_index].triggerring_tick){
+				break;
+			}
+			uint32_t triggerring_tick =
+					(uint32_t)((s_events[event_index].triggerring_tick - tick) * tempo_ratio) + tick;
+			//CHIPTUNE_PRINTF(cDeveloping, "tick = %u, triggerring_tick %u ->%u \r\n",
+			//				tick, s_events[event_index].triggerring_tick, triggerring_tick);
+			s_events[event_index].triggerring_tick = triggerring_tick;
+		} while(0);
+		event_index = s_events[event_index].next_event;
+	}
+
+	return 0;
+}
