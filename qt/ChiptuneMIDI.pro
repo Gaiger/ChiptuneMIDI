@@ -1,5 +1,6 @@
 QT -= gui
-QT += multimedia
+QT += multimedia \
+    widgets
 
 CONFIG += c++11 console
 CONFIG -= app_bundle
@@ -17,6 +18,7 @@ SOURCES += \
         ../chiptune_event_internal.c \
         ../chiptune_oscillator_internal.c \
         ../chiptune_printf_internal.c \
+        ChiptuneMidiWidget.cpp \
         TuneManager.cpp \
         AudioPlayer.cpp \
         main.cpp
@@ -35,6 +37,10 @@ HEADERS += \
     ../chiptune_midi_define_internal.h \
     ../chiptune_oscillator_internal.h \
     ../chiptune_printf_internal.h \
+    ChiptuneMidiWidget.h \
     MidiPlayer.h \
     TuneManager.h \
     AudioPlayer.h
+
+FORMS += \
+    ChiptuneMidiWidgetForm.ui

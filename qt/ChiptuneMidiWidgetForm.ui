@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ChiptuneMidiWidget</class>
+ <widget class="QWidget" name="ChiptuneMidiWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget {
+background-color: rgb(48, 48, 48); 
+color: rgb(208, 208, 208);
+}
+
+
+QWidget:disabled {
+background-color:  rgb(80, 80, 80) ;
+color: rgb(184, 184, 184);
+}
+
+QPushButton{
+  background-color: rgb(64, 64, 64); 
+ color: rgb(128, 128, 128);
+}
+
+QPushButton:checked{
+  background-color: rgb(32, 32, 32); 
+ color: rgb(128, 128, 128);
+}
+</string>
+  </property>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

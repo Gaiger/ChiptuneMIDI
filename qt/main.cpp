@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <QThread>
 #include <QElapsedTimer>
-#include <QCoreApplication>
+#include <QApplication>
 #include <QDebug>
 
 #include <QMidiOut.h>
@@ -26,6 +26,7 @@
 
 #include "TuneManager.h"
 #include "AudioPlayer.h"
+#include "ChiptuneMidiWidget.h"
 
 static void ListAvailableMidiDevices(void)
 {
@@ -167,6 +168,7 @@ void PilotRun(TuneManager *p_tune_manager)
 
 int main(int argc, char* argv[])
 {
+#if(0)
 #if defined( Q_OS_WIN )
 	if (AttachConsole(ATTACH_PARENT_PROCESS) || AllocConsole()){
 		freopen("CONOUT$", "w", stdout);
@@ -175,11 +177,11 @@ int main(int argc, char* argv[])
 	}
 	setvbuf(stdout, NULL, _IONBF, 0);
 #endif
-
-	QCoreApplication a(argc, argv);
+#endif
+	QApplication a(argc, argv);
 
 	//QString filename = "8bit(bpm185)v0727T1.mid";
-	QString filename = "totoro.mid";
+	//QString filename = "totoro.mid";
 	//QString filename = "evil_eye.mid";
 	//QString filename = "black_star.mid";
 	//QString filename = "crying.mid";
@@ -199,6 +201,8 @@ int main(int argc, char* argv[])
 	//QString filename = "duck.mid";
 	//QString filename = "201211212129826.mid";
 	//QString filename = "pray_for_buddha.mid";
+	QString filename = "those_years.mid";
+
 	//QString filename = "102473.mid";
 	//QString filename = "korobeiniki.mid";
 	//QString filename = "nekrasov-korobeiniki-tetris-theme-20230417182739.mid";
@@ -217,12 +221,7 @@ int main(int argc, char* argv[])
 	p_player->Play();
 #endif
 
-#if(1)
 	TuneManager tune_manager(true, 16000, 8);
-	QThread tune_manager_working_thread;
-	tune_manager.moveToThread(&tune_manager_working_thread);
-	tune_manager_working_thread.start(QThread::HighPriority);
-	tune_manager.SetMidiFile(filename);
 	//PilotRun(&tune_manager);
 	//SaveAsWavFile(&tune_manager, "20240206ankokuButo.wav");
 	//SaveAsWavFile(&tune_manager, "20240205Laputa.wav");
@@ -230,8 +229,13 @@ int main(int argc, char* argv[])
 	//SaveAsWavFile(&tune_manager, "202402156Oclock.wav");
 	//SaveAsWavFile(&tune_manager, "20240215never_enough.wav");
 	//SaveAsWavFile(&tune_manager, "202402016pray_for_buddha.wav");
-	AudioPlayer audio_player(&tune_manager, &a);
-	audio_player.Play();
-#endif
+	tune_manager.SetMidiFile(filename);
+
+	//AudioPlayer audio_player(&tune_manager, &a);
+	//audio_player.Play();
+
+	ChiptuneMidiWidget chiptune_midi_widget(&tune_manager);
+	chiptune_midi_widget.show();
+	chiptune_midi_widget.setFocus();
 	return a.exec();
 }
