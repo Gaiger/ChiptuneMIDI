@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>960</width>
+    <height>640</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -21,14 +21,20 @@ color: rgb(208, 208, 208);
 
 
 QWidget:disabled {
-background-color:  rgb(80, 80, 80) ;
-color: rgb(184, 184, 184);
+background-color:  rgb(128, 128, 128) ;
+color: rgb(168, 168, 168);
 }
 
 QPushButton{
-  background-color: rgb(64, 64, 64); 
+  background-color: rgb(96, 96, 96); 
+ color: rgb(48, 48, 48);
+}
+
+QPushButton:pressed{
+  background-color: rgb(56, 56, 56); 
  color: rgb(128, 128, 128);
 }
+
 
 QPushButton:checked{
   background-color: rgb(32, 32, 32); 
@@ -36,6 +42,74 @@ QPushButton:checked{
 }
 </string>
   </property>
+  <widget class="QPushButton" name="SaveSaveFilePushButton">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>890</x>
+     <y>16</y>
+     <width>48</width>
+     <height>48</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/wav-format.png</normaloff>icons/wav-format.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>44</width>
+     <height>44</height>
+    </size>
+   </property>
+   <property name="flat">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="OpenMidiFilePushButton">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>16</y>
+     <width>48</width>
+     <height>48</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>20</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::ClickFocus</enum>
+   </property>
+   <property name="text">
+    <string>📂</string>
+   </property>
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="MessageLabel">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>580</y>
+     <width>760</width>
+     <height>48</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>
