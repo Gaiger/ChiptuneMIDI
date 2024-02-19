@@ -20,9 +20,17 @@ public:
 	~ChiptuneMidiWidget()  Q_DECL_OVERRIDE;
 signals:
 
+private:
+	virtual void dragEnterEvent(QDragEnterEvent* event) Q_DECL_OVERRIDE;
+	virtual void dragMoveEvent(QDragMoveEvent* event) Q_DECL_OVERRIDE;
+	virtual void dragLeaveEvent(QDragLeaveEvent* event) Q_DECL_OVERRIDE;
+	virtual void dropEvent(QDropEvent *event) Q_DECL_OVERRIDE;
 private slots:
 	void on_OpenMidiFilePushButton_released(void);
 	void on_SaveSaveFilePushButton_released(void);
+
+private:
+	void PlayMidiFile(QString midi_filename_string);
 
 private :
 	TuneManager *		m_p_tune_manager;

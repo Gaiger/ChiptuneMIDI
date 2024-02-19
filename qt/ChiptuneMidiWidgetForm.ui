@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>960</width>
+    <width>1024</width>
     <height>640</height>
    </rect>
   </property>
@@ -48,7 +48,7 @@ QPushButton:checked{
    </property>
    <property name="geometry">
     <rect>
-     <x>890</x>
+     <x>960</x>
      <y>16</y>
      <width>48</width>
      <height>48</height>
@@ -63,8 +63,8 @@ QPushButton:checked{
    </property>
    <property name="iconSize">
     <size>
-     <width>44</width>
-     <height>44</height>
+     <width>40</width>
+     <height>40</height>
     </size>
    </property>
    <property name="flat">
@@ -102,7 +102,7 @@ QPushButton:checked{
     <rect>
      <x>20</x>
      <y>580</y>
-     <width>760</width>
+     <width>784</width>
      <height>48</height>
     </rect>
    </property>
