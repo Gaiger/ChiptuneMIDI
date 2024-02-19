@@ -44,3 +44,5 @@ HEADERS += \
 
 FORMS += \
     ChiptuneMidiWidgetForm.ui
+
+RC_ICONS = chipmusic.ico

@@ -180,32 +180,6 @@ int main(int argc, char* argv[])
 #endif
 	QApplication a(argc, argv);
 
-	//QString filename = "8bit(bpm185)v0727T1.mid";
-	//QString filename = "totoro.mid";
-	//QString filename = "evil_eye.mid";
-	//QString filename = "black_star.mid";
-	//QString filename = "crying.mid";
-	//QString filename = "triligy.mid";
-	//QString filename = "6Oclock.mid";
-	//QString filename = "requiem.mid";
-	//QString filename = "Laputa.mid";
-	//QString filename = "Ironforge.mid";
-	//QString filename = "23401.mid";
-	//QString filename = "never_enough.mid";
-
-	//QString filename = "67573.mid";
-	//QString filename = "79538.mid";
-
-	//QString filename = "2012111316917146.mid";
-	//QString filename = "25626oth34.mid";
-	//QString filename = "duck.mid";
-	//QString filename = "201211212129826.mid";
-	//QString filename = "pray_for_buddha.mid";
-	QString filename = "those_years.mid";
-
-	//QString filename = "102473.mid";
-	//QString filename = "korobeiniki.mid";
-	//QString filename = "nekrasov-korobeiniki-tetris-theme-20230417182739.mid";
 #if(0)
 	ListAvailableMidiDevices();
 	QString midiOutName = "0";
@@ -223,16 +197,6 @@ int main(int argc, char* argv[])
 
 	TuneManager tune_manager(true, 16000, 8);
 	//PilotRun(&tune_manager);
-	//SaveAsWavFile(&tune_manager, "20240206ankokuButo.wav");
-	//SaveAsWavFile(&tune_manager, "20240205Laputa.wav");
-	//SaveAsWavFile(&tune_manager, "20240205Ironforge.wav");
-	//SaveAsWavFile(&tune_manager, "202402156Oclock.wav");
-	//SaveAsWavFile(&tune_manager, "20240215never_enough.wav");
-	//SaveAsWavFile(&tune_manager, "202402016pray_for_buddha.wav");
-	tune_manager.SetMidiFile(filename);
-
-	//AudioPlayer audio_player(&tune_manager, &a);
-	//audio_player.Play();
 
 	ChiptuneMidiWidget chiptune_midi_widget(&tune_manager);
 	chiptune_midi_widget.show();
