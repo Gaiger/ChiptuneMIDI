@@ -30,7 +30,7 @@ private slots:
 	void on_SaveSaveFilePushButton_released(void);
 
 private:
-	void PlayMidiFile(QString midi_filename_string);
+	int PlayMidiFile(QString filename_string);
 
 private :
 	TuneManager *		m_p_tune_manager;

@@ -149,17 +149,31 @@ ChiptuneMidiWidget::~ChiptuneMidiWidget()
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::PlayMidiFile(QString midi_filename_string)
+int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 {
 	m_p_audio_player->Stop();
 	ui->MessageLabel->setText("");
 	QThread::msleep(10);
-	m_p_tune_manager->SetMidiFile(midi_filename_string);
-	m_p_audio_player->Play();
-	ui->SaveSaveFilePushButton->setEnabled(true);
-	m_opened_file_info = QFileInfo(midi_filename_string);
-	QString message_string = QString::asprintf("Playing file <b>%s</b>", m_opened_file_info.fileName().toUtf8().data());
+	QString message_string;
+	m_opened_file_info = QFileInfo(filename_string);
+	int ret = 0;
+	do
+	{
+		if(0 > m_p_tune_manager->SetMidiFile(filename_string)){
+			message_string = QString::asprintf("Not a MIDI File");
+			ui->MessageLabel->setText(message_string);
+			ret = -1;
+			break;
+		}
+		m_p_audio_player->Play();
+		ui->SaveSaveFilePushButton->setEnabled(true);
+		message_string = QString::asprintf("Playing file");
+		ui->MessageLabel->setText(message_string);
+	}while(0);
+
+	message_string += QString::asprintf(" :: <b>%s</b>", m_opened_file_info.fileName().toUtf8().data());
 	ui->MessageLabel->setText(message_string);
+	return ret;
 }
 
 /**********************************************************************************/
@@ -205,12 +219,7 @@ void ChiptuneMidiWidget::dropEvent(QDropEvent *event)
 
 		file_info = QFileInfo(event->mimeData()->urls().at(0).toLocalFile());
 		if(false == file_info.isFile()){
-			QString message_string = QString::asprintf("<b>%s</b> is not a file", file_info.fileName().toUtf8().data());
-			ui->MessageLabel->setText(message_string);
-			break;
-		}
-		if("mid" != file_info.suffix()){
-			QString message_string = QString::asprintf("<b>%s</b> is not midi file", file_info.fileName().toUtf8().data());
+			QString message_string = QString::asprintf("Not a file :: <b>%s<b>", file_info.fileName().toUtf8().data());
 			ui->MessageLabel->setText(message_string);
 			break;
 		}
