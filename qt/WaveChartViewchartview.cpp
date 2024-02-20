@@ -6,7 +6,8 @@
 
 WaveChartView::WaveChartView(int const number_of_channels,
 							 int const sampling_rate, int const sampling_size, QWidget *parent)
-	: QChartView(new QChart(), parent)
+	: QChartView(new QChart(), parent),
+	  m_sampling_size_in_bytes(sampling_size/8)
 {
 	QChart * p_chart = QChartView::chart();
 	p_chart->setTheme(QChart::ChartThemeDark);
@@ -24,7 +25,7 @@ WaveChartView::WaveChartView(int const number_of_channels,
 	p_chart->axes(Qt::Horizontal).at(0)->setVisible(false);
 	p_chart->addAxis( new QValueAxis(), Qt::AlignLeft);
 	do{
-		if(SamplingSize8Bit == sampling_size){
+		if(1 == m_sampling_size_in_bytes){
 			p_chart->axes(Qt::Vertical).at(0)->setRange(-10, UINT8_MAX + 10);
 			break;
 		}
@@ -67,37 +68,34 @@ template <typename T> void  WaveChartView::ReplaceSeries(void)
 	}
 }
 
+/**********************************************************************************/
+
 void WaveChartView::GiveWave(QByteArray wave_bytearray)
 {
 	m_remain_wave_bytearray += wave_bytearray;
 
 	do
 	{
-		int sampling_size_in_bytes = 1;
-		if(4 * UINT8_MAX < ((QValueAxis*)QChartView::chart()->axes(Qt::Vertical).at(0))->max()){
-			sampling_size_in_bytes = 2;
-		}
-
 		int number_of_channels = QChartView::chart()->series().size();
-		QValueAxis *p_x_axis  = (QValueAxis*)QChartView::chart()->axes(Qt::Horizontal).at(0);
-		int displayed_length = p_x_axis->max() + 1;
-		if(displayed_length * number_of_channels * sampling_size_in_bytes > m_remain_wave_bytearray.size()){
+		int length = ((QXYSeries*)QChartView::chart()->series().at(0))->points().length();
+		if(number_of_channels * m_sampling_size_in_bytes * length> m_remain_wave_bytearray.size()){
 			break;
 		}
 
-		while( 2 * displayed_length * number_of_channels * sampling_size_in_bytes < m_remain_wave_bytearray.size() )
+		while( 2 * number_of_channels * m_sampling_size_in_bytes * length < m_remain_wave_bytearray.size() )
 		{
-			m_remain_wave_bytearray.remove(0, displayed_length * number_of_channels * sampling_size_in_bytes);
+			m_remain_wave_bytearray.remove(0, number_of_channels * m_sampling_size_in_bytes * length);
 		}
+
 		do
 		{
-			if(1 == sampling_size_in_bytes){
+			if(1 == m_sampling_size_in_bytes){
 				ReplaceSeries<uint8_t>();
 				break;
 			}
 			ReplaceSeries<int16_t>();
 		}while(0);
-		m_remain_wave_bytearray.remove(0, sampling_size_in_bytes * number_of_channels * displayed_length);
+		m_remain_wave_bytearray.remove(0, number_of_channels * m_sampling_size_in_bytes  * length);
 	}while(0);
 
 }

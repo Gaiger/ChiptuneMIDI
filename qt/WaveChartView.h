@@ -24,8 +24,10 @@ public:
 	void Reset(void);
 private :
 	template <typename T> void ReplaceSeries(void);
+
 private :
 	QByteArray m_remain_wave_bytearray;
+	int m_sampling_size_in_bytes;
 };
 
 #endif // WAVECHARTVIEW_H
