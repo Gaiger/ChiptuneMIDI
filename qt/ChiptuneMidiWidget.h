@@ -7,6 +7,8 @@
 #include "TuneManager.h"
 #include "AudioPlayer.h"
 
+#include "WaveChartView.h"
+
 namespace Ui {
 class ChiptuneMidiWidget;
 }
@@ -29,8 +31,13 @@ private slots:
 	void on_OpenMidiFilePushButton_released(void);
 	void on_SaveSaveFilePushButton_released(void);
 
+private slots:
+	void HandleWaveFetched(const QByteArray wave_bytearray);
 private:
 	int PlayMidiFile(QString filename_string);
+
+private:
+	WaveChartView *		m_p_wave_chartview;
 
 private :
 	TuneManager *		m_p_tune_manager;

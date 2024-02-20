@@ -1,14 +1,15 @@
-
-#include "ui_ChiptuneMidiWidgetForm.h"
-#include "ChiptuneMidiWidget.h"
-
 #include <QDebug>
+
+#include <QGridLayout>
 #include <QElapsedTimer>
 #include <QDateTime>
 #include <QDropEvent>
 #include <QMimeData>
 #include <QFileDialog>
 #include <QFile>
+
+#include "ui_ChiptuneMidiWidgetForm.h"
+#include "ChiptuneMidiWidget.h"
 
 struct wav_header_t
 {
@@ -112,6 +113,16 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 
 /**********************************************************************************/
 
+void ReplaceWidget(QWidget *p_widget, QWidget *p_replaced_widget)
+{
+	QGridLayout *p_layout = new QGridLayout(p_replaced_widget);
+	p_layout->addWidget(p_widget, 0, 0);
+	p_layout->setContentsMargins(0, 0, 0, 0);
+	p_layout->setSpacing(0);
+}
+
+/**********************************************************************************/
+
 ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidget *parent)
 	: QWidget(parent),
 	m_p_tune_manager(p_tune_manager),
@@ -124,11 +135,23 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	font20.setPixelSize(20);
 	ui->MessageLabel->setFont(font20);
 
+	do
+	{
+		m_p_wave_chartview = new WaveChartView(
+					p_tune_manager->GetNumberOfChannels(),
+					p_tune_manager->GetSamplingRate(), p_tune_manager->GetSamplingSize(), this);
+		ReplaceWidget(m_p_wave_chartview, ui->WaveWidget);
+	}while(0);
+
 	QWidget::setAcceptDrops(true);
 
 	m_p_tune_manager->moveToThread(&m_tune_manager_working_thread);
 	m_tune_manager_working_thread.start(QThread::HighPriority);
 	m_p_audio_player = new AudioPlayer(m_p_tune_manager, this);
+
+	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
+					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
+
 }
 
 /**********************************************************************************/
@@ -165,6 +188,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			ret = -1;
 			break;
 		}
+		m_p_wave_chartview->Reset();
 		m_p_audio_player->Play();
 		ui->SaveSaveFilePushButton->setEnabled(true);
 		message_string = QString::asprintf("Playing file");
@@ -178,25 +202,23 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::dragEnterEvent(QDragEnterEvent* event)
+void ChiptuneMidiWidget::HandleWaveFetched(const QByteArray wave_bytearray)
 {
-	event->acceptProposedAction();
+	//qDebug() << Q_FUNC_INFO <<  wave_bytearray.size();
+	m_p_wave_chartview->GiveWave(wave_bytearray);
 }
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::dragMoveEvent(QDragMoveEvent* event)
-{
-	event->acceptProposedAction();
-}
+void ChiptuneMidiWidget::dragEnterEvent(QDragEnterEvent* event) { event->acceptProposedAction(); }
 
 /**********************************************************************************/
 
+void ChiptuneMidiWidget::dragMoveEvent(QDragMoveEvent* event) { event->acceptProposedAction(); }
 
-void ChiptuneMidiWidget::dragLeaveEvent(QDragLeaveEvent* event)
-{
-	event->accept();
-}
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::dragLeaveEvent(QDragLeaveEvent* event) { event->accept();}
 
 /**********************************************************************************/
 

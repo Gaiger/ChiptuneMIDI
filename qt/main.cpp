@@ -1,10 +1,3 @@
-/*
- *
- * Copyright 2003-2012 by David G. Slomin
- * Copyright 2012-2016 Augustin Cavalier <waddlesplash>
- * All rights reserved. Distributed under the terms of the MIT license.
- */
-
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -61,13 +54,12 @@ void PilotRun(TuneManager *p_tune_manager)
 		}
 	}
 	qDebug() <<Q_FUNC_INFO << " elpased" << elasped_timer.elapsed() << "ms";
-
 }
+
 /**********************************************************************************/
 
 int main(int argc, char* argv[])
 {
-#if(0)
 #if defined( Q_OS_WIN )
 	if (AttachConsole(ATTACH_PARENT_PROCESS) || AllocConsole()){
 		freopen("CONOUT$", "w", stdout);
@@ -75,7 +67,6 @@ int main(int argc, char* argv[])
 		freopen("CONIN$", "r", stdin);
 	}
 	setvbuf(stdout, NULL, _IONBF, 0);
-#endif
 #endif
 	QApplication a(argc, argv);
 

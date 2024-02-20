@@ -1,8 +1,8 @@
-QT -= gui
-QT += multimedia \
-    widgets
+QT += widgets
+QT += charts
+QT += multimedia
 
-CONFIG += c++11 console
+CONFIG += c++11 #console
 CONFIG -= app_bundle
 
 # You can make your code fail to compile if it uses deprecated APIs.
@@ -21,6 +21,7 @@ SOURCES += \
         ChiptuneMidiWidget.cpp \
         TuneManager.cpp \
         AudioPlayer.cpp \
+        WaveChartViewchartview.cpp \
         main.cpp
 
 # Default rules for deployment.
@@ -40,7 +41,8 @@ HEADERS += \
     ChiptuneMidiWidget.h \
     MidiPlayer.h \
     TuneManager.h \
-    AudioPlayer.h
+    AudioPlayer.h \
+    WaveChartView.h
 
 FORMS += \
     ChiptuneMidiWidgetForm.ui
