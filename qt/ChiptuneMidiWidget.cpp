@@ -152,6 +152,8 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
 					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
 
+	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
+	ui->SaveSaveFilePushButton->setToolTip(tr("Save as .wav file"));
 }
 
 /**********************************************************************************/

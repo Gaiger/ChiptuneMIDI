@@ -74,7 +74,7 @@ QPushButton:checked{
   <widget class="QPushButton" name="OpenMidiFilePushButton">
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>16</x>
      <y>16</y>
      <width>48</width>
      <height>48</height>
@@ -100,10 +100,10 @@ QPushButton:checked{
   <widget class="QLabel" name="MessageLabel">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>580</y>
+     <x>16</x>
+     <y>76</y>
      <width>784</width>
-     <height>48</height>
+     <height>24</height>
     </rect>
    </property>
    <property name="text">
