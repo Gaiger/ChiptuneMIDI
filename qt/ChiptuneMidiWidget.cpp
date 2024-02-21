@@ -3,6 +3,7 @@
 #include <QGridLayout>
 #include <QElapsedTimer>
 #include <QDateTime>
+#include <QTimerEvent>
 #include <QDropEvent>
 #include <QMimeData>
 #include <QFileDialog>
@@ -134,7 +135,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	font20.setStyleHint(QFont::TypeWriter);
 	font20.setPixelSize(20);
 	ui->MessageLabel->setFont(font20);
-
+	ui->ElapsedLabel->setFont(font20);
 	do
 	{
 		m_p_wave_chartview = new WaveChartView(
@@ -174,9 +175,24 @@ ChiptuneMidiWidget::~ChiptuneMidiWidget()
 
 /**********************************************************************************/
 
+static QString FormatTimeString(qint64 timeMilliSeconds)
+{
+	qint64 seconds = timeMilliSeconds / 1000;
+	const qint64 minutes = seconds / 60;
+	seconds -= minutes * 60;
+	return QStringLiteral("%1:%2")
+		.arg(minutes, 2, 10, QLatin1Char('0'))
+		.arg(seconds, 2, 10, QLatin1Char('0'));
+}
+
+/**********************************************************************************/
+
 int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 {
 	m_p_audio_player->Stop();
+	QObject::killTimer(m_inquiring_elapsed_time_timer);
+	m_inquiring_elapsed_time_timer = -1;
+
 	ui->MessageLabel->setText("");
 	QThread::msleep(10);
 	QString message_string;
@@ -190,11 +206,18 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			ret = -1;
 			break;
 		}
+
+		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
+		m_midi_file_duration_time_string = FormatTimeString(m_midi_file_duration_in_milliseconds);
+		ui->ElapsedLabel->setText(FormatTimeString(0) + " / " + m_midi_file_duration_time_string);
+		ui->ElapsedSlider->setRange(0, m_midi_file_duration_in_milliseconds);
+		ui->ElapsedSlider->setValue(0);
 		m_p_wave_chartview->Reset();
 		m_p_audio_player->Play();
 		ui->SaveSaveFilePushButton->setEnabled(true);
 		message_string = QString::asprintf("Playing file");
 		ui->MessageLabel->setText(message_string);
+		m_inquiring_elapsed_time_timer = QObject::startTimer(500);
 	}while(0);
 
 	message_string += QString::asprintf(" :: <b>%s</b>", m_opened_file_info.fileName().toUtf8().data());
@@ -206,8 +229,25 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 
 void ChiptuneMidiWidget::HandleWaveFetched(const QByteArray wave_bytearray)
 {
-	//qDebug() << Q_FUNC_INFO <<  wave_bytearray.size();
 	m_p_wave_chartview->GiveWave(wave_bytearray);
+}
+
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
+{
+	QWidget::timerEvent(event);
+	do
+	{
+		if(event->timerId() == m_inquiring_elapsed_time_timer){
+			int elapsed_time_in_milliseconds =
+					(int)(m_p_tune_manager->GetCurrentElapsedTimeInSeconds() * 1000);
+			ui->ElapsedLabel->setText(FormatTimeString(elapsed_time_in_milliseconds) + " / "
+									  + m_midi_file_duration_time_string);
+			ui->ElapsedSlider->setValue(elapsed_time_in_milliseconds);
+			break;
+		}
+	}while(0);
 }
 
 /**********************************************************************************/

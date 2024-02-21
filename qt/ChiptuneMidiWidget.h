@@ -23,6 +23,8 @@ public:
 signals:
 
 private:
+	virtual void timerEvent(QTimerEvent *event) Q_DECL_OVERRIDE;
+
 	virtual void dragEnterEvent(QDragEnterEvent* event) Q_DECL_OVERRIDE;
 	virtual void dragMoveEvent(QDragMoveEvent* event) Q_DECL_OVERRIDE;
 	virtual void dragLeaveEvent(QDragLeaveEvent* event) Q_DECL_OVERRIDE;
@@ -44,8 +46,10 @@ private :
 	QThread				m_tune_manager_working_thread;
 
 	AudioPlayer *		m_p_audio_player;
-
-	QFileInfo				m_opened_file_info;
+	QFileInfo			m_opened_file_info;
+	uint32_t			m_midi_file_duration_in_milliseconds;
+	int					m_inquiring_elapsed_time_timer;
+	QString				m_midi_file_duration_time_string;
 private:
 	Ui::ChiptuneMidiWidget *ui;
 };

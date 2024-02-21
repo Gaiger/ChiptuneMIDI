@@ -34,6 +34,9 @@ public:
 
 	QByteArray FetchWave(int const length);
 	bool IsTuneEnding(void);
+
+	float GetMidiFileDurationInSeconds(void);
+	float GetCurrentElapsedTimeInSeconds(void);
 public:
 	signals:
 	void TuneEnded(void);

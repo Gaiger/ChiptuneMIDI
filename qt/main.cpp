@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 	p_player->Play();
 #endif
 
-	TuneManager tune_manager(true, 16000, 8);
+	TuneManager tune_manager(true, 16000, 16);
 	//PilotRun(&tune_manager);
 
 	ChiptuneMidiWidget chiptune_midi_widget(&tune_manager);

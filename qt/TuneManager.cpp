@@ -267,3 +267,27 @@ bool TuneManager::IsTuneEnding(void)
 
 	return false;
 }
+
+/**********************************************************************************/
+
+float TuneManager::GetMidiFileDurationInSeconds(void)
+{
+	if(nullptr == m_p_private->m_p_midi_file){
+		return -1.0;
+	}
+
+	QMidiEvent *p_midi_event = m_p_private->m_p_midi_file->events().at(
+				m_p_private->m_p_midi_file->events().size() -1);
+	return m_p_private->m_p_midi_file->timeFromTick(p_midi_event->tick());
+}
+
+/**********************************************************************************/
+
+float TuneManager::GetCurrentElapsedTimeInSeconds(void)
+{
+	if(nullptr == m_p_private->m_p_midi_file){
+		return -1.0;
+	}
+
+	return m_p_private->m_p_midi_file->timeFromTick(chiptune_get_current_tick());
+}

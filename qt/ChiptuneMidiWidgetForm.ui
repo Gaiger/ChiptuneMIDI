@@ -19,12 +19,6 @@ background-color: rgb(48, 48, 48);
 color: rgb(208, 208, 208);
 }
 
-
-QWidget:disabled {
-background-color:  rgb(128, 128, 128) ;
-color: rgb(168, 168, 168);
-}
-
 QPushButton{
   background-color: rgb(96, 96, 96); 
  color: rgb(48, 48, 48);
@@ -35,12 +29,31 @@ QPushButton:pressed{
  color: rgb(128, 128, 128);
 }
 
-
 QPushButton:checked{
   background-color: rgb(32, 32, 32); 
  color: rgb(128, 128, 128);
 }
-</string>
+
+
+QSlider  {
+background-color: rgb(56, 56, 56); 
+}
+
+
+QSlider::groove:horizontal {
+    border: 1px ;
+    height: 4px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
+background-color: rgb(96, 96, 96); 
+    margin: 2px 0;
+}
+
+QSlider::handle {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #b4b4b4, stop:1 #8f8f8f);
+    border: 1px solid #5c5c5c;
+    width: 16px;
+    margin: -2px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
+    border-radius: 3px;
+}</string>
   </property>
   <widget class="QPushButton" name="SaveSaveFilePushButton">
    <property name="enabled">
@@ -124,6 +137,38 @@ QPushButton:checked{
 background-color: rgb(56, 56, 56); 
 color: rgb(208, 208, 208);
 }</string>
+   </property>
+  </widget>
+  <widget class="QSlider" name="ElapsedSlider">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>32</x>
+     <y>596</y>
+     <width>640</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="ElapsedLabel">
+   <property name="geometry">
+    <rect>
+     <x>32</x>
+     <y>614</y>
+     <width>180</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>00:00 / 00:00</string>
    </property>
   </widget>
  </widget>
