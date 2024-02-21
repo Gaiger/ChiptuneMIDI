@@ -87,7 +87,7 @@ static int16_t s_sine_table[SINE_TABLE_LENGTH]		= {0};
 
 /**********************************************************************************/
 
-static int(*s_handler_get_midi_message)(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message) = NULL;
+static int(*s_handler_get_midi_message)(uint32_t const index, uint32_t * const p_tick, uint32_t * const p_message) = NULL;
 
 static bool s_is_tune_ending = false;
 
@@ -920,7 +920,7 @@ int32_t g_max_loudness = 1 << 16;
 
 /**********************************************************************************/
 
-void chiptune_initialize(bool is_stereo,
+void chiptune_initialize(bool const is_stereo,
 						 uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
 {
 	s_is_stereo = is_stereo;
@@ -1356,7 +1356,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 
 uint8_t chiptune_fetch_8bit_wave(void)
 {
-	return (uint8_t)(REDUCE_INT16_PRECISION_TO_INT8(chiptune_fetch_16bit_wave()) + INT8_MAX_PLUS_1);
+	return (uint8_t const)(REDUCE_INT16_PRECISION_TO_INT8(chiptune_fetch_16bit_wave()) + INT8_MAX_PLUS_1);
 }
 
 /**********************************************************************************/
