@@ -58,8 +58,8 @@ typedef struct _channel_controller
 {
 	int8_t				tuning_in_semitones;
 
-	int8_t				max_volume;
-	int8_t				playing_volume;
+	int8_t				volume;
+	int8_t				expression;
 	int8_t				pan;
 
 	int8_t				waveform;

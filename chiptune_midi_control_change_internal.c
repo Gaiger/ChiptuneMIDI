@@ -77,16 +77,61 @@ static void process_cc_registered_parameter(uint32_t const tick, int8_t const vo
 
 /**********************************************************************************/
 
-static inline void process_cc_volume(uint32_t const tick, int8_t const voice, int8_t const value)
+static void process_loudness_change(uint32_t const tick, int8_t const voice, int8_t const value,
+									bool const is_volume_changed)
 {
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_VOLUME(%d) :: voice = %d, value = %d\r\n",
-					tick, MIDI_CC_VOLUME, voice, value);
-	get_channel_controller_pointer_from_index(voice)->max_volume = value;
+	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	int8_t old_value = p_channel_controller->volume;
+	if(false == is_volume_changed){
+		old_value = p_channel_controller->expression;
+	}
+
+	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
+	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+	for(int16_t i = 0; i < occupied_oscillator_number; i++){
+		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+		do {
+			if(voice != p_oscillator->voice){
+				break;
+			}
+			if(true == IS_FREEING(p_oscillator->state_bits)){
+				break;
+			}
+
+			//CHIPTUNE_PRINTF(cMidiSetup, "oscillator = %d, envelope_state = %d, loudness %u -> %u\r\n",
+			//				oscillator_index, p_oscillator->envelope_state,
+			//				p_oscillator->loudness, (p_oscillator->loudness * value)/old_value);
+			p_oscillator->loudness = (p_oscillator->loudness * value)/old_value;
+			p_oscillator->envelope_table_index = 0;
+			p_oscillator->envelope_same_index_count = 0;
+			switch(p_oscillator->envelope_state){
+			case ENVELOPE_ATTACK:
+				break;
+			case ENVELOPE_DECAY:
+				break;
+			case ENVELOPE_SUSTAIN:
+				p_oscillator->envelope_state = ENVELOPE_DECAY;
+				break;
+			}
+		} while(0);
+		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+	}
 }
 
 /**********************************************************************************/
 
-static inline void process_cc_pan(uint32_t const tick, int8_t const voice, int8_t const value)
+static void process_cc_volume(uint32_t const tick, int8_t const voice, int8_t const value)
+{
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_VOLUME(%d) :: voice = %d, value = %d\r\n",
+					tick, MIDI_CC_VOLUME, voice, value);
+	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	process_loudness_change(tick, voice, value, true);
+	p_channel_controller->volume = value;
+}
+
+/**********************************************************************************/
+
+static void process_cc_pan(uint32_t const tick, int8_t const voice, int8_t const value)
 {
 #define PAN_BAR_SCALE_NUMBER						(16)
 #define PAN_BAR_DELTA_TICK							((INT8_MAX + 1)/PAN_BAR_SCALE_NUMBER)
@@ -111,12 +156,13 @@ static inline void process_cc_pan(uint32_t const tick, int8_t const voice, int8_
 
 /**********************************************************************************/
 
-static inline void process_cc_expression(uint32_t const tick, int8_t const voice, int8_t const value)
+static void process_cc_expression(uint32_t const tick, int8_t const voice, int8_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EXPRESSION(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_EXPRESSION, voice, value);
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-	p_channel_controller->playing_volume = (value * p_channel_controller->max_volume)/INT8_MAX;
+	process_loudness_change(tick, voice, value, false);
+	p_channel_controller->expression = value;
 }
 
 /**********************************************************************************/
@@ -156,7 +202,7 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 			}
 			put_event(EVENT_FREE, oscillator_index, tick);
 			process_chorus_effect(tick, EVENT_FREE, voice, p_oscillator->note,
-						  p_oscillator->loudness/p_channel_controller->playing_volume,
+						  p_oscillator->loudness * INT8_MAX/(p_channel_controller->expression * p_channel_controller->volume),
 								  oscillator_index);
 		} while(0);
 		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);

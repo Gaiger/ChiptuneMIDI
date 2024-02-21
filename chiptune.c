@@ -426,7 +426,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			SET_NOTE_ON(p_oscillator->state_bits);
 			p_oscillator->voice = voice;
 			p_oscillator->note = note;
-			p_oscillator->loudness = (uint16_t)velocity * (uint16_t)p_channel_controller->playing_volume;
+			p_oscillator->loudness = (uint16_t)(
+						(velocity * p_channel_controller->expression * p_channel_controller->volume)/INT8_MAX);
 			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
 			p_oscillator->current_phase = 0;
 
@@ -874,6 +875,9 @@ static int32_t get_max_simultaneous_loudness(void)
 		}
 	}
 
+	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
+		reset_channel_controller_midi_parameters_from_index(i);
+	}
 	return max_loudness;
 }
 
