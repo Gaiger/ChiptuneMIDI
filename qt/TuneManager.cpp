@@ -24,7 +24,7 @@ public:
 		QMidiEvent *p_midi_event = m_p_midi_file->events().at(index);
 		if(QMidiEvent::Meta == p_midi_event->type()){
 			if(QMidiEvent::Tempo == p_midi_event->number()){
-				chiptune_set_tempo(p_midi_event->tick(), p_midi_event->tempo());
+				chiptune_set_tempo(p_midi_event->tempo());
 			}
 		}
 

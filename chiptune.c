@@ -950,11 +950,11 @@ void chiptune_initialize(bool is_stereo,
 
 /**********************************************************************************/
 
-void chiptune_set_tempo(uint32_t const tick, float const tempo)
+void chiptune_set_tempo(float const tempo)
 {
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %d, set tempo = %3.1f\r\n", tick, tempo);
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %d, set tempo as %3.1f\r\n", CURRENT_TICK(), tempo);
 	CORRECT_BASE_TIME();
-	adjust_event_triggering_tick_by_tempo(tick, tempo);
+	adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), tempo);
 	s_tempo = tempo;
 	UPDATE_BASE_TIME_UNIT();
 	UPDATE_MIN_CHORUS_DELTA_TICK();
@@ -1357,6 +1357,13 @@ int16_t chiptune_fetch_16bit_wave(void)
 uint8_t chiptune_fetch_8bit_wave(void)
 {
 	return (uint8_t)(REDUCE_INT16_PRECISION_TO_INT8(chiptune_fetch_16bit_wave()) + INT8_MAX_PLUS_1);
+}
+
+/**********************************************************************************/
+
+uint32_t chiptune_get_current_tick(void)
+{
+	return CURRENT_TICK();
 }
 
 /**********************************************************************************/
