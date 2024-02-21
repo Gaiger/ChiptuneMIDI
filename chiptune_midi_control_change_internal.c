@@ -81,41 +81,47 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, int
 									bool const is_volume_changed)
 {
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-	int8_t old_value = p_channel_controller->volume;
+	int8_t original_value = p_channel_controller->volume;
 	if(false == is_volume_changed){
-		old_value = p_channel_controller->expression;
+		original_value = p_channel_controller->expression;
 	}
 
-	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
-	for(int16_t i = 0; i < occupied_oscillator_number; i++){
-		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-		do {
-			if(voice != p_oscillator->voice){
-				break;
-			}
-			if(true == IS_FREEING(p_oscillator->state_bits)){
-				break;
-			}
+	do {
+		if(value == original_value){
+			break;
+		}
 
-			//CHIPTUNE_PRINTF(cMidiSetup, "oscillator = %d, envelope_state = %d, loudness %u -> %u\r\n",
-			//				oscillator_index, p_oscillator->envelope_state,
-			//				p_oscillator->loudness, (p_oscillator->loudness * value)/old_value);
-			p_oscillator->loudness = (p_oscillator->loudness * value)/old_value;
-			p_oscillator->envelope_table_index = 0;
-			p_oscillator->envelope_same_index_count = 0;
-			switch(p_oscillator->envelope_state){
-			case ENVELOPE_ATTACK:
-				break;
-			case ENVELOPE_DECAY:
-				break;
-			case ENVELOPE_SUSTAIN:
-				p_oscillator->envelope_state = ENVELOPE_DECAY;
-				break;
-			}
-		} while(0);
-		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
-	}
+		int16_t oscillator_index = get_event_occupied_oscillator_head_index();
+		int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+		for(int16_t i = 0; i < occupied_oscillator_number; i++){
+			oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+			do {
+				if(voice != p_oscillator->voice){
+					break;
+				}
+				if(true == IS_FREEING(p_oscillator->state_bits)){
+					break;
+				}
+
+				//CHIPTUNE_PRINTF(cMidiSetup, "oscillator = %d, envelope_state = %d, loudness %u -> %u\r\n",
+				//				oscillator_index, p_oscillator->envelope_state,
+				//				p_oscillator->loudness, (p_oscillator->loudness * value)/original_value);
+				p_oscillator->loudness = (p_oscillator->loudness * value)/original_value;
+				p_oscillator->envelope_table_index = 0;
+				p_oscillator->envelope_same_index_count = 0;
+				switch(p_oscillator->envelope_state){
+				case ENVELOPE_ATTACK:
+					break;
+				case ENVELOPE_DECAY:
+					break;
+				case ENVELOPE_SUSTAIN:
+					p_oscillator->envelope_state = ENVELOPE_DECAY;
+					break;
+				}
+			} while(0);
+			oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+		}
+	} while(0);
 }
 
 /**********************************************************************************/

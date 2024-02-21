@@ -486,7 +486,15 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			return -2;
 		}
 
-		if(true == p_channel_controller->is_damper_pedal_on){
+		do
+		{
+			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
+					MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
+				break;
+			}
+			if(false == p_channel_controller->is_damper_pedal_on){
+				break;
+			}
 			int16_t const original_oscillator_index = oscillator_index;
 			int16_t reduced_loundness_oscillator_index;
 			oscillator_t * const p_oscillator = acquire_event_freed_oscillator(&reduced_loundness_oscillator_index);
@@ -503,8 +511,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->release_reference_amplitude = 0;
 			put_event(EVENT_ACTIVATE, reduced_loundness_oscillator_index, tick);
 			process_chorus_effect(tick, EVENT_ACTIVATE, voice, note, velocity, reduced_loundness_oscillator_index);
-		}
 
+		} while(0);
 		do
 		{
 			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
