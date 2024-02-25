@@ -102,7 +102,7 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 					 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
 	//100% = level 8
-#define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(6)
+#define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(7)
 	p_channel_controller->envelope_sustain_level = DEFAULT_ENVELOPE_SUSTAIN_LEVEL;
 
 #define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.03f)

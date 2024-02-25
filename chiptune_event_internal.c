@@ -552,13 +552,13 @@ int process_events(uint32_t const tick)
 							100.0f * p_oscillator->release_reference_amplitude/(float)p_oscillator->loudness,
 							event_additional_string(s_event_head_index));
 			if(true == IS_FREEING(p_oscillator->state_bits)
-					&& UNUSED_OSCILLATOR ==  p_oscillator->native_oscillator){
+					&& true ==  p_oscillator->is_native){
 				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: rest a freeing native oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
 				break;
 			}
 			if(true == IS_RESTING(p_oscillator->state_bits)
-					&& UNUSED_OSCILLATOR == p_oscillator->native_oscillator){
+					&& true == p_oscillator->is_native){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: rest a resting native oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
 				break;

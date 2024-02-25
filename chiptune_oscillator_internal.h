@@ -27,6 +27,9 @@ typedef struct _oscillator
 
 union{
 	struct {
+		int16_t		chorus_asscociate_oscillators[3];
+		int16_t		reverb_asscociate_oscillators[3];
+
 		uint16_t	envelope_table_index;
 		uint16_t	envelope_same_index_count;
 		int16_t		release_reference_amplitude;
@@ -44,9 +47,7 @@ union{
 		uint16_t	percussion_same_index_count;
 	};
 };
-	int16_t			native_oscillator;
-	int16_t			chorus_asscociate_oscillators[3];
-	int16_t			reverb_asscociate_oscillators[3];
+	bool			is_native;
 } oscillator_t;
 
 #define UNUSED_OSCILLATOR							(-1)
