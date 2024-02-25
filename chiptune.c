@@ -249,7 +249,6 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 														   p_channel_controller->pitch_wheel,
 														   p_oscillator->pitch_chorus_bend_in_semitone,
 														   &pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
-				p_oscillator->is_native = false;
 				SET_CHORUS_ASSOCIATE(p_oscillator->state_bits);
 				p_native_oscillator->chorus_asscociate_oscillators[i] = oscillator_index;
 				oscillator_indexes[i] = oscillator_index;
@@ -339,7 +338,6 @@ int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 				}
 				memcpy(p_oscillator, p_native_oscillator, sizeof(oscillator_t));
 				p_oscillator->loudness = loudness_list[i + 1];
-				p_oscillator->is_native = false;
 				SET_REVERB_ASSOCIATE(p_oscillator->state_bits);
 				oscillator_indexes[i] = oscillator_index;
 				p_native_oscillator->reverb_asscociate_oscillators[i] = oscillator_index;
@@ -465,7 +463,7 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
 			if(voice != p_oscillator->voice){
 				break;
 			}
-			if(false == p_oscillator->is_native){
+			if(false == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
 				break;
 			}
 			if(true == IS_FREEING(p_oscillator->state_bits)){
@@ -504,7 +502,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->note = note;
 			p_oscillator->loudness = (uint16_t)(
 						(velocity * p_channel_controller->expression * p_channel_controller->volume)/INT8_MAX);
-			p_oscillator->is_native = true;
 			memset(&p_oscillator->chorus_asscociate_oscillators[0], UNUSED_OSCILLATOR, 3 * sizeof(int16_t));
 			memset(&p_oscillator->reverb_asscociate_oscillators[0], UNUSED_OSCILLATOR, 3 * sizeof(int16_t));
 
@@ -540,7 +537,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					break;
 				}
 
-				if(false == p_oscillator->is_native){
+				if(false == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
 					break;
 				}
 				if(false == IS_NOTE_ON(p_oscillator->state_bits)){
@@ -1376,7 +1373,7 @@ int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
 		if(true == is_processing_left_channel()){
 			channel_panning_weight = 2 * MIDI_CC_CENTER_VALUE - channel_panning_weight;
 		}
-		channel_wave_amplitude = CHANNEL_WAVE_AMPLITUDE(mono_wave_amplitude, channel_panning_weight);
+		channel_wave_amplitude = CHANNEL_WAVE_AMPLITUDE(mono_wave_amplitude, channel_panning_weight)/2;
 	} while(0);
 
 	return channel_wave_amplitude;

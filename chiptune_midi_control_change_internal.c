@@ -204,7 +204,7 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 			if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 				break;
 			}
-			if(false == p_oscillator->is_native){
+			if(false == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
 				break;
 			}
 			if(true == IS_FREEING(p_oscillator->state_bits)){

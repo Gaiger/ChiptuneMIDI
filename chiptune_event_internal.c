@@ -92,28 +92,6 @@ static int check_occupied_oscillator_list(void)
 													} while(0)
 #endif
 
-
-/**********************************************************************************/
-static int occupy_oscillator(int16_t const index);
-
-oscillator_t * const acquire_event_freed_oscillator(int16_t * const p_index)
-{
-	if(MAX_OSCILLATOR_NUMBER == s_occupied_oscillator_number){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillators are used\r\n");
-		return NULL;
-	}
-	for(int16_t i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(UNUSED_OSCILLATOR == s_oscillators[i].voice){
-			*p_index = i;
-			occupy_oscillator(i);
-			return &s_oscillators[i];
-		}
-	}
-	CHIPTUNE_PRINTF(cDeveloping, "ERROR::available oscillator is not found\r\n");
-	*p_index = UNUSED_OSCILLATOR;
-	return NULL;
-}
-
 /**********************************************************************************/
 
 static int occupy_oscillator(int16_t const index)
@@ -133,6 +111,26 @@ static int occupy_oscillator(int16_t const index)
 	s_occupied_oscillator_number += 1;
 	CHECK_OCCUPIED_OSCILLATOR_LIST();
 	return 0;
+}
+
+/**********************************************************************************/
+
+oscillator_t * const acquire_event_freed_oscillator(int16_t * const p_index)
+{
+	if(MAX_OSCILLATOR_NUMBER == s_occupied_oscillator_number){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillators are used\r\n");
+		return NULL;
+	}
+	for(int16_t i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+		if(UNUSED_OSCILLATOR == s_oscillators[i].voice){
+			*p_index = i;
+			occupy_oscillator(i);
+			return &s_oscillators[i];
+		}
+	}
+	CHIPTUNE_PRINTF(cDeveloping, "ERROR::available oscillator is not found\r\n");
+	*p_index = UNUSED_OSCILLATOR;
+	return NULL;
 }
 
 /**********************************************************************************/
@@ -225,7 +223,7 @@ oscillator_t * const get_event_oscillator_pointer_from_index(int16_t const index
 
 /**********************************************************************************/
 
-static void reset_all_oscillators(void)
+static void reset_all_event_oscillators(void)
 {
 	for(int16_t i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		s_oscillators[i].voice = UNUSED_OSCILLATOR;
@@ -352,17 +350,6 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 	if(MAX_EVENT_NUMBER == s_upcoming_event_number){
 		CHIPTUNE_PRINTF(cDeveloping, "No unused event is available\r\n");
 		return -1;
-	}
-
-	switch(type)
-	{
-	case EVENT_ACTIVATE:
-		//occupy_oscillator(oscillator_index);
-		break;
-	case EVENT_FREE:
-	case EVENT_REST:
-	default:
-		break;
 	}
 
 	do {
@@ -552,13 +539,13 @@ int process_events(uint32_t const tick)
 							100.0f * p_oscillator->release_reference_amplitude/(float)p_oscillator->loudness,
 							event_additional_string(s_event_head_index));
 			if(true == IS_FREEING(p_oscillator->state_bits)
-					&& true ==  p_oscillator->is_native){
+					&& true == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
 				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: rest a freeing native oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
 				break;
 			}
 			if(true == IS_RESTING(p_oscillator->state_bits)
-					&& true == p_oscillator->is_native){
+					&& true == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: rest a resting native oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
 				break;
@@ -593,7 +580,7 @@ int process_events(uint32_t const tick)
 
 void clean_all_events(void)
 {
-	reset_all_oscillators();
+	reset_all_event_oscillators();
 	for(int16_t i = 0; i < MAX_EVENT_NUMBER; i++){
 		s_events[i].type = UNUSED_EVENT;
 	}

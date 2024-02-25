@@ -47,7 +47,6 @@ union{
 		uint16_t	percussion_same_index_count;
 	};
 };
-	bool			is_native;
 } oscillator_t;
 
 #define UNUSED_OSCILLATOR							(-1)
@@ -71,14 +70,16 @@ union{
 #define SET_NOTE_OFF(STATE_BITS)					( (STATE_BITS) &= (~(0x01 << STATE_NOTE_BIT)) )
 #define IS_NOTE_ON(STATE_BITS)						(((0x01 << STATE_NOTE_BIT) & (STATE_BITS) ) ? true : false)
 
-#define STATE_CHORUS_ASSOCIATE_BIT					(4)
-#define SET_CHORUS_ASSOCIATE(STATE_BITS)			( (STATE_BITS) |= ((0x01)<< STATE_CHORUS_ASSOCIATE_BIT))
-#define IS_CHORUS_ASSOCIATE(STATE_BITS)				(((0x01 << STATE_CHORUS_ASSOCIATE_BIT) & (STATE_BITS)) ? true : false)
-
-#define STATE_REVERB_ASSOCIATE_BIT					(5)
+#define STATE_REVERB_ASSOCIATE_BIT					(4)
 #define SET_REVERB_ASSOCIATE(STATE_BITS)			( (STATE_BITS) |= ((0x01)<< STATE_REVERB_ASSOCIATE_BIT))
 #define IS_REVERB_ASSOCIATE(STATE_BITS)				(((0x01 << STATE_REVERB_ASSOCIATE_BIT) & (STATE_BITS)) ? true : false)
 
+#define STATE_CHORUS_ASSOCIATE_BIT					(5)
+#define SET_CHORUS_ASSOCIATE(STATE_BITS)			( (STATE_BITS) |= ((0x01)<< STATE_CHORUS_ASSOCIATE_BIT))
+#define IS_CHORUS_ASSOCIATE(STATE_BITS)				(((0x01 << STATE_CHORUS_ASSOCIATE_BIT) & (STATE_BITS)) ? true : false)
+
+
+#define IS_NATIVE_OSCILLATOR(STATE_BITS)			((IS_REVERB_ASSOCIATE(STATE_BITS) || IS_CHORUS_ASSOCIATE(STATE_BITS)) ? false : true)
 
 uint16_t const calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_semitones,
 							   int8_t const pitch_wheel_bend_range_in_semitones, int16_t const pitch_wheel,
