@@ -29,7 +29,7 @@
 
 #define MIDI_CC_DAMPER_PEDAL						(64)
 
-#define MIDI_CC_EFFECT_1_DEPTH						(91)
+#define MIDI_CC_REVERB_DEPTH						(91)
 #define MIDI_CC_EFFECT_2_DEPTH						(92)
 #define MIDI_CC_EFFECT_3_DEPTH						(93)
 #define MIDI_CC_CHORUS_EFFECT						(MIDI_CC_EFFECT_3_DEPTH)

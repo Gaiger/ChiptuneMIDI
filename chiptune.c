@@ -160,17 +160,32 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 #define EACH_CHORUS_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND	\
 													(0.0015)
 
-uint32_t s_min_chorus_delta_tick = (uint32_t)(EACH_CHORUS_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * DEFAULT_TEMPO * DEFAULT_RESOLUTION / (60.0) + 0.5);
+float s_min_chorus_delta_tick = (float)(EACH_CHORUS_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * DEFAULT_TEMPO * DEFAULT_RESOLUTION / (60.0) + 0.5);
 
 #define	UPDATE_MIN_CHORUS_DELTA_TICK()				\
 													do { \
 														 s_min_chorus_delta_tick \
-															= (uint32_t)(EACH_CHORUS_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ 60.0 + 0.5); \
+															= (float)(EACH_CHORUS_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ 60.0 + 0.5); \
 													} while(0)
 
 static inline uint32_t obtain_chorus_delta_tick(int8_t chorus)
 {
-	return ((chorus + 1) / 16) * s_min_chorus_delta_tick;
+	return (uint32_t)((chorus + 1) * s_min_chorus_delta_tick/16.0);
+}
+
+#define EACH_REVERB_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND	\
+													(0.008)
+float s_min_reverb_delta_tick = (float)(EACH_REVERB_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * DEFAULT_TEMPO * DEFAULT_RESOLUTION / (60.0) + 0.5);
+
+#define	UPDATE_MIN_REVERB_DELTA_TICK()				\
+													do { \
+														 s_min_reverb_delta_tick \
+															= (float)(EACH_REVERB_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ (60.0) + 0.5); \
+													} while(0)
+
+static inline uint32_t obtain_reverb_delta_tick(int8_t reverb)
+{
+	return (uint32_t)((reverb + 1) * s_min_reverb_delta_tick/16.0);
 }
 
 /**********************************************************************************/
@@ -236,54 +251,116 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 														   &pitch_wheel_bend_in_semitone) - p_oscillator->delta_phase;
 				p_oscillator->native_oscillator = native_oscillator_index;
 				SET_CHORUS_ASSOCIATE(p_oscillator->state_bits);
+				p_native_oscillator->chorus_asscociate_oscillators[i] = oscillator_index;
 				oscillator_indexes[i] = oscillator_index;
 			}
 			break;
 		}
 
-		int16_t kk = 0;
-		bool is_all_found = false;
-		int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-		int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
-		for(int16_t i = 0; i < occupied_oscillator_number; i++){
-			oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-			do {
-				if(true != IS_CHORUS_ASSOCIATE(p_oscillator->state_bits)){
-					break;
-				}
-				if(native_oscillator_index != p_oscillator->native_oscillator){
-					break;
-				}
-				if(note != p_oscillator->note){
-					break;
-				}
-				if(voice != p_oscillator->voice){
-					break;
-				}
-				// it is accociate oscillator, not directly related to scores
-				//if(true == IS_FREEING(p_oscillator->state_bits)){
-				//	break;
-				//	}
-				oscillator_indexes[kk] = oscillator_index;
-				kk += 1;
-			} while(0);
-
-			if(ASSOCIATE_CHORUS_OSCILLATOR_NUMBER == kk){
-				is_all_found = true;
-				break;
-			}
-			oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
-		}
-
-		if(false == is_all_found){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR::targeted oscillator voice = %d, note = %d could not be found\r\n", voice, note);
-			return -2;
+		for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
+			oscillator_indexes[i] = p_native_oscillator->chorus_asscociate_oscillators[i];
 		}
 	} while(0);
 
 	uint32_t chorus_delta_tick = obtain_chorus_delta_tick(p_channel_controller->chorus);
 	for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
+		if(UNUSED_OSCILLATOR == oscillator_indexes[i]){
+			break;
+		}
 		put_event(event_type, oscillator_indexes[i], tick + (i + 1) * chorus_delta_tick);
+	}
+
+	return 0;
+}
+
+/**********************************************************************************/
+
+static inline void swap(int16_t *a, int16_t *b)
+{
+	int temp = *a;
+	*a = *b;
+	*b = temp;
+}
+
+int process_reverb_effect(uint32_t const tick, int8_t const event_type,
+						  int8_t const voice, int8_t const note, int8_t const velocity,
+						  int16_t const native_oscillator_index)
+{
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
+			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
+		return 1;
+	}
+	(void)velocity;
+	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	if(0 == p_channel_controller->reverb){
+		return 1;
+	}
+	oscillator_t  * const p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_index);
+#define ASSOCIATE_REVERB_OSCILLATOR_NUMBER			(4 - 1)
+	int oscillator_indexes[ASSOCIATE_REVERB_OSCILLATOR_NUMBER] = {UNUSED_OSCILLATOR, UNUSED_OSCILLATOR, UNUSED_OSCILLATOR};
+
+	do {
+		if(EVENT_ACTIVATE == event_type){
+			int16_t const loudness = p_native_oscillator->loudness;
+			int16_t averaged_loudness = DIVIDE_BY_16(loudness);
+			int16_t loudness_list[4] = {loudness - (4 + 5 + 6) * averaged_loudness,
+										4 * averaged_loudness,
+										5 * averaged_loudness,
+										6 * averaged_loudness};
+			do {
+				if(loudness_list[0] < loudness_list[1]) {
+					swap(&loudness_list[0] , &loudness_list[1]);
+				}
+				if(loudness_list[2] < loudness_list[3]) {
+					swap(&loudness_list[2] , &loudness_list[3]);
+				}
+				if(loudness_list[0] < loudness_list[2]) {
+					swap(&loudness_list[0] , &loudness_list[2]);
+				}
+				if(loudness_list[1] < loudness_list[3]) {
+					swap(&loudness_list[1] , &loudness_list[3]);
+				}
+				if(loudness_list[1] < loudness_list[2]) {
+					swap(&loudness_list[1], &loudness_list[2]);
+				}
+			}while(0);
+			// oscillator 1 : 4 * averaged_volume
+			// oscillator 2 : 5 * averaged_volume
+			// oscillator 3 : 6 * averaged_volume
+			// oscillator 0 : volume - (4 + 5  + 6) * averaged_volume
+			int16_t oscillator_loudness = loudness_list[0];
+			p_native_oscillator->loudness = oscillator_loudness;
+
+			for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
+				int16_t oscillator_index;
+				oscillator_t * const p_oscillator = acquire_event_freed_oscillator(&oscillator_index);
+				if(NULL == p_oscillator){
+					return -1;
+				}
+				memcpy(p_oscillator, p_native_oscillator, sizeof(oscillator_t));
+				p_oscillator->loudness = loudness_list[i + 1];
+				p_oscillator->native_oscillator = native_oscillator_index;
+				SET_REVERB_ASSOCIATE(p_oscillator->state_bits);
+				oscillator_indexes[i] = oscillator_index;
+				p_native_oscillator->reverb_asscociate_oscillators[i] = oscillator_index;
+			}
+			break;
+		}
+
+		for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
+			oscillator_indexes[i] = p_native_oscillator->reverb_asscociate_oscillators[i];
+		}
+	} while(0);
+
+	uint32_t reverb_delta_tick = obtain_reverb_delta_tick(p_channel_controller->reverb);
+	for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
+		do
+		{
+			if(UNUSED_OSCILLATOR == oscillator_indexes[i]){
+				break;
+			}
+			put_event(event_type, oscillator_indexes[i], tick + (i + 1) * reverb_delta_tick);
+		}while(0);
 	}
 
 	return 0;
@@ -362,8 +439,6 @@ int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t 
 	p_oscillator->percussion_table_index = 0;
 	p_oscillator->delta_phase = p_percussion->delta_phase;
 
-	p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
-
 	char not_implemented_string[24] = {0};
 	if(false == p_percussion->is_implemented){
 		snprintf(&not_implemented_string[0], sizeof(not_implemented_string), "%s", "(NOT IMPLEMENTED)");
@@ -402,6 +477,7 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
 
 			put_event(EVENT_REST, oscillator_index, tick);
 			process_chorus_effect(tick, EVENT_REST, voice, note, velocity, oscillator_index);
+			process_reverb_effect(tick, EVENT_REST, voice, note, velocity, oscillator_index);
 		} while(0);
 		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 	}
@@ -429,8 +505,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->loudness = (uint16_t)(
 						(velocity * p_channel_controller->expression * p_channel_controller->volume)/INT8_MAX);
 			p_oscillator->native_oscillator = UNUSED_OSCILLATOR;
-			p_oscillator->current_phase = 0;
+			memset(&p_oscillator->chorus_asscociate_oscillators[0], UNUSED_OSCILLATOR, 3 * sizeof(int16_t));
+			memset(&p_oscillator->reverb_asscociate_oscillators[0], UNUSED_OSCILLATOR, 3 * sizeof(int16_t));
 
+			p_oscillator->current_phase = 0;
 			do
 			{
 				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
@@ -443,6 +521,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			}while(0);
 
 			put_event(EVENT_ACTIVATE, oscillator_index, tick);
+			process_reverb_effect(tick, EVENT_ACTIVATE, voice, note, velocity, oscillator_index);
 			process_chorus_effect(tick, EVENT_ACTIVATE, voice, note, velocity, oscillator_index);
 			break;
 		}
@@ -471,6 +550,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					break;
 				}
 				put_event(EVENT_FREE, oscillator_index, tick);
+				process_reverb_effect(tick, EVENT_FREE, voice, note, velocity, oscillator_index);
 				process_chorus_effect(tick, EVENT_FREE, voice, note, velocity, oscillator_index);
 				is_found = true;
 			} while(0);
@@ -502,6 +582,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				   sizeof(oscillator_t));
 			RESET_STATE_BITES(p_oscillator->state_bits);
 			SET_NOTE_OFF(p_oscillator->state_bits);
+			memset(&p_oscillator->chorus_asscociate_oscillators[0], UNUSED_OSCILLATOR, 3 * sizeof(int16_t));
+			memset(&p_oscillator->reverb_asscociate_oscillators[0], UNUSED_OSCILLATOR, 3 * sizeof(int16_t));
 			p_oscillator->loudness =
 					LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->loudness,
 															   p_channel_controller->damper_on_but_note_off_loudness_level);
@@ -510,9 +592,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->envelope_table_index = 0;
 			p_oscillator->release_reference_amplitude = 0;
 			put_event(EVENT_ACTIVATE, reduced_loundness_oscillator_index, tick);
+			process_reverb_effect(tick, EVENT_ACTIVATE, voice, note, velocity, reduced_loundness_oscillator_index);
 			process_chorus_effect(tick, EVENT_ACTIVATE, voice, note, velocity, reduced_loundness_oscillator_index);
-
 		} while(0);
+
 		do
 		{
 			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
@@ -568,7 +651,7 @@ static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, 
 																		 p_channel_controller->pitch_wheel_bend_range_in_semitones,
 																		 p_channel_controller->pitch_wheel, p_oscillator->pitch_chorus_bend_in_semitone,
 																		 &pitch_bend_in_semitone);
-			CHIPTUNE_PRINTF(cMidiSetup, "---- voice = %d, note = %d, pitch bend in semitone = %+3.2f\r\n",
+			CHIPTUNE_PRINTF(cNoteOperation, "---- voice = %d, note = %d, pitch bend in semitone = %+3.2f\r\n",
 							voice, p_oscillator->note, pitch_bend_in_semitone);
 		} while(0);
 		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
@@ -878,7 +961,6 @@ static int32_t get_max_simultaneous_loudness(void)
 
 			CHIPTUNE_PRINTF(cDeveloping, "oscillator = %d, voice = %d, note = 0x%02x(%d)\r\n",
 							oscillator_index, p_oscillator->voice, p_oscillator->note, p_oscillator->note);
-
 			oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 		}
 	}
@@ -966,10 +1048,11 @@ void chiptune_set_tempo(float const tempo)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %d, set tempo as %3.1f\r\n", CURRENT_TICK(), tempo);
 	CORRECT_BASE_TIME();
-	adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), tempo);
+	//adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), tempo);
 	s_tempo = tempo;
 	UPDATE_BASE_TIME_UNIT();
 	UPDATE_MIN_CHORUS_DELTA_TICK();
+	UPDATE_MIN_REVERB_DELTA_TICK();
 	update_channel_controller_parameters_related_to_tempo();
 }
 

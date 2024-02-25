@@ -46,6 +46,7 @@ void reset_channel_controller_midi_parameters_from_index(int8_t const index)
 	p_channel_controller->pitch_wheel = MIDI_PITCH_WHEEL_CENTER;
 
 	p_channel_controller->modulation_wheel = 0;
+	p_channel_controller->reverb = 0;
 	p_channel_controller->chorus = 0;
 	p_channel_controller->is_damper_pedal_on = false;
 }

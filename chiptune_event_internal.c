@@ -9,7 +9,7 @@
 #include "chiptune_event_internal.h"
 
 
-#define MAX_OSCILLATOR_NUMBER						(MIDI_MAX_CHANNEL_NUMBER * 8)
+#define MAX_OSCILLATOR_NUMBER						(MIDI_MAX_CHANNEL_NUMBER * 20)
 
 static oscillator_t s_oscillators[MAX_OSCILLATOR_NUMBER];
 static int16_t s_occupied_oscillator_number = 0;
@@ -94,6 +94,7 @@ static int check_occupied_oscillator_list(void)
 
 
 /**********************************************************************************/
+static int occupy_oscillator(int16_t const index);
 
 oscillator_t * const acquire_event_freed_oscillator(int16_t * const p_index)
 {
@@ -104,6 +105,7 @@ oscillator_t * const acquire_event_freed_oscillator(int16_t * const p_index)
 	for(int16_t i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
 		if(UNUSED_OSCILLATOR == s_oscillators[i].voice){
 			*p_index = i;
+			occupy_oscillator(i);
 			return &s_oscillators[i];
 		}
 	}
@@ -238,7 +240,7 @@ static void reset_all_oscillators(void)
 /**********************************************************************************/
 /**********************************************************************************/
 
-#define MAX_EVENT_NUMBER							(MIDI_MAX_CHANNEL_NUMBER * 8)
+#define MAX_EVENT_NUMBER							(MAX_OSCILLATOR_NUMBER * 3 / 2)
 
 enum
 {
@@ -355,7 +357,7 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 	switch(type)
 	{
 	case EVENT_ACTIVATE:
-		occupy_oscillator(oscillator_index);
+		//occupy_oscillator(oscillator_index);
 		break;
 	case EVENT_FREE:
 	case EVENT_REST:
@@ -424,6 +426,9 @@ static inline char const * const event_additional_string(int16_t const event_ind
 	snprintf(&s_event_additional_string[0], sizeof(s_event_additional_string), "");
 	bool is_empty_string = false;
 	do {
+		if(true == IS_REVERB_ASSOCIATE(p_oscillator->state_bits)){
+			break;
+		}
 		if(true == IS_CHORUS_ASSOCIATE(p_oscillator->state_bits)){
 			break;
 		}
@@ -441,6 +446,14 @@ static inline char const * const event_additional_string(int16_t const event_ind
 
 		snprintf(&s_event_additional_string[0], sizeof(s_event_additional_string), "(");
 		bool is_empty_content = true;
+
+		if(true == IS_REVERB_ASSOCIATE(p_oscillator->state_bits)){
+			size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
+			snprintf(&s_event_additional_string[event_addition_string_length], sizeof(s_event_additional_string)
+					 - event_addition_string_length, "reverb");
+			is_empty_content = false;
+		}
+
 		if(true == IS_CHORUS_ASSOCIATE(p_oscillator->state_bits)){
 			size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
 			snprintf(&s_event_additional_string[event_addition_string_length], sizeof(s_event_additional_string)
@@ -459,6 +472,7 @@ static inline char const * const event_additional_string(int16_t const event_ind
 			snprintf(&s_event_additional_string[event_addition_string_length],
 					 sizeof(s_event_additional_string) - event_addition_string_length,"damper_on_note_off");
 		}
+
 		{
 			size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
 			snprintf(&s_event_additional_string[event_addition_string_length],
@@ -537,15 +551,17 @@ int process_events(uint32_t const tick)
 							p_oscillator->voice, p_oscillator->note,
 							100.0f * p_oscillator->release_reference_amplitude/(float)p_oscillator->loudness,
 							event_additional_string(s_event_head_index));
-			if(true == IS_FREEING(p_oscillator->state_bits)){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: rest a freeing oscillator = %d\r\n",
+			if(true == IS_FREEING(p_oscillator->state_bits)
+					&& UNUSED_OSCILLATOR ==  p_oscillator->native_oscillator){
+				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: rest a freeing native oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
 				break;
 			}
-			if(true == IS_RESTING(p_oscillator->state_bits)){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: rest a resting oscillator = %d\r\n",
+			if(true == IS_RESTING(p_oscillator->state_bits)
+					&& UNUSED_OSCILLATOR == p_oscillator->native_oscillator){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: rest a resting native oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
-				return -1;
+				break;
 			}
 			SET_RESTING(p_oscillator->state_bits);
 			p_oscillator->envelope_state = ENVELOPE_RELEASE;
@@ -624,8 +640,8 @@ int adjust_event_triggering_tick_by_tempo(uint32_t const tick, float const new_t
 
 			uint32_t triggering_tick =
 					(uint32_t)((s_events[event_index].triggering_tick - tick) * tempo_ratio) + tick;
-			//CHIPTUNE_PRINTF(cDeveloping, "tick = %u, triggering_tick %u ->%u \r\n",
-			//				tick, s_events[event_index].triggering_tick, triggering_tick);
+			CHIPTUNE_PRINTF(cDeveloping, "tick = %u, triggering_tick %u ->%u \r\n",
+							tick, s_events[event_index].triggering_tick, triggering_tick);
 			s_events[event_index].triggering_tick = triggering_tick;
 		} while(0);
 		event_index = s_events[event_index].next_event;

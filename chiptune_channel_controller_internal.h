@@ -74,6 +74,7 @@ typedef struct _channel_controller
 	int8_t const *		p_vibrato_phase_table;
 	uint16_t			vibrato_same_index_number;
 
+	int8_t				reverb;
 	int8_t				chorus;
 	float				max_pitch_chorus_bend_in_semitones;
 

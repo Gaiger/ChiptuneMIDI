@@ -44,7 +44,9 @@ union{
 		uint16_t	percussion_same_index_count;
 	};
 };
-	int16_t		native_oscillator;
+	int16_t			native_oscillator;
+	int16_t			chorus_asscociate_oscillators[3];
+	int16_t			reverb_asscociate_oscillators[3];
 } oscillator_t;
 
 #define UNUSED_OSCILLATOR							(-1)
@@ -71,6 +73,10 @@ union{
 #define STATE_CHORUS_ASSOCIATE_BIT					(4)
 #define SET_CHORUS_ASSOCIATE(STATE_BITS)			( (STATE_BITS) |= ((0x01)<< STATE_CHORUS_ASSOCIATE_BIT))
 #define IS_CHORUS_ASSOCIATE(STATE_BITS)				(((0x01 << STATE_CHORUS_ASSOCIATE_BIT) & (STATE_BITS)) ? true : false)
+
+#define STATE_REVERB_ASSOCIATE_BIT					(5)
+#define SET_REVERB_ASSOCIATE(STATE_BITS)			( (STATE_BITS) |= ((0x01)<< STATE_REVERB_ASSOCIATE_BIT))
+#define IS_REVERB_ASSOCIATE(STATE_BITS)				(((0x01 << STATE_REVERB_ASSOCIATE_BIT) & (STATE_BITS)) ? true : false)
 
 
 uint16_t const calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_semitones,

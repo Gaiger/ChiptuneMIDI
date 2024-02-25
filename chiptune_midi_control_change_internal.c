@@ -84,6 +84,7 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, int
 	int8_t original_value = p_channel_controller->volume;
 	if(false == is_volume_changed){
 		original_value = p_channel_controller->expression;
+		original_value += !original_value;
 	}
 
 	do {
@@ -176,6 +177,9 @@ static void process_cc_expression(uint32_t const tick, int8_t const voice, int8_
 int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 						  int8_t const voice, int8_t const note, int8_t const velocity,
 						  int16_t const native_oscillator_index);
+int process_reverb_effect(uint32_t const tick, int8_t const event_type,
+						  int8_t const voice, int8_t const note, int8_t const velocity,
+						  int16_t const native_oscillator_index);
 
 static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uint8_t const value)
 {
@@ -210,9 +214,21 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 			process_chorus_effect(tick, EVENT_FREE, voice, p_oscillator->note,
 						  p_oscillator->loudness * INT8_MAX/(p_channel_controller->expression * p_channel_controller->volume),
 								  oscillator_index);
+			process_reverb_effect(tick, EVENT_FREE, voice, p_oscillator->note,
+						  p_oscillator->loudness * INT8_MAX/(p_channel_controller->expression * p_channel_controller->volume),
+								  oscillator_index);
 		} while(0);
 		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 	}
+}
+
+/**********************************************************************************/
+
+static void process_cc_reverb_effect(uint32_t const tick, int8_t const voice, int8_t const value)
+{
+	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC_REVERB_DEPTH(%d) :: voice = %d, value = %d\r\n",
+					tick, MIDI_CC_REVERB_DEPTH, voice, value);
+	get_channel_controller_pointer_from_index(voice)->reverb = value;
 }
 
 /**********************************************************************************/
@@ -270,9 +286,8 @@ int process_control_change_message(uint32_t const tick, int8_t const voice, int8
 	case MIDI_CC_DAMPER_PEDAL:
 		process_cc_damper_pedal(tick, voice, value);
 		break;
-	case MIDI_CC_EFFECT_1_DEPTH:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_1_DEPTH(%d) :: voice = %d, value = %d %s\r\n",
-						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
+	case MIDI_CC_REVERB_DEPTH:
+		process_cc_reverb_effect(tick, voice, value);
 		break;
 	case MIDI_CC_EFFECT_2_DEPTH:
 		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_EFFECT_2_DEPTH(%d) :: voice = %d, value = %d %s\r\n",
