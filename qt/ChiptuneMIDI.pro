@@ -16,6 +16,7 @@ SOURCES += \
         ../chiptune_channel_controller_internal.c \
         ../chiptune_midi_control_change_internal.c \
         ../chiptune_event_internal.c \
+        ../chiptune_midi_effect_internal.c \
         ../chiptune_oscillator_internal.c \
         ../chiptune_printf_internal.c \
         ChiptuneMidiWidget.cpp \
@@ -36,6 +37,7 @@ HEADERS += \
     ../chiptune_midi_control_change_internal.h \
     ../chiptune_event_internal.h \
     ../chiptune_midi_define_internal.h \
+    ../chiptune_midi_effect_internal.h \
     ../chiptune_oscillator_internal.h \
     ../chiptune_printf_internal.h \
     ChiptuneMidiWidget.h \

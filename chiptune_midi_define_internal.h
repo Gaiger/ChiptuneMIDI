@@ -1,6 +1,8 @@
 #ifndef _CHIPTUNE_MIDI_DEFINE_H_
 #define _CHIPTUNE_MIDI_DEFINE_H_
 
+#define MIDI_DEFAULT_TEMPO							(120.0)
+#define MIDI_DEFAULT_RESOLUTION						(960)
 
 #define MIDI_MAX_CHANNEL_NUMBER						(16)
 #define MIDI_CC_CENTER_VALUE						(64)
