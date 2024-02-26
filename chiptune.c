@@ -157,35 +157,44 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 
 /**********************************************************************************/
 
+#define MAX_CHORUS_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND	\
+															(0.033)
 #define EACH_CHORUS_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND	\
-													(0.0015)
+															(MAX_CHORUS_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND/(float)(INT8_MAX + 1)/3.0)
 
-float s_min_chorus_delta_tick = (float)(EACH_CHORUS_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * DEFAULT_TEMPO * DEFAULT_RESOLUTION / (60.0) + 0.5);
+float s_min_chorus_delta_tick = (float)(EACH_CHORUS_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * DEFAULT_TEMPO * DEFAULT_RESOLUTION / (60.0));
 
 #define	UPDATE_MIN_CHORUS_DELTA_TICK()				\
 													do { \
 														 s_min_chorus_delta_tick \
-															= (float)(EACH_CHORUS_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ 60.0 + 0.5); \
+															= (float)(EACH_CHORUS_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution / 60.0); \
 													} while(0)
 
 static inline uint32_t obtain_chorus_delta_tick(int8_t chorus)
 {
-	return (uint32_t)((chorus + 1) * s_min_chorus_delta_tick/16.0);
+	uint32_t chorus_delta_tick = (uint32_t)((chorus + 1) * s_min_chorus_delta_tick + 0.5);
+	chorus_delta_tick |= !chorus_delta_tick;
+	return chorus_delta_tick;
 }
 
+#define MAX_REVERB_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND	\
+															(0.150)
 #define EACH_REVERB_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND	\
-													(0.005)
-float s_min_reverb_delta_tick = (float)(EACH_REVERB_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * DEFAULT_TEMPO * DEFAULT_RESOLUTION / (60.0) + 0.5);
+															(MAX_REVERB_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND/(float)(INT8_MAX + 1)/3.0)
+
+float s_min_reverb_delta_tick = (float)(EACH_REVERB_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * DEFAULT_TEMPO * DEFAULT_RESOLUTION / (60.0));
 
 #define	UPDATE_MIN_REVERB_DELTA_TICK()				\
 													do { \
 														 s_min_reverb_delta_tick \
-															= (float)(EACH_REVERB_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution/ (60.0) + 0.5); \
+															= (float)(EACH_REVERB_OSCILLAOTER_MIN_TIME_INTERVAL_IN_SECOND * s_tempo * s_resolution / (60.0)); \
 													} while(0)
 
 static inline uint32_t obtain_reverb_delta_tick(int8_t reverb)
 {
-	return (uint32_t)((reverb + 1) * s_min_reverb_delta_tick/16.0);
+	uint32_t reverb_delta_tick = (uint32_t)((reverb + 1) * s_min_reverb_delta_tick + 0.5);
+	reverb_delta_tick |= !reverb_delta_tick;
+	return reverb_delta_tick;
 }
 
 /**********************************************************************************/
