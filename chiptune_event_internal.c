@@ -352,6 +352,10 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 		return -1;
 	}
 
+	if(UNUSED_OSCILLATOR == oscillator_index){
+		return 1;
+	}
+
 	do {
 		int16_t current_index;
 		for(current_index = 0; current_index < MAX_EVENT_NUMBER; current_index++){

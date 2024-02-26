@@ -44,15 +44,16 @@ int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 						  int8_t const voice, int8_t const note, int8_t const velocity,
 						  int16_t const native_oscillator_index)
 {
+	(void)velocity;
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
 			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
 		return 1;
 	}
-	(void)velocity;
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	if(0 == p_channel_controller->reverb){
-		return 1;
+		return 2;
 	}
+
 	oscillator_t  * const p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_index);
 	int oscillator_indexes[ASSOCIATE_REVERB_OSCILLATOR_NUMBER] = {UNUSED_OSCILLATOR, UNUSED_OSCILLATOR, UNUSED_OSCILLATOR};
 
@@ -110,13 +111,7 @@ int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 
 	uint32_t reverb_delta_tick = obtain_reverb_delta_tick(p_channel_controller->reverb);
 	for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
-		do
-		{
-			if(UNUSED_OSCILLATOR == oscillator_indexes[i]){
-				break;
-			}
-			put_event(event_type, oscillator_indexes[i], tick + (i + 1) * reverb_delta_tick);
-		}while(0);
+		put_event(event_type, oscillator_indexes[i], tick + (i + 1) * reverb_delta_tick);
 	}
 
 	return 0;
@@ -147,14 +142,14 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 						  int8_t const voice, int8_t const note, int8_t const velocity,
 						  int16_t const native_oscillator_index)
 {
+	(void)velocity;
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
 			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
 		return 1;
 	}
-	(void)velocity;
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	if(0 == p_channel_controller->chorus){
-		return 1;
+		return 2;
 	}
 
 	oscillator_t  * const p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_index);
@@ -212,9 +207,6 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 
 	uint32_t chorus_delta_tick = obtain_chorus_delta_tick(p_channel_controller->chorus);
 	for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
-		if(UNUSED_OSCILLATOR == oscillator_indexes[i]){
-			break;
-		}
 		put_event(event_type, oscillator_indexes[i], tick + (i + 1) * chorus_delta_tick);
 	}
 

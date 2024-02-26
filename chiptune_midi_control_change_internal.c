@@ -7,6 +7,7 @@
 #include "chiptune_channel_controller_internal.h"
 #include "chiptune_oscillator_internal.h"
 #include "chiptune_event_internal.h"
+#include "chiptune_midi_effect_internal.h"
 
 #include "chiptune_midi_control_change_internal.h"
 
@@ -173,13 +174,6 @@ static void process_cc_expression(uint32_t const tick, int8_t const voice, int8_
 }
 
 /**********************************************************************************/
-
-int process_chorus_effect(uint32_t const tick, int8_t const event_type,
-						  int8_t const voice, int8_t const note, int8_t const velocity,
-						  int16_t const native_oscillator_index);
-int process_reverb_effect(uint32_t const tick, int8_t const event_type,
-						  int8_t const voice, int8_t const note, int8_t const velocity,
-						  int16_t const native_oscillator_index);
 
 static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uint8_t const value)
 {
