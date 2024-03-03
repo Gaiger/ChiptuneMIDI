@@ -291,7 +291,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			SET_NOTE_ON(p_oscillator->state_bits);
 			p_oscillator->voice = voice;
 			p_oscillator->note = note;
-			p_oscillator->loudness = (uint16_t)(
+			p_oscillator->loudness = (int16_t)(
 						(velocity * p_channel_controller->expression * p_channel_controller->volume)/INT8_MAX);
 			memset(&p_oscillator->chorus_asscociate_oscillators[0], UNUSED_OSCILLATOR, 3 * sizeof(int16_t));
 			memset(&p_oscillator->reverb_asscociate_oscillators[0], UNUSED_OSCILLATOR, 3 * sizeof(int16_t));
@@ -756,6 +756,10 @@ static int32_t get_max_simultaneous_loudness(void)
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 		reset_channel_controller_midi_parameters_from_index(i);
 	}
+
+	if(true == is_stereo()){
+		max_loudness /= 2;
+	}
 	return max_loudness;
 }
 
@@ -1208,7 +1212,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 	int32_t out_wave = NORMALIZE_WAVE_AMPLITUDE(accumulated_wave_amplitude);
 	do {
 		if(INT16_MAX < out_wave){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, greater than UINT8_MAX\r\n",
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, greater than INT16_MAX\r\n",
 							out_wave);
 			break;
 		}
