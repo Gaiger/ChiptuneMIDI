@@ -143,7 +143,7 @@ static void process_cc_pan(uint32_t const tick, int8_t const voice, int8_t const
 {
 #define PAN_BAR_SCALE_NUMBER						(16)
 #define PAN_BAR_DELTA_TICK							((INT8_MAX + 1)/PAN_BAR_SCALE_NUMBER)
-	char panning_bar_string[PAN_BAR_SCALE_NUMBER] = "";
+	char panning_bar_string[PAN_BAR_SCALE_NUMBER + 1] = "";
 	do {
 		int location = (value + PAN_BAR_DELTA_TICK/2)/PAN_BAR_DELTA_TICK;
 		for(int i = 0; i < location - 1; i++){
@@ -152,7 +152,7 @@ static void process_cc_pan(uint32_t const tick, int8_t const voice, int8_t const
 		}
 		snprintf(&panning_bar_string[strlen(&panning_bar_string[0])],
 				sizeof(panning_bar_string) - strlen(&panning_bar_string[0]), "+");
-		for(int i = location + 1; i < (INT8_MAX + 1)/8; i++){
+		for(int i = location + 1; i < PAN_BAR_SCALE_NUMBER; i++){
 			snprintf(&panning_bar_string[strlen(&panning_bar_string[0])],
 					sizeof(panning_bar_string) - strlen(&panning_bar_string[0]), "-");
 		}
