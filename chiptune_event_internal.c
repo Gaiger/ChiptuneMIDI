@@ -9,7 +9,7 @@
 #include "chiptune_event_internal.h"
 
 
-#define MAX_OSCILLATOR_NUMBER						(MIDI_MAX_CHANNEL_NUMBER * 20)
+#define MAX_OSCILLATOR_NUMBER						(MIDI_MAX_CHANNEL_NUMBER * 24)
 
 static oscillator_t s_oscillators[MAX_OSCILLATOR_NUMBER];
 static int16_t s_occupied_oscillator_number = 0;
@@ -446,6 +446,11 @@ static inline char const * const event_additional_string(int16_t const event_ind
 		}
 
 		if(true == IS_CHORUS_ASSOCIATE(p_oscillator->state_bits)){
+			if(false == is_empty_content){
+				size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
+				snprintf(&s_event_additional_string[event_addition_string_length],
+						 sizeof(s_event_additional_string) - event_addition_string_length, "|");
+			}
 			size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
 			snprintf(&s_event_additional_string[event_addition_string_length], sizeof(s_event_additional_string)
 					 - event_addition_string_length, "chorus");
@@ -454,12 +459,12 @@ static inline char const * const event_additional_string(int16_t const event_ind
 
 		if(true == p_channel_controller->is_damper_pedal_on
 				&& false == IS_NOTE_ON(p_oscillator->state_bits)){
-			size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
 			if(false == is_empty_content){
+				size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
 				snprintf(&s_event_additional_string[event_addition_string_length],
-						 sizeof(s_event_additional_string) - event_addition_string_length,"|");
+						 sizeof(s_event_additional_string) - event_addition_string_length, "|");
 			}
-			event_addition_string_length = strlen(&s_event_additional_string[0]);
+			size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
 			snprintf(&s_event_additional_string[event_addition_string_length],
 					 sizeof(s_event_additional_string) - event_addition_string_length,"damper_on_note_off");
 		}
