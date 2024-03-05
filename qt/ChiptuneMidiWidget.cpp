@@ -9,6 +9,11 @@
 #include <QFileDialog>
 #include <QFile>
 
+#ifdef Q_OS_WIN
+#include <QWinTaskbarButton>
+#include <QWinTaskbarProgress>
+#endif
+
 #include "ui_ChiptuneMidiWidgetForm.h"
 #include "ChiptuneMidiWidget.h"
 
@@ -232,6 +237,7 @@ void ChiptuneMidiWidget::HandleWaveFetched(const QByteArray wave_bytearray)
 	m_p_wave_chartview->GiveWave(wave_bytearray);
 }
 
+
 /**********************************************************************************/
 
 void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
@@ -248,6 +254,23 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 			break;
 		}
 	}while(0);
+}
+
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::showEvent(QShowEvent *event)
+{
+	QWidget::showEvent(event);
+#ifdef Q_OS_WIN
+	QWinTaskbarButton *p_win_taskbar_button = new QWinTaskbarButton(this);
+	p_win_taskbar_button->setWindow(QWidget::windowHandle());
+	QWinTaskbarProgress *p_win_taskbar_progress = p_win_taskbar_button->progress();
+	p_win_taskbar_progress->setVisible(true);
+	QObject::connect(ui->ElapsedSlider, &QAbstractSlider::valueChanged,
+					 p_win_taskbar_progress, &QWinTaskbarProgress::setValue);
+	QObject::connect(ui->ElapsedSlider, &QAbstractSlider::rangeChanged,
+					 p_win_taskbar_progress, &QWinTaskbarProgress::setRange);
+#endif
 }
 
 /**********************************************************************************/

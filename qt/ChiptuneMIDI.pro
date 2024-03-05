@@ -1,6 +1,9 @@
 QT += widgets
 QT += charts
 QT += multimedia
+win32 {
+QT += winextras
+}
 
 CONFIG += c++11 #console
 CONFIG -= app_bundle

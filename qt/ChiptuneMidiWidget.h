@@ -24,6 +24,7 @@ signals:
 
 private:
 	virtual void timerEvent(QTimerEvent *event) Q_DECL_OVERRIDE;
+	virtual void showEvent(QShowEvent *event) Q_DECL_OVERRIDE;
 
 	virtual void dragEnterEvent(QDragEnterEvent* event) Q_DECL_OVERRIDE;
 	virtual void dragMoveEvent(QDragMoveEvent* event) Q_DECL_OVERRIDE;
