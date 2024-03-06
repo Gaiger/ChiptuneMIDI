@@ -10,6 +10,7 @@
 
 
 #define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
+#define DIVIDE_BY_32(VALUE)							((VALUE) >> 5)
 #define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
 
 #define ASSOCIATE_OSCILLATOR_NUMBER					(4 - 1)
@@ -55,40 +56,8 @@ static inline uint32_t obtain_reverb_delta_tick(int8_t reverb)
 }
 
 /**********************************************************************************/
-
-static inline void swap(int16_t *a, int16_t *b)
-{
-	int temp = *a;
-	*a = *b;
-	*b = temp;
-}
-
-/**********************************************************************************/
-
-static void sort_loudnesses_to_descending(int16_t loudnesses[4])
-{
-	do {
-		if(loudnesses[0] < loudnesses[1]) {
-			swap(&loudnesses[0] , &loudnesses[1]);
-		}
-		if(loudnesses[2] < loudnesses[3]) {
-			swap(&loudnesses[2] , &loudnesses[3]);
-		}
-		if(loudnesses[0] < loudnesses[2]) {
-			swap(&loudnesses[0] , &loudnesses[2]);
-		}
-		if(loudnesses[1] < loudnesses[3]) {
-			swap(&loudnesses[1] , &loudnesses[3]);
-		}
-		if(loudnesses[1] < loudnesses[2]) {
-			swap(&loudnesses[1], &loudnesses[2]);
-		}
-	}while(0);
-}
-
-/**********************************************************************************/
-#define ENHANDED_REVERB_LOUDNESS(LUDNESS, REVERB_VALUE) \
-														DIVIDE_BY_128((LUDNESS) * ((INT8_MAX + 1) + (REVERB_VALUE + 1)))
+#define ENHANCE_REVERB_LOUDNESS(LOUDNESS, REVERB_VALUE) \
+								DIVIDE_BY_128((LOUDNESS) * ((INT8_MAX + 1) + ((REVERB_VALUE) + 1))/2)
 
 int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 						  int8_t const voice, int8_t const note, int8_t const velocity,
@@ -103,23 +72,19 @@ int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 	if(0 == p_channel_controller->reverb){
 		return 2;
 	}
-	//return 3;
+
 	oscillator_t  * const p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_index);
 
 	do {
 		if(EVENT_ACTIVATE == event_type){
-			int16_t const loudness = p_native_oscillator->loudness;
-			int16_t averaged_loudness = DIVIDE_BY_16(ENHANDED_REVERB_LOUDNESS(loudness, p_channel_controller->reverb));
-			// oscillator 1 : 3 * averaged_volume
-			// oscillator 2 : 4 * averaged_volume
-			// oscillator 3 : 6 * averaged_volume
-			// oscillator 0 : volume - (3 + 4 + 6) * averaged_volume
+			int32_t const enhanced_loudness = ENHANCE_REVERB_LOUDNESS(p_native_oscillator->loudness, p_channel_controller->reverb);
+			int16_t const enhanced_loudness_over_32 = DIVIDE_BY_32(enhanced_loudness);
 			int16_t loudnesses[1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER]
-					= { loudness - (3 + 4 + 6) * averaged_loudness,
-						3 * averaged_loudness,
-						4 * averaged_loudness,
-						6 * averaged_loudness };
-			sort_loudnesses_to_descending(loudnesses);
+					= { 0,
+						enhanced_loudness_over_32 * 9,
+						enhanced_loudness_over_32 * 6,
+						enhanced_loudness_over_32 * 7};
+			loudnesses[0] = enhanced_loudness - (loudnesses[1] + loudnesses[2] + loudnesses[3]);
 			p_native_oscillator->loudness = loudnesses[0];
 
 			for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
@@ -147,8 +112,6 @@ int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 }
 
 /**********************************************************************************/
-#define ENHANDED_CHORUS_LOUDNESS(LUDNESS, CHORUS_VALUE) \
-														DIVIDE_BY_128((LUDNESS) * ((INT8_MAX + 1) + (CHORUS_VALUE + 1) * 3))
 
 int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 						  int8_t const voice, int8_t const note, int8_t const velocity,
@@ -181,25 +144,22 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 				p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_indexes[k]);
 
 				int16_t const loudness = p_native_oscillator->loudness;
-				int16_t averaged_loudness = DIVIDE_BY_16(ENHANDED_CHORUS_LOUDNESS(loudness, p_channel_controller->chorus));
-				// oscillator 1 : 3 * averaged_volume
-				// oscillator 2 : 4 * averaged_volume
-				// oscillator 3 : 6 * averaged_volume
-				// oscillator 0 : volume - (3 + 5  + 6) * averaged_volume
+				int16_t loudness_over_16 = DIVIDE_BY_16(loudness);
 				int16_t loudnesses[4]
-						= { loudness - (3 + 5 + 6) * averaged_loudness,
-							3 * averaged_loudness,
-							5 * averaged_loudness,
-							6 * averaged_loudness};
+						= { 0,
+							4 * loudness_over_16,
+							3 * loudness_over_16,
+							5 * loudness_over_16};
+				loudnesses[0] = loudness - (4 + 3 + 5) * loudness_over_16;
 				p_native_oscillator->loudness = loudnesses[0];
 
-				float pitch_wheel_bend_in_semitone = 0.0f;
 				for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
 					int16_t oscillator_index;
 					oscillator_t * const p_oscillator = acquire_event_freed_oscillator(&oscillator_index);
 					if(NULL == p_oscillator){
 						return -1;
 					}
+					float pitch_wheel_bend_in_semitone;
 					int8_t const vibrato_modulation_in_semitone = p_channel_controller->vibrato_modulation_in_semitone;
 					memcpy(p_oscillator, p_native_oscillator, sizeof(oscillator_t));
 					p_oscillator->loudness = loudnesses[i + 1];

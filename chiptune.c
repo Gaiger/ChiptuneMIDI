@@ -757,6 +757,7 @@ static int32_t get_max_simultaneous_loudness(void)
 		reset_channel_controller_midi_parameters_from_index(i);
 	}
 
+	CHIPTUNE_PRINTF(cDeveloping, "max_loudness = %d\r\n", max_loudness);
 	if(true == is_stereo()){
 		max_loudness /= 2;
 	}
