@@ -20,8 +20,8 @@ struct _occupied_oscillator_node
 	int16_t next;
 }s_occupied_oscillator_nodes[MAX_OSCILLATOR_NUMBER];
 
-int16_t s_occupied_oscillator_head_index = UNUSED_OSCILLATOR;
-int16_t s_occupied_oscillator_last_index = UNUSED_OSCILLATOR;
+int16_t s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
+int16_t s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
 
 #ifdef _CHECK_OCCUPIED_OSCILLATOR_LIST
 /**********************************************************************************/
@@ -37,9 +37,9 @@ static int check_occupied_oscillator_list(void)
 		}
 
 		if(0 == s_occupied_oscillator_number){
-			if(UNUSED_OSCILLATOR != s_occupied_oscillator_head_index){
+			if(UNOCCUPIED_OSCILLATOR != s_occupied_oscillator_head_index){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number = 0"
-											 " but s_occupied_oscillator_head_index is not UNUSED_OSCILLATOR\r\n");
+											 " but s_occupied_oscillator_head_index is not UNOCCUPIED_OSCILLATOR\r\n");
 				ret = -2;
 			}
 			break;
@@ -50,7 +50,7 @@ static int check_occupied_oscillator_list(void)
 
 		current_index = s_occupied_oscillator_head_index;
 		counter= 1;
-		while(UNUSED_OSCILLATOR != s_occupied_oscillator_nodes[current_index].next)
+		while(UNOCCUPIED_OSCILLATOR != s_occupied_oscillator_nodes[current_index].next)
 		{
 			counter += 1;
 			current_index = s_occupied_oscillator_nodes[current_index].next;
@@ -64,7 +64,7 @@ static int check_occupied_oscillator_list(void)
 
 		current_index = s_occupied_oscillator_last_index;
 		counter = 1;
-		while(UNUSED_OSCILLATOR != s_occupied_oscillator_nodes[current_index].previous)
+		while(UNOCCUPIED_OSCILLATOR != s_occupied_oscillator_nodes[current_index].previous)
 		{
 			counter += 1;
 			current_index = s_occupied_oscillator_nodes[current_index].previous;
@@ -98,14 +98,14 @@ static int occupy_oscillator(int16_t const index)
 {
 	do{
 		if(0 == s_occupied_oscillator_number){
-			s_occupied_oscillator_nodes[index].previous = UNUSED_OSCILLATOR;
-			s_occupied_oscillator_nodes[index].next = UNUSED_OSCILLATOR;
+			s_occupied_oscillator_nodes[index].previous = UNOCCUPIED_OSCILLATOR;
+			s_occupied_oscillator_nodes[index].next = UNOCCUPIED_OSCILLATOR;
 			s_occupied_oscillator_head_index = index;
 			break;
 		}
 		s_occupied_oscillator_nodes[s_occupied_oscillator_last_index].next = index;
 		s_occupied_oscillator_nodes[index].previous = s_occupied_oscillator_last_index;
-		s_occupied_oscillator_nodes[index].next = UNUSED_OSCILLATOR;
+		s_occupied_oscillator_nodes[index].next = UNOCCUPIED_OSCILLATOR;
 	} while(0);
 	s_occupied_oscillator_last_index = index;
 	s_occupied_oscillator_number += 1;
@@ -122,14 +122,14 @@ oscillator_t * const acquire_event_freed_oscillator(int16_t * const p_index)
 		return NULL;
 	}
 	for(int16_t i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		if(UNUSED_OSCILLATOR == s_oscillators[i].voice){
+		if(UNOCCUPIED_OSCILLATOR == s_oscillators[i].voice){
 			*p_index = i;
 			occupy_oscillator(i);
 			return &s_oscillators[i];
 		}
 	}
 	CHIPTUNE_PRINTF(cDeveloping, "ERROR::available oscillator is not found\r\n");
-	*p_index = UNUSED_OSCILLATOR;
+	*p_index = UNOCCUPIED_OSCILLATOR;
 	return NULL;
 }
 
@@ -147,7 +147,7 @@ static int discard_oscillator(int16_t const index)
 		}
 
 		if(1 != s_occupied_oscillator_number
-				&& (UNUSED_OSCILLATOR == previous_index && UNUSED_OSCILLATOR == next_index) ){
+				&& (UNOCCUPIED_OSCILLATOR == previous_index && UNOCCUPIED_OSCILLATOR == next_index) ){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator %d is not on the occupied list\r\n", index);
 			return -2;
 		}
@@ -156,13 +156,13 @@ static int discard_oscillator(int16_t const index)
 	do {
 		if(index == s_occupied_oscillator_head_index){
 			s_occupied_oscillator_head_index = next_index;
-			s_occupied_oscillator_nodes[s_occupied_oscillator_head_index].previous = UNUSED_OSCILLATOR;
+			s_occupied_oscillator_nodes[s_occupied_oscillator_head_index].previous = UNOCCUPIED_OSCILLATOR;
 			break;
 		}
 
 		if(index == s_occupied_oscillator_last_index){
 			s_occupied_oscillator_last_index = previous_index;
-			s_occupied_oscillator_nodes[s_occupied_oscillator_last_index].next = UNUSED_OSCILLATOR;
+			s_occupied_oscillator_nodes[s_occupied_oscillator_last_index].next = UNOCCUPIED_OSCILLATOR;
 			break;
 		}
 
@@ -170,9 +170,9 @@ static int discard_oscillator(int16_t const index)
 		s_occupied_oscillator_nodes[next_index].previous = previous_index;
 	} while (0);
 
-	s_occupied_oscillator_nodes[index].previous = UNUSED_OSCILLATOR;
-	s_occupied_oscillator_nodes[index].next = UNUSED_OSCILLATOR;
-	s_oscillators[index].voice = UNUSED_OSCILLATOR;
+	s_occupied_oscillator_nodes[index].previous = UNOCCUPIED_OSCILLATOR;
+	s_occupied_oscillator_nodes[index].next = UNOCCUPIED_OSCILLATOR;
+	s_oscillators[index].voice = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number -= 1;
 	CHECK_OCCUPIED_OSCILLATOR_LIST();
 	return 0;
@@ -203,7 +203,7 @@ int16_t const get_event_occupied_oscillator_next_index(int16_t const index)
 {
 	if(false == (index >= 0 && index < MAX_OSCILLATOR_NUMBER) ){
 		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
-		return UNUSED_OSCILLATOR;
+		return UNOCCUPIED_OSCILLATOR;
 	}
 
 	return 	s_occupied_oscillator_nodes[index].next;
@@ -226,12 +226,12 @@ oscillator_t * const get_event_oscillator_pointer_from_index(int16_t const index
 static void reset_all_event_oscillators(void)
 {
 	for(int16_t i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
-		s_oscillators[i].voice = UNUSED_OSCILLATOR;
+		s_oscillators[i].voice = UNOCCUPIED_OSCILLATOR;
 		s_occupied_oscillator_nodes[i]
-				= (struct _occupied_oscillator_node){.previous = UNUSED_OSCILLATOR, .next = UNUSED_OSCILLATOR};
+				= (struct _occupied_oscillator_node){.previous = UNOCCUPIED_OSCILLATOR, .next = UNOCCUPIED_OSCILLATOR};
 	}
-	s_occupied_oscillator_head_index = UNUSED_OSCILLATOR;
-	s_occupied_oscillator_last_index = UNUSED_OSCILLATOR;
+	s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
+	s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number = 0;
 }
 
@@ -296,12 +296,12 @@ static int check_upcoming_events(uint32_t const tick)
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event is not in time order\r\n");
 				is_listing_error_occur = true;
 			}
-			if(UNUSED_OSCILLATOR == s_events[index].oscillator){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event %d oscillator is UNUSED_OSCILLATOR\r\n", index);
+			if(UNOCCUPIED_OSCILLATOR == s_events[index].oscillator){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event %d oscillator is UNOCCUPIED_OSCILLATOR\r\n", index);
 				is_listing_error_occur = true;
 			}
-			if(UNUSED_OSCILLATOR == get_event_oscillator_pointer_from_index(s_events[index].oscillator)->voice){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: oscillator %d is UNUSED_OSCILLATOR\r\n", s_events[index].oscillator);
+			if(UNOCCUPIED_OSCILLATOR == get_event_oscillator_pointer_from_index(s_events[index].oscillator)->voice){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: oscillator %d is UNOCCUPIED_OSCILLATOR\r\n", s_events[index].oscillator);
 				is_listing_error_occur = true;
 			}
 
@@ -352,7 +352,7 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 		return -1;
 	}
 
-	if(UNUSED_OSCILLATOR == oscillator_index){
+	if(UNOCCUPIED_OSCILLATOR == oscillator_index){
 		return 1;
 	}
 

@@ -220,7 +220,7 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 
 static void process_cc_reverb_effect(uint32_t const tick, int8_t const voice, int8_t const value)
 {
-	CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC_REVERB_DEPTH(%d) :: voice = %d, value = %d\r\n",
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_CC_REVERB_DEPTH(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_REVERB_DEPTH, voice, value);
 	get_channel_controller_pointer_from_index(voice)->reverb = value;
 }

@@ -138,7 +138,7 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 	do {
 		if(EVENT_ACTIVATE == event_type){
 			for(int k = 0; k < 1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER; k++){
-				if(UNUSED_OSCILLATOR == native_oscillator_indexes[k]){
+				if(UNOCCUPIED_OSCILLATOR == native_oscillator_indexes[k]){
 					break;
 				}
 				p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_indexes[k]);
@@ -189,7 +189,7 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 		}
 
 		for(int k = 0; k < 1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER; k++){
-			if(UNUSED_OSCILLATOR == native_oscillator_indexes[k]){
+			if(UNOCCUPIED_OSCILLATOR == native_oscillator_indexes[k]){
 				break;
 			}
 

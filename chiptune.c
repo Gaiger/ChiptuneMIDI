@@ -293,8 +293,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->note = note;
 			p_oscillator->loudness = (int16_t)(
 						(velocity * p_channel_controller->expression * p_channel_controller->volume)/INT8_MAX);
-			memset(&p_oscillator->chorus_asscociate_oscillators[0], UNUSED_OSCILLATOR, 3 * sizeof(int16_t));
-			memset(&p_oscillator->reverb_asscociate_oscillators[0], UNUSED_OSCILLATOR, 3 * sizeof(int16_t));
+			memset(&p_oscillator->chorus_asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, 3 * sizeof(int16_t));
+			memset(&p_oscillator->reverb_asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, 3 * sizeof(int16_t));
 
 			p_oscillator->current_phase = 0;
 			do
@@ -370,8 +370,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				   sizeof(oscillator_t));
 			RESET_STATE_BITES(p_oscillator->state_bits);
 			SET_NOTE_OFF(p_oscillator->state_bits);
-			memset(&p_oscillator->chorus_asscociate_oscillators[0], UNUSED_OSCILLATOR, 3 * sizeof(int16_t));
-			memset(&p_oscillator->reverb_asscociate_oscillators[0], UNUSED_OSCILLATOR, 3 * sizeof(int16_t));
+			memset(&p_oscillator->chorus_asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, 3 * sizeof(int16_t));
+			memset(&p_oscillator->reverb_asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, 3 * sizeof(int16_t));
 			p_oscillator->loudness =
 					LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->loudness,
 															   p_channel_controller->damper_on_but_note_off_loudness_level);
@@ -494,7 +494,7 @@ static int process_midi_message(struct _tick_message const tick_message)
 			voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]));
 	 break;
 	case MIDI_MESSAGE_KEY_PRESSURE:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: note = %d, amount = %d %s\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_KEY_PRESSURE :: note = %d, amount = %d %s\r\n",
 						tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_CONTROL_CHANGE:
@@ -647,8 +647,10 @@ static int process_timely_midi_message_and_event(void)
 static int32_t get_max_simultaneous_loudness(void)
 {
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(false);
-	uint32_t midi_messge_index = 0;
 	int32_t max_loudness = 0;
+	int16_t max_event_occupied_oscillator_number = 0;
+
+	uint32_t midi_messge_index = 0;
 	uint32_t previous_tick;
 
 	struct _tick_message tick_message;
@@ -691,6 +693,10 @@ static int32_t get_max_simultaneous_loudness(void)
 				break;
 			}
 			previous_tick = tick;
+
+			if(max_event_occupied_oscillator_number < get_event_occupied_oscillator_number()){
+				max_event_occupied_oscillator_number = get_event_occupied_oscillator_number();
+			}
 
 			int32_t sum_loudness = 0;
 
@@ -757,6 +763,8 @@ static int32_t get_max_simultaneous_loudness(void)
 		reset_channel_controller_midi_parameters_from_index(i);
 	}
 
+	CHIPTUNE_PRINTF(cDeveloping, "max_event_occupied_oscillator_number = %d\r\n",
+					max_event_occupied_oscillator_number);
 	CHIPTUNE_PRINTF(cDeveloping, "max_loudness = %d\r\n", max_loudness);
 	if(true == is_stereo()){
 		max_loudness /= 2;

@@ -49,7 +49,7 @@ union{
 };
 } oscillator_t;
 
-#define UNUSED_OSCILLATOR							(-1)
+#define UNOCCUPIED_OSCILLATOR							(-1)
 #define RESET_STATE_BITES(STATE_BITES)				((STATE_BITES) = 0)
 
 #define STATE_ACTIVATED_BIT							(0)
