@@ -127,8 +127,7 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: ", tick);
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice
-			|| MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 		p_channel_controller->waveform = WAVEFORM_NOISE;
 		p_channel_controller->envelope_sustain_level = 8;
 	}
@@ -160,8 +159,7 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 int setup_pitch_oscillator(uint32_t const tick, int8_t const voice, int8_t const note, int8_t const velocity,
 									oscillator_t * const p_oscillator)
 {
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
-			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 		return 1;
 	}
 	(void)tick;
@@ -212,8 +210,7 @@ int setup_pitch_oscillator(uint32_t const tick, int8_t const voice, int8_t const
 int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t const note, int8_t const velocity,
 									oscillator_t * const p_oscillator)
 {
-	if(false == (MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
-			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice)){
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL != voice){
 		return 1;
 	}
 	(void)tick;
@@ -299,8 +296,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->current_phase = 0;
 			do
 			{
-				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
-						MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
+				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 					setup_percussion_oscillator(tick, voice, note, velocity, p_oscillator);
 					break;
 				}
@@ -356,8 +352,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 		do
 		{
-			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
-					MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
+			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 				break;
 			}
 			if(false == p_channel_controller->is_damper_pedal_on){
@@ -386,8 +381,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 		do
 		{
-			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
-					MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
+			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 				CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, %s, velocity = %d\r\n",
 								tick,  "MIDI_MESSAGE_NOTE_OFF",
 								voice, get_percussion_name_string(note), velocity);
@@ -880,8 +874,7 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 			break;
 		}
 
-		if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == p_oscillator->voice ||
-				MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == p_oscillator->voice){
+		if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice){
 			break;
 		}
 
@@ -904,7 +897,6 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 	} while(0);
 }
 
-
 /**********************************************************************************/
 
 void perform_pitch_envelope(oscillator_t * const p_oscillator)
@@ -915,8 +907,7 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 			break;
 		}
 
-		if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == p_oscillator->voice ||
-				MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == p_oscillator->voice){
+		if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice){
 			break;
 		}
 
@@ -1039,8 +1030,7 @@ void perform_percussion(oscillator_t * const p_oscillator)
 			break;
 		}
 
-		if(false == (MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == p_oscillator->voice ||
-				MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == p_oscillator->voice)){
+		if(false == (MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice)){
 			break;
 		}
 		percussion_t const * const p_percussion = get_percussion_pointer_from_index(p_oscillator->note);
@@ -1110,8 +1100,7 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 			= get_channel_controller_pointer_from_index(p_oscillator->voice);
 	int16_t wave = 0;
 	int8_t waveform = p_channel_controller->waveform;
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == p_oscillator->voice ||
-			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == p_oscillator->voice){
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice){
 		percussion_t const * const p_percussion = get_percussion_pointer_from_index(p_oscillator->note);
 		waveform = p_percussion->waveform[p_oscillator->percussion_waveform_index];
 	}

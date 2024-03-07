@@ -64,8 +64,7 @@ int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 						  int16_t const native_oscillator_index)
 {
 	(void)velocity;
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
-			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 		return 1;
 	}
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
@@ -118,8 +117,7 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 						  int16_t const native_oscillator_index)
 {
 	(void)velocity;
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == voice ||
-			MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == voice){
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 		return 1;
 	}
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);

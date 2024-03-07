@@ -526,10 +526,8 @@ int process_events(uint32_t const tick)
 			do
 			{
 #if(0)
-				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL_0 == p_oscillator->voice ||
-						MIDI_PERCUSSION_INSTRUMENT_CHANNEL_1 == p_oscillator->voice){
-					put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
-					tick);
+				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice){
+					put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator, tick);
 					break;
 				}
 #endif
