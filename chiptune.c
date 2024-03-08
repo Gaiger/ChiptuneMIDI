@@ -538,6 +538,32 @@ static int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_
 
 /**********************************************************************************/
 
+static int free_all_notes(const uint32_t tick)
+{
+	int ret = 0;
+	do {
+		int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+		if(0 == occupied_oscillator_number){
+			break;
+		}
+		CHIPTUNE_PRINTF(cDeveloping,
+						"WARNING :: %d notes are not freed but tune is ending :: \r\n", occupied_oscillator_number);
+		ret = 1;
+		int16_t oscillator_index = get_event_occupied_oscillator_head_index();
+		for(int16_t i = 0; i < occupied_oscillator_number; i++){
+			oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+			CHIPTUNE_PRINTF(cDeveloping, "oscillator = %d, voice = %d, note = %d\r\n",
+							oscillator_index, p_oscillator->voice, p_oscillator->note);
+			put_event(EVENT_FREE, oscillator_index, tick);
+			oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+		}
+	} while(0);
+
+	return ret;
+}
+
+/**********************************************************************************/
+
 static int release_all_channels_damper_pedal(const uint32_t tick)
 {
 	int ret = 0;
@@ -562,7 +588,10 @@ static int release_all_channels_damper_pedal(const uint32_t tick)
 
 int process_ending(const uint32_t tick)
 {
-	return release_all_channels_damper_pedal(tick);
+	int ret = 0;
+	ret += free_all_notes(tick);
+	ret += release_all_channels_damper_pedal(tick);
+	return ret;
 }
 
 /**********************************************************************************/
@@ -665,7 +694,9 @@ static int32_t get_max_simultaneous_loudness(void)
 			}
 
 			fetch_midi_tick_message(midi_messge_index, &tick_message);
-			midi_messge_index += 1;
+			if(false == IS_NULL_TICK_MESSAGE(tick_message)){
+				midi_messge_index += 1;
+			}
 		} while(0);
 
 		if(NULL_TICK == event_tick){
