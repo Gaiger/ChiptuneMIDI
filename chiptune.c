@@ -538,23 +538,59 @@ static int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_
 
 /**********************************************************************************/
 
-static int free_all_notes(const uint32_t tick)
+static int free_note_off_but_damper_pedal_on_oscillators(const uint32_t tick)
+{
+	int ret = 0;
+	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
+	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+	for(int16_t i = 0; i < occupied_oscillator_number; i++){
+		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+		do {
+			if(true == IS_NOTE_ON(p_oscillator->state_bits)){
+				break;
+			}
+			channel_controller_t const * const p_channel_controller
+					= get_channel_controller_pointer_from_index(p_oscillator->voice);
+			if(false == p_channel_controller->is_damper_pedal_on){
+				break;
+			}
+
+			ret = 1;
+			put_event(EVENT_FREE, oscillator_index, tick);
+		} while(0);
+		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+	}
+
+	return ret;
+}
+
+/**********************************************************************************/
+
+static int free_remaining_oscillators(const uint32_t tick)
 {
 	int ret = 0;
 	do {
 		int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
-		if(0 == occupied_oscillator_number){
-			break;
-		}
-		CHIPTUNE_PRINTF(cDeveloping,
-						"WARNING :: %d notes are not freed but tune is ending :: \r\n", occupied_oscillator_number);
-		ret = 1;
+
 		int16_t oscillator_index = get_event_occupied_oscillator_head_index();
 		for(int16_t i = 0; i < occupied_oscillator_number; i++){
 			oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-			CHIPTUNE_PRINTF(cDeveloping, "oscillator = %d, voice = %d, note = %d\r\n",
+
+			do {
+				if(true == IS_FREEING(p_oscillator->state_bits)){
+					break;
+				}
+				channel_controller_t const * const p_channel_controller
+						= get_channel_controller_pointer_from_index(p_oscillator->voice);
+				if(true == p_channel_controller->is_damper_pedal_on){
+					break;
+				}
+
+				ret = 1;
+				CHIPTUNE_PRINTF(cDeveloping, "oscillator = %d, voice = %d, note = %d is not freed but tune is ending\r\n",
 							oscillator_index, p_oscillator->voice, p_oscillator->note);
-			put_event(EVENT_FREE, oscillator_index, tick);
+				put_event(EVENT_FREE, oscillator_index, tick);
+			} while(0);
 			oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 		}
 	} while(0);
@@ -564,33 +600,11 @@ static int free_all_notes(const uint32_t tick)
 
 /**********************************************************************************/
 
-static int release_all_channels_damper_pedal(const uint32_t tick)
-{
-	int ret = 0;
-	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
-	for(int16_t i = 0; i < occupied_oscillator_number; i++){
-		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-		channel_controller_t const * const p_channel_controller
-				= get_channel_controller_pointer_from_index(p_oscillator->voice);
-
-		if(true == p_channel_controller->is_damper_pedal_on){
-			ret = 1;
-			put_event(EVENT_FREE, oscillator_index, tick);
-		}
-		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
-	}
-
-	return ret;
-}
-
-/**********************************************************************************/
-
 int process_ending(const uint32_t tick)
 {
 	int ret = 0;
-	ret += free_all_notes(tick);
-	ret += release_all_channels_damper_pedal(tick);
+	ret += free_note_off_but_damper_pedal_on_oscillators(tick);
+	ret += free_remaining_oscillators(tick);
 	return ret;
 }
 
