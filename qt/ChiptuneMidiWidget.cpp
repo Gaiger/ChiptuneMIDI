@@ -140,7 +140,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	font20.setStyleHint(QFont::TypeWriter);
 	font20.setPixelSize(20);
 	ui->MessageLabel->setFont(font20);
-	ui->ElapsedLabel->setFont(font20);
+	ui->PlayPositionLabel->setFont(font20);
 	do
 	{
 		m_p_wave_chartview = new WaveChartView(
@@ -214,9 +214,9 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 
 		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
 		m_midi_file_duration_time_string = FormatTimeString(m_midi_file_duration_in_milliseconds);
-		ui->ElapsedLabel->setText(FormatTimeString(0) + " / " + m_midi_file_duration_time_string);
-		ui->ElapsedSlider->setRange(0, m_midi_file_duration_in_milliseconds);
-		ui->ElapsedSlider->setValue(0);
+		ui->PlayPositionLabel->setText(FormatTimeString(0) + " / " + m_midi_file_duration_time_string);
+		ui->PlayPositionSlider->setRange(0, m_midi_file_duration_in_milliseconds);
+		ui->PlayPositionSlider->setValue(0);
 		m_p_wave_chartview->Reset();
 		m_p_audio_player->Play();
 		ui->SaveSaveFilePushButton->setEnabled(true);
@@ -248,9 +248,9 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 		if(event->timerId() == m_inquiring_elapsed_time_timer){
 			int elapsed_time_in_milliseconds =
 					(int)(m_p_tune_manager->GetCurrentElapsedTimeInSeconds() * 1000);
-			ui->ElapsedLabel->setText(FormatTimeString(elapsed_time_in_milliseconds) + " / "
+			ui->PlayPositionLabel->setText(FormatTimeString(elapsed_time_in_milliseconds) + " / "
 									  + m_midi_file_duration_time_string);
-			ui->ElapsedSlider->setValue(elapsed_time_in_milliseconds);
+			ui->PlayPositionSlider->setValue(elapsed_time_in_milliseconds);
 			break;
 		}
 	}while(0);
@@ -266,9 +266,9 @@ void ChiptuneMidiWidget::showEvent(QShowEvent *event)
 	p_win_taskbar_button->setWindow(QWidget::windowHandle());
 	QWinTaskbarProgress *p_win_taskbar_progress = p_win_taskbar_button->progress();
 	p_win_taskbar_progress->setVisible(true);
-	QObject::connect(ui->ElapsedSlider, &QAbstractSlider::valueChanged,
+	QObject::connect(ui->PlayPositionSlider, &QAbstractSlider::valueChanged,
 					 p_win_taskbar_progress, &QWinTaskbarProgress::setValue);
-	QObject::connect(ui->ElapsedSlider, &QAbstractSlider::rangeChanged,
+	QObject::connect(ui->PlayPositionSlider, &QAbstractSlider::rangeChanged,
 					 p_win_taskbar_progress, &QWinTaskbarProgress::setRange);
 #endif
 }
