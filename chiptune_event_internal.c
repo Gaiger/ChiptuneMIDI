@@ -618,6 +618,7 @@ int adjust_event_triggering_tick_by_tempo(uint32_t const tick, float const new_t
 {
 	float tempo_ratio = new_tempo/get_tempo();
 	uint16_t event_index = s_event_head_index;
+	bool is_reported = false;
 	for(int i = 0; i < s_upcoming_event_number; i++){
 		do
 		{
@@ -625,20 +626,35 @@ int adjust_event_triggering_tick_by_tempo(uint32_t const tick, float const new_t
 				break;
 			}
 
+#if(0)
 			oscillator_t const * const p_oscillator
 					= get_event_oscillator_pointer_from_index(s_events[event_index].oscillator);
 			if(true == IS_FREEING(p_oscillator->state_bits)
 					|| true ==  IS_RESTING(p_oscillator->state_bits)){
 				break;
 			}
-
-			uint32_t triggering_tick =
+#endif
+			uint32_t const triggering_tick =
 					(uint32_t)((s_events[event_index].triggering_tick - tick) * tempo_ratio) + tick;
-			CHIPTUNE_PRINTF(cDeveloping, "tick = %u, triggering_tick %u ->%u \r\n",
-							tick, s_events[event_index].triggering_tick, triggering_tick);
+			if(triggering_tick == s_events[event_index].triggering_tick){
+				break;
+			}
+			if(false == is_reported){
+				CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, tempo change from %3.1f to %3.1f\r\n",
+								tick, get_tempo(), new_tempo);
+			}
+			is_reported = true;
+			CHIPTUNE_PRINTF(cEventTriggering, "event = %d, oscillator = %d, triggering_tick %u ->%u\r\n",
+							event_index, s_events[event_index].oscillator,
+							s_events[event_index].triggering_tick, triggering_tick);
 			s_events[event_index].triggering_tick = triggering_tick;
 		} while(0);
 		event_index = s_events[event_index].next_event;
+	}
+
+	if(true == is_reported){
+		CHIPTUNE_PRINTF(cEventTriggering, "-------------------------------------------------\r\n");
+		CHIPTUNE_PRINTF(cEventTriggering, "-------------------------------------------------\r\n");
 	}
 
 	return 0;

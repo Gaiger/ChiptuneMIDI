@@ -516,8 +516,6 @@ static int process_midi_message(struct _tick_message const tick_message)
 
 /**********************************************************************************/
 
-uint32_t s_total_message_number = 0;
-
 static int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_message)
 {
 	uint32_t tick;
@@ -610,15 +608,23 @@ int process_ending(const uint32_t tick)
 
 /**********************************************************************************/
 
-uint32_t s_previous_run_timely_tick = NULL_TICK;
+static uint32_t s_midi_messge_index = 0;
 
-uint32_t s_midi_messge_index = 0;
-struct _tick_message s_fetched_tick_message = {NULL_TICK, NULL_MESSAGE};
-uint32_t s_fetched_event_tick = NULL_TICK;
+static uint32_t s_previous_timely_tick = NULL_TICK;
+static struct _tick_message s_fetched_tick_message = {NULL_TICK, NULL_MESSAGE};
+static uint32_t s_fetched_event_tick = NULL_TICK;
+
+#define RESET_MESSAGE_AND_TICK()	\
+								do { \
+									RESET_CURRENT_TIME(); \
+									s_previous_timely_tick = NULL_TICK; \
+									SET_TICK_MESSAGE_NULL(s_fetched_tick_message); \
+									s_fetched_event_tick = NULL_TICK; \
+								} while(0)
 
 static int process_timely_midi_message_and_event(void)
 {
-	if(CURRENT_TICK() == s_previous_run_timely_tick){
+	if(CURRENT_TICK() == s_previous_timely_tick){
 		return 1;
 	}
 
@@ -675,63 +681,67 @@ static int process_timely_midi_message_and_event(void)
 		}
 	}
 
-	s_previous_run_timely_tick = CURRENT_TICK();
+	s_previous_timely_tick = CURRENT_TICK();
 	return ret;
 }
 
 /**********************************************************************************/
 
-static int32_t get_max_simultaneous_loudness(void)
+static void pass_through_midi_messages(const uint32_t end_midi_message_index,
+									   int32_t * const p_max_loudness,
+									   int16_t * const p_max_event_occupied_oscillator_number)
 {
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(false);
 	int32_t max_loudness = 0;
 	int16_t max_event_occupied_oscillator_number = 0;
 
 	uint32_t midi_messge_index = 0;
-	uint32_t previous_tick;
 
-	struct _tick_message tick_message;
-	uint32_t event_tick = NULL_TICK;
-
-	fetch_midi_tick_message(midi_messge_index, &tick_message);
+	RESET_MESSAGE_AND_TICK();
+	fetch_midi_tick_message(midi_messge_index, &s_fetched_tick_message);
 	midi_messge_index += 1;
-	process_midi_message(tick_message);
-	previous_tick = tick_message.tick;
-	SET_TICK_MESSAGE_NULL(tick_message);
+	process_midi_message(s_fetched_tick_message);
+	s_previous_timely_tick = s_fetched_tick_message.tick;
+	SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
 
-	uint32_t tick = NULL_TICK;
 	while(1)
 	{
 		do {
-			if(false == IS_NULL_TICK_MESSAGE(tick_message)){
+			if(false == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)){
+				break;
+			}
+			if(end_midi_message_index == midi_messge_index){
 				break;
 			}
 
-			fetch_midi_tick_message(midi_messge_index, &tick_message);
-			if(false == IS_NULL_TICK_MESSAGE(tick_message)){
+			fetch_midi_tick_message(midi_messge_index, &s_fetched_tick_message);
+			if(false == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)){
 				midi_messge_index += 1;
 			}
 		} while(0);
 
-		if(NULL_TICK == event_tick){
-			event_tick = get_next_event_triggering_tick();
+		if(NULL_TICK == s_fetched_event_tick){
+			s_fetched_event_tick = get_next_event_triggering_tick();
 		}
 
-		if(true == IS_NULL_TICK_MESSAGE(tick_message)
-				&& NULL_TICK == event_tick){
-			if(0 == process_ending(tick)){
+		if(true == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)
+				&& NULL_TICK == s_fetched_event_tick){
+			if(0 == process_ending(CURRENT_TICK())){
 				break;
 			}
 		}
 
-		tick = (tick_message.tick < event_tick) ? tick_message.tick : event_tick;
+		{
+			uint32_t const tick = (s_fetched_tick_message.tick < s_fetched_event_tick) ? s_fetched_tick_message.tick : s_fetched_event_tick;
+			s_current_tick = (chiptune_float)tick;
+		}
 
 		do
 		{
-			if(tick == previous_tick){
+			if((uint32_t)s_current_tick == s_previous_timely_tick){
 				break;
 			}
-			previous_tick = tick;
+			s_previous_timely_tick = (uint32_t)s_current_tick;
 
 			if(max_event_occupied_oscillator_number < get_event_occupied_oscillator_number()){
 				max_event_occupied_oscillator_number = get_event_occupied_oscillator_number();
@@ -764,20 +774,35 @@ static int32_t get_max_simultaneous_loudness(void)
 			}
 		}while(0);
 
-		if(tick == tick_message.tick){
-			process_midi_message(tick_message);
-			SET_TICK_MESSAGE_NULL(tick_message);
+		if((uint32_t)s_current_tick == s_fetched_tick_message.tick){
+			process_midi_message(s_fetched_tick_message);
+			SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
 
-			event_tick = get_next_event_triggering_tick();
+			s_fetched_event_tick = get_next_event_triggering_tick();
 		}
 
-		if(tick == event_tick){
-			process_events(event_tick);
-			event_tick = NULL_TICK;
+		if((uint32_t)s_current_tick == s_fetched_event_tick){
+			process_events((uint32_t)s_current_tick);
+			s_fetched_event_tick = NULL_TICK;
 		}
 	}
 
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
+	if(true == is_stereo()){
+		max_loudness /= 2;
+	}
+
+	*p_max_loudness = max_loudness;
+	*p_max_event_occupied_oscillator_number = max_event_occupied_oscillator_number;
+}
+
+/**********************************************************************************/
+
+static int32_t get_max_simultaneous_loudness(void)
+{
+	int32_t max_loudness = 0;
+	int16_t max_event_occupied_oscillator_number = 0;
+	pass_through_midi_messages(UINT32_MAX, &max_loudness, &max_event_occupied_oscillator_number);
 
 	if(0 != get_upcoming_event_number()){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: not all events are released, remain %d events\r\n",
@@ -806,7 +831,8 @@ static int32_t get_max_simultaneous_loudness(void)
 					max_event_occupied_oscillator_number);
 	CHIPTUNE_PRINTF(cDeveloping, "max_loudness = %d\r\n", max_loudness);
 	if(true == is_stereo()){
-		max_loudness /= 2;
+		//max_loudness = max_loudness / 2;
+		max_loudness = max_loudness * 17 / 32;
 	}
 	return max_loudness;
 }
@@ -854,20 +880,15 @@ int32_t g_max_loudness = 1 << 16;
 
 /**********************************************************************************/
 
-void chiptune_initialize(bool const is_stereo,
-						 uint32_t const sampling_rate, uint32_t const resolution, uint32_t const total_message_number)
+void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution)
 {
 	s_is_stereo = is_stereo;
 	s_is_processing_left_channel = true;
 	s_sampling_rate = sampling_rate;
 	s_resolution = resolution;
-	s_total_message_number = total_message_number;
 
-	RESET_CURRENT_TIME();
 	s_is_tune_ending = false;
 	s_midi_messge_index = 0;
-	s_previous_run_timely_tick = NULL_TICK;
-	SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
 
 	for(int i = 0; i < SINE_TABLE_LENGTH; i++){
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
@@ -878,7 +899,17 @@ void chiptune_initialize(bool const is_stereo,
 
 	UPDATE_BASE_TIME_UNIT();
 	UPDATE_AMPLITUDE_NORMALIZER();
+	RESET_MESSAGE_AND_TICK();
 	process_timely_midi_message_and_event();
+	return ;
+}
+
+/**********************************************************************************/
+
+void chiptune_set_next_midi_message_index(uint32_t const next_midi_message_index)
+{
+	s_midi_messge_index = next_midi_message_index;
+	clean_all_events();
 	return ;
 }
 
@@ -888,7 +919,7 @@ void chiptune_set_tempo(float const tempo)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %d, set tempo as %3.1f\r\n", CURRENT_TICK(), tempo);
 	CORRECT_BASE_TIME();
-	//adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), tempo);
+	adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), tempo);
 	s_tempo = tempo;
 	UPDATE_BASE_TIME_UNIT();
 	update_effect_tick();
