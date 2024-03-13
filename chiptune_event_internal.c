@@ -566,11 +566,6 @@ int process_events(uint32_t const tick)
 							tick, s_events[s_event_head_index].oscillator,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness,
 							event_additional_string(s_event_head_index));
-			if(false == IS_ACTIVATED(p_oscillator->state_bits)){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: deactivate an deactivated oscillator = %d\r\n",
-								s_events[s_event_head_index].oscillator);
-				return -1;
-			}
 			SET_DEACTIVATED(p_oscillator->state_bits);
 			break;
 		case EVENT_DISCARD:
