@@ -29,6 +29,7 @@ public:
 	void Play(bool const is_blocking = false);
 	void Stop(void);
 
+	QAudio::State GetState(void);
 private slots:
 	void HandleAudioNotify(void);
 	void HandleAudioStateChanged(QAudio::State state);

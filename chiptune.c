@@ -614,9 +614,11 @@ static uint32_t s_previous_timely_tick = NULL_TICK;
 static struct _tick_message s_fetched_tick_message = {NULL_TICK, NULL_MESSAGE};
 static uint32_t s_fetched_event_tick = NULL_TICK;
 
-#define RESET_MESSAGE_AND_TICK()	\
+#define RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES()	\
 								do { \
+									s_is_tune_ending = false; \
 									RESET_CURRENT_TIME(); \
+									s_midi_messge_index = 0; \
 									s_previous_timely_tick = NULL_TICK; \
 									SET_TICK_MESSAGE_NULL(s_fetched_tick_message); \
 									s_fetched_event_tick = NULL_TICK; \
@@ -691,15 +693,17 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 									   int32_t * const p_max_loudness,
 									   int16_t * const p_max_event_occupied_oscillator_number)
 {
+	if(0 == end_midi_message_index){
+		return ;
+	}
+
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(false);
 	int32_t max_loudness = 0;
 	int16_t max_event_occupied_oscillator_number = 0;
 
-	uint32_t midi_messge_index = 0;
-
-	RESET_MESSAGE_AND_TICK();
-	fetch_midi_tick_message(midi_messge_index, &s_fetched_tick_message);
-	midi_messge_index += 1;
+	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
+	fetch_midi_tick_message(s_midi_messge_index, &s_fetched_tick_message);
+	s_midi_messge_index += 1;
 	process_midi_message(s_fetched_tick_message);
 	s_previous_timely_tick = s_fetched_tick_message.tick;
 	SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
@@ -710,15 +714,35 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 			if(false == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)){
 				break;
 			}
-			if(end_midi_message_index == midi_messge_index){
-				break;
-			}
 
-			fetch_midi_tick_message(midi_messge_index, &s_fetched_tick_message);
+			fetch_midi_tick_message(s_midi_messge_index, &s_fetched_tick_message);
 			if(false == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)){
-				midi_messge_index += 1;
+				s_midi_messge_index += 1;
 			}
 		} while(0);
+
+		if(end_midi_message_index == s_midi_messge_index){
+#if(1)
+			int16_t oscillator_index = get_event_occupied_oscillator_head_index();
+			int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+			for(int16_t i = 0; i < occupied_oscillator_number; i++){
+				oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+				do {
+					if(true == IS_NOTE_ON(p_oscillator->state_bits)){
+						break;
+					}
+					channel_controller_t const * const p_channel_controller
+							= get_channel_controller_pointer_from_index(p_oscillator->voice);
+					if(false == p_channel_controller->is_damper_pedal_on){
+						break;
+					}
+					put_event(EVENT_DEACTIVATE, oscillator_index, s_current_tick);
+				} while(0);
+				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+			}
+#endif
+			break;
+		}
 
 		if(NULL_TICK == s_fetched_event_tick){
 			s_fetched_event_tick = get_next_event_triggering_tick();
@@ -788,12 +812,13 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 	}
 
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
-	if(true == is_stereo()){
-		max_loudness /= 2;
-	}
 
-	*p_max_loudness = max_loudness;
-	*p_max_event_occupied_oscillator_number = max_event_occupied_oscillator_number;
+	if(NULL != p_max_loudness){
+		*p_max_loudness = max_loudness;
+	}
+	if(NULL != p_max_event_occupied_oscillator_number){
+		*p_max_event_occupied_oscillator_number = max_event_occupied_oscillator_number;
+	}
 }
 
 /**********************************************************************************/
@@ -831,8 +856,7 @@ static int32_t get_max_simultaneous_loudness(void)
 					max_event_occupied_oscillator_number);
 	CHIPTUNE_PRINTF(cDeveloping, "max_loudness = %d\r\n", max_loudness);
 	if(true == is_stereo()){
-		//max_loudness = max_loudness / 2;
-		max_loudness = max_loudness * 17 / 32;
+		max_loudness = max_loudness * 23 / 64;
 	}
 	return max_loudness;
 }
@@ -887,9 +911,6 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 	s_sampling_rate = sampling_rate;
 	s_resolution = resolution;
 
-	s_is_tune_ending = false;
-	s_midi_messge_index = 0;
-
 	for(int i = 0; i < SINE_TABLE_LENGTH; i++){
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
 	}
@@ -899,7 +920,7 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 
 	UPDATE_BASE_TIME_UNIT();
 	UPDATE_AMPLITUDE_NORMALIZER();
-	RESET_MESSAGE_AND_TICK();
+	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	process_timely_midi_message_and_event();
 	return ;
 }
@@ -908,8 +929,12 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 
 void chiptune_set_next_midi_message_index(uint32_t const next_midi_message_index)
 {
-	s_midi_messge_index = next_midi_message_index;
 	clean_all_events();
+	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
+		reset_channel_controller_midi_parameters_from_index(i);
+	}
+	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
+	pass_through_midi_messages(next_midi_message_index, NULL, NULL);
 	return ;
 }
 

@@ -182,6 +182,7 @@ int TuneManager::InitializeTune(void)
 
 void TuneManager::HandleGenerateWaveRequested(int const length)
 {
+	QMutexLocker locker(&m_mutex);
 	m_p_private->GenerateWave(length);
 }
 
@@ -228,7 +229,6 @@ int TuneManager::GetSamplingSize(void){ return m_p_private->m_sampling_size; }
 
 QByteArray TuneManager::FetchWave(int const length)
 {
-	QMutexLocker locker(&m_mutex);
 	if(length > m_p_private->m_wave_prebuffer_length){
 		m_p_private->m_wave_prebuffer_length = length;
 	}
@@ -289,4 +289,46 @@ float TuneManager::GetCurrentElapsedTimeInSeconds(void)
 	}
 
 	return m_p_private->m_p_midi_file->timeFromTick(chiptune_get_current_tick());
+}
+
+/**********************************************************************************/
+
+int TuneManager::SetStartTimeInSeconds(float start_time_in_seconds)
+{
+	QMutexLocker locker(&m_mutex);
+	int ret = -1;
+	do
+	{
+		if(nullptr == m_p_private->m_p_midi_file){
+			break;
+		}
+
+		ret = -2;
+		if(start_time_in_seconds < 0){
+			break;
+		}
+		if(start_time_in_seconds > GetMidiFileDurationInSeconds()){
+			break;
+		}
+
+		ret = 0;
+		QList<QMidiEvent *> const p_midi_event_list = m_p_private ->m_p_midi_file->events();
+
+		float current_event_time = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(0)->tick());
+		float next_event_time = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(0 + 1)->tick());
+		for(int i = 0; i < p_midi_event_list.size() - 1; i++){
+			if(current_event_time <= start_time_in_seconds){
+				if(next_event_time >= start_time_in_seconds){
+					qDebug() << Q_FUNC_INFO << "start_time_in_seconds = " << start_time_in_seconds
+							 << ", index = " << i <<", event_time = " << current_event_time;
+					chiptune_set_next_midi_message_index(i);
+					break;
+				}
+			}
+			current_event_time = next_event_time;
+			next_event_time = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(i + 1)->tick());
+		}
+	}while(0);
+
+	return ret;
 }

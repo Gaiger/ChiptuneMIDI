@@ -155,6 +155,8 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	m_tune_manager_working_thread.start(QThread::HighPriority);
 	m_p_audio_player = new AudioPlayer(m_p_tune_manager, this);
 
+	QObject::connect(ui->PlayPositionSlider, &QAbstractSlider::sliderMoved, this,
+					 &ChiptuneMidiWidget::HandlePlayPositionSliderMoved);
 	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
 					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
 
@@ -212,11 +214,13 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			break;
 		}
 
+		m_p_tune_manager->InitializeTune();
 		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
 		m_midi_file_duration_time_string = FormatTimeString(m_midi_file_duration_in_milliseconds);
 		ui->PlayPositionLabel->setText(FormatTimeString(0) + " / " + m_midi_file_duration_time_string);
 		ui->PlayPositionSlider->setRange(0, m_midi_file_duration_in_milliseconds);
 		ui->PlayPositionSlider->setValue(0);
+		ui->PlayPositionSlider->setEnabled(true);
 		m_p_wave_chartview->Reset();
 		m_p_audio_player->Play();
 		ui->SaveSaveFilePushButton->setEnabled(true);
@@ -237,6 +241,41 @@ void ChiptuneMidiWidget::HandleWaveFetched(const QByteArray wave_bytearray)
 	m_p_wave_chartview->GiveWave(wave_bytearray);
 }
 
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::HandlePlayPositionSliderMoved(int value)
+{
+	if(-1 != m_inquiring_elapsed_time_timer){
+		killTimer(m_inquiring_elapsed_time_timer);
+		m_inquiring_elapsed_time_timer = -1;
+	}
+	if(true == m_set_start_time_postpone_timer.isActive()){
+		m_set_start_time_postpone_timer.stop();
+	}
+	QObject::disconnect(&m_set_start_time_postpone_timer, nullptr , nullptr, nullptr);
+
+	QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, [&, value](){
+		m_inquiring_elapsed_time_timer = QObject::startTimer(500);
+
+		m_p_tune_manager->SetStartTimeInSeconds(value/1000.0);
+		if(QAudio::ActiveState != m_p_audio_player->GetState()){
+			m_p_audio_player->Play();
+		}
+
+		m_set_start_time_postpone_timer.setInterval(30);
+		m_set_start_time_postpone_timer.start();
+		QObject::disconnect(&m_set_start_time_postpone_timer, nullptr , nullptr, nullptr);
+		QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, [&](){
+			if(QAudio::ActiveState != m_p_audio_player->GetState()){
+				m_p_audio_player->Play();
+			}
+		});
+
+	});
+	m_set_start_time_postpone_timer.setInterval(100);
+	m_set_start_time_postpone_timer.setSingleShot(true);
+	m_set_start_time_postpone_timer.start();
+}
 
 /**********************************************************************************/
 

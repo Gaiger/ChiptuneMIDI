@@ -93,8 +93,8 @@ typedef struct _channel_controller
 
 	bool				is_damper_pedal_on;
 
-	float				envelope_damper_on_but_note_off_sustain_duration_in_second;
 	uint8_t				damper_on_but_note_off_loudness_level;
+	float				envelope_damper_on_but_note_off_sustain_duration_in_second;
 	int8_t const *		p_envelope_damper_on_but_note_off_sustain_table;
 	uint16_t			envelope_damper_on_but_note_off_sustain_same_index_number;
 	uint16_t			envelope_damper_on_but_note_off_sustain_tick_number;

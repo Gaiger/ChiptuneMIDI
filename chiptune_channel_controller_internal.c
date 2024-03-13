@@ -61,6 +61,16 @@ static void update_channel_controller_envelope_parameters_related_to_tempo(int8_
 
 	p_channel_controller->envelope_release_tick_number
 		= (uint16_t)(p_channel_controller->envelope_release_duration_in_second * resolution * tempo/60.0f + 0.5f);
+	uint32_t envelope_damper_on_but_note_off_sustain_tick_number
+			= (uint32_t)(p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_second * resolution * tempo/60.0f + 0.5f);
+	if(UINT16_MAX <= envelope_damper_on_but_note_off_sustain_tick_number){
+		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_on_but_note_off_sustain_tick_number = %u,"
+									 " greater than UINT16_MAX\r\n",
+						envelope_damper_on_but_note_off_sustain_tick_number);
+		envelope_damper_on_but_note_off_sustain_tick_number = UINT16_MAX;
+	}
+	p_channel_controller->envelope_damper_on_but_note_off_sustain_tick_number
+			= (uint32_t)envelope_damper_on_but_note_off_sustain_tick_number;
 }
 
 /**********************************************************************************/
@@ -116,14 +126,15 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 	//100% = level 32
 #define DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL	(6)
 	p_channel_controller->damper_on_but_note_off_loudness_level = DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL;
-	p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table = &s_linear_decline_table[0];
 #define DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND \
 													(8.0)
+	p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_second
+			= DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND;
+	p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table = &s_linear_decline_table[0];
 	p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number
 		= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND)
 					 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 	//p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number = UINT16_MAX;
-
 
 	update_channel_controller_envelope_parameters_related_to_tempo(index);
 	reset_channel_controller_midi_parameters_from_index(index);

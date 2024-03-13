@@ -124,7 +124,14 @@ void AudioPlayer::InitializeAudioResources(int const channel_counts, int const s
 
 void AudioPlayer::Play(bool const is_blocking)
 {
-	m_p_tune_manager->InitializeTune();
+	QMutexLocker lock(&m_accessing_io_device_mutex);
+	if(nullptr != m_p_audio_output){
+		if(QAudio::ActiveState == m_p_audio_output->state()){
+			qDebug() << Q_FUNC_INFO << "Playing, ingore";
+			return ;
+		}
+	}
+	qDebug() << Q_FUNC_INFO << "Start Play";
 
 	InitializeAudioResources(m_p_tune_manager->GetNumberOfChannels(),
 							 m_p_tune_manager->GetSamplingRate(), m_p_tune_manager->GetSamplingSize(), 100);
@@ -150,7 +157,6 @@ void AudioPlayer::Play(bool const is_blocking)
 
 void AudioPlayer::AppendWave(QByteArray audio_bytearray)
 {
-	QMutexLocker lock(&m_accessing_io_device_mutex);
 	if(nullptr == m_p_audio_io_device){
 		return ;
 	}
@@ -175,6 +181,9 @@ void AudioPlayer::HandleAudioNotify(void)
 	//qDebug() << Q_FUNC_INFO  << "elapsed " <<
 	//			m_p_audio_output->elapsedUSecs()/1000.0/1000.0
 	//		 << "seconds";
+	if(QAudio::ActiveState != m_p_audio_output->state()){
+		return ;
+	}
 
 	int remain_audio_buffer_size = m_p_audio_output->bytesFree();
 	if(0 == remain_audio_buffer_size){
@@ -215,4 +224,14 @@ void AudioPlayer::HandleAudioStateChanged(QAudio::State state)
 		// ... other cases as appropriate
 		break;
 	}
+}
+
+/**********************************************************************************/
+
+QAudio::State AudioPlayer::GetState(void)
+{
+	if(0 == m_p_audio_output){
+		return QAudio::IdleState;
+	}
+	return m_p_audio_output->state();
 }

@@ -560,7 +560,19 @@ int process_events(uint32_t const tick)
 			SET_RESTING(p_oscillator->state_bits);
 			p_oscillator->envelope_state = ENVELOPE_RELEASE;
 			break;
-
+		case EVENT_DEACTIVATE:
+			CHIPTUNE_PRINTF(cEventTriggering,
+							"tick = %u, DEACTIVATE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
+							tick, s_events[s_event_head_index].oscillator,
+							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness,
+							event_additional_string(s_event_head_index));
+			if(false == IS_ACTIVATED(p_oscillator->state_bits)){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: deactivate an deactivated oscillator = %d\r\n",
+								s_events[s_event_head_index].oscillator);
+				return -1;
+			}
+			SET_DEACTIVATED(p_oscillator->state_bits);
+			break;
 		case EVENT_DISCARD:
 			CHIPTUNE_PRINTF(cEventTriggering,
 							"tick = %u, DISCARD oscillator = %d, voice = %d, note = %d, amplitude = %1.2f%% of loudness %s\r\n",
@@ -570,7 +582,6 @@ int process_events(uint32_t const tick)
 							event_additional_string(s_event_head_index));
 			discard_oscillator(s_events[s_event_head_index].oscillator);
 			break;
-
 		default:
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: UNKOWN event type = %d\r\n");
 			break;

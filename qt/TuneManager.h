@@ -27,16 +27,19 @@ public:
 
 	int SetMidiFile(QString const midi_file_name_string);
 
-	int InitializeTune(void);
 	int GetNumberOfChannels(void);
 	int GetSamplingRate(void);
 	int GetSamplingSize(void);
+
+	int InitializeTune(void);
 
 	QByteArray FetchWave(int const length);
 	bool IsTuneEnding(void);
 
 	float GetMidiFileDurationInSeconds(void);
 	float GetCurrentElapsedTimeInSeconds(void);
+	int SetStartTimeInSeconds(float start_time_in_seconds);
+
 public:
 	signals:
 	void TuneEnded(void);

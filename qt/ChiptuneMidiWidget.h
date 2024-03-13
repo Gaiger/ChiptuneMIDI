@@ -1,5 +1,6 @@
 #ifndef CHIPTUNEMIDIWIDGET_H
 #define CHIPTUNEMIDIWIDGET_H
+#include <QTimer>
 #include <QThread>
 #include <QWidget>
 #include <QFileInfo>
@@ -36,6 +37,8 @@ private slots:
 
 private slots:
 	void HandleWaveFetched(const QByteArray wave_bytearray);
+	void HandlePlayPositionSliderMoved(int value);
+
 private:
 	int PlayMidiFile(QString filename_string);
 
@@ -51,6 +54,8 @@ private :
 	uint32_t			m_midi_file_duration_in_milliseconds;
 	int					m_inquiring_elapsed_time_timer;
 	QString				m_midi_file_duration_time_string;
+
+	QTimer				m_set_start_time_postpone_timer;
 private:
 	Ui::ChiptuneMidiWidget *ui;
 };
