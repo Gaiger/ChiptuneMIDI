@@ -262,7 +262,7 @@ void ChiptuneMidiWidget::ChangePlayPosition(int value)
 		m_inquiring_elapsed_time_timer = QObject::startTimer(500);
 
 		m_p_tune_manager->SetStartTimeInSeconds(value/1000.0);
-		if(QAudio::ActiveState != m_p_audio_player->GetState()){
+		if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
 			m_p_audio_player->Play();
 		}
 
@@ -270,7 +270,7 @@ void ChiptuneMidiWidget::ChangePlayPosition(int value)
 		m_set_start_time_postpone_timer.start();
 		QObject::disconnect(&m_set_start_time_postpone_timer, nullptr , nullptr, nullptr);
 		QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, [&](){
-			if(QAudio::ActiveState != m_p_audio_player->GetState()){
+			if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
 				m_p_audio_player->Play();
 			}
 		});

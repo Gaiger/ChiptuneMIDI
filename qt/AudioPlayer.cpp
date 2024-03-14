@@ -41,6 +41,9 @@ AudioPlayer::AudioPlayer(TuneManager *p_tune_manager, QObject *parent)
 	m_p_tune_manager(p_tune_manager)
 {
 
+	if( QMetaType::UnknownType == QMetaType::type("PlaybackState")){
+			qRegisterMetaType<TuneManager::SamplingSize>("PlaybackState");
+	}
 }
 
 /**********************************************************************************/
@@ -70,12 +73,12 @@ void AudioPlayer::CleanAudioResources(void)
 
 /**********************************************************************************/
 
-void AudioPlayer::InitializeAudioResources(int const channel_counts, int const sampling_rate, int const sampling_size,
+void AudioPlayer::InitializeAudioResources(int const number_of_channels, int const sampling_rate, int const sampling_size,
 										   int const fetching_wave_interval_in_milliseconds)
 {
 	CleanAudioResources();
 	QAudioFormat format;
-	format.setChannelCount((int)channel_counts);
+	format.setChannelCount((int)number_of_channels);
 	format.setSampleRate(sampling_rate);
 	format.setCodec("audio/pcm");
 	format.setByteOrder(QAudioFormat::LittleEndian);
@@ -228,10 +231,24 @@ void AudioPlayer::HandleAudioStateChanged(QAudio::State state)
 
 /**********************************************************************************/
 
-QAudio::State AudioPlayer::GetState(void)
+AudioPlayer::PlaybackState AudioPlayer::GetState(void)
 {
 	if(0 == m_p_audio_output){
-		return QAudio::IdleState;
+		return PlaybackStateStateStopped;
 	}
-	return m_p_audio_output->state();
+
+	PlaybackState state = PlaybackStateStateStopped;
+	switch(m_p_audio_output->state()){
+	case QAudio::ActiveState:
+		state = PlaybackStateStatePlaying;
+		break;
+	case QAudio::SuspendedState:
+	case QAudio::InterruptedState:
+		state = PlaybackStateStatePaused;
+		break;
+	case QAudio::IdleState:
+	default:
+		break;
+	}
+	return state;
 }
