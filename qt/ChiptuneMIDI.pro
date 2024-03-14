@@ -23,6 +23,7 @@ SOURCES += \
         ../chiptune_oscillator_internal.c \
         ../chiptune_printf_internal.c \
         ChiptuneMidiWidget.cpp \
+        ProgressSlider.cpp \
         TuneManager.cpp \
         AudioPlayer.cpp \
         WaveChartViewchartview.cpp \
@@ -45,6 +46,7 @@ HEADERS += \
     ../chiptune_printf_internal.h \
     ChiptuneMidiWidget.h \
     MidiPlayer.h \
+    ProgressSlider.h \
     TuneManager.h \
     AudioPlayer.h \
     WaveChartView.h

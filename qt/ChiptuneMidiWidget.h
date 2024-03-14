@@ -38,10 +38,11 @@ private slots:
 private slots:
 	void HandleWaveFetched(const QByteArray wave_bytearray);
 	void HandlePlayPositionSliderMoved(int value);
+	void HandlePlayPositionSliderMousePressed(Qt::MouseButton button, int value);
 
 private:
 	int PlayMidiFile(QString filename_string);
-
+	void ChangePlayPosition(int value);
 private:
 	WaveChartView *		m_p_wave_chartview;
 

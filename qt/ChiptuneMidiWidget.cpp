@@ -15,6 +15,7 @@
 #endif
 
 #include "ui_ChiptuneMidiWidgetForm.h"
+#include "ProgressSlider.h"
 #include "ChiptuneMidiWidget.h"
 
 struct wav_header_t
@@ -157,6 +158,9 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	QObject::connect(ui->PlayPositionSlider, &QAbstractSlider::sliderMoved, this,
 					 &ChiptuneMidiWidget::HandlePlayPositionSliderMoved);
+	QObject::connect(ui->PlayPositionSlider, &ProgressSlider::MousePressed, this,
+					 &ChiptuneMidiWidget::HandlePlayPositionSliderMousePressed);
+
 	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
 					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
 
@@ -243,7 +247,7 @@ void ChiptuneMidiWidget::HandleWaveFetched(const QByteArray wave_bytearray)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::HandlePlayPositionSliderMoved(int value)
+void ChiptuneMidiWidget::ChangePlayPosition(int value)
 {
 	if(-1 != m_inquiring_elapsed_time_timer){
 		killTimer(m_inquiring_elapsed_time_timer);
@@ -270,11 +274,27 @@ void ChiptuneMidiWidget::HandlePlayPositionSliderMoved(int value)
 				m_p_audio_player->Play();
 			}
 		});
-
 	});
+
 	m_set_start_time_postpone_timer.setInterval(100);
 	m_set_start_time_postpone_timer.setSingleShot(true);
 	m_set_start_time_postpone_timer.start();
+}
+
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::HandlePlayPositionSliderMoved(int value)
+{
+	ChangePlayPosition(value);
+}
+
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::HandlePlayPositionSliderMousePressed(Qt::MouseButton button, int value)
+{
+	if(button == Qt::LeftButton){
+		ChangePlayPosition(value);
+	}
 }
 
 /**********************************************************************************/
