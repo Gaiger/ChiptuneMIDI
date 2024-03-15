@@ -308,13 +308,6 @@ int TuneManager::SetStartTimeInSeconds(float start_time_in_seconds)
 	QMutexLocker locker(&m_mutex);
 
 	int ret = -1;
-	if(start_time_in_seconds < 0){
-		start_time_in_seconds = 0;
-	}
-	if(start_time_in_seconds > GetMidiFileDurationInSeconds()){
-		start_time_in_seconds = GetMidiFileDurationInSeconds();
-	}
-
 	do
 	{
 		if(nullptr == m_p_private->m_p_midi_file){
@@ -322,6 +315,22 @@ int TuneManager::SetStartTimeInSeconds(float start_time_in_seconds)
 		}
 
 		QList<QMidiEvent *> const p_midi_event_list = m_p_private ->m_p_midi_file->events();
+		qDebug() << Q_FUNC_INFO << start_time_in_seconds << GetMidiFileDurationInSeconds();
+		if(0.05 > qAbs(GetMidiFileDurationInSeconds() - start_time_in_seconds)){
+			start_time_in_seconds = GetMidiFileDurationInSeconds();
+
+			float current_event_time =  m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.last()->tick());
+			qDebug() << Q_FUNC_INFO << "start_time_in_seconds = " << start_time_in_seconds
+					 << ", index = " << p_midi_event_list.size() - 1 <<", event_time = " << current_event_time;
+			chiptune_set_next_midi_message_index(m_p_private->m_p_midi_file->events().size() - 1);
+			ret = 0;
+			break;
+		}
+
+		if(start_time_in_seconds < 0){
+			start_time_in_seconds = 0;
+		}
+
 
 		float current_event_time = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(0)->tick());
 		float next_event_time = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(0 + 1)->tick());
@@ -338,9 +347,9 @@ int TuneManager::SetStartTimeInSeconds(float start_time_in_seconds)
 			current_event_time = next_event_time;
 			next_event_time = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(i + 1)->tick());
 		}
-		m_p_private->m_wave_bytearray.clear();
-		m_p_private->m_wave_prebuffer_length = 0;
 	}while(0);
 
+	m_p_private->m_wave_bytearray.clear();
+	m_p_private->m_wave_prebuffer_length = 0;
 	return ret;
 }

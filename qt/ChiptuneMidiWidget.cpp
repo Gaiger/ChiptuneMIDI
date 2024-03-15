@@ -297,6 +297,7 @@ void ChiptuneMidiWidget::PlayTune(int start_time_in_milliseconds)
 void ChiptuneMidiWidget::HandlePlayPositionSliderMoved(int value)
 {
 	PlayTune(value);
+	QWidget::setFocus();
 }
 
 /**********************************************************************************/
@@ -306,7 +307,9 @@ void ChiptuneMidiWidget::HandlePlayPositionSliderMousePressed(Qt::MouseButton bu
 	if(button != Qt::LeftButton){
 		return ;
 	}
+	ui->PlayPositionSlider->setValue(value);
 	PlayTune(value);
+	QWidget::setFocus();
 }
 
 /**********************************************************************************/
@@ -384,8 +387,8 @@ void ChiptuneMidiWidget::dropEvent(QDropEvent *event)
 
 		PlayMidiFile(dropped_filename_string);
 	}while(0);
-	QWidget::setFocus();
 	QWidget::activateWindow();
+	QWidget::setFocus();
 }
 
 /**********************************************************************************/
@@ -402,7 +405,7 @@ void ChiptuneMidiWidget::keyPressEvent(QKeyEvent *event)
 			break;
 		}
 
-		int start_time = (int)(m_p_tune_manager->GetCurrentElapsedTimeInSeconds() * 1000);
+		int start_time = ui->PlayPositionSlider->value();
 #define KEY_LEFT_RIGHT_DELTA_TIME_IN_SECONDS		(10)
 		if(Qt::Key_Left == event->key()){
 			start_time -= KEY_LEFT_RIGHT_DELTA_TIME_IN_SECONDS * 1000;
@@ -413,8 +416,8 @@ void ChiptuneMidiWidget::keyPressEvent(QKeyEvent *event)
 
 		if(Qt::Key_Right == event->key()){
 			start_time += KEY_LEFT_RIGHT_DELTA_TIME_IN_SECONDS * 1000;
-			if(start_time < m_p_tune_manager->GetMidiFileDurationInSeconds()){
-				start_time = m_p_tune_manager->GetMidiFileDurationInSeconds();
+			if(start_time > m_p_tune_manager->GetMidiFileDurationInSeconds() * 1000){
+				start_time = m_p_tune_manager->GetMidiFileDurationInSeconds() * 1000;
 			}
 		}
 
@@ -447,7 +450,6 @@ void ChiptuneMidiWidget::on_OpenMidiFilePushButton_released(void)
 
 void ChiptuneMidiWidget::on_SaveSaveFilePushButton_released(void)
 {
-
 	m_p_audio_player->Stop();
 	int playing_value = ui->PlayPositionSlider->value();
 
@@ -471,25 +473,19 @@ void ChiptuneMidiWidget::on_SaveSaveFilePushButton_released(void)
 		QWidget::setEnabled(false);
 		SaveAsWavFileThread save_as_wav_file_thread(m_p_tune_manager, save_filename_string);
 		save_as_wav_file_thread.start(QThread::HighPriority);
+
 		QEventLoop loop;
 		QObject::connect(&save_as_wav_file_thread, &QThread::finished, &loop, &QEventLoop::quit);
-		while(1)
+		do
 		{
-			if(true == save_as_wav_file_thread.isFinished()){
-				break;
-			}
 			loop.exec();
-		}
-		QObject::disconnect(&save_as_wav_file_thread, nullptr, nullptr, nullptr);
+		} while(false == save_as_wav_file_thread.isFinished());
 
-		ui->MessageLabel->setText(QString("file saved "));
-		QTimer::singleShot(100, &loop, &QEventLoop::quit);
-		loop.exec();
 		ui->MessageLabel->setText("");
 		QWidget::setEnabled(true);
 	}while(0);
 
 	PlayTune(playing_value);
-	QWidget::setFocus();
 	QWidget::activateWindow();
+	QWidget::setFocus();
 }
