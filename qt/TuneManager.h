@@ -27,11 +27,10 @@ public:
 
 	int SetMidiFile(QString const midi_file_name_string);
 
+	bool IsFileLoaded(void);
 	int GetNumberOfChannels(void);
 	int GetSamplingRate(void);
 	int GetSamplingSize(void);
-
-	int InitializeTune(void);
 
 	QByteArray FetchWave(int const length);
 	bool IsTuneEnding(void);
@@ -52,6 +51,7 @@ private slots:
 	void HandleGenerateWaveRequested(int const length);
 private:
 	void GenerateWave(int const length, bool const is_synchronized = true);
+	int InitializeTune(void);
 private:
 	TuneManagerPrivate *m_p_private;
 	QMutex m_mutex;

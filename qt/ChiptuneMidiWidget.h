@@ -31,6 +31,8 @@ private:
 	virtual void dragMoveEvent(QDragMoveEvent* event) Q_DECL_OVERRIDE;
 	virtual void dragLeaveEvent(QDragLeaveEvent* event) Q_DECL_OVERRIDE;
 	virtual void dropEvent(QDropEvent *event) Q_DECL_OVERRIDE;
+
+	virtual void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 private slots:
 	void on_OpenMidiFilePushButton_released(void);
 	void on_SaveSaveFilePushButton_released(void);
@@ -42,7 +44,7 @@ private slots:
 
 private:
 	int PlayMidiFile(QString filename_string);
-	void ChangePlayPosition(int value);
+	void PlayTune(int start_time_in_milliseconds);
 private:
 	WaveChartView *		m_p_wave_chartview;
 

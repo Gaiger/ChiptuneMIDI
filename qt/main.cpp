@@ -42,7 +42,7 @@ void PilotRun(TuneManager *p_tune_manager)
 	QElapsedTimer elasped_timer;
 
 	elasped_timer.start();
-	p_tune_manager->InitializeTune();
+	p_tune_manager->SetStartTimeInSeconds(0);
 	int data_buffer_size = p_tune_manager->GetNumberOfChannels()
 			* p_tune_manager->GetSamplingRate() * p_tune_manager->GetSamplingSize()/8;
 	QByteArray wave_data;

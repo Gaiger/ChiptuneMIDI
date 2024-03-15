@@ -88,7 +88,7 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 	QElapsedTimer elasped_timer;
 
 	elasped_timer.start();
-	p_tune_manager->InitializeTune();
+	p_tune_manager->SetStartTimeInSeconds(0);
 	int data_buffer_size = p_tune_manager->GetNumberOfChannels()
 			* p_tune_manager->GetSamplingRate() * p_tune_manager->GetSamplingSize()/8;
 	QByteArray wave_data;
@@ -117,6 +117,17 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 	qDebug() << "file saved, size = " << file_size << " bytes";
 	return 0;
 }
+
+class SaveAsWavFileThread: public QThread {
+public :
+	SaveAsWavFileThread(TuneManager *p_tune_manager, QString filename):
+	m_p_tune_manager(p_tune_manager), m_filename(filename){}
+protected:
+	void run(void) Q_DECL_OVERRIDE { SaveAsWavFile(m_p_tune_manager,m_filename); }
+private:
+	TuneManager *m_p_tune_manager;
+	QString m_filename;
+};
 
 /**********************************************************************************/
 
@@ -166,6 +177,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
 	ui->SaveSaveFilePushButton->setToolTip(tr("Save as .wav file"));
+	QWidget::setFocusPolicy(Qt::StrongFocus);
 }
 
 /**********************************************************************************/
@@ -218,7 +230,6 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			break;
 		}
 
-		m_p_tune_manager->InitializeTune();
 		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
 		m_midi_file_duration_time_string = FormatTimeString(m_midi_file_duration_in_milliseconds);
 		ui->PlayPositionLabel->setText(FormatTimeString(0) + " / " + m_midi_file_duration_time_string);
@@ -247,7 +258,7 @@ void ChiptuneMidiWidget::HandleWaveFetched(const QByteArray wave_bytearray)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::ChangePlayPosition(int value)
+void ChiptuneMidiWidget::PlayTune(int start_time_in_milliseconds)
 {
 	if(-1 != m_inquiring_elapsed_time_timer){
 		killTimer(m_inquiring_elapsed_time_timer);
@@ -258,10 +269,10 @@ void ChiptuneMidiWidget::ChangePlayPosition(int value)
 	}
 	QObject::disconnect(&m_set_start_time_postpone_timer, nullptr , nullptr, nullptr);
 
-	QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, [&, value](){
+	QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, [&, start_time_in_milliseconds](){
 		m_inquiring_elapsed_time_timer = QObject::startTimer(500);
 
-		m_p_tune_manager->SetStartTimeInSeconds(value/1000.0);
+		m_p_tune_manager->SetStartTimeInSeconds(start_time_in_milliseconds/1000.0);
 		if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
 			m_p_audio_player->Play();
 		}
@@ -285,16 +296,17 @@ void ChiptuneMidiWidget::ChangePlayPosition(int value)
 
 void ChiptuneMidiWidget::HandlePlayPositionSliderMoved(int value)
 {
-	ChangePlayPosition(value);
+	PlayTune(value);
 }
 
 /**********************************************************************************/
 
 void ChiptuneMidiWidget::HandlePlayPositionSliderMousePressed(Qt::MouseButton button, int value)
 {
-	if(button == Qt::LeftButton){
-		ChangePlayPosition(value);
+	if(button != Qt::LeftButton){
+		return ;
 	}
+	PlayTune(value);
 }
 
 /**********************************************************************************/
@@ -372,6 +384,43 @@ void ChiptuneMidiWidget::dropEvent(QDropEvent *event)
 
 		PlayMidiFile(dropped_filename_string);
 	}while(0);
+	QWidget::setFocus();
+	QWidget::activateWindow();
+}
+
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::keyPressEvent(QKeyEvent *event)
+{
+	QWidget:: keyPressEvent(event);
+	if(false == m_p_tune_manager->IsFileLoaded()){
+		return ;
+	}
+
+	do {
+		if(false == (Qt::Key_Left == event->key() || Qt::Key_Right == event->key()) ){
+			break;
+		}
+
+		int start_time = (int)(m_p_tune_manager->GetCurrentElapsedTimeInSeconds() * 1000);
+#define KEY_LEFT_RIGHT_DELTA_TIME_IN_SECONDS		(10)
+		if(Qt::Key_Left == event->key()){
+			start_time -= KEY_LEFT_RIGHT_DELTA_TIME_IN_SECONDS * 1000;
+			if(start_time < 0){
+				start_time = 0;
+			}
+		}
+
+		if(Qt::Key_Right == event->key()){
+			start_time += KEY_LEFT_RIGHT_DELTA_TIME_IN_SECONDS * 1000;
+			if(start_time < m_p_tune_manager->GetMidiFileDurationInSeconds()){
+				start_time = m_p_tune_manager->GetMidiFileDurationInSeconds();
+			}
+		}
+
+		ui->PlayPositionSlider->setValue(start_time);
+		PlayTune(start_time);
+	}while(0);
 }
 
 /**********************************************************************************/
@@ -398,21 +447,49 @@ void ChiptuneMidiWidget::on_OpenMidiFilePushButton_released(void)
 
 void ChiptuneMidiWidget::on_SaveSaveFilePushButton_released(void)
 {
-	QString suggested_filename_string = QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss");
-	suggested_filename_string += m_opened_file_info.baseName();
-	suggested_filename_string += ".wav";
-	QString save_filename_string = QFileDialog::getSaveFileName(this, QString("Save the Wave File"),
-											   suggested_filename_string,
-											   QString("Wave File (*.wav);;"
-											   "All file (*)")
-																);
+
+	m_p_audio_player->Stop();
+	int playing_value = ui->PlayPositionSlider->value();
 
 	do
 	{
+		QString suggested_filename_string = QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss");
+		suggested_filename_string += QString(" ") + m_opened_file_info.baseName();
+		suggested_filename_string += ".wav";
+		QString save_filename_string = QFileDialog::getSaveFileName(this, QString("Save the Wave File"),
+												   suggested_filename_string,
+												   QString("Wave File (*.wav);;"
+												   "All file (*)")
+																	);
+
 		if(true == save_filename_string.isNull()){
 			break;
 		}
-		m_p_audio_player->Stop();
-		SaveAsWavFile(m_p_tune_manager, save_filename_string);
+
+
+		ui->MessageLabel->setText(QString("saving file :: ") + QFileInfo(save_filename_string).fileName());
+		QWidget::setEnabled(false);
+		SaveAsWavFileThread save_as_wav_file_thread(m_p_tune_manager, save_filename_string);
+		save_as_wav_file_thread.start(QThread::HighPriority);
+		QEventLoop loop;
+		QObject::connect(&save_as_wav_file_thread, &QThread::finished, &loop, &QEventLoop::quit);
+		while(1)
+		{
+			if(true == save_as_wav_file_thread.isFinished()){
+				break;
+			}
+			loop.exec();
+		}
+		QObject::disconnect(&save_as_wav_file_thread, nullptr, nullptr, nullptr);
+
+		ui->MessageLabel->setText(QString("file saved "));
+		QTimer::singleShot(100, &loop, &QEventLoop::quit);
+		loop.exec();
+		ui->MessageLabel->setText("");
+		QWidget::setEnabled(true);
 	}while(0);
+
+	PlayTune(playing_value);
+	QWidget::setFocus();
+	QWidget::activateWindow();
 }
