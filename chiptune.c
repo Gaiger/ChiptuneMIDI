@@ -722,7 +722,6 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 		} while(0);
 
 		if(end_midi_message_index == s_midi_messge_index){
-#if(1)
 			int16_t oscillator_index = get_event_occupied_oscillator_head_index();
 			int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
 			for(int16_t i = 0; i < occupied_oscillator_number; i++){
@@ -736,11 +735,10 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 					if(false == p_channel_controller->is_damper_pedal_on){
 						break;
 					}
-					put_event(EVENT_DEACTIVATE, oscillator_index, s_current_tick);
+					put_event(EVENT_DEACTIVATE, oscillator_index, (uint32_t)s_current_tick);
 				} while(0);
 				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 			}
-#endif
 			break;
 		}
 
