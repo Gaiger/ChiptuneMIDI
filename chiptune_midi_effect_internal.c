@@ -157,7 +157,7 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 					if(NULL == p_oscillator){
 						return -1;
 					}
-					float pitch_wheel_bend_in_semitones;
+
 					int8_t const vibrato_modulation_in_semitones = p_channel_controller->vibrato_modulation_in_semitones;
 					memcpy(p_oscillator, p_native_oscillator, sizeof(oscillator_t));
 					p_oscillator->loudness = loudnesses[i + 1];
@@ -166,12 +166,10 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 																			  p_channel_controller->max_pitch_chorus_bend_in_semitones);
 					p_oscillator->delta_phase
 							= calculate_oscillator_delta_phase(voice, p_oscillator->note,
-															   p_oscillator->pitch_chorus_bend_in_semitones,
-															   &pitch_wheel_bend_in_semitones);
+															   p_oscillator->pitch_chorus_bend_in_semitones);
 					p_oscillator->max_delta_vibrato_phase
 							= calculate_oscillator_delta_phase(voice, p_oscillator->note + vibrato_modulation_in_semitones,
-															   p_oscillator->pitch_chorus_bend_in_semitones,
-															   &pitch_wheel_bend_in_semitones) - p_oscillator->delta_phase;
+															   p_oscillator->pitch_chorus_bend_in_semitones) - p_oscillator->delta_phase;
 					SET_CHORUS_ASSOCIATE(p_oscillator->state_bits);
 					p_native_oscillator->chorus_asscociate_oscillators[i] = oscillator_index;
 					put_event(event_type, p_native_oscillator->chorus_asscociate_oscillators[i],

@@ -4,20 +4,15 @@
 #include "chiptune_channel_controller_internal.h"
 
 
-#define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 
 uint16_t const calculate_oscillator_delta_phase(int8_t const voice,
-												int16_t const note, float const pitch_chorus_bend_in_semitones,
-												float * const p_pitch_wheel_bend_in_semitones)
+												int16_t const note, float const pitch_chorus_bend_in_semitones)
 {
 	// TO DO : too many float variable
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 
-	float pitch_wheel_bend_in_semitones
-			= ((p_channel_controller->pitch_wheel - MIDI_FOURTEEN_BITS_CENTER_VALUE)/(float)MIDI_FOURTEEN_BITS_CENTER_VALUE)
-			* DIVIDE_BY_2(p_channel_controller->pitch_wheel_bend_range_in_semitones);
 	float corrected_note = (float)note + p_channel_controller->tuning_in_semitones
-			+ pitch_wheel_bend_in_semitones + pitch_chorus_bend_in_semitones;
+			+ p_channel_controller->pitch_wheel_bend_in_semitones + pitch_chorus_bend_in_semitones;
 	/*
 	 * freq = 440 * 2**((note - 69)/12)
 	*/
@@ -27,9 +22,6 @@ uint16_t const calculate_oscillator_delta_phase(int8_t const voice,
 	 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX + 1)/phase
 	*/
 	uint16_t delta_phase = (uint16_t)((UINT16_MAX + 1) * frequency / get_sampling_rate());
-	if(NULL != p_pitch_wheel_bend_in_semitones){
-		*p_pitch_wheel_bend_in_semitones = pitch_wheel_bend_in_semitones;
-	}
 	return delta_phase;
 }
 
@@ -47,7 +39,7 @@ static uint16_t obtain_chorus_random(void)
 }
 
 /**********************************************************************************/
-
+#define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 #define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
 												(((DIVIDE_BY_2(UINT16_MAX) + 1) - (VALUE))/(float)(DIVIDE_BY_2(UINT16_MAX) + 1))
 

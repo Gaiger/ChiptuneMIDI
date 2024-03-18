@@ -164,21 +164,18 @@ int setup_pitch_oscillator(uint32_t const tick, int8_t const voice, int8_t const
 	}
 	(void)tick;
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-	float pitch_wheel_bend_in_semitones = 0.0f;
 
 	p_oscillator->amplitude = 0;
 
 	p_oscillator->pitch_chorus_bend_in_semitones = 0;
 	p_oscillator->delta_phase
 			= calculate_oscillator_delta_phase(voice, p_oscillator->note,
-											   p_oscillator->pitch_chorus_bend_in_semitones,
-											   &pitch_wheel_bend_in_semitones);
+											   p_oscillator->pitch_chorus_bend_in_semitones);
 
 	p_oscillator->max_delta_vibrato_phase
 			= calculate_oscillator_delta_phase(voice,
 				p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitones,
-				p_oscillator->pitch_chorus_bend_in_semitones, &pitch_wheel_bend_in_semitones)
-			- p_oscillator->delta_phase;
+				p_oscillator->pitch_chorus_bend_in_semitones) - p_oscillator->delta_phase;
 
 	p_oscillator->vibrato_table_index = 0;
 	p_oscillator->vibrato_same_index_count = 0;
@@ -188,9 +185,9 @@ int setup_pitch_oscillator(uint32_t const tick, int8_t const voice, int8_t const
 	p_oscillator->release_reference_amplitude = 0;
 
 	char pitch_wheel_bend_string[32] = "";
-	if(0.0f != pitch_wheel_bend_in_semitones){
+	if(0.0f != p_channel_controller->pitch_wheel_bend_in_semitones){
 		snprintf(&pitch_wheel_bend_string[0], sizeof(pitch_wheel_bend_string),
-				", pitch wheel bend in semitone = %+3.2f", pitch_wheel_bend_in_semitones);
+				", pitch wheel bend in semitone = %+3.2f", p_channel_controller->pitch_wheel_bend_in_semitones);
 	}
 
 	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, note = %d, velocity = %d%s\r\n",
@@ -392,28 +389,22 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 }
 
 /**********************************************************************************/
+#define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 
 static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, int16_t const value)
 {
-	char delta_hex_string[12] = "";
-	do {
-		if(value == MIDI_FOURTEEN_BITS_CENTER_VALUE){
-			break;
-		}
-		if(value > MIDI_FOURTEEN_BITS_CENTER_VALUE){
-			snprintf(&delta_hex_string[0], sizeof(delta_hex_string),"(+0x%04x)", value - MIDI_FOURTEEN_BITS_CENTER_VALUE);
-			break;
-		}
-		snprintf(&delta_hex_string[0], sizeof(delta_hex_string),"(-0x%04x)", MIDI_FOURTEEN_BITS_CENTER_VALUE - value);
-	} while(0);
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %d, value = 0x%04x %s\r\n",
-					tick, voice, value, &delta_hex_string[0]);
 
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-	p_channel_controller->pitch_wheel = value;
+	p_channel_controller->pitch_wheel_bend_in_semitones
+			= ((value - MIDI_FOURTEEN_BITS_CENTER_VALUE)/(float)MIDI_FOURTEEN_BITS_CENTER_VALUE)
+			* DIVIDE_BY_2(p_channel_controller->pitch_wheel_bend_range_in_semitones);
 
 	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
 	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+
+	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %d, pitch_wheel_bend_in_semitones = %+3.2f\r\n",
+					tick, voice, p_channel_controller->pitch_wheel_bend_in_semitones);
+
 
 	for(int16_t i = 0; i < occupied_oscillator_number; i++){
 		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
@@ -421,12 +412,8 @@ static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, 
 			if(voice != p_oscillator->voice){
 				break;
 			}
-			float pitch_bend_in_semitone;
 			p_oscillator->delta_phase = calculate_oscillator_delta_phase(voice, p_oscillator->note,
-																		 p_oscillator->pitch_chorus_bend_in_semitones,
-																		 &pitch_bend_in_semitone);
-			CHIPTUNE_PRINTF(cNoteOperation, "---- voice = %d, note = %d, pitch bend in semitone = %+3.2f\r\n",
-							voice, p_oscillator->note, pitch_bend_in_semitone);
+																		 p_oscillator->pitch_chorus_bend_in_semitones);
 		} while(0);
 		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 	}

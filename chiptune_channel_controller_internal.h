@@ -12,9 +12,9 @@
 													CHANNEL_CONTROLLER_DIVIDE_BY_128(CHANNEL_CONTROLLER_DIVIDE_BY_128(((int32_t)(VALUE))))
 #define REGULATE_MODULATION_WHEEL(VALUE)			((VALUE) + 1)
 
-#define DELTA_VIBTRATO_PHASE(MODULATION_WHEEL, MAX_max_delta_vibrato_phase, VIBRATO_TABLE_VALUE) \
+#define DELTA_VIBTRATO_PHASE(MODULATION_WHEEL, MAX_DELTA_VIBRATO_PHASE, VIBRATO_TABLE_VALUE) \
 							NORMALIZE_VIBRTO_DELTA_PHASE( \
-								((MAX_max_delta_vibrato_phase) * REGULATE_MODULATION_WHEEL(MODULATION_WHEEL)) * (VIBRATO_TABLE_VALUE) \
+								((MAX_DELTA_VIBRATO_PHASE) * REGULATE_MODULATION_WHEEL(MODULATION_WHEEL)) * (VIBRATO_TABLE_VALUE) \
 							)
 
 #define REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(INDEX)		\
@@ -69,7 +69,7 @@ typedef struct _channel_controller
 	uint16_t			duty_cycle_critical_phase;
 
 	int8_t				pitch_wheel_bend_range_in_semitones;
-	int16_t				pitch_wheel;
+	float				pitch_wheel_bend_in_semitones;
 
 	int8_t				modulation_wheel;
 	int8_t				vibrato_modulation_in_semitones;

@@ -30,7 +30,7 @@ static void process_cc_registered_parameter(uint32_t const tick, int8_t const vo
 	{
 	case MIDI_CC_RPN_PITCH_BEND_SENSITIVY:
 		p_channel_controller->pitch_wheel_bend_range_in_semitones = SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value >> 8);
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %d, MIDI_CC_RPN_PITCH_BEND_SENSITIVY(%d) :: voice = %d, semitones = %d\r\n",
+		CHIPTUNE_PRINTF(cMidiSetup, "tick = %d, MIDI_CC_RPN_PITCH_BEND_SENSITIVY(%d) :: voice = %d, pitch_wheel_bend_range_in_semitones = %d\r\n",
 						tick, MIDI_CC_RPN_PITCH_BEND_SENSITIVY,
 						voice, p_channel_controller->pitch_wheel_bend_range_in_semitones);
 		if(0 != SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value)){
@@ -43,7 +43,7 @@ static void process_cc_registered_parameter(uint32_t const tick, int8_t const vo
 			short fourteen_bits_value = (SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value >> 8) << 7)
 					+ SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value & 0xFF);
 			p_channel_controller->fine_tuning_value = fourteen_bits_value;
-			CHIPTUNE_PRINTF(cMidiSetup, "tick = %d, MIDI_CC_RPN_CHANNEL_FINE_TUNING(%d) :: voice = %d, tuning in semitones = %+1.2f\r\n",
+			CHIPTUNE_PRINTF(cMidiSetup, "tick = %d, MIDI_CC_RPN_CHANNEL_FINE_TUNING(%d) :: voice = %d, fine tuning in semitones = %+3.2f\r\n",
 							tick, MIDI_CC_RPN_CHANNEL_FINE_TUNING,
 							voice, (p_channel_controller->fine_tuning_value - MIDI_FOURTEEN_BITS_CENTER_VALUE)/(float)MIDI_FOURTEEN_BITS_CENTER_VALUE);
 			p_channel_controller->tuning_in_semitones

@@ -47,7 +47,7 @@ void reset_channel_controller_midi_parameters_from_index(int8_t const index)
 	p_channel_controller->pan = MIDI_SEVEN_BITS_CENTER_VALUE;
 
 	p_channel_controller->pitch_wheel_bend_range_in_semitones = MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES;
-	p_channel_controller->pitch_wheel = MIDI_FOURTEEN_BITS_CENTER_VALUE;
+	p_channel_controller->pitch_wheel_bend_in_semitones = 0;
 
 	p_channel_controller->modulation_wheel = 0;
 	p_channel_controller->reverb = 0;
