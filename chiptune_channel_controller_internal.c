@@ -36,14 +36,18 @@ channel_controller_t * const get_channel_controller_pointer_from_index(int8_t co
 void reset_channel_controller_midi_parameters_from_index(int8_t const index)
 {
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
-	p_channel_controller->tuning_in_semitones = 0;
+	p_channel_controller->coarse_tuning_value = MIDI_SEVEN_BITS_CENTER_VALUE;
+	p_channel_controller->fine_tuning_value = MIDI_FOURTEEN_BITS_CENTER_VALUE;
+	p_channel_controller->tuning_in_semitones
+			= (float)(p_channel_controller->coarse_tuning_value - MIDI_SEVEN_BITS_CENTER_VALUE)
+			+ (p_channel_controller->fine_tuning_value - MIDI_FOURTEEN_BITS_CENTER_VALUE)/(float)MIDI_FOURTEEN_BITS_CENTER_VALUE;
 
-	p_channel_controller->volume = MIDI_CC_CENTER_VALUE;
+	p_channel_controller->volume = MIDI_SEVEN_BITS_CENTER_VALUE;
 	p_channel_controller->expression = INT8_MAX;
-	p_channel_controller->pan = MIDI_CC_CENTER_VALUE;
+	p_channel_controller->pan = MIDI_SEVEN_BITS_CENTER_VALUE;
 
 	p_channel_controller->pitch_wheel_bend_range_in_semitones = MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES;
-	p_channel_controller->pitch_wheel = MIDI_PITCH_WHEEL_CENTER;
+	p_channel_controller->pitch_wheel = MIDI_FOURTEEN_BITS_CENTER_VALUE;
 
 	p_channel_controller->modulation_wheel = 0;
 	p_channel_controller->reverb = 0;
@@ -84,7 +88,7 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 
 #define	DEFAULT_VIBRATO_MODULATION_IN_SEMITINE		(1)
 #define DEFAULT_VIBRATO_RATE						(4)
-	p_channel_controller->vibrato_modulation_in_semitone = DEFAULT_VIBRATO_MODULATION_IN_SEMITINE;
+	p_channel_controller->vibrato_modulation_in_semitones = DEFAULT_VIBRATO_MODULATION_IN_SEMITINE;
 	p_channel_controller->p_vibrato_phase_table = &s_vibrato_phase_table[0];
 	p_channel_controller->vibrato_same_index_number
 			= (uint16_t)(sampling_rate/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_RATE);

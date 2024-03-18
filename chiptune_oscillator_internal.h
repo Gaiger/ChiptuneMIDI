@@ -38,7 +38,7 @@ union{
 		uint16_t	vibrato_table_index;
 		uint16_t	vibrato_same_index_count;
 
-		float		pitch_chorus_bend_in_semitone;
+		float		pitch_chorus_bend_in_semitones;
 	};
 	struct {
 		int8_t		percussion_waveform_index;
@@ -81,10 +81,10 @@ union{
 
 #define IS_NATIVE_OSCILLATOR(STATE_BITS)			((IS_REVERB_ASSOCIATE(STATE_BITS) || IS_CHORUS_ASSOCIATE(STATE_BITS)) ? false : true)
 
-uint16_t const calculate_oscillator_delta_phase(int16_t const note, int8_t tuning_in_semitones,
-							   int8_t const pitch_wheel_bend_range_in_semitones, int16_t const pitch_wheel,
-							   float const pitch_chorus_bend_in_semitones, float * const p_pitch_wheel_bend_in_semitone);
+uint16_t const calculate_oscillator_delta_phase(int8_t const voice,
+												int16_t const note, float const pitch_chorus_bend_in_semitones,
+												float * const p_pitch_wheel_bend_in_semitones);
 
-float const obtain_oscillator_pitch_chorus_bend_in_semitone(int8_t const chorus,
+float const obtain_oscillator_pitch_chorus_bend_in_semitones(int8_t const chorus,
 															float const max_pitch_chorus_bend_in_semitones);
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_

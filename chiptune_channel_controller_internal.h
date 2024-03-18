@@ -56,7 +56,9 @@ enum
 
 typedef struct _channel_controller
 {
-	int8_t				tuning_in_semitones;
+	int8_t				coarse_tuning_value;
+	int16_t				fine_tuning_value;
+	float				tuning_in_semitones;
 
 	int8_t				volume;
 	int8_t				expression;
@@ -70,7 +72,7 @@ typedef struct _channel_controller
 	int16_t				pitch_wheel;
 
 	int8_t				modulation_wheel;
-	int8_t				vibrato_modulation_in_semitone;
+	int8_t				vibrato_modulation_in_semitones;
 	int8_t const *		p_vibrato_phase_table;
 	uint16_t			vibrato_same_index_number;
 
