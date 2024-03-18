@@ -37,10 +37,11 @@ private slots:
 	void on_OpenMidiFilePushButton_released(void);
 	void on_SaveSaveFilePushButton_released(void);
 
+	void on_StopPushButton_released(void);
 private slots:
 	void HandleWaveFetched(const QByteArray wave_bytearray);
-	void HandlePlayPositionSliderMoved(int value);
-	void HandlePlayPositionSliderMousePressed(Qt::MouseButton button, int value);
+	void HandlePlayProgressSliderMoved(int value);
+	void HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value);
 
 private:
 	int PlayMidiFile(QString filename_string);
@@ -55,7 +56,7 @@ private :
 	AudioPlayer *		m_p_audio_player;
 	QFileInfo			m_opened_file_info;
 	uint32_t			m_midi_file_duration_in_milliseconds;
-	int					m_inquiring_elapsed_time_timer;
+	int					m_inquiring_play_progress_timer_id;
 	QString				m_midi_file_duration_time_string;
 
 	QTimer				m_set_start_time_postpone_timer;

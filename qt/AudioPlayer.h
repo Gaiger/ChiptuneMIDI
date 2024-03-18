@@ -39,7 +39,7 @@ private :
 	void InitializeAudioResources(int const number_of_channels, int const sampling_rate, int const sampling_size,
 								  int fetching_wave_interval_in_milliseconds);
 	void AppendWave(QByteArray wave_bytearray);
-	void CleanAudioResources();
+	void ClearOutMidiFileAudioResources();
 private:
 	QAudioOutput * m_p_audio_output;
 	QIODevice *m_p_audio_io_device;

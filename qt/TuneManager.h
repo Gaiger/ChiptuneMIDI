@@ -25,7 +25,8 @@ public:
 						 QObject * parent = nullptr);
 	~TuneManager(void);
 
-	int SetMidiFile(QString const midi_file_name_string);
+	int LoadMidiFile(QString const midi_file_name_string);
+	void ClearOutMidiFile(void);
 
 	bool IsFileLoaded(void);
 	int GetNumberOfChannels(void);

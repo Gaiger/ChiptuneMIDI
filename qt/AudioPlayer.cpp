@@ -51,12 +51,12 @@ AudioPlayer::AudioPlayer(TuneManager *p_tune_manager, QObject *parent)
 AudioPlayer::~AudioPlayer(void)
 {
 	AudioPlayer::Stop();
-	AudioPlayer::CleanAudioResources();
+	AudioPlayer::ClearOutMidiFileAudioResources();
 }
 
 /**********************************************************************************/
 
-void AudioPlayer::CleanAudioResources(void)
+void AudioPlayer::ClearOutMidiFileAudioResources(void)
 {
 	if(nullptr != m_p_audio_output){
 		m_p_audio_output->stop();
@@ -76,7 +76,7 @@ void AudioPlayer::CleanAudioResources(void)
 void AudioPlayer::InitializeAudioResources(int const number_of_channels, int const sampling_rate, int const sampling_size,
 										   int const fetching_wave_interval_in_milliseconds)
 {
-	CleanAudioResources();
+	ClearOutMidiFileAudioResources();
 	QAudioFormat format;
 	format.setChannelCount((int)number_of_channels);
 	format.setSampleRate(sampling_rate);
@@ -174,7 +174,7 @@ void AudioPlayer::Stop(void)
 	if(nullptr != m_p_audio_output){
 		m_p_audio_output->stop();
 	}
-	AudioPlayer::CleanAudioResources();
+	AudioPlayer::ClearOutMidiFileAudioResources();
 }
 
 /**********************************************************************************/

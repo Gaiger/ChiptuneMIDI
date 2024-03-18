@@ -129,7 +129,7 @@ TuneManager::~TuneManager(void)
 
 /**********************************************************************************/
 
-int TuneManager::SetMidiFile(QString const midi_file_name_string)
+int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 {
 	QMutexLocker locker(&m_mutex);
 	QFileInfo file_info(midi_file_name_string);
@@ -148,21 +148,40 @@ int TuneManager::SetMidiFile(QString const midi_file_name_string)
 	InitializeTune();
 	return 0;
 }
+
+/**********************************************************************************/
+
+void TuneManager::ClearOutMidiFile(void)
+{
+	QMutexLocker locker(&m_mutex);
+	m_p_private->m_wave_bytearray.clear();
+	m_p_private->m_wave_prebuffer_length = 0;
+
+	m_p_private->m_inquiring_tune_ending_timer.stop();
+	m_p_private->m_inquiring_tune_ending_timer.disconnect();
+
+	if(nullptr != m_p_private->m_p_midi_file){
+		delete m_p_private->m_p_midi_file;
+		m_p_private->m_p_midi_file = nullptr;
+	}
+}
+
 /**********************************************************************************/
 
 int TuneManager::InitializeTune(void)
 {
-	if(nullptr == m_p_private->m_p_midi_file){
-		return -1;
-	}
-	m_p_private->m_inquiring_tune_ending_timer.stop();
-	m_p_private->m_inquiring_tune_ending_timer.disconnect();
-
-	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
-						 (uint32_t)m_p_private->m_sampling_rate, m_p_private->m_p_midi_file->resolution());
 	m_p_private->m_wave_bytearray.clear();
 	m_p_private->m_wave_prebuffer_length = 0;
 
+	m_p_private->m_inquiring_tune_ending_timer.stop();
+	m_p_private->m_inquiring_tune_ending_timer.disconnect();
+
+	if(nullptr == m_p_private->m_p_midi_file){
+		return -1;
+	}
+
+	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
+						 (uint32_t)m_p_private->m_sampling_rate, m_p_private->m_p_midi_file->resolution());
 	QObject::connect(&m_p_private->m_inquiring_tune_ending_timer, &QTimer::timeout, this, [&](){
 		do
 		{

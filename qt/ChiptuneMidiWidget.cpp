@@ -167,10 +167,10 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	m_tune_manager_working_thread.start(QThread::HighPriority);
 	m_p_audio_player = new AudioPlayer(m_p_tune_manager, this);
 
-	QObject::connect(ui->PlayPositionSlider, &QAbstractSlider::sliderMoved, this,
-					 &ChiptuneMidiWidget::HandlePlayPositionSliderMoved);
-	QObject::connect(ui->PlayPositionSlider, &ProgressSlider::MousePressed, this,
-					 &ChiptuneMidiWidget::HandlePlayPositionSliderMousePressed);
+	QObject::connect(ui->PlayProgressSlider, &QAbstractSlider::sliderMoved, this,
+					 &ChiptuneMidiWidget::HandlePlayProgressSliderMoved);
+	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::MousePressed, this,
+					 &ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed);
 
 	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
 					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
@@ -213,8 +213,8 @@ static QString FormatTimeString(qint64 timeMilliSeconds)
 int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 {
 	m_p_audio_player->Stop();
-	QObject::killTimer(m_inquiring_elapsed_time_timer);
-	m_inquiring_elapsed_time_timer = -1;
+	QObject::killTimer(m_inquiring_play_progress_timer_id);
+	m_inquiring_play_progress_timer_id = -1;
 
 	ui->MessageLabel->setText("");
 	QThread::msleep(10);
@@ -223,7 +223,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 	int ret = 0;
 	do
 	{
-		if(0 > m_p_tune_manager->SetMidiFile(filename_string)){
+		if(0 > m_p_tune_manager->LoadMidiFile(filename_string)){
 			message_string = QString::asprintf("Not a MIDI File");
 			ui->MessageLabel->setText(message_string);
 			ret = -1;
@@ -233,15 +233,15 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
 		m_midi_file_duration_time_string = FormatTimeString(m_midi_file_duration_in_milliseconds);
 		ui->PlayPositionLabel->setText(FormatTimeString(0) + " / " + m_midi_file_duration_time_string);
-		ui->PlayPositionSlider->setRange(0, m_midi_file_duration_in_milliseconds);
-		ui->PlayPositionSlider->setValue(0);
-		ui->PlayPositionSlider->setEnabled(true);
+		ui->PlayProgressSlider->setRange(0, m_midi_file_duration_in_milliseconds);
+		ui->PlayProgressSlider->setValue(0);
+		ui->PlayProgressSlider->setEnabled(true);
 		m_p_wave_chartview->Reset();
 		m_p_audio_player->Play();
 		ui->SaveSaveFilePushButton->setEnabled(true);
 		message_string = QString::asprintf("Playing file");
 		ui->MessageLabel->setText(message_string);
-		m_inquiring_elapsed_time_timer = QObject::startTimer(500);
+		m_inquiring_play_progress_timer_id = QObject::startTimer(500);
 	}while(0);
 
 	message_string += QString::asprintf(" :: <b>%s</b>", m_opened_file_info.fileName().toUtf8().data());
@@ -260,9 +260,9 @@ void ChiptuneMidiWidget::HandleWaveFetched(const QByteArray wave_bytearray)
 
 void ChiptuneMidiWidget::PlayTune(int start_time_in_milliseconds)
 {
-	if(-1 != m_inquiring_elapsed_time_timer){
-		killTimer(m_inquiring_elapsed_time_timer);
-		m_inquiring_elapsed_time_timer = -1;
+	if(-1 != m_inquiring_play_progress_timer_id){
+		killTimer(m_inquiring_play_progress_timer_id);
+		m_inquiring_play_progress_timer_id = -1;
 	}
 	if(true == m_set_start_time_postpone_timer.isActive()){
 		m_set_start_time_postpone_timer.stop();
@@ -270,7 +270,7 @@ void ChiptuneMidiWidget::PlayTune(int start_time_in_milliseconds)
 	QObject::disconnect(&m_set_start_time_postpone_timer, nullptr , nullptr, nullptr);
 
 	QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, [&, start_time_in_milliseconds](){
-		m_inquiring_elapsed_time_timer = QObject::startTimer(500);
+		m_inquiring_play_progress_timer_id = QObject::startTimer(500);
 
 		m_p_tune_manager->SetStartTimeInSeconds(start_time_in_milliseconds/1000.0);
 		if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
@@ -294,7 +294,7 @@ void ChiptuneMidiWidget::PlayTune(int start_time_in_milliseconds)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::HandlePlayPositionSliderMoved(int value)
+void ChiptuneMidiWidget::HandlePlayProgressSliderMoved(int value)
 {
 	PlayTune(value);
 	QWidget::setFocus();
@@ -302,12 +302,12 @@ void ChiptuneMidiWidget::HandlePlayPositionSliderMoved(int value)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::HandlePlayPositionSliderMousePressed(Qt::MouseButton button, int value)
+void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value)
 {
 	if(button != Qt::LeftButton){
 		return ;
 	}
-	ui->PlayPositionSlider->setValue(value);
+	ui->PlayProgressSlider->setValue(value);
 	PlayTune(value);
 	QWidget::setFocus();
 }
@@ -319,12 +319,12 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 	QWidget::timerEvent(event);
 	do
 	{
-		if(event->timerId() == m_inquiring_elapsed_time_timer){
+		if(event->timerId() == m_inquiring_play_progress_timer_id){
 			int elapsed_time_in_milliseconds =
 					(int)(m_p_tune_manager->GetCurrentElapsedTimeInSeconds() * 1000);
 			ui->PlayPositionLabel->setText(FormatTimeString(elapsed_time_in_milliseconds) + " / "
 									  + m_midi_file_duration_time_string);
-			ui->PlayPositionSlider->setValue(elapsed_time_in_milliseconds);
+			ui->PlayProgressSlider->setValue(elapsed_time_in_milliseconds);
 			break;
 		}
 	}while(0);
@@ -340,9 +340,9 @@ void ChiptuneMidiWidget::showEvent(QShowEvent *event)
 	p_win_taskbar_button->setWindow(QWidget::windowHandle());
 	QWinTaskbarProgress *p_win_taskbar_progress = p_win_taskbar_button->progress();
 	p_win_taskbar_progress->setVisible(true);
-	QObject::connect(ui->PlayPositionSlider, &QAbstractSlider::valueChanged,
+	QObject::connect(ui->PlayProgressSlider, &QAbstractSlider::valueChanged,
 					 p_win_taskbar_progress, &QWinTaskbarProgress::setValue);
-	QObject::connect(ui->PlayPositionSlider, &QAbstractSlider::rangeChanged,
+	QObject::connect(ui->PlayProgressSlider, &QAbstractSlider::rangeChanged,
 					 p_win_taskbar_progress, &QWinTaskbarProgress::setRange);
 #endif
 }
@@ -405,7 +405,7 @@ void ChiptuneMidiWidget::keyPressEvent(QKeyEvent *event)
 			break;
 		}
 
-		int start_time = ui->PlayPositionSlider->value();
+		int start_time = ui->PlayProgressSlider->value();
 #define KEY_LEFT_RIGHT_DELTA_TIME_IN_SECONDS		(10)
 		if(Qt::Key_Left == event->key()){
 			start_time -= KEY_LEFT_RIGHT_DELTA_TIME_IN_SECONDS * 1000;
@@ -421,7 +421,7 @@ void ChiptuneMidiWidget::keyPressEvent(QKeyEvent *event)
 			}
 		}
 
-		ui->PlayPositionSlider->setValue(start_time);
+		ui->PlayProgressSlider->setValue(start_time);
 		PlayTune(start_time);
 	}while(0);
 }
@@ -451,7 +451,7 @@ void ChiptuneMidiWidget::on_OpenMidiFilePushButton_released(void)
 void ChiptuneMidiWidget::on_SaveSaveFilePushButton_released(void)
 {
 	m_p_audio_player->Stop();
-	int playing_value = ui->PlayPositionSlider->value();
+	int playing_value = ui->PlayProgressSlider->value();
 
 	do
 	{
@@ -488,4 +488,24 @@ void ChiptuneMidiWidget::on_SaveSaveFilePushButton_released(void)
 	PlayTune(playing_value);
 	QWidget::activateWindow();
 	QWidget::setFocus();
+}
+
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::on_StopPushButton_released(void)
+{
+	qDebug() << Q_FUNC_INFO;
+	m_p_audio_player->Stop();
+	m_p_tune_manager->ClearOutMidiFile();
+
+	if(-1 != m_inquiring_play_progress_timer_id){
+		QObject::killTimer(m_inquiring_play_progress_timer_id);
+		m_inquiring_play_progress_timer_id = -1;
+	}
+
+	ui->PlayPositionLabel->setText("00:00 / 00:00");
+	ui->PlayProgressSlider->setValue(0);
+
+	ui->PlayProgressSlider->setEnabled(false);
+	ui->MessageLabel->setText("");
 }
