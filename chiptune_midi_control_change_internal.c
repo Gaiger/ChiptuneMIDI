@@ -117,11 +117,8 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, int
 					break;
 				}
 
-				//CHIPTUNE_PRINTF(cMidiSetup, "oscillator = %d, envelope_state = %d, loudness %u -> %u\r\n",
-				//				oscillator_index, p_oscillator->envelope_state,
-				//				p_oscillator->loudness, (p_oscillator->loudness * value)/original_value);
-				p_oscillator->loudness = (p_oscillator->loudness * value)/original_value;
 				original_value += !original_value;
+				p_oscillator->loudness = (p_oscillator->loudness * value)/original_value;
 				p_oscillator->envelope_table_index = 0;
 				p_oscillator->envelope_same_index_count = 0;
 				switch(p_oscillator->envelope_state){
