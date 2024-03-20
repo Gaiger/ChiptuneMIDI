@@ -20,12 +20,14 @@ public:
 
 	void Play(bool const is_blocking = false);
 	void Stop(void);
+	void Pause(void);
 
 	enum PlaybackState
 	{
-		PlaybackStateStateStopped			= 0,
-		PlaybackStateStatePlaying			= 1,
-		PlaybackStateStatePaused			= 2,
+		PlaybackStateStateIdle				= 0,
+		PlaybackStateStateStopped			= 1,
+		PlaybackStateStatePlaying			= 2,
+		PlaybackStateStatePaused			= 3,
 
 		PlaybackStateStateMax				= 255,
 	}; Q_ENUM(PlaybackState)

@@ -167,13 +167,14 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	m_tune_manager_working_thread.start(QThread::HighPriority);
 	m_p_audio_player = new AudioPlayer(m_p_tune_manager, this);
 
+	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
+					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
+
 	QObject::connect(ui->PlayProgressSlider, &QAbstractSlider::sliderMoved, this,
 					 &ChiptuneMidiWidget::HandlePlayProgressSliderMoved);
 	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::MousePressed, this,
 					 &ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed);
 
-	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
-					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
 
 	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
 	ui->SaveSaveFilePushButton->setToolTip(tr("Save as .wav file"));
@@ -242,6 +243,9 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		message_string = QString::asprintf("Playing file");
 		ui->MessageLabel->setText(message_string);
 		m_inquiring_play_progress_timer_id = QObject::startTimer(500);
+
+		ui->PlayPausePushButton->setEnabled(true);
+		SetPlayPausePushButtonAsPlayIcon(false);
 	}while(0);
 
 	message_string += QString::asprintf(" :: <b>%s</b>", m_opened_file_info.fileName().toUtf8().data());
@@ -258,10 +262,10 @@ void ChiptuneMidiWidget::HandleWaveFetched(const QByteArray wave_bytearray)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::PlayTune(int start_time_in_milliseconds)
+void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds)
 {
 	if(-1 != m_inquiring_play_progress_timer_id){
-		killTimer(m_inquiring_play_progress_timer_id);
+		QObject::killTimer(m_inquiring_play_progress_timer_id);
 		m_inquiring_play_progress_timer_id = -1;
 	}
 	if(true == m_set_start_time_postpone_timer.isActive()){
@@ -271,33 +275,36 @@ void ChiptuneMidiWidget::PlayTune(int start_time_in_milliseconds)
 
 	QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, [&, start_time_in_milliseconds](){
 		m_inquiring_play_progress_timer_id = QObject::startTimer(500);
-
 		m_p_tune_manager->SetStartTimeInSeconds(start_time_in_milliseconds/1000.0);
-		if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
+
+		if(false == IsPlayPausePushButtonPlayIcon()){
 			m_p_audio_player->Play();
+
+			m_set_start_time_postpone_timer.setInterval(30);
+			QObject::disconnect(&m_set_start_time_postpone_timer, nullptr , nullptr, nullptr);
+			QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, [&](){
+				if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
+					m_p_audio_player->Play();
+				}
+			});
+			m_set_start_time_postpone_timer.start();
 		}
 
-		m_set_start_time_postpone_timer.setInterval(30);
-		m_set_start_time_postpone_timer.start();
-		QObject::disconnect(&m_set_start_time_postpone_timer, nullptr , nullptr, nullptr);
-		QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, [&](){
-			if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
-				m_p_audio_player->Play();
-			}
-		});
 	});
 
 	m_set_start_time_postpone_timer.setInterval(100);
 	m_set_start_time_postpone_timer.setSingleShot(true);
 	m_set_start_time_postpone_timer.start();
+
+	QWidget::activateWindow();
+	QWidget::setFocus();
 }
 
 /**********************************************************************************/
 
 void ChiptuneMidiWidget::HandlePlayProgressSliderMoved(int value)
 {
-	PlayTune(value);
-	QWidget::setFocus();
+	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
 }
 
 /**********************************************************************************/
@@ -308,8 +315,7 @@ void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton bu
 		return ;
 	}
 	ui->PlayProgressSlider->setValue(value);
-	PlayTune(value);
-	QWidget::setFocus();
+	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
 }
 
 /**********************************************************************************/
@@ -317,9 +323,20 @@ void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton bu
 void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 {
 	QWidget::timerEvent(event);
-	do
-	{
+	do {
 		if(event->timerId() == m_inquiring_play_progress_timer_id){
+			if(true == m_p_tune_manager->IsTuneEnding())
+			{
+				if(AudioPlayer::PlaybackStateStateIdle == m_p_audio_player->GetState()){
+					m_p_tune_manager->SetStartTimeInSeconds(0);
+					ui->PlayProgressSlider->setValue(0);
+					ui->PlayPositionLabel->setText("00:00 / 00:00");
+					SetPlayPausePushButtonAsPlayIcon(true);
+					m_p_wave_chartview->Reset();
+				}
+				break;
+			}
+
 			int elapsed_time_in_milliseconds =
 					(int)(m_p_tune_manager->GetCurrentElapsedTimeInSeconds() * 1000);
 			ui->PlayPositionLabel->setText(FormatTimeString(elapsed_time_in_milliseconds) + " / "
@@ -422,7 +439,7 @@ void ChiptuneMidiWidget::keyPressEvent(QKeyEvent *event)
 		}
 
 		ui->PlayProgressSlider->setValue(start_time);
-		PlayTune(start_time);
+		SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(start_time);
 	}while(0);
 }
 
@@ -430,7 +447,6 @@ void ChiptuneMidiWidget::keyPressEvent(QKeyEvent *event)
 
 void ChiptuneMidiWidget::on_OpenMidiFilePushButton_released(void)
 {
-
 	QString open_filename_string = QFileDialog::getOpenFileName(this, QString("Open the MIDI File"),
 											   QString(),
 											   QString("MIDI File (*.mid);;"
@@ -485,9 +501,7 @@ void ChiptuneMidiWidget::on_SaveSaveFilePushButton_released(void)
 		QWidget::setEnabled(true);
 	}while(0);
 
-	PlayTune(playing_value);
-	QWidget::activateWindow();
-	QWidget::setFocus();
+	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(playing_value);
 }
 
 /**********************************************************************************/
@@ -508,4 +522,52 @@ void ChiptuneMidiWidget::on_StopPushButton_released(void)
 
 	ui->PlayProgressSlider->setEnabled(false);
 	ui->MessageLabel->setText("");
+
+	ui->PlayPausePushButton->setEnabled(false);
+	SetPlayPausePushButtonAsPlayIcon(true);
+	m_p_wave_chartview->Reset();
+}
+
+/**********************************************************************************/
+
+#define UNICODE_PLAY_ICON						u8"\u25B7"
+#define UNICODE_PAUSE_ICON						u8"\u2016"
+
+bool ChiptuneMidiWidget::IsPlayPausePushButtonPlayIcon(void)
+{
+	if(ui->PlayPausePushButton->text() == QString(UNICODE_PLAY_ICON)){
+			return true;
+	}
+	return false;
+}
+
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::SetPlayPausePushButtonAsPlayIcon(bool is_play_icon)
+{
+	do {
+		if(true == is_play_icon){
+			ui->PlayPausePushButton->setText(UNICODE_PLAY_ICON);
+			break;
+		}
+		ui->PlayPausePushButton->setText(UNICODE_PAUSE_ICON);
+	} while(0);
+}
+
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::on_PlayPausePushButton_released(void)
+{
+	do {
+		if(true == IsPlayPausePushButtonPlayIcon()){
+			SetPlayPausePushButtonAsPlayIcon(false);
+			m_p_audio_player->Play();
+			break;
+		}
+
+		SetPlayPausePushButtonAsPlayIcon(true);
+		m_p_audio_player->Pause();
+	} while(0);
+
+	QWidget::setFocus();
 }

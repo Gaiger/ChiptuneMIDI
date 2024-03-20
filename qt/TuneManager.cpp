@@ -65,7 +65,6 @@ public:
 	int m_wave_prebuffer_length;
 	QByteArray m_wave_bytearray;
 
-	QTimer m_inquiring_tune_ending_timer;
 	TuneManager *m_p_public;
 };
 
@@ -158,9 +157,6 @@ void TuneManager::ClearOutMidiFile(void)
 	m_p_private->m_wave_bytearray.clear();
 	m_p_private->m_wave_prebuffer_length = 0;
 
-	m_p_private->m_inquiring_tune_ending_timer.stop();
-	m_p_private->m_inquiring_tune_ending_timer.disconnect();
-
 	if(nullptr != m_p_private->m_p_midi_file){
 		delete m_p_private->m_p_midi_file;
 		m_p_private->m_p_midi_file = nullptr;
@@ -174,27 +170,12 @@ int TuneManager::InitializeTune(void)
 	m_p_private->m_wave_bytearray.clear();
 	m_p_private->m_wave_prebuffer_length = 0;
 
-	m_p_private->m_inquiring_tune_ending_timer.stop();
-	m_p_private->m_inquiring_tune_ending_timer.disconnect();
-
 	if(nullptr == m_p_private->m_p_midi_file){
 		return -1;
 	}
 
 	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
 						 (uint32_t)m_p_private->m_sampling_rate, m_p_private->m_p_midi_file->resolution());
-	QObject::connect(&m_p_private->m_inquiring_tune_ending_timer, &QTimer::timeout, this, [&](){
-		do
-		{
-			if(false == IsTuneEnding()){
-				break;
-			}
-			m_p_private->m_inquiring_tune_ending_timer.stop();
-			emit TuneEnded();
-		}while(0);
-	}, Qt::DirectConnection);
-
-	m_p_private->m_inquiring_tune_ending_timer.start(100);
 	return 0;
 }
 

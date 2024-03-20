@@ -42,7 +42,6 @@ public:
 
 public:
 	signals:
-	void TuneEnded(void);
 	void WaveFetched(QByteArray const wave_bytearray);
 
 private:

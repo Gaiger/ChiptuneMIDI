@@ -20,9 +20,9 @@ public:
 				  QWidget *parent = nullptr);
 
 	void GiveWave(QByteArray wave_bytearray);
-	void CleanUndrawnWave(void);
 	void Reset(void);
 private :
+	void CleanUndrawnWave(void);
 	template <typename T> void ReplaceSeries(void);
 
 private :

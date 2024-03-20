@@ -38,14 +38,19 @@ private slots:
 	void on_SaveSaveFilePushButton_released(void);
 
 	void on_StopPushButton_released(void);
+	void on_PlayPausePushButton_released(void);
 private slots:
 	void HandleWaveFetched(const QByteArray wave_bytearray);
+
 	void HandlePlayProgressSliderMoved(int value);
 	void HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value);
 
 private:
 	int PlayMidiFile(QString filename_string);
-	void PlayTune(int start_time_in_milliseconds);
+	void SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds);
+private:
+	bool IsPlayPausePushButtonPlayIcon(void);
+	void SetPlayPausePushButtonAsPlayIcon(bool is_play_icon);
 private:
 	WaveChartView *		m_p_wave_chartview;
 
