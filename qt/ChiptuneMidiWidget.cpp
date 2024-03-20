@@ -406,7 +406,7 @@ void ChiptuneMidiWidget::keyPressEvent(QKeyEvent *event)
 		}
 
 		int start_time = ui->PlayProgressSlider->value();
-#define KEY_LEFT_RIGHT_DELTA_TIME_IN_SECONDS		(10)
+#define KEY_LEFT_RIGHT_DELTA_TIME_IN_SECONDS		(5)
 		if(Qt::Key_Left == event->key()){
 			start_time -= KEY_LEFT_RIGHT_DELTA_TIME_IN_SECONDS * 1000;
 			if(start_time < 0){
