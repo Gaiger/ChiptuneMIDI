@@ -45,16 +45,20 @@ static chiptune_float s_tick_to_sample_index_ratio = (chiptune_float)(DEFAULT_SA
 														= (chiptune_float)(s_sampling_rate * 60.0/s_tempo/s_resolution); \
 													} while(0)
 
-#define CORRECT_BASE_TIME()							\
+#define UPDATE_RESOLUTION(RESOLUTION)				\
 													do { \
-														s_current_sample_index = (uint32_t)(s_current_sample_index * s_tempo/tempo); \
+														s_resolution = (RESOLUTION); \
+														UPDATE_SAMPLES_TO_TICK_RATIO(); \
 													} while(0)
 
-#define UPDATE_BASE_TIME_UNIT()						UPDATE_SAMPLES_TO_TICK_RATIO()
+#define UPDATE_TEMPO(TEMPO)							\
+													do { \
+														s_current_sample_index = (uint32_t)(s_current_sample_index * s_tempo/(TEMPO)); \
+														s_tempo = (TEMPO); \
+														UPDATE_SAMPLES_TO_TICK_RATIO(); \
+													} while(0)
 
-#define TICK_TO_SAMPLE_INDEX(TICK)					((uint32_t)(s_tick_to_sample_index_ratio * (chiptune_float)(TICK) + 0.5 ))
-
-#define	IS_AFTER_CURRENT_TIME(TICK)					( (TICK_TO_SAMPLE_INDEX(TICK) > s_current_sample_index) ? true : false)
+#define TICK_TO_SAMPLE_INDEX(TICK)					((uint32_t)(s_tick_to_sample_index_ratio * (chiptune_float)(TICK) + 0.5))
 #define CURRENT_TICK()								( (uint32_t)(s_current_sample_index/(s_tick_to_sample_index_ratio) + 0.5))
 #else
 static chiptune_float s_current_tick = 0.0;
@@ -70,14 +74,25 @@ static chiptune_float s_delta_tick_per_sample = (MIDI_DEFAULT_RESOLUTION / ( (ch
 														s_delta_tick_per_sample = ( s_resolution * s_tempo / (chiptune_float)s_sampling_rate/ 60.0 ); \
 													} while(0)
 
+#if(0)
+
 #define CORRECT_BASE_TIME()							\
 													do { \
 														(void)0; \
 													} while(0)
+#endif
+#define UPDATE_RESOLUTION(RESOLUTION)				\
+													do { \
+														s_resolution = (RESOLUTION); \
+														UPDATE_DELTA_TICK_PER_SAMPLE(); \
+													} while(0)
 
-#define UPDATE_BASE_TIME_UNIT()						UPDATE_DELTA_TICK_PER_SAMPLE()
+#define UPDATE_TEMPO(TEMPO)							\
+													do { \
+														s_tempo = (TEMPO); \
+														UPDATE_DELTA_TICK_PER_SAMPLE(); \
+													} while(0)
 
-#define	IS_AFTER_CURRENT_TIME(TICK)					(((chiptune_float)(TICK) > s_current_tick) ? true : false)
 #define CURRENT_TICK()								((uint32_t)(s_current_tick + 0.5))
 #endif
 
@@ -635,7 +650,8 @@ static int process_timely_midi_message_and_event(void)
 		bool is_both_after_current_tick = true;
 
 		do {
-			if(true == IS_AFTER_CURRENT_TIME(s_fetched_tick_message.tick)){
+
+			if(CURRENT_TICK() < s_fetched_tick_message.tick){
 				break;
 			}
 			process_midi_message(s_fetched_tick_message);
@@ -649,7 +665,7 @@ static int process_timely_midi_message_and_event(void)
 			if(NULL_TICK == s_fetched_event_tick){
 				break;
 			}
-			if(true == IS_AFTER_CURRENT_TIME(s_fetched_event_tick)){
+			if(CURRENT_TICK() < s_fetched_event_tick){
 				break;
 			}
 			process_events(s_fetched_event_tick);
@@ -667,7 +683,15 @@ static int process_timely_midi_message_and_event(void)
 }
 
 /**********************************************************************************/
-
+#ifdef _INCREMENTAL_SAMPLE_INDEX
+#define UPDATE_CURRENT_TICK(TICK)					do { \
+														s_current_sample_index = (uint32_t)((TICK) * s_tick_to_sample_index_ratio + 0.5); \
+													} while(0)
+#else
+#define UPDATE_CURRENT_TICK(TICK)					do { \
+														s_current_tick = (chiptune_float)(TICK); \
+													} while(0)
+#endif
 static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 									   int32_t * const p_max_loudness,
 									   int16_t * const p_max_event_occupied_oscillator_number)
@@ -714,7 +738,7 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 					if(false == p_channel_controller->is_damper_pedal_on){
 						break;
 					}
-					put_event(EVENT_DEACTIVATE, oscillator_index, (uint32_t)s_current_tick);
+					put_event(EVENT_DEACTIVATE, oscillator_index, CURRENT_TICK());
 				} while(0);
 				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 			}
@@ -734,15 +758,15 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 
 		{
 			uint32_t const tick = (s_fetched_tick_message.tick < s_fetched_event_tick) ? s_fetched_tick_message.tick : s_fetched_event_tick;
-			s_current_tick = (chiptune_float)tick;
+			UPDATE_CURRENT_TICK(tick);
 		}
 
 		do
 		{
-			if((uint32_t)s_current_tick == s_previous_timely_tick){
+			if(CURRENT_TICK() == s_previous_timely_tick){
 				break;
 			}
-			s_previous_timely_tick = (uint32_t)s_current_tick;
+			s_previous_timely_tick = CURRENT_TICK();
 
 			if(max_event_occupied_oscillator_number < get_event_occupied_oscillator_number()){
 				max_event_occupied_oscillator_number = get_event_occupied_oscillator_number();
@@ -775,15 +799,15 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 			}
 		}while(0);
 
-		if((uint32_t)s_current_tick == s_fetched_tick_message.tick){
+		if(CURRENT_TICK() == s_fetched_tick_message.tick){
 			process_midi_message(s_fetched_tick_message);
 			SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
 
 			s_fetched_event_tick = get_next_event_triggering_tick();
 		}
 
-		if((uint32_t)s_current_tick == s_fetched_event_tick){
-			process_events((uint32_t)s_current_tick);
+		if(CURRENT_TICK() == s_fetched_event_tick){
+			process_events(CURRENT_TICK());
 			s_fetched_event_tick = NULL_TICK;
 		}
 	}
@@ -886,8 +910,8 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 	s_is_stereo = is_stereo;
 	s_is_processing_left_channel = true;
 	s_sampling_rate = sampling_rate;
-	s_resolution = resolution;
-
+	UPDATE_RESOLUTION(resolution);
+	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	for(int i = 0; i < SINE_TABLE_LENGTH; i++){
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
 	}
@@ -895,9 +919,7 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 	initialize_channel_controller();
 	clean_all_events();
 
-	UPDATE_BASE_TIME_UNIT();
 	UPDATE_AMPLITUDE_NORMALIZER();
-	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	process_timely_midi_message_and_event();
 	return ;
 }
@@ -920,10 +942,8 @@ void chiptune_set_next_midi_message_index(uint32_t const next_midi_message_index
 void chiptune_set_tempo(float const tempo)
 {
 	CHIPTUNE_PRINTF(cMidiSetup, "tick = %d, set tempo as %3.1f\r\n", CURRENT_TICK(), tempo);
-	CORRECT_BASE_TIME();
 	adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), tempo);
-	s_tempo = tempo;
-	UPDATE_BASE_TIME_UNIT();
+	UPDATE_TEMPO(tempo);
 	update_effect_tick();
 	update_channel_controller_parameters_related_to_tempo();
 }
