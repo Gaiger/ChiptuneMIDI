@@ -38,7 +38,7 @@ public:
 
 	float GetMidiFileDurationInSeconds(void);
 	float GetCurrentElapsedTimeInSeconds(void);
-	int SetStartTimeInSeconds(float start_time_in_seconds);
+	int SetStartTimeInSeconds(float target_start_time_in_seconds);
 
 public:
 	signals:

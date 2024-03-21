@@ -304,7 +304,7 @@ float TuneManager::GetCurrentElapsedTimeInSeconds(void)
 
 /**********************************************************************************/
 
-int TuneManager::SetStartTimeInSeconds(float start_time_in_seconds)
+int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 {
 	QMutexLocker locker(&m_mutex);
 
@@ -317,41 +317,46 @@ int TuneManager::SetStartTimeInSeconds(float start_time_in_seconds)
 			break;
 		}
 
-		qDebug() << Q_FUNC_INFO << "set start time = "<<start_time_in_seconds << "seconds";
-		if(0.05 > qAbs(GetMidiFileDurationInSeconds() - start_time_in_seconds)){
+		if(0.05 > qAbs(GetMidiFileDurationInSeconds() - target_start_time_in_seconds)){
 			set_index = m_p_private->m_p_midi_file->events().size() - 1;
 			break;
 		}
 
-		if(start_time_in_seconds < 0){
-			start_time_in_seconds = 0;
+		if(target_start_time_in_seconds < 0){
+			target_start_time_in_seconds = 0;
 		}
 
 
-		float current_event_time = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(0)->tick());
-		float next_event_time = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(0 + 1)->tick());
+		float current_event_time_in_seconds = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(0)->tick());
+		float next_event_time_in_seconds = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(0 + 1)->tick());
+
 		for(int i = 0; i < p_midi_event_list.size() - 1; i++){
-			if(current_event_time <= start_time_in_seconds){
-				if(next_event_time >= start_time_in_seconds){
-					set_index = i;
+			if(0.05 > qAbs(current_event_time_in_seconds - target_start_time_in_seconds)){
+				set_index = i;
+				break;
+			}
+
+			if(current_event_time_in_seconds < target_start_time_in_seconds){
+				if(next_event_time_in_seconds > target_start_time_in_seconds){
+					set_index = i + 1;
 					break;
 				}
 			}
-			current_event_time = next_event_time;
-			next_event_time = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(i + 1)->tick());
+
+			current_event_time_in_seconds = next_event_time_in_seconds;
+			next_event_time_in_seconds = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(i + 1)->tick());
 		}
 	}while(0);
 
 	if(-1 == set_index){
-		qDebug() << Q_FUNC_INFO <<"ERROR :: could not find start_time_in_seconds = " << start_time_in_seconds;
+		qDebug() << Q_FUNC_INFO <<"ERROR :: could not find target_start_time_in_seconds = " << target_start_time_in_seconds;
 		return -1;
 	}
-
-	qDebug() << Q_FUNC_INFO << "start_time_in_seconds = " << start_time_in_seconds
+	qDebug() << Q_FUNC_INFO << "target_start_time_in_seconds = " << target_start_time_in_seconds
+			 << ", found time = " << m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick())
 			 << ", index = " << set_index
-			 << ", set time = " << m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick());
-
-	chiptune_set_next_midi_message_index(set_index);
+			 << ", tick = " << p_midi_event_list.at(set_index)->tick();
+	chiptune_move_toward(set_index);
 
 	m_p_private->m_wave_bytearray.clear();
 	m_p_private->m_wave_prebuffer_length = 0;
