@@ -829,7 +829,7 @@ static int32_t get_max_simultaneous_loudness(void)
 	int32_t max_loudness = 0;
 	int16_t max_event_occupied_oscillator_number = 0;
 	pass_through_midi_messages(UINT32_MAX, &max_loudness, &max_event_occupied_oscillator_number);
-
+	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	if(0 != get_upcoming_event_number()){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: not all events are released, remain %d events\r\n",
 						get_upcoming_event_number());
@@ -932,7 +932,6 @@ void chiptune_set_next_midi_message_index(uint32_t const next_midi_message_index
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 		reset_channel_controller_midi_parameters_from_index(i);
 	}
-	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	pass_through_midi_messages(next_midi_message_index, NULL, NULL);
 	return ;
 }
