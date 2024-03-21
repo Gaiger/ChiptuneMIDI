@@ -706,6 +706,7 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 
 	while(1)
 	{
+		bool is_reach_end_midi_message_index = false;
 		do {
 			if(false == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)){
 				break;
@@ -735,7 +736,7 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 				} while(0);
 				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 			}
-			break;
+			is_reach_end_midi_message_index = true;
 		}
 
 		if(NULL_TICK == s_fetched_event_tick){
@@ -802,6 +803,10 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 		if(CURRENT_TICK() == s_fetched_event_tick){
 			process_events(CURRENT_TICK());
 			s_fetched_event_tick = NULL_TICK;
+		}
+
+		if(true == is_reach_end_midi_message_index){
+			break;
 		}
 	}
 
@@ -926,9 +931,6 @@ void chiptune_move_toward(uint32_t const index)
 		reset_channel_controller_midi_parameters_from_index(i);
 	}
 	pass_through_midi_messages(index, NULL, NULL);
-	if(false == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)){
-		UPDATE_CURRENT_TICK(s_fetched_tick_message.tick);
-	}
 	return ;
 }
 
@@ -1309,7 +1311,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 		}
 
 		if(-INT16_MAX_PLUS_1 > out_wave){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, less than 0\r\n",
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, less than -INT16_MAX_PLUS_1\r\n",
 							out_wave);
 			break;
 		}
