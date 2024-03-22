@@ -273,6 +273,9 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 	}
 	QObject::disconnect(&m_set_start_time_postpone_timer, nullptr , nullptr, nullptr);
 
+	ui->PlayPositionLabel->setText(FormatTimeString(start_time_in_milliseconds) + " / "
+							  + m_midi_file_duration_time_string);
+
 	QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, [&, start_time_in_milliseconds](){
 		m_inquiring_play_progress_timer_id = QObject::startTimer(500);
 		m_p_tune_manager->SetStartTimeInSeconds(start_time_in_milliseconds/1000.0);
