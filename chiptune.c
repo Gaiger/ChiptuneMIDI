@@ -145,7 +145,7 @@ static inline void swap_processing_channel() { s_is_processing_left_channel = !s
 
 static int process_program_change_message(uint32_t const tick, int8_t const voice, uint8_t const number)
 {
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: ", tick);
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: ", tick);
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 		p_channel_controller->waveform = WAVEFORM_NOISE;
@@ -155,16 +155,16 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 	switch(p_channel_controller->waveform)
 	{
 	case WAVEFORM_SQUARE:
-		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %d instrument = %d, is WAVEFORM_SQUARE\r\n", voice, number);
+		CHIPTUNE_PRINTF(cMidiControlChange, "%voice = %d instrument = %d, is WAVEFORM_SQUARE\r\n", voice, number);
 		break;
 	case WAVEFORM_TRIANGLE:
-		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %d instrument = %d, is WAVEFORM_TRIANGLE\r\n", voice, number);
+		CHIPTUNE_PRINTF(cMidiControlChange, "%voice = %d instrument = %d, is WAVEFORM_TRIANGLE\r\n", voice, number);
 		break;
 	case WAVEFORM_SAW:
-		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %d instrument = %d, is WAVEFORM_SAW\r\n", voice, number);
+		CHIPTUNE_PRINTF(cMidiControlChange, "%voice = %d instrument = %d, is WAVEFORM_SAW\r\n", voice, number);
 		break;
 	case WAVEFORM_NOISE:
-		CHIPTUNE_PRINTF(cMidiSetup, "%voice = %d instrument = %d, is WAVEFORM_NOISE\r\n", voice, number);
+		CHIPTUNE_PRINTF(cMidiControlChange, "%voice = %d instrument = %d, is WAVEFORM_NOISE\r\n", voice, number);
 		break;
 	default:
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: "
@@ -172,7 +172,6 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 	}
 	return 0;
 }
-
 
 /**********************************************************************************/
 
@@ -205,12 +204,14 @@ int setup_pitch_oscillator(uint32_t const tick, int8_t const voice, int8_t const
 	p_oscillator->release_reference_amplitude = 0;
 
 	char pitch_wheel_bend_string[32] = "";
+#ifdef _PRINT_MIDI_PITCH_WHEEL
 	if(0.0f != p_channel_controller->pitch_wheel_bend_in_semitones){
+
 		snprintf(&pitch_wheel_bend_string[0], sizeof(pitch_wheel_bend_string),
 				", pitch wheel bend in semitone = %+3.2f", p_channel_controller->pitch_wheel_bend_in_semitones);
 	}
-
-	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, note = %d, velocity = %d%s\r\n",
+#endif
+	CHIPTUNE_PRINTF(cMidiNote, "tick = %u, %s :: voice = %d, note = %d, velocity = %d%s\r\n",
 					tick,  "MIDI_MESSAGE_NOTE_ON",
 					voice, note, velocity, &pitch_wheel_bend_string[0]);
 	return 0;
@@ -240,7 +241,7 @@ int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t 
 	if(false == p_percussion->is_implemented){
 		snprintf(&not_implemented_string[0], sizeof(not_implemented_string), "%s", "(NOT IMPLEMENTED)");
 	}
-	CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, %s%s, velocity = %d\r\n",
+	CHIPTUNE_PRINTF(cMidiNote, "tick = %u, %s :: voice = %d, %s%s, velocity = %d\r\n",
 					tick,  "MIDI_MESSAGE_NOTE_ON",
 					voice, get_percussion_name_string(note), not_implemented_string, velocity);
 	return 0;
@@ -392,13 +393,13 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		do
 		{
 			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
-				CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, %s, velocity = %d\r\n",
+				CHIPTUNE_PRINTF(cMidiNote, "tick = %u, %s :: voice = %d, %s, velocity = %d\r\n",
 								tick,  "MIDI_MESSAGE_NOTE_OFF",
 								voice, get_percussion_name_string(note), velocity);
 				break;
 			}
 
-			CHIPTUNE_PRINTF(cNoteOperation, "tick = %u, %s :: voice = %d, note = %d, velocity = %d\r\n",
+			CHIPTUNE_PRINTF(cMidiNote, "tick = %u, %s :: voice = %d, note = %d, velocity = %d\r\n",
 							tick,  "MIDI_MESSAGE_NOTE_OFF",
 							voice, note, velocity);
 		}while(0);
@@ -421,7 +422,7 @@ static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, 
 	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
 	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
 
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %d, pitch_wheel_bend_in_semitones = %+3.2f\r\n",
+	CHIPTUNE_PRINTF(cMidiPitchWheel, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %d, pitch_wheel_bend_in_semitones = %+3.2f\r\n",
 					tick, voice, p_channel_controller->pitch_wheel_bend_in_semitones);
 
 
@@ -486,7 +487,7 @@ static int process_midi_message(struct _tick_message const tick_message)
 			voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]));
 	 break;
 	case MIDI_MESSAGE_KEY_PRESSURE:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_KEY_PRESSURE :: note = %d, amount = %d %s\r\n",
+		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_MESSAGE_KEY_PRESSURE :: note = %d, amount = %d %s\r\n",
 						tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_CONTROL_CHANGE:
@@ -496,7 +497,7 @@ static int process_midi_message(struct _tick_message const tick_message)
 		process_program_change_message(tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]));
 		break;
 	case MIDI_MESSAGE_CHANNEL_PRESSURE:
-		CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %d, amount = %d %s\r\n",
+		CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %d, amount = %d %s\r\n",
 						tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_MESSAGE_PITCH_WHEEL:
@@ -505,7 +506,7 @@ static int process_midi_message(struct _tick_message const tick_message)
 		process_pitch_wheel_message(tick, voice, COMBINE_AS_PITCH_WHEEL_14BITS(u.data_as_bytes[1], u.data_as_bytes[2]);
 		break;
 	default:
-		//CHIPTUNE_PRINTF(cMidiSetup, "tick = %u, MIDI_MESSAGE code = %u :: voice = %d, byte 1 = %d, byte 2 = %d %s\r\n",
+		//CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_MESSAGE code = %u :: voice = %d, byte 1 = %d, byte 2 = %d %s\r\n",
 		//				tick, type, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]), "(NOT IMPLEMENTED YET)");
 		break;
 	}
@@ -1381,7 +1382,7 @@ void chiptune_move_toward(uint32_t const index)
 
 void chiptune_set_tempo(float const tempo)
 {
-	CHIPTUNE_PRINTF(cMidiSetup, "tick = %d, set tempo as %3.1f\r\n", CURRENT_TICK(), tempo);
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %d, set tempo as %3.1f\r\n", CURRENT_TICK(), tempo);
 	adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), tempo);
 	UPDATE_TEMPO(tempo);
 	update_effect_tick();

@@ -28,24 +28,30 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 		}
 	}
 
-#ifdef _PRINT_MIDI_SETUP
-	if(cMidiSetup == print_type){
+#ifdef _PRINT_MIDI_NOTE
+	if(cMidiNote == print_type){
 		is_print_out = true;
-		//fprintf(stdout, "cMidiSetup:: ");
+		//fprintf(stdout, "cMidiNote:: ");
+	}
+#endif
+#ifdef _PRINT_MIDI_CONTROLCHANGE
+	if(cMidiControlChange == print_type){
+		is_print_out = true;
+		//fprintf(stdout, "cMidiControlChange:: ");
 	}
 #endif
 
-#ifdef _PRINT_NOTE_OPERATION
-	if(cNoteOperation == print_type){
+#ifdef _PRINT_MIDI_PITCH_WHEEL
+	if(cMidiPitchWheel == print_type){
 		is_print_out = true;
-		//fprintf(stdout, "cNoteOperation:: ");
+		//fprintf(stdout, "cMidiPitchWheel:: ");
 	}
 #endif
 
 #ifdef _PRINT_EVENT_TRIGGERING
 	if(cEventTriggering == print_type){
 		is_print_out = true;
-		//fprintf(stdout, "cNoteOperation:: ");
+		//fprintf(stdout, "cEventTriggering:: ");
 	}
 #endif
 

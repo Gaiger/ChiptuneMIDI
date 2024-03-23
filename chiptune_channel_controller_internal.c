@@ -512,7 +512,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	default:
-		//CHIPTUNE_PRINTF(cNoteOperation, "percussion note = %d NOT IMPLEMENT YET\r\n", index);
+		//CHIPTUNE_PRINTF(cMidiNote, "percussion note = %d NOT IMPLEMENT YET\r\n", index);
 		break;
 	}
 

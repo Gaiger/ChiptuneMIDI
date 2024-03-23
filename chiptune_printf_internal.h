@@ -23,10 +23,13 @@
 
 enum
 {
-	cDeveloping		= 0,
-	cMidiSetup		= 1,
-	cNoteOperation	= 2,
-	cEventTriggering = 3,
+	cDeveloping			= 0,
+
+	cMidiNote			= 1,
+	cMidiControlChange	= 2,
+	cMidiPitchWheel		= 3,
+
+	cEventTriggering	= 4,
 };
 
 void chiptune_printf(int const print_type, const char* fmt, ...);
