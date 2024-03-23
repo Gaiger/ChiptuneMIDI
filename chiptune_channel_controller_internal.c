@@ -69,9 +69,9 @@ static void update_channel_controller_envelope_parameters_related_to_tempo(int8_
 			= (uint32_t)(p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_second * resolution * tempo/60.0f + 0.5f);
 	if(UINT16_MAX <= envelope_damper_on_but_note_off_sustain_tick_number){
 		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_on_but_note_off_sustain_tick_number = %u,"
-									 " greater than UINT16_MAX\r\n",
-						envelope_damper_on_but_note_off_sustain_tick_number);
-		envelope_damper_on_but_note_off_sustain_tick_number = UINT16_MAX;
+									 " greater than UINT16_MAX, set as  UINT16_MAX - 1 (%3.2f seconds)\r\n",
+						envelope_damper_on_but_note_off_sustain_tick_number, (UINT16_MAX - 1) * 60.0 /resolution/tempo );
+		envelope_damper_on_but_note_off_sustain_tick_number = UINT16_MAX - 1;
 	}
 	p_channel_controller->envelope_damper_on_but_note_off_sustain_tick_number
 			= (uint32_t)envelope_damper_on_but_note_off_sustain_tick_number;

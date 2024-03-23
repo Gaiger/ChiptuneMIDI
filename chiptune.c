@@ -1342,6 +1342,7 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 	s_is_processing_left_channel = true;
 	UPDATE_SAMPLING_RATE(sampling_rate);
 	UPDATE_RESOLUTION(resolution);
+	UPDATE_TEMPO(MIDI_DEFAULT_TEMPO);
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	for(int i = 0; i < SINE_TABLE_LENGTH; i++){
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
