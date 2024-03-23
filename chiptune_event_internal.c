@@ -378,7 +378,7 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 			break;
 		}
 
-		if(s_events[current_index].triggering_tick < s_events[s_event_head_index].triggering_tick){
+		if(s_events[current_index].triggering_tick <= s_events[s_event_head_index].triggering_tick){
 			s_events[current_index].next_event = s_event_head_index;
 			s_event_head_index = current_index;
 			break;
@@ -518,9 +518,9 @@ int process_events(uint32_t const tick)
 							100.0f * p_oscillator->release_reference_amplitude/(float)p_oscillator->loudness,
 							event_additional_string(s_event_head_index));
 			if(true == IS_FREEING(p_oscillator->state_bits)) {
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: free a freeing oscillator = %d\r\n",
+				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: free a freeing oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
-				return -1;
+				break;
 			}
 			SET_FREEING(p_oscillator->state_bits);
 			do
