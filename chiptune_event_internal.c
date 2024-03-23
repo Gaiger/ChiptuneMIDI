@@ -402,6 +402,19 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 	} while(0);
 	s_upcoming_event_number += 1;
 
+	oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+	switch(type)
+	{
+	case EVENT_FREE:
+		SET_PREPARE_TO_FREE(p_oscillator->state_bits);
+		break;
+	case EVENT_REST:
+		SET_PREPARE_TO_REST(p_oscillator->state_bits);
+		break;
+	default:
+		break;
+	}
+
 	CHECK_UPCOMING_EVENTS(s_events[s_event_head_index].triggering_tick);
 	return 0;
 }
@@ -518,9 +531,9 @@ int process_events(uint32_t const tick)
 							100.0f * p_oscillator->release_reference_amplitude/(float)p_oscillator->loudness,
 							event_additional_string(s_event_head_index));
 			if(true == IS_FREEING(p_oscillator->state_bits)) {
-				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: free a freeing oscillator = %d\r\n",
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: free a freeing oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
-				break;
+				return -1;
 			}
 			SET_FREEING(p_oscillator->state_bits);
 			do
@@ -553,7 +566,7 @@ int process_events(uint32_t const tick)
 			}
 			if(true == IS_RESTING(p_oscillator->state_bits)
 					&& true == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: rest a resting native oscillator = %d\r\n",
+				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: rest a resting native oscillator = %d\r\n",
 							s_events[s_event_head_index].oscillator);
 				break;
 			}
@@ -632,14 +645,6 @@ int adjust_event_triggering_tick_by_tempo(uint32_t const tick, float const new_t
 				break;
 			}
 
-#if(0)
-			oscillator_t const * const p_oscillator
-					= get_event_oscillator_pointer_from_index(s_events[event_index].oscillator);
-			if(true == IS_FREEING(p_oscillator->state_bits)
-					|| true ==  IS_RESTING(p_oscillator->state_bits)){
-				break;
-			}
-#endif
 			uint32_t const triggering_tick =
 					(uint32_t)((s_events[event_index].triggering_tick - tick) * tempo_ratio) + tick;
 			if(triggering_tick == s_events[event_index].triggering_tick){

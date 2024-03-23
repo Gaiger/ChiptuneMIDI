@@ -122,7 +122,7 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, int
 				if(voice != p_oscillator->voice){
 					break;
 				}
-				if(true == IS_FREEING(p_oscillator->state_bits)){
+				if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
 					break;
 				}
 
@@ -220,9 +220,10 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 			if(false == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
 				break;
 			}
-			if(true == IS_FREEING(p_oscillator->state_bits)){
+			if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
 				break;
 			}
+
 			put_event(EVENT_FREE, oscillator_index, tick);
 
 			int32_t expression_multiply_volume = p_channel_controller->expression * p_channel_controller->volume;

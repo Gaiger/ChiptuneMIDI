@@ -266,10 +266,10 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
 			if(false == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
 				break;
 			}
-			if(true == IS_FREEING(p_oscillator->state_bits)){
+			if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
 				break;
 			}
-			if(true == IS_RESTING(p_oscillator->state_bits)){
+			if(true == IS_RESTING_OR_PREPARE_TO_REST(p_oscillator->state_bits)){
 				break;
 			}
 			put_event(EVENT_REST, oscillator_index, tick);
@@ -341,7 +341,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				if(false == IS_NOTE_ON(p_oscillator->state_bits)){
 					break;
 				}
-				if(true == IS_FREEING(p_oscillator->state_bits)){
+				if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
 					break;
 				}
 				put_event(EVENT_FREE, oscillator_index, tick);
