@@ -13,6 +13,10 @@ void chiptune_set_midi_message_callback(
 		int(*handler_get_midi_message)(uint32_t const index, uint32_t * const p_tick, uint32_t * const p_message) );
 
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution);
+
+int32_t chiptune_get_amplitude_gain(void);
+void chiptune_set_amplitude_gain(int32_t amplitude_gain);
+
 void chiptune_move_toward(uint32_t const index);
 
 void chiptune_set_tempo(float const tempo);

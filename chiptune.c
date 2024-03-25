@@ -1281,9 +1281,9 @@ static int32_t get_amplitude_normaliztion_gain(void)
 	// max_64bit_amplitude/amplitude_normalization_gain = TARGET_MAX_AMPLITUDE;
 #define MAX_NAORMAILIZED_AMPILTUDE					(2 * INT16_MAX / 3)
 	int32_t amplitude_normalization_gain = (int32_t)(max_64bit_amplitude/MAX_NAORMAILIZED_AMPILTUDE);
-	//CHIPTUNE_PRINTF(cDeveloping, "amplitude_normalization_value = %d\r\n", amplitude_normalization_gain);
+	CHIPTUNE_PRINTF(cDeveloping, "amplitude_normalization_value = %d\r\n", amplitude_normalization_gain);
 	amplitude_normalization_gain = (amplitude_normalization_gain + (int32_t)(max_loudness * 1 / 4))/2;
-	//CHIPTUNE_PRINTF(cDeveloping, "amplitude_normalization_value as %d\r\n", amplitude_normalization_gain);
+	CHIPTUNE_PRINTF(cDeveloping, "amplitude_normalization_value as %d\r\n", amplitude_normalization_gain);
 	UPDATE_SAMPLING_RATE(original_sampling_rate);
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	clean_all_events();
@@ -1370,6 +1370,14 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 	process_timely_midi_message_and_event();
 	return ;
 }
+
+/**********************************************************************************/
+
+int32_t chiptune_get_amplitude_gain(void){ return s_amplitude_normaliztion_gain; }
+
+/**********************************************************************************/
+
+void chiptune_set_amplitude_gain(int32_t amplitude_gain) {s_amplitude_normaliztion_gain = amplitude_gain; }
 
 /**********************************************************************************/
 

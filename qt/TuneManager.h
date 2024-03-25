@@ -32,6 +32,8 @@ public:
 	int GetNumberOfChannels(void);
 	int GetSamplingRate(void);
 	int GetSamplingSize(void);
+	int GetAmplitudeGain(void);
+	void SetAmplitudeGain(int amplitude_gain);
 
 	QByteArray FetchWave(int const length);
 	bool IsTuneEnding(void);

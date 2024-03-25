@@ -170,11 +170,8 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
 					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
 
-	QObject::connect(ui->PlayProgressSlider, &QAbstractSlider::sliderMoved, this,
-					 &ChiptuneMidiWidget::HandlePlayProgressSliderMoved);
 	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::MousePressed, this,
 					 &ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed);
-
 
 	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
 	ui->SaveSaveFilePushButton->setToolTip(tr("Save as .wav file"));
@@ -230,7 +227,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			ret = -1;
 			break;
 		}
-
+		ui->AmplitudeGainSlider->setValue(65535 - m_p_tune_manager->GetAmplitudeGain());
 		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
 		m_midi_file_duration_time_string = FormatTimeString(m_midi_file_duration_in_milliseconds);
 		ui->PlayPositionLabel->setText(FormatTimeString(0) + " / " + m_midi_file_duration_time_string);
@@ -305,7 +302,7 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::HandlePlayProgressSliderMoved(int value)
+void ChiptuneMidiWidget::on_PlayProgressSlider_sliderMoved(int value)
 {
 	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
 }
@@ -573,4 +570,10 @@ void ChiptuneMidiWidget::on_PlayPausePushButton_released(void)
 	} while(0);
 
 	QWidget::setFocus();
+}
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::on_AmplitudeGainSlider_sliderMoved(int value)
+{
+	m_p_tune_manager->SetAmplitudeGain(65535 - value);
 }

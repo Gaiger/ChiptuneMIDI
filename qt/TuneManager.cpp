@@ -240,6 +240,23 @@ int TuneManager::GetSamplingSize(void){ return m_p_private->m_sampling_size; }
 
 /**********************************************************************************/
 
+int TuneManager::GetAmplitudeGain(void)
+{
+	if(nullptr == m_p_private->m_p_midi_file){
+		return -1;
+	}
+	return chiptune_get_amplitude_gain();
+}
+
+/**********************************************************************************/
+
+void TuneManager::SetAmplitudeGain(int amplitude_gain)
+{
+	chiptune_set_amplitude_gain(amplitude_gain);
+}
+
+/**********************************************************************************/
+
 QByteArray TuneManager::FetchWave(int const length)
 {
 	if(length > m_p_private->m_wave_prebuffer_length){

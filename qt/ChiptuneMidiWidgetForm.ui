@@ -214,6 +214,45 @@ color: rgb(208, 208, 208);
     <string>▷</string>
    </property>
   </widget>
+  <widget class="QWidget" name="ChannelListWidget" native="true">
+   <property name="geometry">
+    <rect>
+     <x>696</x>
+     <y>16</y>
+     <width>320</width>
+     <height>620</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QWidget {
+background-color: rgb(52, 52, 52); 
+color: rgb(208, 208, 208);
+}
+</string>
+   </property>
+  </widget>
+  <widget class="QSlider" name="AmplitudeGainSlider">
+   <property name="geometry">
+    <rect>
+     <x>660</x>
+     <y>8</y>
+     <width>18</width>
+     <height>160</height>
+    </rect>
+   </property>
+   <property name="minimum">
+    <number>1</number>
+   </property>
+   <property name="maximum">
+    <number>65534</number>
+   </property>
+   <property name="singleStep">
+    <number>256</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Vertical</enum>
+   </property>
+  </widget>
  </widget>
  <customwidgets>
   <customwidget>

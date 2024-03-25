@@ -39,10 +39,11 @@ private slots:
 
 	void on_StopPushButton_released(void);
 	void on_PlayPausePushButton_released(void);
+	void on_AmplitudeGainSlider_sliderMoved(int value);
 private slots:
 	void HandleWaveFetched(const QByteArray wave_bytearray);
 
-	void HandlePlayProgressSliderMoved(int value);
+	void on_PlayProgressSlider_sliderMoved(int value);
 	void HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value);
 
 private:
