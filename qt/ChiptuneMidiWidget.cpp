@@ -176,6 +176,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
 	ui->SaveSaveFilePushButton->setToolTip(tr("Save as .wav file"));
 	QWidget::setFocusPolicy(Qt::StrongFocus);
+	QWidget::setFixedSize(QWidget::size());
 }
 
 /**********************************************************************************/
@@ -211,8 +212,8 @@ static QString FormatTimeString(qint64 timeMilliSeconds)
 int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 {
 	m_p_audio_player->Stop();
-	QObject::killTimer(m_inquiring_play_progress_timer_id);
-	m_inquiring_play_progress_timer_id = -1;
+	QObject::killTimer(m_inquiring_playback_status_timer_id);
+	m_inquiring_playback_status_timer_id = -1;
 
 	ui->MessageLabel->setText("");
 	QThread::msleep(10);
@@ -227,7 +228,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			ret = -1;
 			break;
 		}
-		ui->AmplitudeGainSlider->setValue(65535 - m_p_tune_manager->GetAmplitudeGain());
+		ui->AmplitudeGainSlider->setValue(UINT16_MAX - m_p_tune_manager->GetAmplitudeGain());
 		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
 		m_midi_file_duration_time_string = FormatTimeString(m_midi_file_duration_in_milliseconds);
 		ui->PlayPositionLabel->setText(FormatTimeString(0) + " / " + m_midi_file_duration_time_string);
@@ -239,7 +240,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		ui->SaveSaveFilePushButton->setEnabled(true);
 		message_string = QString::asprintf("Playing file");
 		ui->MessageLabel->setText(message_string);
-		m_inquiring_play_progress_timer_id = QObject::startTimer(500);
+		m_inquiring_playback_status_timer_id = QObject::startTimer(500);
 
 		ui->PlayPausePushButton->setEnabled(true);
 		SetPlayPausePushButtonAsPlayIcon(false);
@@ -261,9 +262,9 @@ void ChiptuneMidiWidget::HandleWaveFetched(const QByteArray wave_bytearray)
 
 void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds)
 {
-	if(-1 != m_inquiring_play_progress_timer_id){
-		QObject::killTimer(m_inquiring_play_progress_timer_id);
-		m_inquiring_play_progress_timer_id = -1;
+	if(-1 != m_inquiring_playback_status_timer_id){
+		QObject::killTimer(m_inquiring_playback_status_timer_id);
+		m_inquiring_playback_status_timer_id = -1;
 	}
 	if(true == m_set_start_time_postpone_timer.isActive()){
 		m_set_start_time_postpone_timer.stop();
@@ -274,7 +275,7 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 							  + m_midi_file_duration_time_string);
 
 	QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, [&, start_time_in_milliseconds](){
-		m_inquiring_play_progress_timer_id = QObject::startTimer(500);
+		m_inquiring_playback_status_timer_id = QObject::startTimer(500);
 		m_p_tune_manager->SetStartTimeInSeconds(start_time_in_milliseconds/1000.0);
 
 		if(false == IsPlayPausePushButtonPlayIcon()){
@@ -324,7 +325,7 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 {
 	QWidget::timerEvent(event);
 	do {
-		if(event->timerId() == m_inquiring_play_progress_timer_id){
+		if(event->timerId() == m_inquiring_playback_status_timer_id){
 			if(true == m_p_tune_manager->IsTuneEnding())
 			{
 				if(AudioPlayer::PlaybackStateStateIdle == m_p_audio_player->GetState()){
@@ -342,6 +343,11 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 			ui->PlayPositionLabel->setText(FormatTimeString(elapsed_time_in_milliseconds) + " / "
 									  + m_midi_file_duration_time_string);
 			ui->PlayProgressSlider->setValue(elapsed_time_in_milliseconds);
+
+			int const amplitude_gain = UINT16_MAX - m_p_tune_manager->GetAmplitudeGain();
+			if(ui->AmplitudeGainSlider->value() != amplitude_gain){
+				ui->AmplitudeGainSlider->setValue(amplitude_gain);
+			}
 			break;
 		}
 	}while(0);
@@ -512,9 +518,9 @@ void ChiptuneMidiWidget::on_StopPushButton_released(void)
 	m_p_audio_player->Stop();
 	m_p_tune_manager->ClearOutMidiFile();
 
-	if(-1 != m_inquiring_play_progress_timer_id){
-		QObject::killTimer(m_inquiring_play_progress_timer_id);
-		m_inquiring_play_progress_timer_id = -1;
+	if(-1 != m_inquiring_playback_status_timer_id){
+		QObject::killTimer(m_inquiring_playback_status_timer_id);
+		m_inquiring_playback_status_timer_id = -1;
 	}
 
 	ui->PlayPositionLabel->setText("00:00 / 00:00");
@@ -575,5 +581,5 @@ void ChiptuneMidiWidget::on_PlayPausePushButton_released(void)
 
 void ChiptuneMidiWidget::on_AmplitudeGainSlider_sliderMoved(int value)
 {
-	m_p_tune_manager->SetAmplitudeGain(65535 - value);
+	m_p_tune_manager->SetAmplitudeGain(UINT16_MAX - value);
 }

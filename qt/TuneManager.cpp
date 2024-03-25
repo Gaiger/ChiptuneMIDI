@@ -173,11 +173,9 @@ int TuneManager::InitializeTune(void)
 	if(nullptr == m_p_private->m_p_midi_file){
 		return -1;
 	}
-	QElapsedTimer elaspse_time;
-	elaspse_time.start();
+
 	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
 						 (uint32_t)m_p_private->m_sampling_rate, m_p_private->m_p_midi_file->resolution());
-	qDebug() << "chiptune_initialize costs " << elaspse_time.elapsed() << "milliseconds";
 	return 0;
 }
 

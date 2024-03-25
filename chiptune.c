@@ -697,6 +697,7 @@ static int process_timely_midi_message_and_event(void)
 														s_current_tick = (chiptune_float)(TICK); \
 													} while(0)
 #endif
+
 static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 									   int32_t * const p_max_loudness,
 									   int16_t * const p_max_event_occupied_oscillator_number)
@@ -1132,6 +1133,7 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 														DIVIDE_BY_128((int64_t)(MONO_WAVE_AMPLITUDE) * (CHANNEL_PANNING_WEIGHT))
 
 #endif
+
 int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
 				   int32_t const mono_wave_amplitude)
 {
@@ -1165,12 +1167,6 @@ int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
 													do { \
 														s_current_tick += s_delta_tick_per_sample; \
 													} while(0)
-#endif
-
-#ifdef _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
-#define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE) >> g_loudness_nomalization_right_shift))
-#else
-#define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE)/(int32_t)s_amplitude_normaliztion_gain))
 #endif
 
 static int64_t chiptune_fetch_64bit_wave(void)
@@ -1215,87 +1211,7 @@ static int64_t chiptune_fetch_64bit_wave(void)
 
 /**********************************************************************************/
 
-static int32_t get_max_loudness(void)
-{
-	int32_t max_loudness = 0;
-	int16_t max_event_occupied_oscillator_number = 0;
-	pass_through_midi_messages(UINT32_MAX, &max_loudness, &max_event_occupied_oscillator_number);
-#if(1)
-	if(0 != get_upcoming_event_number()){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: not all events are released, remain %d events\r\n",
-						get_upcoming_event_number());
-	}
-
-	if(0 != get_event_occupied_oscillator_number()){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: not all oscillators are released\r\n");
-
-		int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-		int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
-		for(int16_t i = 0; i < occupied_oscillator_number; i++){
-			oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-
-			CHIPTUNE_PRINTF(cDeveloping, "oscillator = %d, voice = %d, note = 0x%02x(%d)\r\n",
-							oscillator_index, p_oscillator->voice, p_oscillator->note, p_oscillator->note);
-			oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
-		}
-	}
-#endif
-	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		reset_channel_controller_midi_parameters_from_index(i);
-	}
-	clean_all_events();
-	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
-
-	CHIPTUNE_PRINTF(cDeveloping, "max_event_occupied_oscillator_number = %d\r\n",
-					max_event_occupied_oscillator_number);
-	CHIPTUNE_PRINTF(cDeveloping, "max_loudness = %d\r\n", max_loudness);
-	return max_loudness;
-}
-
-/**********************************************************************************/
-
-static int32_t get_amplitude_normaliztion_gain(void)
-{
-	int32_t max_loudness = get_max_loudness();
-	uint32_t const original_sampling_rate = get_sampling_rate();
-	uint32_t evaluation_sampling_rate = get_resolution();
-	CHIPTUNE_PRINTF(cDeveloping, "resolution = %u, evaluation_sampling_rate = %u\r\n",
-					s_resolution, evaluation_sampling_rate);
-	UPDATE_SAMPLING_RATE(evaluation_sampling_rate);
-
-	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(false);
-	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
-	clean_all_events();
-	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		reset_channel_controller_midi_parameters_from_index(i);
-	}
-	int64_t max_64bit_amplitude = 0;
-	while(false == s_is_tune_ending){
-		int64_t const amplitude = chiptune_fetch_64bit_wave();
-		if(llabs(amplitude) > max_64bit_amplitude){
-			max_64bit_amplitude = llabs(amplitude);
-		}
-	}
-	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
-
-	// max_64bit_amplitude/amplitude_normalization_gain = TARGET_MAX_AMPLITUDE;
-#define MAX_NAORMAILIZED_AMPILTUDE					(2 * INT16_MAX / 3)
-	int32_t amplitude_normalization_gain = (int32_t)(max_64bit_amplitude/MAX_NAORMAILIZED_AMPILTUDE);
-	CHIPTUNE_PRINTF(cDeveloping, "amplitude_normalization_value = %d\r\n", amplitude_normalization_gain);
-	amplitude_normalization_gain = (amplitude_normalization_gain + (int32_t)(max_loudness * 1 / 4))/2;
-	CHIPTUNE_PRINTF(cDeveloping, "amplitude_normalization_value as %d\r\n", amplitude_normalization_gain);
-	UPDATE_SAMPLING_RATE(original_sampling_rate);
-	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
-	clean_all_events();
-	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		reset_channel_controller_midi_parameters_from_index(i);
-	}
-	return amplitude_normalization_gain;
-}
-
-#ifdef _RIGHT_SHIFT_FOR_NORMALIZING_AMPLITUDE
-
-/**********************************************************************************/
+#ifdef AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
 
 uint32_t number_of_roundup_to_power2_left_shift_bits(uint32_t const value)
 {
@@ -1319,19 +1235,37 @@ uint32_t number_of_roundup_to_power2_left_shift_bits(uint32_t const value)
 	return i;
 }
 
-int32_t g_loudness_nomalization_right_shift = 16;
-#define UPDATE_AMPLITUDE_NORMALIZER()				\
+/**********************************************************************************/
+#define DEFAULT_AMPLITUDE_NORMALIZATION_RIGHT_SHIFT_BIT_NUMBER	(13)
+int32_t s_loudness_nomalization_right_shift = DEFAULT_AMPLITUDE_NORMALIZATION_RIGHT_SHIFT_BIT_NUMBER;
+#define RESET_AMPLITUDE_NORMALIZATION_GAIN()		\
 													do { \
-														uint32_t amplitude_normaliztion_gain = get_amplitude_normaliztion_gain(); \
-														g_loudness_nomalization_right_shift \
-															= number_of_roundup_to_power2_left_shift_bits(amplitude_normaliztion_gain);\
-													} while(0)
+														s_loudness_nomalization_right_shift \
+															= DEFAULT_AMPLITUDE_NORMALIZATION_RIGHT_SHIFT_BIT_NUMBER; \
+													}while(0)
+
+#define AMPLITUDE_NORMALIZATION_GAIN()				(1 << s_loudness_nomalization_right_shift)
+#define UPDATE_AMPLITUDE_NORMALIZATION_GAIN(AMPLITUDE_NORMALIZATION_GAIN)	\
+													do { \
+														s_loudness_nomalization_right_shift \
+															= number_of_roundup_to_power2_left_shift_bits(AMPLITUDE_NORMALIZATION_GAIN); \
+													}while(0)
+#define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE) >> s_loudness_nomalization_right_shift))
 #else
-static int32_t s_amplitude_normaliztion_gain = 1 << 16;
-#define UPDATE_AMPLITUDE_NORMALIZER()				\
+#define DEFAULT_AMPLITUDE_NORMALIZATION_GAIN		(8192)
+static int32_t s_amplitude_normaliztion_gain = DEFAULT_AMPLITUDE_NORMALIZATION_GAIN;
+#define RESET_AMPLITUDE_NORMALIZATION_GAIN()		\
 													do { \
-														s_amplitude_normaliztion_gain = get_amplitude_normaliztion_gain(); \
-													} while(0)
+														s_amplitude_normaliztion_gain = 8192; \
+													}while(0)
+
+#define AMPLITUDE_NORMALIZATION_GAIN()				(s_amplitude_normaliztion_gain)
+#define UPDATE_AMPLITUDE_NORMALIZATION_GAIN(AMPLITUDE_NORMALIZATION_GAIN)	\
+													do { \
+														s_amplitude_normaliztion_gain = (AMPLITUDE_NORMALIZATION_GAIN); \
+													}while(0)
+
+#define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE)/(int32_t)s_amplitude_normaliztion_gain))
 #endif
 
 /**********************************************************************************/
@@ -1350,40 +1284,26 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 
 	initialize_channel_controller();
 	clean_all_events();
-	UPDATE_AMPLITUDE_NORMALIZER();
-#if(0)
-	int64_t max_64bit_amplitude = 0;
-	while(false == s_is_tune_ending){
-		int64_t const amplitude = chiptune_fetch_64bit_wave();
-		if(llabs(amplitude) > max_64bit_amplitude){
-			max_64bit_amplitude = llabs(amplitude);
-		}
-	}
-	int32_t accurate_amplitude_normaliztion_gain = (int32_t)(max_64bit_amplitude/MAX_NAORMAILIZED_AMPILTUDE);
-	CHIPTUNE_PRINTF(cDeveloping, "accurate_amplitude_normaliztion_gain = %d\r\n", accurate_amplitude_normaliztion_gain);
-	CHIPTUNE_PRINTF(cDeveloping, "accurate_amplitude_normaliztion_gain/s_amplitude_normaliztion_gain = %3.2f\r\n",
-					accurate_amplitude_normaliztion_gain /(double)s_amplitude_normaliztion_gain);
-	s_amplitude_normaliztion_gain = accurate_amplitude_normaliztion_gain;
-	initialize_channel_controller();
-#endif
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
+	RESET_AMPLITUDE_NORMALIZATION_GAIN();
 	process_timely_midi_message_and_event();
 	return ;
 }
 
 /**********************************************************************************/
 
-int32_t chiptune_get_amplitude_gain(void){ return s_amplitude_normaliztion_gain; }
+int32_t chiptune_get_amplitude_gain(void){ return AMPLITUDE_NORMALIZATION_GAIN(); }
 
 /**********************************************************************************/
 
-void chiptune_set_amplitude_gain(int32_t amplitude_gain) {s_amplitude_normaliztion_gain = amplitude_gain; }
+void chiptune_set_amplitude_gain(int32_t amplitude_gain) { UPDATE_AMPLITUDE_NORMALIZATION_GAIN(amplitude_gain); }
 
 /**********************************************************************************/
 
 void chiptune_move_toward(uint32_t const index)
 {
 	pass_through_midi_messages(index, NULL, NULL);
+	RESET_AMPLITUDE_NORMALIZATION_GAIN();
 	return ;
 }
 
@@ -1398,28 +1318,34 @@ void chiptune_set_tempo(float const tempo)
 	update_channel_controller_parameters_related_to_tempo();
 }
 
-
 /**********************************************************************************/
 
 int16_t chiptune_fetch_16bit_wave(void)
 {
-	int32_t out_wave = NORMALIZE_WAVE_AMPLITUDE(chiptune_fetch_64bit_wave());
-	do {
-		if(INT16_MAX < out_wave){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, greater than INT16_MAX\r\n",
-							out_wave);
-			break;
-		}
+	int64_t wave_64bit = chiptune_fetch_64bit_wave();
+	int32_t original_amplitude_normaliztion_gain = AMPLITUDE_NORMALIZATION_GAIN();
+	while(1)
+	{
+		int32_t wave_32bit;
+		wave_32bit = NORMALIZE_WAVE_AMPLITUDE(wave_64bit);
+		do {
+			if(INT16_MAX < wave_32bit){
+				break;
+			}
+			if(-INT16_MAX_PLUS_1 > wave_32bit){
+				break;
+			}
 
-		if(-INT16_MAX_PLUS_1 > out_wave){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: out_value = %d, less than -INT16_MAX_PLUS_1\r\n",
-							out_wave);
-			break;
-		}
-	}while(0);
+			if(AMPLITUDE_NORMALIZATION_GAIN() != original_amplitude_normaliztion_gain){
+				CHIPTUNE_PRINTF(cDeveloping, "change NORMALIZE_WAVE_AMPLITUDE as %d\r\n", AMPLITUDE_NORMALIZATION_GAIN());
+			}
+			return (int16_t)wave_32bit;
+		}while(0);
 
+		UPDATE_AMPLITUDE_NORMALIZATION_GAIN(AMPLITUDE_NORMALIZATION_GAIN() + 256);
+	} while(1);
 
-	return (int16_t)out_wave;
+	return 0;
 }
 
 /**********************************************************************************/

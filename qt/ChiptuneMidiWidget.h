@@ -62,7 +62,7 @@ private :
 	AudioPlayer *		m_p_audio_player;
 	QFileInfo			m_opened_file_info;
 	uint32_t			m_midi_file_duration_in_milliseconds;
-	int					m_inquiring_play_progress_timer_id;
+	int					m_inquiring_playback_status_timer_id;
 	QString				m_midi_file_duration_time_string;
 
 	QTimer				m_set_start_time_postpone_timer;

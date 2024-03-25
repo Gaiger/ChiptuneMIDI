@@ -110,7 +110,7 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 					 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
 	p_channel_controller->p_envelope_decay_table  = &s_fermi_decline_table[0];
-#define DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND	(0.05f)
+#define DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND	(0.01f)
 	p_channel_controller->envelope_decay_same_index_number
 		= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND)
 					 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
