@@ -378,7 +378,7 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 			break;
 		}
 
-		if(s_events[current_index].triggering_tick <= s_events[s_event_head_index].triggering_tick){
+		if(s_events[current_index].triggering_tick < s_events[s_event_head_index].triggering_tick){
 			s_events[current_index].next_event = s_event_head_index;
 			s_event_head_index = current_index;
 			break;
@@ -388,7 +388,7 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 		int16_t kk;
 		for(kk = 1; kk < s_upcoming_event_number; kk++){
 			int16_t next_index = s_events[previous_index].next_event;
-			if(s_events[current_index].triggering_tick <= s_events[next_index].triggering_tick){
+			if(s_events[current_index].triggering_tick < s_events[next_index].triggering_tick){
 				s_events[previous_index].next_event = current_index;
 				s_events[current_index].next_event = next_index;
 				break;
