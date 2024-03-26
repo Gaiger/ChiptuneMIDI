@@ -1,3 +1,4 @@
+#include <float.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -65,16 +66,6 @@ static void update_channel_controller_envelope_parameters_related_to_tempo(int8_
 
 	p_channel_controller->envelope_release_tick_number
 		= (uint16_t)(p_channel_controller->envelope_release_duration_in_second * resolution * tempo/60.0f + 0.5f);
-	uint32_t envelope_damper_on_but_note_off_sustain_tick_number
-			= (uint32_t)(p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_second * resolution * tempo/60.0f + 0.5f);
-	if(UINT16_MAX <= envelope_damper_on_but_note_off_sustain_tick_number){
-		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_on_but_note_off_sustain_tick_number = %u,"
-									 " greater than UINT16_MAX, set as  UINT16_MAX - 1 (%3.2f seconds)\r\n",
-						envelope_damper_on_but_note_off_sustain_tick_number, (UINT16_MAX - 1) * 60.0 /resolution/tempo );
-		envelope_damper_on_but_note_off_sustain_tick_number = UINT16_MAX - 1;
-	}
-	p_channel_controller->envelope_damper_on_but_note_off_sustain_tick_number
-			= (uint32_t)envelope_damper_on_but_note_off_sustain_tick_number;
 }
 
 /**********************************************************************************/
@@ -135,10 +126,31 @@ void reset_channel_controller_all_parameters_from_index(int8_t const index)
 	p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_second
 			= DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND;
 	p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table = &s_linear_decline_table[0];
-	p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number
-		= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND)
-					 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
-	//p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number = UINT16_MAX;
+	do {
+		if(FLT_MAX == p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_second){
+			p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number = UINT16_MAX;
+			break;
+		}
+		uint32_t envelope_damper_on_but_note_off_sustain_same_index_number
+				= (uint32_t)((sampling_rate * DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND)
+					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
+
+		if(envelope_damper_on_but_note_off_sustain_same_index_number >= UINT16_MAX){
+			envelope_damper_on_but_note_off_sustain_same_index_number = UINT16_MAX - 1;
+			float fixed_envelope_damper_on_but_note_off_sustain_duration_in_second
+					= (envelope_damper_on_but_note_off_sustain_same_index_number * CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH)
+					/ (float)sampling_rate;
+			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_on_but_note_off_sustain_duration_in_second = %3.2f,"
+										 "too greater than UINT16_MAX, set as %3.2f seconds\r\n",
+							p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_second,
+							fixed_envelope_damper_on_but_note_off_sustain_duration_in_second);
+			p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_second
+					= fixed_envelope_damper_on_but_note_off_sustain_duration_in_second;
+		}
+
+		p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number
+				= (uint16_t)envelope_damper_on_but_note_off_sustain_same_index_number;
+	} while(0);
 
 	update_channel_controller_envelope_parameters_related_to_tempo(index);
 	reset_channel_controller_midi_parameters_from_index(index);

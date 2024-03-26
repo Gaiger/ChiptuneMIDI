@@ -83,8 +83,7 @@ void AudioPlayer::InitializeAudioResources(int const number_of_channels, int con
 	format.setCodec("audio/pcm");
 	format.setByteOrder(QAudioFormat::LittleEndian);
 
-	do
-	{
+	do {
 		if(16 == sampling_size){
 			format.setSampleSize(16);
 			format.setSampleType(QAudioFormat::SignedInt);
@@ -128,8 +127,7 @@ void AudioPlayer::InitializeAudioResources(int const number_of_channels, int con
 void AudioPlayer::Play(bool const is_blocking)
 {
 	QMutexLocker lock(&m_accessing_io_device_mutex);
-	do
-	{
+	do {
 		if(nullptr != m_p_audio_output){
 			if(QAudio::ActiveState == m_p_audio_output->state()){
 				qDebug() << Q_FUNC_INFO << "Playing, ingore";
@@ -152,8 +150,7 @@ void AudioPlayer::Play(bool const is_blocking)
 		m_p_audio_output->start(m_p_audio_io_device);
 	} while(0);
 
-	do
-	{
+	do {
 		if(false == is_blocking){
 			break;
 		}
@@ -163,7 +160,7 @@ void AudioPlayer::Play(bool const is_blocking)
 		do {
 			loop.exec();
 		} while(m_p_audio_output->state() == QAudio::ActiveState);
-	}while(0);
+	} while(0);
 
 }
 

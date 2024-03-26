@@ -96,7 +96,7 @@ static int check_occupied_oscillator_list(void)
 
 static int occupy_oscillator(int16_t const index)
 {
-	do{
+	do {
 		if(0 == s_occupied_oscillator_number){
 			s_occupied_oscillator_nodes[index].previous = UNOCCUPIED_OSCILLATOR;
 			s_occupied_oscillator_nodes[index].next = UNOCCUPIED_OSCILLATOR;
@@ -281,8 +281,7 @@ static int check_upcoming_events(uint32_t const tick)
 	} while(0);
 
 	bool is_listing_error_occur = false;
-	do
-	{
+	do {
 		if(-1 == ret){
 			break;
 		}
@@ -536,8 +535,7 @@ int process_events(uint32_t const tick)
 				return -1;
 			}
 			SET_FREEING(p_oscillator->state_bits);
-			do
-			{
+			do {
 #if(0)
 				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice){
 					put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator, tick);

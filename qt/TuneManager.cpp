@@ -42,15 +42,14 @@ public:
 				break;
 			}
 
-			do
-			{
+			do {
 				if(TuneManager::SamplingSize16Bit == m_sampling_size){
 					int16_t value = chiptune_fetch_16bit_wave();
 					generated_bytearray += QByteArray((char*)&value, 2);
 					break;
 				}
 				generated_bytearray += chiptune_fetch_8bit_wave();
-			}while(0);
+			} while(0);
 		}
 
 		m_wave_bytearray += generated_bytearray;
@@ -90,13 +89,13 @@ TuneManager::TuneManager(bool is_stereo,
 
 	m_p_private = new TuneManagerPrivate();
 	m_p_private->m_sampling_rate = sampling_rate;
-	do{
+	do {
 		if(SamplingSize16Bit == sampling_size){
 			m_p_private->m_sampling_size = SamplingSize16Bit;
 			break;
 		}
 		m_p_private->m_sampling_size = SamplingSize8Bit;
-	}while(0);
+	} while(0);
 
 	do {
 		if(true == is_stereo){
@@ -205,8 +204,7 @@ void TuneManager::GenerateWave(int const length, bool const is_synchronized)
 						this, &TuneManager::HandleGenerateWaveRequested);
 
 	Qt::ConnectionType type = Qt::DirectConnection;
-	do
-	{
+	do {
 		if( QObject::thread() == QThread::currentThread()){
 			break;
 		}
@@ -217,7 +215,7 @@ void TuneManager::GenerateWave(int const length, bool const is_synchronized)
 			break;
 		}
 		type = Qt::BlockingQueuedConnection;
-	}while(0);
+	} while(0);
 
 	QObject::connect(this, &TuneManager::GenerateWaveRequested,
 					 this, &TuneManager::HandleGenerateWaveRequested, type);
@@ -328,8 +326,7 @@ int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 	int set_index = -1;
 	QList<QMidiEvent *> const p_midi_event_list = m_p_private ->m_p_midi_file->events();
 
-	do
-	{
+	do {
 		if(nullptr == m_p_private->m_p_midi_file){
 			break;
 		}
@@ -363,7 +360,7 @@ int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 			current_event_time_in_seconds = next_event_time_in_seconds;
 			next_event_time_in_seconds = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(i + 1)->tick());
 		}
-	}while(0);
+	} while(0);
 
 	if(-1 == set_index){
 		qDebug() << Q_FUNC_INFO <<"ERROR :: could not find target_start_time_in_seconds = " << target_start_time_in_seconds;

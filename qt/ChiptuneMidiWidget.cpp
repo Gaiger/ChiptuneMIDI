@@ -153,13 +153,12 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	font20.setPixelSize(20);
 	ui->MessageLabel->setFont(font20);
 	ui->PlayPositionLabel->setFont(font20);
-	do
-	{
+	do {
 		m_p_wave_chartview = new WaveChartView(
 					p_tune_manager->GetNumberOfChannels(),
 					p_tune_manager->GetSamplingRate(), p_tune_manager->GetSamplingSize(), this);
 		ReplaceWidget(m_p_wave_chartview, ui->WaveWidget);
-	}while(0);
+	} while(0);
 
 	QWidget::setAcceptDrops(true);
 
@@ -220,8 +219,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 	QString message_string;
 	m_opened_file_info = QFileInfo(filename_string);
 	int ret = 0;
-	do
-	{
+	do {
 		if(0 > m_p_tune_manager->LoadMidiFile(filename_string)){
 			message_string = QString::asprintf("Not a MIDI File");
 			ui->MessageLabel->setText(message_string);
@@ -390,8 +388,7 @@ void ChiptuneMidiWidget::dropEvent(QDropEvent *event)
 
 	QString dropped_filename_string = event->mimeData()->urls().at(0).toLocalFile();
 	QFileInfo file_info;
-	do
-	{
+	do {
 		if(false == event->mimeData()->hasUrls()){
 			ui->MessageLabel->setText("No dropped file");
 			break;
@@ -446,7 +443,7 @@ void ChiptuneMidiWidget::keyPressEvent(QKeyEvent *event)
 
 		ui->PlayProgressSlider->setValue(start_time);
 		SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(start_time);
-	}while(0);
+	} while(0);
 }
 
 /**********************************************************************************/
@@ -459,13 +456,12 @@ void ChiptuneMidiWidget::on_OpenMidiFilePushButton_released(void)
 											   "All file (*)")
 																);
 
-	do
-	{
+	do {
 		if(true == open_filename_string.isNull()){
 			break;
 		}
 		PlayMidiFile(open_filename_string);
-	}while(0);
+	} while(0);
 }
 
 /**********************************************************************************/
@@ -475,8 +471,7 @@ void ChiptuneMidiWidget::on_SaveSaveFilePushButton_released(void)
 	m_p_audio_player->Stop();
 	int playing_value = ui->PlayProgressSlider->value();
 
-	do
-	{
+	do {
 		QString suggested_filename_string = QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss");
 		suggested_filename_string += QString(" ") + m_opened_file_info.baseName();
 		suggested_filename_string += ".wav";
@@ -505,7 +500,7 @@ void ChiptuneMidiWidget::on_SaveSaveFilePushButton_released(void)
 
 		ui->MessageLabel->setText("");
 		QWidget::setEnabled(true);
-	}while(0);
+	} while(0);
 
 	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(playing_value);
 }
