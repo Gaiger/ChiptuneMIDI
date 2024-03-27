@@ -262,7 +262,7 @@ static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const v
 	(void)value;
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_RESET_ALL_CONTROLLERS(%d) :: voices = %d\r\n",
 					tick, MIDI_CC_RESET_ALL_CONTROLLERS, voice);
-	reset_channel_controller_midi_parameters_from_index(voice);
+	reset_channel_controller_midi_parameters(voice);
 }
 
 /**********************************************************************************/

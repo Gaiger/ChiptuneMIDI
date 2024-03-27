@@ -20,7 +20,7 @@ WaveChartView::WaveChartView(int const number_of_channels,
 	p_chart->addAxis(new QValueAxis(), Qt::AlignBottom);
 #define NOTE_A0_FREQUENCY							(27.50)
 	int series_length = (int)(sampling_rate/NOTE_A0_FREQUENCY + 0.5);
-	qDebug() << Q_FUNC_INFO << " series_length = " << series_length;
+	//qDebug() << Q_FUNC_INFO << " series_length = " << series_length;
 	p_chart->axes(Qt::Horizontal).at(0)->setRange(0, series_length - 1);
 	p_chart->axes(Qt::Horizontal).at(0)->setVisible(false);
 	p_chart->addAxis( new QValueAxis(), Qt::AlignLeft);

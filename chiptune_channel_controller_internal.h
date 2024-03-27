@@ -21,7 +21,7 @@
 															((INDEX) & (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1))
 
 #define SUSTAIN_AMPLITUDE(LOUNDNESS, SUSTAIN_LEVEL)	\
-													((int16_t)CHANNEL_CONTROLLER_DIVIDE_BY_128((int32_t)(LOUNDNESS) * (SUSTAIN_LEVEL) * 16))
+													((int16_t)CHANNEL_CONTROLLER_DIVIDE_BY_128((int32_t)(LOUNDNESS) * (SUSTAIN_LEVEL)))
 
 #define ENVELOPE_AMPLITUDE(AMPLITUDE, TABLE_VALUE)	\
 													(CHANNEL_CONTROLLER_DIVIDE_BY_128((AMPLITUDE) * (int32_t)(TABLE_VALUE)))
@@ -29,7 +29,7 @@
 #define LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(NOTE_ON_LOUNDNESS, DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL) \
 													(\
 														(int16_t)CHANNEL_CONTROLLER_DIVIDE_BY_128((int32_t)(NOTE_ON_LOUNDNESS) \
-														* (DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL) * 4)\
+														* (DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL))\
 													)
 
 #define PERCUSSION_ENVELOPE(XX, TABLE_VALUE)	\
@@ -47,12 +47,20 @@ enum
 
 enum
 {
-	DUTY_CYLCE_125_CRITICAL_PHASE	= (UINT16_MAX + 1) >> 3,
-	DUTY_CYLCE_25_CRITICAL_PHASE	= (UINT16_MAX + 1) >> 2,
+	DUTY_CYLCE_NONE					= UINT16_MAX,
 	DUTY_CYLCE_50_CRITICAL_PHASE	= (UINT16_MAX + 1) >> 1,
+	DUTY_CYLCE_25_CRITICAL_PHASE	= (UINT16_MAX + 1) >> 2,
+	DUTY_CYLCE_125_CRITICAL_PHASE	= (UINT16_MAX + 1) >> 3,
 	DUTY_CYLCE_75_CRITICAL_PHASE	= (UINT16_MAX + 1) - ((UINT16_MAX + 1) >> 2),
 };
 
+enum
+{
+	ENVELOPE_CURVE_LINEAR,
+	ENVELOPE_CURVE_EXPONENTIAL,
+	ENVELOPE_CURVE_GAUSSIAN,
+	ENVELOPE_CURVE_FERMI,
+};
 
 typedef struct _channel_controller
 {
@@ -88,15 +96,15 @@ typedef struct _channel_controller
 
 	uint8_t				envelope_sustain_level;
 
-	float				envelope_release_duration_in_second;
+	float				envelope_release_duration_in_seconds;
 	int8_t const *		p_envelope_release_table;
 	uint16_t			envelope_release_same_index_number;
 	uint16_t			envelope_release_tick_number;
 
 	bool				is_damper_pedal_on;
 
-	uint8_t				damper_on_but_note_off_loudness_level;
-	float				envelope_damper_on_but_note_off_sustain_duration_in_second;
+	uint8_t				envelop_damper_on_but_note_off_sustain_level;
+	float				envelope_damper_on_but_note_off_sustain_duration_in_seconds;
 	int8_t const *		p_envelope_damper_on_but_note_off_sustain_table;
 	uint16_t			envelope_damper_on_but_note_off_sustain_same_index_number;
 
@@ -124,8 +132,18 @@ void initialize_channel_controller(void);
 void update_channel_controller_parameters_related_to_tempo(void);
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index);
 
-void reset_channel_controller_midi_parameters_from_index(int8_t const index);
-void reset_channel_controller_all_parameters_from_index(int8_t const index);
+void reset_channel_controller_midi_parameters(int8_t const index);
+void reset_channel_controller_all_parameters(int8_t const index);
 
 percussion_t * const get_percussion_pointer_from_index(int8_t const index);
+
+int set_pitch_channel_parameters(int8_t const channel_index, int8_t const waveform, uint16_t const dutycycle_critical_phase,
+									   int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
+									   int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
+									   uint8_t const envelope_sustain_level,
+									   int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
+									   uint8_t const envelope_damper_on_but_note_off_sustain_level,
+									   int8_t const envelope_damper_on_but_note_off_sustain_curve,
+									   float const envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+
 #endif // _CHIPTUNE_CHANNEL_CONTROLLER_INTERNAL_H_

@@ -64,6 +64,7 @@ public:
 	int m_wave_prebuffer_length;
 	QByteArray m_wave_bytearray;
 
+	QList<int> m_active_channel_list;
 	TuneManager *m_p_public;
 };
 
@@ -105,6 +106,7 @@ TuneManager::TuneManager(bool is_stereo,
 		m_p_private->m_number_of_channels = 1;
 	} while(0);
 	m_p_private->m_p_midi_file = nullptr;
+	m_p_private->m_active_channel_list.clear();
 	m_p_private->m_p_public = this;
 
 	s_p_private_instance = m_p_private;
@@ -120,6 +122,7 @@ TuneManager::~TuneManager(void)
 		delete m_p_private->m_p_midi_file;
 		m_p_private->m_p_midi_file = nullptr;
 	}
+	m_p_private->m_active_channel_list.clear();
 
 	delete m_p_private;
 	m_p_private = nullptr;
@@ -160,6 +163,7 @@ void TuneManager::ClearOutMidiFile(void)
 		delete m_p_private->m_p_midi_file;
 		m_p_private->m_p_midi_file = nullptr;
 	}
+	m_p_private->m_active_channel_list.clear();
 }
 
 /**********************************************************************************/
@@ -173,8 +177,17 @@ int TuneManager::InitializeTune(void)
 		return -1;
 	}
 
+	bool is_channels_active_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
 	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
-						 (uint32_t)m_p_private->m_sampling_rate, m_p_private->m_p_midi_file->resolution());
+						 (uint32_t)m_p_private->m_sampling_rate, m_p_private->m_p_midi_file->resolution(),
+						 &is_channels_active_array[0]);
+	for(int i = 0; i < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; i++){
+		if(true == is_channels_active_array[i]){
+			m_p_private->m_active_channel_list.append(i);
+			qDebug() << "channel " << i << " is active";
+		}
+	}
+
 	return 0;
 }
 
@@ -375,4 +388,39 @@ int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 	m_p_private->m_wave_bytearray.clear();
 	m_p_private->m_wave_prebuffer_length = 0;
 	return 0;
+}
+
+/**********************************************************************************/
+
+QList<int> TuneManager::GetActiveChannelList(void)
+{
+	return m_p_private->m_active_channel_list;
+}
+
+/**********************************************************************************/
+
+int TuneManager::SetPitchChannelTimbre(int8_t channel_index,
+						   int8_t const waveform,
+						   int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
+						   int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
+						   uint8_t const envelope_sustain_level,
+						   int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
+						   uint8_t const envelope_damper_on_but_note_off_sustain_level,
+						   int8_t const envelope_damper_on_but_note_off_sustain_curve,
+						   float const envelope_damper_on_but_note_off_sustain_duration_in_seconds)
+{
+	QMutexLocker locker(&m_mutex);
+	if(nullptr == m_p_private->m_p_midi_file){
+		return -1;
+	}
+
+	int ret = chiptune_set_pitch_channel_timbre(channel_index, waveform,
+									  envelope_attack_curve, envelope_attack_duration_in_seconds,
+									  envelope_decay_curve, envelope_decay_duration_in_seconds,
+									  envelope_sustain_level,
+									  envelope_release_curve, envelope_release_duration_in_seconds,
+									  envelope_damper_on_but_note_off_sustain_level,
+									  envelope_damper_on_but_note_off_sustain_curve,
+									  envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+	return ret;
 }

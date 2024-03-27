@@ -34,7 +34,7 @@ channel_controller_t * const get_channel_controller_pointer_from_index(int8_t co
 
 /**********************************************************************************/
 
-void reset_channel_controller_midi_parameters_from_index(int8_t const index)
+void reset_channel_controller_midi_parameters(int8_t const index)
 {
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
 	p_channel_controller->coarse_tuning_value = MIDI_SEVEN_BITS_CENTER_VALUE;
@@ -65,95 +65,173 @@ static void update_channel_controller_envelope_parameters_related_to_tempo(int8_
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
 
 	p_channel_controller->envelope_release_tick_number
-		= (uint16_t)(p_channel_controller->envelope_release_duration_in_second * resolution * tempo/60.0f + 0.5f);
+		= (uint16_t)(p_channel_controller->envelope_release_duration_in_seconds * resolution * tempo/60.0f + 0.5f);
 }
 
 /**********************************************************************************/
 
-void reset_channel_controller_all_parameters_from_index(int8_t const index)
+static void set_growth_curve(int8_t const ** pp_phase_table, int8_t const curve)
 {
+	switch(curve)
+	{
+	case ENVELOPE_CURVE_LINEAR:
+		*pp_phase_table = &s_linear_growth_table[0];
+		break;
+	case ENVELOPE_CURVE_EXPONENTIAL:
+		*pp_phase_table = &s_exponential_growth_table[0];
+		break;
+	case ENVELOPE_CURVE_GAUSSIAN:
+		*pp_phase_table = &s_gaussian_growth_table[0];
+		break;
+	case ENVELOPE_CURVE_FERMI:
+		*pp_phase_table = &s_fermi_growth_table[0];
+		break;
+	}
+}
+
+/**********************************************************************************/
+
+static void set_decline_curve(int8_t const ** pp_phase_table, int8_t const curve)
+{
+	switch(curve)
+	{
+	case ENVELOPE_CURVE_LINEAR:
+		*pp_phase_table = &s_linear_decline_table[0];
+		break;
+	case ENVELOPE_CURVE_EXPONENTIAL:
+		*pp_phase_table = &s_exponential_decline_table[0];
+		break;
+	case ENVELOPE_CURVE_GAUSSIAN:
+		*pp_phase_table = &s_gaussian_decline_table[0];
+		break;
+	case ENVELOPE_CURVE_FERMI:
+		*pp_phase_table = &s_fermi_decline_table[0];
+		break;
+	}
+}
+
+/**********************************************************************************/
+
+int set_pitch_channel_parameters(int8_t const index, int8_t const waveform, uint16_t const dutycycle_critical_phase,
+									   int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
+									   int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
+									   uint8_t const envelope_sustain_level,
+									   int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
+									   uint8_t const envelope_damper_on_but_note_off_sustain_level,
+									   int8_t const envelope_damper_on_but_note_off_sustain_curve,
+									   float const envelope_damper_on_but_note_off_sustain_duration_in_seconds)
+{
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == index){
+		return 1;
+	}
+
+	int ret = 0;
 	uint32_t const sampling_rate = get_sampling_rate();
 
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
-	p_channel_controller->waveform = WAVEFORM_TRIANGLE;
+	p_channel_controller->waveform = waveform;
+	p_channel_controller->duty_cycle_critical_phase = dutycycle_critical_phase;
 
-#define	DEFAULT_VIBRATO_MODULATION_IN_SEMITINE		(1)
-#define DEFAULT_VIBRATO_RATE						(4)
-	p_channel_controller->vibrato_modulation_in_semitones = DEFAULT_VIBRATO_MODULATION_IN_SEMITINE;
-	p_channel_controller->p_vibrato_phase_table = &s_vibrato_phase_table[0];
-	p_channel_controller->vibrato_same_index_number
-			= (uint16_t)(sampling_rate/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_RATE);
+	int8_t const ** pp_phase_table = NULL;
 
-#define	DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE	(0.25f)
-	p_channel_controller->max_pitch_chorus_bend_in_semitones = DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
-
-	/*
-	 * s_linear_decline_table s_linear_growth_table
-	 * s_exponential_decline_table s_exponential_growth_table
-	 * s_gaussian_decline_table s_gaussian_growth_table
-	 * s_fermi_decline_table s_fermi_growth_table
-	*/
-
-	p_channel_controller->p_envelope_attack_table = &s_linear_growth_table[0];
-#define DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND	(0.02f)
+	pp_phase_table = &p_channel_controller->p_envelope_attack_table;
+	set_growth_curve(pp_phase_table, envelope_attack_curve);
 	p_channel_controller->envelope_attack_same_index_number
-		= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND)
-					 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
+		= (uint16_t)((sampling_rate * envelope_attack_duration_in_seconds)
+					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
+	if(0 == p_channel_controller->envelope_attack_same_index_number){
+		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_attack_same_index_number is zero\r\n");
+		ret = 0x01 << 0;
+	}
 
-	p_channel_controller->p_envelope_decay_table  = &s_fermi_decline_table[0];
-#define DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND	(0.01f)
+	pp_phase_table = &p_channel_controller->p_envelope_decay_table;
+	set_decline_curve(pp_phase_table, envelope_decay_curve);
 	p_channel_controller->envelope_decay_same_index_number
-		= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND)
-					 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
+		= (uint16_t)((sampling_rate * envelope_decay_duration_in_seconds)
+					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
-	//100% = level 8
-#define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(7)
-	p_channel_controller->envelope_sustain_level = DEFAULT_ENVELOPE_SUSTAIN_LEVEL;
+	p_channel_controller->envelope_sustain_level = envelope_sustain_level;
 
-#define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.03f)
-	p_channel_controller->envelope_release_duration_in_second = DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND;
-	p_channel_controller->p_envelope_release_table = &s_exponential_decline_table[0];
+	if(0 == p_channel_controller->envelope_decay_same_index_number){
+		if(INT8_MAX + 1 != p_channel_controller->envelope_sustain_level){
+			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_decay_same_index_number is zero"
+										 " but envelope_sustain_level is not INT8_MAX + 1 \r\n");
+		}
+		ret |= 0x01 << 1;
+	}
+
+	pp_phase_table = &p_channel_controller->p_envelope_release_table;
+	set_decline_curve(pp_phase_table, envelope_release_curve);
+	p_channel_controller->envelope_release_duration_in_seconds = envelope_release_duration_in_seconds;
 	p_channel_controller->envelope_release_same_index_number
-		= (uint16_t)((sampling_rate * DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND)
-					 /(float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
+		= (uint16_t)((sampling_rate * envelope_release_duration_in_seconds)
+					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
+	if(0 == p_channel_controller->envelope_release_duration_in_seconds){
+		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_release_same_index_number is zero\r\n");
+		ret |= 0x01 << 2;
+	}
 
-
-	//100% = level 32
-#define DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL	(6)
-	p_channel_controller->damper_on_but_note_off_loudness_level = DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL;
-#define DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND \
-													(8.0)
-	p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_second
-			= DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND;
-	p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table = &s_linear_decline_table[0];
+	pp_phase_table = &p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table;
+	set_decline_curve(pp_phase_table, envelope_damper_on_but_note_off_sustain_curve);
+	p_channel_controller->envelop_damper_on_but_note_off_sustain_level = envelope_damper_on_but_note_off_sustain_level;
+	p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_seconds
+			= envelope_damper_on_but_note_off_sustain_duration_in_seconds;
 	do {
-		if(FLT_MAX == p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_second){
+		if(FLT_MAX == p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_seconds){
 			p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number = UINT16_MAX;
 			break;
 		}
 		uint32_t envelope_damper_on_but_note_off_sustain_same_index_number
-				= (uint32_t)((sampling_rate * DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND)
+				= (uint32_t)((sampling_rate * envelope_damper_on_but_note_off_sustain_duration_in_seconds)
 					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
 		if(envelope_damper_on_but_note_off_sustain_same_index_number >= UINT16_MAX){
 			envelope_damper_on_but_note_off_sustain_same_index_number = UINT16_MAX - 1;
-			float fixed_envelope_damper_on_but_note_off_sustain_duration_in_second
+			float fixed_envelope_damper_on_but_note_off_sustain_duration_in_seconds
 					= (envelope_damper_on_but_note_off_sustain_same_index_number * CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH)
 					/ (float)sampling_rate;
 			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_on_but_note_off_sustain_duration_in_second = %3.2f,"
-										 "too greater than UINT16_MAX, set as %3.2f seconds\r\n",
-							p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_second,
-							fixed_envelope_damper_on_but_note_off_sustain_duration_in_second);
-			p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_second
-					= fixed_envelope_damper_on_but_note_off_sustain_duration_in_second;
+										 "greater than UINT16_MAX, set as %3.2f seconds\r\n",
+							p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_seconds,
+							fixed_envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+			p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_seconds
+					= fixed_envelope_damper_on_but_note_off_sustain_duration_in_seconds;
 		}
 
 		p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number
 				= (uint16_t)envelope_damper_on_but_note_off_sustain_same_index_number;
 	} while(0);
-
+#if(0)
+	if(FLT_MAX == p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number){
+		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_on_but_note_off_sustain_duration_in_seconds is forever\r\n");
+		ret |= 0x01 << 3;
+	}
+#endif
 	update_channel_controller_envelope_parameters_related_to_tempo(index);
-	reset_channel_controller_midi_parameters_from_index(index);
+	return ret;
+}
+
+/**********************************************************************************/
+
+void reset_channel_controller_all_parameters(int8_t const index)
+{
+#define DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND	(0.02f)
+#define DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND	(0.01f)
+#define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(96)
+#define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.02f)
+#define DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL	\
+													(24)
+#define DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND \
+													(8.0f)
+
+	set_pitch_channel_parameters(index, WAVEFORM_TRIANGLE, DUTY_CYLCE_50_CRITICAL_PHASE,
+									  ENVELOPE_CURVE_LINEAR, DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND,
+									  ENVELOPE_CURVE_FERMI, DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND,
+									  DEFAULT_ENVELOPE_SUSTAIN_LEVEL,
+									  ENVELOPE_CURVE_EXPONENTIAL, DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND,
+									  DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL, ENVELOPE_CURVE_LINEAR,
+									  DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND);
+	reset_channel_controller_midi_parameters(index);
 }
 
 /**********************************************************************************/
@@ -231,12 +309,36 @@ void initialize_channel_controller(void)
 		s_vibrato_phase_table[i] = (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
 	}
 	initialize_envelope_tables();
+
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		reset_channel_controller_all_parameters_from_index(i);
+		channel_controller_t * const p_channel_controller = &s_channel_controllers[i];
+#define	DEFAULT_VIBRATO_MODULATION_IN_SEMITINE		(1)
+#define DEFAULT_VIBRATO_RATE						(4)
+		p_channel_controller->vibrato_modulation_in_semitones = DEFAULT_VIBRATO_MODULATION_IN_SEMITINE;
+		p_channel_controller->p_vibrato_phase_table = &s_vibrato_phase_table[0];
+		p_channel_controller->vibrato_same_index_number
+			= (uint16_t)(get_sampling_rate()/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_RATE);
+#define	DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE	(0.25f)
+		p_channel_controller->max_pitch_chorus_bend_in_semitones = DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
 	}
+
+#define DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS		(0.03f)
+	channel_controller_t * const p_channel_controller = &s_channel_controllers[MIDI_PERCUSSION_INSTRUMENT_CHANNEL];
+	int8_t const ** pp_phase_table = NULL;
+	pp_phase_table = &p_channel_controller->p_envelope_release_table;
+	set_decline_curve(pp_phase_table, ENVELOPE_CURVE_EXPONENTIAL);
+	p_channel_controller->envelope_release_duration_in_seconds = DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS;
+	p_channel_controller->envelope_release_same_index_number
+		= (uint16_t)((get_sampling_rate() * DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS)
+					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
+	update_channel_controller_envelope_parameters_related_to_tempo(MIDI_PERCUSSION_INSTRUMENT_CHANNEL);
 
 	for(int i = PERCUSSION_CODE_MIN; i <= PERCUSSION_CODE_MAX; i++){
 		reset_percussion_all_parameters_from_index(i);
+	}
+
+	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
+		reset_channel_controller_all_parameters(i);
 	}
 }
 

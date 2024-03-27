@@ -396,7 +396,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			memset(&p_oscillator->reverb_asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, 3 * sizeof(int16_t));
 			p_oscillator->loudness =
 					LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->loudness,
-															   p_channel_controller->damper_on_but_note_off_loudness_level);
+															   p_channel_controller->envelop_damper_on_but_note_off_sustain_level);
 			p_oscillator->amplitude = 0;
 			p_oscillator->envelope_same_index_count = 0;
 			p_oscillator->envelope_table_index = 0;
@@ -690,160 +690,6 @@ static int process_timely_midi_message_and_event(void)
 	return ret;
 }
 
-/**********************************************************************************/
-#ifdef _INCREMENTAL_SAMPLE_INDEX
-#define UPDATE_CURRENT_TICK(TICK)					do { \
-														s_current_sample_index = (uint32_t)((TICK) * s_tick_to_sample_index_ratio + 0.5); \
-													} while(0)
-#else
-#define UPDATE_CURRENT_TICK(TICK)					do { \
-														s_current_tick = (chiptune_float)(TICK); \
-													} while(0)
-#endif
-
-static void pass_through_midi_messages(const uint32_t end_midi_message_index,
-									   int32_t * const p_max_loudness,
-									   int16_t * const p_max_event_occupied_oscillator_number)
-{
-	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		reset_channel_controller_midi_parameters_from_index(i);
-	}
-	clean_all_events();
-	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
-	if(0 == end_midi_message_index){
-		return ;
-	}
-
-	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(false);
-	int32_t max_loudness = 0;
-	int16_t max_event_occupied_oscillator_number = 0;
-
-	fetch_midi_tick_message(s_midi_messge_index, &s_fetched_tick_message);
-	s_midi_messge_index += 1;
-	process_midi_message(s_fetched_tick_message);
-	s_previous_timely_tick = s_fetched_tick_message.tick;
-	SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
-
-	while(1)
-	{
-		bool is_reach_end_midi_message_index = false;
-		do {
-			if(false == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)){
-				break;
-			}
-
-			fetch_midi_tick_message(s_midi_messge_index, &s_fetched_tick_message);
-			if(false == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)){
-				s_midi_messge_index += 1;
-			}
-		} while(0);
-
-		if(end_midi_message_index == s_midi_messge_index){
-			int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-			int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
-			for(int16_t i = 0; i < occupied_oscillator_number; i++){
-				oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-				do {
-					if(true == IS_NOTE_ON(p_oscillator->state_bits)){
-						break;
-					}
-					channel_controller_t const * const p_channel_controller
-							= get_channel_controller_pointer_from_index(p_oscillator->voice);
-					if(false == p_channel_controller->is_damper_pedal_on){
-						break;
-					}
-					put_event(EVENT_DEACTIVATE, oscillator_index, CURRENT_TICK());
-				} while(0);
-				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
-			}
-			is_reach_end_midi_message_index = true;
-		}
-
-		if(NULL_TICK == s_fetched_event_tick){
-			s_fetched_event_tick = get_next_event_triggering_tick();
-		}
-
-		if(true == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)
-				&& NULL_TICK == s_fetched_event_tick){
-			if(0 == process_ending(CURRENT_TICK())){
-				break;
-			}
-		}
-
-		{
-			uint32_t const tick = (s_fetched_tick_message.tick < s_fetched_event_tick) ? s_fetched_tick_message.tick : s_fetched_event_tick;
-			UPDATE_CURRENT_TICK(tick);
-		}
-
-		do
-		{
-			if(CURRENT_TICK() == s_previous_timely_tick){
-				break;
-			}
-
-			s_previous_timely_tick = CURRENT_TICK();
-
-			if(max_event_occupied_oscillator_number < get_event_occupied_oscillator_number()){
-				max_event_occupied_oscillator_number = get_event_occupied_oscillator_number();
-			}
-
-			if(NULL == p_max_loudness){
-				break;
-			}
-			int32_t sum_loudness = 0;
-
-			int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-			int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
-			for(int16_t i = 0; i < occupied_oscillator_number; i++,
-				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index)){
-				oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-				if(false == IS_ACTIVATED(p_oscillator->state_bits)){
-					continue;
-				}
-
-				int16_t loudness = p_oscillator->loudness;
-				if(false == IS_NOTE_ON(p_oscillator->state_bits)){
-					channel_controller_t const *p_channel_controller
-							= get_channel_controller_pointer_from_index(p_oscillator->voice);
-					uint8_t damper_on_but_note_off_loudness_level
-							= p_channel_controller->damper_on_but_note_off_loudness_level;
-					loudness = LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(loudness,
-																		  damper_on_but_note_off_loudness_level);
-				}
-				sum_loudness += loudness;
-			}
-
-			if(sum_loudness > max_loudness){
-				max_loudness = sum_loudness;
-			}
-		}while(0);
-
-		if(CURRENT_TICK() == s_fetched_tick_message.tick){
-			process_midi_message(s_fetched_tick_message);
-			SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
-
-			s_fetched_event_tick = get_next_event_triggering_tick();
-		}
-
-		if(CURRENT_TICK() == s_fetched_event_tick){
-			process_events(CURRENT_TICK());
-			s_fetched_event_tick = NULL_TICK;
-		}
-
-		if(true == is_reach_end_midi_message_index){
-			break;
-		}
-	}
-
-	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
-
-	if(NULL != p_max_loudness){
-		*p_max_loudness = max_loudness;
-	}
-	if(NULL != p_max_event_occupied_oscillator_number){
-		*p_max_event_occupied_oscillator_number = max_event_occupied_oscillator_number;
-	}
-}
 
 /**********************************************************************************/
 
@@ -1225,6 +1071,140 @@ static int64_t chiptune_fetch_64bit_wave(void)
 }
 
 /**********************************************************************************/
+#ifdef _INCREMENTAL_SAMPLE_INDEX
+#define UPDATE_CURRENT_TICK(TICK)					do { \
+														s_current_sample_index = (uint32_t)((TICK) * s_tick_to_sample_index_ratio + 0.5); \
+													} while(0)
+#else
+#define UPDATE_CURRENT_TICK(TICK)					do { \
+														s_current_tick = (chiptune_float)(TICK); \
+													} while(0)
+#endif
+
+static void pass_through_midi_messages(const uint32_t end_midi_message_index,
+									   bool * const p_is_channels_active_array)
+{
+	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
+		reset_channel_controller_midi_parameters(i);
+	}
+	if(NULL != p_is_channels_active_array){
+		for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
+			p_is_channels_active_array[i] = false;
+		}
+	}
+
+	clean_all_events();
+	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
+	if(0 == end_midi_message_index){
+		return ;
+	}
+
+	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(false);
+	int16_t max_event_occupied_oscillator_number = 0;
+
+	fetch_midi_tick_message(s_midi_messge_index, &s_fetched_tick_message);
+	s_midi_messge_index += 1;
+	process_midi_message(s_fetched_tick_message);
+	s_previous_timely_tick = s_fetched_tick_message.tick;
+	SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
+
+	while(1)
+	{
+		bool is_reach_end_midi_message_index = false;
+		do {
+			if(false == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)){
+				break;
+			}
+
+			fetch_midi_tick_message(s_midi_messge_index, &s_fetched_tick_message);
+			if(false == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)){
+				s_midi_messge_index += 1;
+			}
+		} while(0);
+
+		if(end_midi_message_index == s_midi_messge_index){
+			int16_t oscillator_index = get_event_occupied_oscillator_head_index();
+			int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+			for(int16_t i = 0; i < occupied_oscillator_number; i++){
+				oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+				do {
+					if(true == IS_NOTE_ON(p_oscillator->state_bits)){
+						break;
+					}
+					channel_controller_t const * const p_channel_controller
+							= get_channel_controller_pointer_from_index(p_oscillator->voice);
+					if(false == p_channel_controller->is_damper_pedal_on){
+						break;
+					}
+					put_event(EVENT_DEACTIVATE, oscillator_index, CURRENT_TICK());
+				} while(0);
+				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+			}
+			is_reach_end_midi_message_index = true;
+		}
+
+		if(NULL_TICK == s_fetched_event_tick){
+			s_fetched_event_tick = get_next_event_triggering_tick();
+		}
+
+		if(true == IS_NULL_TICK_MESSAGE(s_fetched_tick_message)
+				&& NULL_TICK == s_fetched_event_tick){
+			if(0 == process_ending(CURRENT_TICK())){
+				break;
+			}
+		}
+
+		{
+			uint32_t const tick = (s_fetched_tick_message.tick < s_fetched_event_tick) ? s_fetched_tick_message.tick : s_fetched_event_tick;
+			UPDATE_CURRENT_TICK(tick);
+		}
+
+		do
+		{
+			if(CURRENT_TICK() == s_previous_timely_tick){
+				break;
+			}
+
+			s_previous_timely_tick = CURRENT_TICK();
+
+			if(max_event_occupied_oscillator_number < get_event_occupied_oscillator_number()){
+				max_event_occupied_oscillator_number = get_event_occupied_oscillator_number();
+			}
+			if(NULL == p_is_channels_active_array){
+				break;
+			}
+			int16_t oscillator_index = get_event_occupied_oscillator_head_index();
+			int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+			for(int16_t i = 0; i < occupied_oscillator_number; i++,
+				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index)){
+				oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+				p_is_channels_active_array[p_oscillator->voice] = true;
+			}
+		}while(0);
+
+		if(CURRENT_TICK() == s_fetched_tick_message.tick){
+			process_midi_message(s_fetched_tick_message);
+			SET_TICK_MESSAGE_NULL(s_fetched_tick_message);
+
+			s_fetched_event_tick = get_next_event_triggering_tick();
+		}
+
+		if(CURRENT_TICK() == s_fetched_event_tick){
+			process_events(CURRENT_TICK());
+			s_fetched_event_tick = NULL_TICK;
+		}
+
+		if(true == is_reach_end_midi_message_index){
+			break;
+		}
+	}
+
+	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
+
+
+}
+
+/**********************************************************************************/
 
 #ifdef AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
 
@@ -1285,7 +1265,20 @@ static int32_t s_amplitude_normaliztion_gain = DEFAULT_AMPLITUDE_NORMALIZATION_G
 
 /**********************************************************************************/
 
-void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution)
+static void get_active_channel_array(bool is_channels_active_array[MIDI_MAX_CHANNEL_NUMBER])
+{
+	pass_through_midi_messages(-1, &is_channels_active_array[0]);
+	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
+		reset_channel_controller_midi_parameters(i);
+	}
+	clean_all_events();
+	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
+	RESET_AMPLITUDE_NORMALIZATION_GAIN();
+}
+/**********************************************************************************/
+
+void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution,
+						 bool is_channels_active_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER])
 {
 	s_is_stereo = is_stereo;
 	s_is_processing_left_channel = true;
@@ -1301,6 +1294,8 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 	clean_all_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
+
+	get_active_channel_array(&is_channels_active_array[0]);
 	process_timely_midi_message_and_event();
 	return ;
 }
@@ -1317,7 +1312,7 @@ void chiptune_set_amplitude_gain(int32_t amplitude_gain) { UPDATE_AMPLITUDE_NORM
 
 void chiptune_move_toward(uint32_t const index)
 {
-	pass_through_midi_messages(index, NULL, NULL);
+	pass_through_midi_messages(index, NULL);
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
 	return ;
 }
@@ -1385,4 +1380,65 @@ uint32_t chiptune_get_current_tick(void)
 bool chiptune_is_tune_ending(void)
 {
 	return s_is_tune_ending;
+}
+
+
+/**********************************************************************************/
+
+int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const waveform,
+									  int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
+									  int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
+									  uint8_t const envelope_sustain_level,
+									  int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
+									  uint8_t const envelope_damper_on_but_note_off_sustain_level,
+									  int8_t const envelope_damper_on_but_note_off_sustain_curve,
+									  float const envelope_damper_on_but_note_off_sustain_duration_in_seconds)
+{
+	if( 0 > channel_index  || channel_index >= MIDI_MAX_CHANNEL_NUMBER){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: channel_index = %d is not acceptable for %s\r\n",
+						channel_index, __FUNCTION__);
+		return -1;
+	}
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == channel_index){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: channel_index = %d is MIDI_PERCUSSION_INSTRUMENT_CHANNEL %s\r\n",
+						MIDI_PERCUSSION_INSTRUMENT_CHANNEL, __FUNCTION__);
+		return 1;
+	}
+
+	int8_t channel_controller_waveform = WAVEFORM_SQUARE;
+	uint16_t dutycycle_critical_phase = DUTY_CYLCE_NONE;
+	switch(waveform)
+	{
+	case CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_50:
+		dutycycle_critical_phase = DUTY_CYLCE_50_CRITICAL_PHASE;
+		break;
+	case CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_25:
+		dutycycle_critical_phase = DUTY_CYLCE_25_CRITICAL_PHASE;
+		break;
+	case CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_125:
+		dutycycle_critical_phase = DUTY_CYLCE_125_CRITICAL_PHASE;
+		break;
+	case CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_75:
+		dutycycle_critical_phase = DUTY_CYLCE_75_CRITICAL_PHASE;
+		break;
+	case CHIPTUNE_WAVEFORM_TRIANGLE:
+		channel_controller_waveform = WAVEFORM_TRIANGLE;
+		break;
+	case CHIPTUNE_WAVEFORM_SAW:
+		channel_controller_waveform = WAVEFORM_SAW;
+		break;
+	default:
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: waveform = %d is not acceptable for %s\r\n",
+						waveform, __FUNCTION__);
+		return -2;
+	}
+
+	return set_pitch_channel_parameters(channel_index, channel_controller_waveform, dutycycle_critical_phase,
+									  envelope_attack_curve, envelope_attack_duration_in_seconds,
+									  envelope_decay_curve, envelope_decay_duration_in_seconds,
+									  envelope_sustain_level,
+									  envelope_release_curve, envelope_release_duration_in_seconds,
+									  envelope_damper_on_but_note_off_sustain_level,
+									  envelope_damper_on_but_note_off_sustain_curve,
+									  envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 }
