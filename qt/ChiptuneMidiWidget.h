@@ -41,11 +41,21 @@ private slots:
 	void on_PlayPausePushButton_released(void);
 	void on_AmplitudeGainSlider_sliderMoved(int value);
 private slots:
-	void HandleWaveFetched(const QByteArray wave_bytearray);
-
 	void on_PlayProgressSlider_sliderMoved(int value);
+private slots:
+	void HandleWaveFetched(const QByteArray wave_bytearray);
 	void HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value);
+	void HandleAudioPlayerStateChanged(AudioPlayer::PlaybackState state);
 
+	void HandlePitchTimbreValueFrameChanged(int index,
+											int waveform,
+											int envelope_attack_curve, double envelope_attack_duration_in_seconds,
+											int envelope_decay_curve, double envelope_decay_duration_in_seconds,
+											int envelope_sustain_level,
+											int envelope_release_curve, double envelope_release_duration_in_seconds,
+											int envelope_damper_on_but_note_off_sustain_level,
+											int envelope_damper_on_but_note_off_sustain_curve,
+											double envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 private:
 	int PlayMidiFile(QString filename_string);
 	void SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds);
@@ -60,6 +70,7 @@ private :
 	QThread				m_tune_manager_working_thread;
 
 	AudioPlayer *		m_p_audio_player;
+
 	QFileInfo			m_opened_file_info;
 	uint32_t			m_midi_file_duration_in_milliseconds;
 	int					m_inquiring_playback_status_timer_id;

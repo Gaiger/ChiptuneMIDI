@@ -33,6 +33,9 @@ public:
 	}; Q_ENUM(PlaybackState)
 
 	PlaybackState GetState(void);
+public:
+	signals:
+	void StateChanged(AudioPlayer::PlaybackState state);
 private slots:
 	void HandleAudioNotify(void);
 	void HandleAudioStateChanged(QAudio::State state);
@@ -45,8 +48,9 @@ private :
 private:
 	QAudioOutput * m_p_audio_output;
 	QIODevice *m_p_audio_io_device;
-	QMutex m_accessing_io_device_mutex;
 	TuneManager *m_p_tune_manager;
+
+	QMutex m_accessing_io_device_mutex;
 };
 
 #endif // _AUDIOPLAYER_H_

@@ -177,6 +177,7 @@ int TuneManager::InitializeTune(void)
 		return -1;
 	}
 
+	m_p_private->m_active_channel_list.clear();
 	bool is_channels_active_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
 	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
 						 (uint32_t)m_p_private->m_sampling_rate, m_p_private->m_p_midi_file->resolution(),
@@ -184,10 +185,9 @@ int TuneManager::InitializeTune(void)
 	for(int i = 0; i < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; i++){
 		if(true == is_channels_active_array[i]){
 			m_p_private->m_active_channel_list.append(i);
-			qDebug() << "channel " << i << " is active";
+			//qDebug() << "channel " << i << " is active";
 		}
 	}
-
 	return 0;
 }
 
@@ -399,7 +399,7 @@ QList<int> TuneManager::GetActiveChannelList(void)
 
 /**********************************************************************************/
 
-int TuneManager::SetPitchChannelTimbre(int8_t channel_index,
+int TuneManager::SetPitchChannelTimbre(int8_t const channel_index,
 						   int8_t const waveform,
 						   int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
 						   int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,

@@ -214,27 +214,10 @@ color: rgb(208, 208, 208);
     <string>▷</string>
    </property>
   </widget>
-  <widget class="QWidget" name="ChannelListWidget" native="true">
-   <property name="geometry">
-    <rect>
-     <x>696</x>
-     <y>16</y>
-     <width>320</width>
-     <height>620</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">QWidget {
-background-color: rgb(52, 52, 52); 
-color: rgb(208, 208, 208);
-}
-</string>
-   </property>
-  </widget>
   <widget class="QSlider" name="AmplitudeGainSlider">
    <property name="geometry">
     <rect>
-     <x>660</x>
+     <x>648</x>
      <y>8</y>
      <width>18</width>
      <height>160</height>
@@ -251,6 +234,16 @@ color: rgb(208, 208, 208);
    </property>
    <property name="orientation">
     <enum>Qt::Vertical</enum>
+   </property>
+  </widget>
+  <widget class="QTableWidget" name="TimbreListTableWidget">
+   <property name="geometry">
+    <rect>
+     <x>680</x>
+     <y>8</y>
+     <width>336</width>
+     <height>624</height>
+    </rect>
    </property>
   </widget>
  </widget>

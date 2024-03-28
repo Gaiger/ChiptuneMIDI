@@ -62,7 +62,7 @@ public:
 		ENVELOPE_CURVE_FERMI,
 	}; Q_ENUM(EnvelopeCurveType)
 
-	int SetPitchChannelTimbre(int8_t channel_index,
+	int SetPitchChannelTimbre(int8_t const channel_index,
 							  int8_t const waveform = WAVEFORM_TRIANGLE,
 							  int8_t const envelope_attack_curve = ENVELOPE_CURVE_LINEAR, float const envelope_attack_duration_in_seconds = 0.02,
 							  int8_t const envelope_decay_curve = ENVELOPE_CURVE_FERMI, float const envelope_decay_duration_in_seconds = 0.01,

@@ -23,6 +23,7 @@ SOURCES += \
         ../chiptune_oscillator_internal.c \
         ../chiptune_printf_internal.c \
         ChiptuneMidiWidget.cpp \
+        PitchTimbreFrame.cpp \
         ProgressSlider.cpp \
         TuneManager.cpp \
         AudioPlayer.cpp \
@@ -46,12 +47,14 @@ HEADERS += \
     ../chiptune_printf_internal.h \
     ChiptuneMidiWidget.h \
     MidiPlayer.h \
+    PitchTimbreFrame.h \
     ProgressSlider.h \
     TuneManager.h \
     AudioPlayer.h \
     WaveChartView.h
 
 FORMS += \
-    ChiptuneMidiWidgetForm.ui
+    ChiptuneMidiWidgetForm.ui \
+    PitchTimbreFrameForm.ui
 
 RC_ICONS = chiptune.ico

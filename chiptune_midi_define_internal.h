@@ -58,7 +58,7 @@
 
 /**********************************************************************************/
 
-#define MIDI_PERCUSSION_INSTRUMENT_CHANNEL		(9)
+#define MIDI_PERCUSSION_INSTRUMENT_CHANNEL			(9)
 
 //https://usermanuals.finalemusic.com/SongWriter2012Win/Content/PercussionMaps.htm
 

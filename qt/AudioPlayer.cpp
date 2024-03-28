@@ -51,7 +51,7 @@ AudioPlayer::AudioPlayer(TuneManager *p_tune_manager, QObject *parent)
 AudioPlayer::~AudioPlayer(void)
 {
 	AudioPlayer::Stop();
-	AudioPlayer::ClearOutMidiFileAudioResources();
+	//AudioPlayer::ClearOutMidiFileAudioResources();
 }
 
 /**********************************************************************************/
@@ -127,6 +127,7 @@ void AudioPlayer::InitializeAudioResources(int const number_of_channels, int con
 void AudioPlayer::Play(bool const is_blocking)
 {
 	QMutexLocker lock(&m_accessing_io_device_mutex);
+	//qDebug() <<Q_FUNC_INFO <<"QThread::currentThread() = " << QThread::currentThread();
 	do {
 		if(nullptr != m_p_audio_output){
 			if(QAudio::ActiveState == m_p_audio_output->state()){
@@ -169,9 +170,6 @@ void AudioPlayer::Play(bool const is_blocking)
 void AudioPlayer::Stop(void)
 {
 	QMutexLocker lock(&m_accessing_io_device_mutex);
-	if(nullptr != m_p_audio_output){
-		m_p_audio_output->stop();
-	}
 	AudioPlayer::ClearOutMidiFileAudioResources();
 }
 
@@ -193,12 +191,15 @@ void AudioPlayer::AppendWave(QByteArray audio_bytearray)
 		return ;
 	}
 	m_p_audio_io_device->write(audio_bytearray);
+	//qDebug() <<Q_FUNC_INFO <<"QObject::thread() = " << QObject::thread();
 }
 
 /**********************************************************************************/
 
 void AudioPlayer::HandleAudioNotify(void)
 {
+	//qDebug() << Q_FUNC_INFO  << "elapsed " <<
+	//qDebug() <<Q_FUNC_INFO <<"QThread::currentThread() = " << QThread::currentThread();
 	//qDebug() << Q_FUNC_INFO  << "elapsed " <<
 	//			m_p_audio_output->elapsedUSecs()/1000.0/1000.0
 	//		 << "seconds";
@@ -220,6 +221,7 @@ void AudioPlayer::HandleAudioNotify(void)
 
 void AudioPlayer::HandleAudioStateChanged(QAudio::State state)
 {
+	//qDebug() <<Q_FUNC_INFO <<"QThread::currentThread() = " << QThread::currentThread();
 	qDebug() << Q_FUNC_INFO << state;
 	switch (state)
 	{
@@ -245,6 +247,7 @@ void AudioPlayer::HandleAudioStateChanged(QAudio::State state)
 		// ... other cases as appropriate
 		break;
 	}
+	emit StateChanged(GetState());
 }
 
 /**********************************************************************************/

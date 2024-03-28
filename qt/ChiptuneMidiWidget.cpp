@@ -16,6 +16,7 @@
 
 #include "ui_ChiptuneMidiWidgetForm.h"
 #include "ProgressSlider.h"
+#include "PitchTimbreFrame.h"
 #include "ChiptuneMidiWidget.h"
 
 struct wav_header_t
@@ -164,13 +165,16 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	m_p_tune_manager->moveToThread(&m_tune_manager_working_thread);
 	m_tune_manager_working_thread.start(QThread::HighPriority);
-	m_p_audio_player = new AudioPlayer(m_p_tune_manager, this);
+	m_p_audio_player = new AudioPlayer(m_p_tune_manager, nullptr);
 
 	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
 					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
 
 	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::MousePressed, this,
 					 &ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed);
+
+	QObject::connect(m_p_audio_player, &AudioPlayer::StateChanged,
+					 this, &ChiptuneMidiWidget::HandleAudioPlayerStateChanged, Qt::DirectConnection);
 
 	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
 	ui->SaveSaveFilePushButton->setToolTip(tr("Save as .wav file"));
@@ -182,16 +186,18 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 ChiptuneMidiWidget::~ChiptuneMidiWidget()
 {
-	m_tune_manager_working_thread.quit();
-	while( false == m_tune_manager_working_thread.isFinished())
-	{
-		QThread::msleep(10);
-	}
 
 	if(nullptr != m_p_audio_player){
 		m_p_audio_player->Stop();
 	}
+
+	m_tune_manager_working_thread.quit();
+	while( false == m_tune_manager_working_thread.isFinished()){
+		QThread::msleep(10);
+	}
+
 	delete m_p_audio_player; m_p_audio_player = nullptr;
+
 }
 
 /**********************************************************************************/
@@ -226,6 +232,28 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			ret = -1;
 			break;
 		}
+
+		ui->TimbreListTableWidget->clear();
+		ui->TimbreListTableWidget->setRowCount(0);
+		ui->TimbreListTableWidget->setColumnCount(0);
+
+		ui->TimbreListTableWidget->setFrameStyle(QFrame::NoFrame);
+		ui->TimbreListTableWidget->verticalHeader()->setVisible(false);
+		ui->TimbreListTableWidget->horizontalHeader()->setVisible(false);
+		int channel_number = m_p_tune_manager->GetActiveChannelList().size();
+
+		ui->TimbreListTableWidget->setRowCount(channel_number);
+		ui->TimbreListTableWidget->setColumnCount(1);
+		for(int i = 0; i < channel_number; i++){
+			int channel_index = m_p_tune_manager->GetActiveChannelList().at(i);
+			PitchTimbreFrame *p_pitch_timbre_frame = new PitchTimbreFrame(channel_index, ui->TimbreListTableWidget);
+			ui->TimbreListTableWidget->setCellWidget(i, 0, p_pitch_timbre_frame);
+			ui->TimbreListTableWidget->setColumnWidth(i, 320);
+			ui->TimbreListTableWidget->setRowHeight(i, 240);
+			QObject::connect(p_pitch_timbre_frame, &PitchTimbreFrame::ValuesChanged,
+							 this, &ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged);
+		}
+
 		ui->AmplitudeGainSlider->setValue(UINT16_MAX - m_p_tune_manager->GetAmplitudeGain());
 		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
 		m_midi_file_duration_time_string = FormatTimeString(m_midi_file_duration_in_milliseconds);
@@ -306,6 +334,15 @@ void ChiptuneMidiWidget::on_PlayProgressSlider_sliderMoved(int value)
 	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
 }
 
+void ChiptuneMidiWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackState state)
+{
+	if(state == AudioPlayer::PlaybackStateStateIdle){
+		if(false == IsPlayPausePushButtonPlayIcon()){
+			m_p_audio_player->Play();
+		}
+	}
+}
+
 /**********************************************************************************/
 
 void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value)
@@ -315,6 +352,26 @@ void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton bu
 	}
 	ui->PlayProgressSlider->setValue(value);
 	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
+}
+
+void ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged(int index,
+										int waveform,
+										int envelope_attack_curve, double envelope_attack_duration_in_seconds,
+										int envelope_decay_curve, double envelope_decay_duration_in_seconds,
+										int envelope_sustain_level,
+										int envelope_release_curve, double envelope_release_duration_in_seconds,
+										int envelope_damper_on_but_note_off_sustain_level,
+										int envelope_damper_on_but_note_off_sustain_curve,
+										double envelope_damper_on_but_note_off_sustain_duration_in_seconds)
+{
+	m_p_tune_manager->SetPitchChannelTimbre((int8_t)index, (int8_t)waveform,
+											(int8_t)envelope_attack_curve, (float)envelope_attack_duration_in_seconds,
+											(int8_t)envelope_decay_curve, (float)envelope_decay_duration_in_seconds,
+											(uint8_t)envelope_sustain_level,
+											(int8_t)envelope_release_curve, (float)envelope_release_duration_in_seconds,
+											(uint8_t)envelope_damper_on_but_note_off_sustain_level,
+											(int8_t)envelope_damper_on_but_note_off_sustain_curve,
+											(float)envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 }
 
 /**********************************************************************************/
