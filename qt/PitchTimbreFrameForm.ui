@@ -33,7 +33,7 @@ color: rgb(208, 208, 208);
     <rect>
      <x>48</x>
      <y>28</y>
-     <width>121</width>
+     <width>120</width>
      <height>24</height>
     </rect>
    </property>
@@ -504,6 +504,22 @@ color: rgb(208, 208, 208);
    </property>
    <property name="text">
     <string># 16</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="OutputEnabledCheckBox">
+   <property name="geometry">
+    <rect>
+     <x>228</x>
+     <y>8</y>
+     <width>84</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Enabled</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
    </property>
   </widget>
  </widget>

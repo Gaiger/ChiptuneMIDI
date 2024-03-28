@@ -27,6 +27,7 @@ public:
 
 
 	signals:
+	void OutputEnabled(int index, bool is_enabled);
 	void ValuesChanged(int index,
 					   int waveform,
 					   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
@@ -37,6 +38,8 @@ public:
 					   int envelope_damper_on_but_note_off_sustain_curve,
 					   double envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 private slots:
+	void on_OutputEnabledCheckBox_stateChanged(int state);
+
 	void on_WaveFormComboBox_currentIndexChanged(int index);
 	void on_DutyCycleComboBox_currentIndexChanged(int index);
 
@@ -56,7 +59,6 @@ private slots:
 	void on_DamperOnButNoteOffSustainSustainLevelSpinBox_valueChanged(int value);
 private:
 	void EmitValuesChanged(void);
-
 private:
 	int m_index;
 private:

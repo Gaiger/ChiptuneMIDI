@@ -14,7 +14,7 @@ void chiptune_set_midi_message_callback(
 
 #define CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER			(16)
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution,
-						 bool is_channels_active_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
+						 bool is_channels_noted_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
 
 void chiptune_set_tempo(float const tempo);
 
@@ -37,7 +37,7 @@ enum CHIPTUNE_ENVELOPE_CURVE_TYPE
 	CHIPTUNE_ENVELOPE_CURVE_FERMI,
 };
 
-int chiptune_set_pitch_channel_timbre(int8_t const channel, int8_t const waveform,
+int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const waveform,
 									  int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
 									  int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
 									  uint8_t const envelope_sustain_level,
@@ -52,6 +52,7 @@ bool chiptune_is_tune_ending(void);
 
 void chiptune_move_toward(uint32_t const index);
 uint32_t chiptune_get_current_tick(void);
+void chiptune_set_channel_output_enabled(int8_t const channel_index, bool is_enabled);
 
 int32_t chiptune_get_amplitude_gain(void);
 void chiptune_set_amplitude_gain(int32_t amplitude_gain);

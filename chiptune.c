@@ -1030,6 +1030,8 @@ int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
 													} while(0)
 #endif
 
+static bool s_is_channels_output_enabled_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
+
 static int64_t chiptune_fetch_64bit_wave(void)
 {
 	if(-1 == process_timely_midi_message_and_event()){
@@ -1042,6 +1044,9 @@ static int64_t chiptune_fetch_64bit_wave(void)
 	for(int16_t k = 0; k < occupied_oscillator_number; k++){
 		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
 		do {
+			if(false == s_is_channels_output_enabled_array[p_oscillator->voice]){
+				break;
+			}
 			if(false == IS_ACTIVATED(p_oscillator->state_bits)){
 				break;
 			}
@@ -1082,14 +1087,14 @@ static int64_t chiptune_fetch_64bit_wave(void)
 #endif
 
 static void pass_through_midi_messages(const uint32_t end_midi_message_index,
-									   bool * const p_is_channels_active_array)
+									   bool * const p_is_channels_noted_array)
 {
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 		reset_channel_controller_midi_parameters(i);
 	}
-	if(NULL != p_is_channels_active_array){
+	if(NULL != p_is_channels_noted_array){
 		for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-			p_is_channels_active_array[i] = false;
+			p_is_channels_noted_array[i] = false;
 		}
 	}
 
@@ -1170,7 +1175,7 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 			if(max_event_occupied_oscillator_number < get_event_occupied_oscillator_number()){
 				max_event_occupied_oscillator_number = get_event_occupied_oscillator_number();
 			}
-			if(NULL == p_is_channels_active_array){
+			if(NULL == p_is_channels_noted_array){
 				break;
 			}
 			int16_t oscillator_index = get_event_occupied_oscillator_head_index();
@@ -1178,7 +1183,7 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 			for(int16_t i = 0; i < occupied_oscillator_number; i++,
 				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index)){
 				oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-				p_is_channels_active_array[p_oscillator->voice] = true;
+				p_is_channels_noted_array[p_oscillator->voice] = true;
 			}
 		}while(0);
 
@@ -1200,8 +1205,6 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 	}
 
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
-
-
 }
 
 /**********************************************************************************/
@@ -1265,9 +1268,9 @@ static int32_t s_amplitude_normaliztion_gain = DEFAULT_AMPLITUDE_NORMALIZATION_G
 
 /**********************************************************************************/
 
-static void get_active_channel_array(bool is_channels_active_array[MIDI_MAX_CHANNEL_NUMBER])
+static void get_noted_channel_array(bool is_channels_noted_array[MIDI_MAX_CHANNEL_NUMBER])
 {
-	pass_through_midi_messages(-1, &is_channels_active_array[0]);
+	pass_through_midi_messages(-1, &is_channels_noted_array[0]);
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 		reset_channel_controller_midi_parameters(i);
 	}
@@ -1275,10 +1278,11 @@ static void get_active_channel_array(bool is_channels_active_array[MIDI_MAX_CHAN
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
 }
+
 /**********************************************************************************/
 
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution,
-						 bool is_channels_active_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER])
+						 bool is_channels_noted_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER])
 {
 	s_is_stereo = is_stereo;
 	s_is_processing_left_channel = true;
@@ -1290,12 +1294,14 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
 	}
 
+	for(int i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
+		s_is_channels_output_enabled_array[i] = true;
+	}
 	initialize_channel_controller();
 	clean_all_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
-
-	get_active_channel_array(&is_channels_active_array[0]);
+	get_noted_channel_array(&is_channels_noted_array[0]);
 	process_timely_midi_message_and_event();
 	return ;
 }
@@ -1382,6 +1388,18 @@ bool chiptune_is_tune_ending(void)
 	return s_is_tune_ending;
 }
 
+/**********************************************************************************/
+
+void chiptune_set_channel_output_enabled(int8_t const channel_index, bool is_enabled)
+{
+	if( 0 > channel_index  || channel_index >= MIDI_MAX_CHANNEL_NUMBER){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: channel_index = %d is not acceptable for %s\r\n",
+						channel_index, __FUNCTION__);
+		return ;
+	}
+
+	s_is_channels_output_enabled_array[channel_index] = is_enabled;
+}
 
 /**********************************************************************************/
 

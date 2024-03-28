@@ -47,6 +47,7 @@ private slots:
 	void HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value);
 	void HandleAudioPlayerStateChanged(AudioPlayer::PlaybackState state);
 
+	void HandleChannelOutputEnabled(int index, bool is_enabled);
 	void HandlePitchTimbreValueFrameChanged(int index,
 											int waveform,
 											int envelope_attack_curve, double envelope_attack_duration_in_seconds,

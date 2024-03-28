@@ -197,7 +197,6 @@ ChiptuneMidiWidget::~ChiptuneMidiWidget()
 	}
 
 	delete m_p_audio_player; m_p_audio_player = nullptr;
-
 }
 
 /**********************************************************************************/
@@ -240,16 +239,19 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		ui->TimbreListTableWidget->setFrameStyle(QFrame::NoFrame);
 		ui->TimbreListTableWidget->verticalHeader()->setVisible(false);
 		ui->TimbreListTableWidget->horizontalHeader()->setVisible(false);
-		int channel_number = m_p_tune_manager->GetActiveChannelList().size();
+		int channel_number = m_p_tune_manager->GetNotedChannelList().size();
 
 		ui->TimbreListTableWidget->setRowCount(channel_number);
 		ui->TimbreListTableWidget->setColumnCount(1);
 		for(int i = 0; i < channel_number; i++){
-			int channel_index = m_p_tune_manager->GetActiveChannelList().at(i);
+			int channel_index = m_p_tune_manager->GetNotedChannelList().at(i);
 			PitchTimbreFrame *p_pitch_timbre_frame = new PitchTimbreFrame(channel_index, ui->TimbreListTableWidget);
 			ui->TimbreListTableWidget->setCellWidget(i, 0, p_pitch_timbre_frame);
 			ui->TimbreListTableWidget->setColumnWidth(i, 320);
 			ui->TimbreListTableWidget->setRowHeight(i, 240);
+			QObject::connect(p_pitch_timbre_frame, &PitchTimbreFrame::OutputEnabled,
+							 this, &ChiptuneMidiWidget::HandleChannelOutputEnabled);
+
 			QObject::connect(p_pitch_timbre_frame, &PitchTimbreFrame::ValuesChanged,
 							 this, &ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged);
 		}
@@ -337,8 +339,10 @@ void ChiptuneMidiWidget::on_PlayProgressSlider_sliderMoved(int value)
 void ChiptuneMidiWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackState state)
 {
 	if(state == AudioPlayer::PlaybackStateStateIdle){
-		if(false == IsPlayPausePushButtonPlayIcon()){
-			m_p_audio_player->Play();
+		if(false == m_p_tune_manager->IsTuneEnding()){
+			if(false == IsPlayPausePushButtonPlayIcon()){
+				m_p_audio_player->Play();
+			}
 		}
 	}
 }
@@ -353,6 +357,15 @@ void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton bu
 	ui->PlayProgressSlider->setValue(value);
 	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
 }
+
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::HandleChannelOutputEnabled(int index, bool is_enabled)
+{
+	m_p_tune_manager->SetChannelOutputEnabled(index, is_enabled);
+}
+
+/**********************************************************************************/
 
 void ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged(int index,
 										int waveform,

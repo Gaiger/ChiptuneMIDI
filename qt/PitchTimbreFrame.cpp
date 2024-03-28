@@ -14,6 +14,18 @@ PitchTimbreFrame::PitchTimbreFrame(int index, QWidget *parent)
 #define MIDI_PERCUSSION_INSTRUMENT_CHANNEL			(9)
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == index){
 		ui->IndexLabel->setText( "#" + QString::number(index) + QString(" (Percussion)"));
+		ui->WaveFormComboBox->setEnabled(false);
+		ui->AttackCurveComboBox->setEnabled(false);
+		ui->AttackTimeSpinBox->setEnabled(false);
+		ui->DecayCurveComboBox->setEnabled(false);
+		ui->DecayTimeSpinBox->setEnabled(false);
+		ui->SustainLevelSpinBox->setEnabled(false);
+		ui->ReleaseCurveComboBox->setEnabled(false);
+		ui->ReleaseTimeSpinBox->setEnabled(false);
+
+		ui->DamperOnButNoteOffSustainSustainLevelSpinBox->setEnabled(false);
+		ui->DamperOnButNoteOffSustainCurveComboBox->setEnabled(false);
+		ui->DamperOnButNoteOffSustainTimeDoubleSpinBox->setEnabled(false);
 	}
 }
 
@@ -62,11 +74,18 @@ void PitchTimbreFrame::EmitValuesChanged(void)
 						ui->DamperOnButNoteOffSustainCurveComboBox->currentIndex(),
 						ui->DamperOnButNoteOffSustainTimeDoubleSpinBox->value());
 }
+/**********************************************************************************/
+
+void PitchTimbreFrame::on_OutputEnabledCheckBox_stateChanged(int state)
+{
+	emit OutputEnabled(m_index, (bool)state);
+}
 
 /**********************************************************************************/
 
 void PitchTimbreFrame::on_WaveFormComboBox_currentIndexChanged(int index)
 {
+	Q_UNUSED(index);
 	qDebug() << Q_FUNC_INFO;
 	do {
 		if(QString("Square") == ui->WaveFormComboBox->currentText()){

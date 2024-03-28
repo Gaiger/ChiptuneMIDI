@@ -42,7 +42,8 @@ public:
 	float GetCurrentElapsedTimeInSeconds(void);
 	int SetStartTimeInSeconds(float target_start_time_in_seconds);
 
-	QList<int> GetActiveChannelList(void);
+	QList<int> GetNotedChannelList(void);
+	void SetChannelOutputEnabled(int index, bool is_enabled);
 	enum WaveformType
 	{
 		WAVEFORM_SQUARE_DUDYCYCLE_50 = 0,
