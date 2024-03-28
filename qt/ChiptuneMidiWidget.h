@@ -60,6 +60,8 @@ private slots:
 private:
 	int PlayMidiFile(QString filename_string);
 	void SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds);
+	void StopMidiFile(void);
+
 private:
 	bool IsPlayPausePushButtonPlayIcon(void);
 	void SetPlayPausePushButtonAsPlayIcon(bool is_play_icon);

@@ -181,6 +181,10 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
 	ui->SaveSaveFilePushButton->setToolTip(tr("Save as .wav file"));
+
+	ui->TimbreListTableWidget->verticalHeader()->setVisible(false);
+	ui->TimbreListTableWidget->horizontalHeader()->setVisible(false);
+
 	QWidget::setFocusPolicy(Qt::StrongFocus);
 	QWidget::setFixedSize(QWidget::size());
 }
@@ -221,11 +225,14 @@ static QString FormatTimeString(qint64 timeMilliSeconds)
 
 int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 {
+	StopMidiFile();
+#if(0)
 	m_p_audio_player->Stop();
 	QObject::killTimer(m_inquiring_playback_status_timer_id);
 	m_inquiring_playback_status_timer_id = -1;
 
 	ui->MessageLabel->setText("");
+#endif
 	QThread::msleep(10);
 	QString message_string;
 	m_opened_file_info = QFileInfo(filename_string);
@@ -238,13 +245,6 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			break;
 		}
 
-		ui->TimbreListTableWidget->clear();
-		ui->TimbreListTableWidget->setRowCount(0);
-		ui->TimbreListTableWidget->setColumnCount(0);
-
-		ui->TimbreListTableWidget->setFrameStyle(QFrame::NoFrame);
-		ui->TimbreListTableWidget->verticalHeader()->setVisible(false);
-		ui->TimbreListTableWidget->horizontalHeader()->setVisible(false);
 		int channel_number = m_p_tune_manager->GetNotedChannelList().size();
 
 		ui->TimbreListTableWidget->setRowCount(channel_number);
@@ -283,6 +283,33 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 	message_string += QString::asprintf(" :: <b>%s</b>", m_opened_file_info.fileName().toUtf8().data());
 	ui->MessageLabel->setText(message_string);
 	return ret;
+}
+
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::StopMidiFile(void)
+{
+	m_p_audio_player->Stop();
+	m_p_tune_manager->ClearOutMidiFile();
+
+	if(-1 != m_inquiring_playback_status_timer_id){
+		QObject::killTimer(m_inquiring_playback_status_timer_id);
+		m_inquiring_playback_status_timer_id = -1;
+	}
+
+	ui->PlayPositionLabel->setText("00:00 / 00:00");
+	ui->PlayProgressSlider->setValue(0);
+
+	ui->PlayProgressSlider->setEnabled(false);
+	ui->MessageLabel->setText("");
+
+	ui->PlayPausePushButton->setEnabled(false);
+	SetPlayPausePushButtonAsPlayIcon(true);
+	m_p_wave_chartview->Reset();
+
+	ui->TimbreListTableWidget->clear();
+	ui->TimbreListTableWidget->setRowCount(0);
+	ui->TimbreListTableWidget->setColumnCount(0);
 }
 
 /**********************************************************************************/
@@ -586,23 +613,7 @@ void ChiptuneMidiWidget::on_SaveSaveFilePushButton_released(void)
 void ChiptuneMidiWidget::on_StopPushButton_released(void)
 {
 	qDebug() << Q_FUNC_INFO;
-	m_p_audio_player->Stop();
-	m_p_tune_manager->ClearOutMidiFile();
-
-	if(-1 != m_inquiring_playback_status_timer_id){
-		QObject::killTimer(m_inquiring_playback_status_timer_id);
-		m_inquiring_playback_status_timer_id = -1;
-	}
-
-	ui->PlayPositionLabel->setText("00:00 / 00:00");
-	ui->PlayProgressSlider->setValue(0);
-
-	ui->PlayProgressSlider->setEnabled(false);
-	ui->MessageLabel->setText("");
-
-	ui->PlayPausePushButton->setEnabled(false);
-	SetPlayPausePushButtonAsPlayIcon(true);
-	m_p_wave_chartview->Reset();
+	StopMidiFile();
 }
 
 /**********************************************************************************/
