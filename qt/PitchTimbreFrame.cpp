@@ -12,6 +12,7 @@ PitchTimbreFrame::PitchTimbreFrame(int index, QWidget *parent)
 	  ui(new Ui::PitchTimbreFrame)
 {
 	ui->setupUi(this);
+	m_previous_sustain_level = ui->SustainLevelSpinBox->value();
 
 	ui->IndexLabel->setText( "#" + QString::number(index));
 #define MIDI_PERCUSSION_INSTRUMENT_CHANNEL			(9)
@@ -141,8 +142,8 @@ void PitchTimbreFrame::on_AttackTimeSpinBox_valueChanged(int value)
 
 void PitchTimbreFrame::on_DecayCurveComboBox_currentIndexChanged(int index)
 {
-	Q_UNUSED(index);
 	qDebug() << Q_FUNC_INFO;
+	Q_UNUSED(index);
 	EmitValuesChanged();
 }
 
@@ -152,6 +153,25 @@ void PitchTimbreFrame::on_DecayTimeSpinBox_valueChanged(int value)
 {
 	Q_UNUSED(value);
 	qDebug() << Q_FUNC_INFO;
+	do
+	{
+		if(0 == value){
+			QObject::blockSignals(true);
+			m_previous_sustain_level = ui->SustainLevelSpinBox->value();
+			ui->SustainLevelSpinBox->setValue(128);
+			ui->SustainLevelSpinBox->setEnabled(false);
+			QObject::blockSignals(false);
+			break;
+		}
+
+		if(false == ui->SustainLevelSpinBox->isEnabled()){
+			QObject::blockSignals(true);
+			ui->SustainLevelSpinBox->setValue(m_previous_sustain_level);
+			ui->SustainLevelSpinBox->setEnabled(true);
+			QObject::blockSignals(false);
+		}
+	} while(0);
+
 	EmitValuesChanged();
 }
 
