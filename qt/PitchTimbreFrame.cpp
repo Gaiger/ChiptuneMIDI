@@ -4,12 +4,15 @@
 #include "TuneManager.h"
 #include "ui_PitchTimbreFrameForm.h"
 
+#include <QStandardItemModel>
+
 PitchTimbreFrame::PitchTimbreFrame(int index, QWidget *parent)
 	: QFrame(parent),
 	  m_index(index),
 	  ui(new Ui::PitchTimbreFrame)
 {
 	ui->setupUi(this);
+
 	ui->IndexLabel->setText( "#" + QString::number(index));
 #define MIDI_PERCUSSION_INSTRUMENT_CHANNEL			(9)
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == index){
@@ -27,6 +30,10 @@ PitchTimbreFrame::PitchTimbreFrame(int index, QWidget *parent)
 		ui->DamperOnButNoteOffSustainCurveComboBox->setEnabled(false);
 		ui->DamperOnButNoteOffSustainTimeDoubleSpinBox->setEnabled(false);
 	}
+	QStandardItemModel *p_model =
+		  qobject_cast<QStandardItemModel *>(ui->DutyCycleComboBox->model());
+	QStandardItem *p_item = p_model->item(4); //no duty cycle
+	p_item->setFlags(p_item->flags() & ~Qt::ItemIsEnabled);
 }
 
 /**********************************************************************************/
@@ -89,10 +96,16 @@ void PitchTimbreFrame::on_WaveFormComboBox_currentIndexChanged(int index)
 	qDebug() << Q_FUNC_INFO;
 	do {
 		if(QString("Square") == ui->WaveFormComboBox->currentText()){
+			QObject::blockSignals(true);
+			ui->DutyCycleComboBox->setCurrentIndex(0);
+			QObject::blockSignals(false);
 			ui->DutyCycleComboBox->setEnabled(true);
 			break;
 		}
 		ui->DutyCycleComboBox->setEnabled(false);
+		QObject::blockSignals(true);
+		ui->DutyCycleComboBox->setCurrentIndex(4);
+		QObject::blockSignals(false);
 	} while(0);
 	EmitValuesChanged();
 }
