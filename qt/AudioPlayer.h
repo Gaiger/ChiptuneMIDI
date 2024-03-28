@@ -3,13 +3,10 @@
 
 #include <QObject>
 #include <QAudioOutput>
-#include <QThread>
-
-#include <QIODevice>
 #include <QMutex>
-
 #include "TuneManager.h"
 
+class AudioPlayerPrivate;
 
 class AudioPlayer : public QObject
 {
@@ -18,7 +15,7 @@ public:
 	AudioPlayer(TuneManager *p_tune_manager, QObject *parent = nullptr);
 	~AudioPlayer()  Q_DECL_OVERRIDE;
 
-	void Play(bool const is_blocking = false);
+	void Play(void);
 	void Stop(void);
 	void Pause(void);
 
@@ -36,6 +33,18 @@ public:
 public:
 	signals:
 	void StateChanged(AudioPlayer::PlaybackState state);
+
+private:
+	signals:
+	void PlayRequested(void);
+	void StopRequested(void);
+	void PauseRequested(void);
+
+private slots:
+	void HandlePlayRequested(void);
+	void HandleStopRequested(void);
+	void HandlePauseRequested(void);
+
 private slots:
 	void HandleAudioNotify(void);
 	void HandleAudioStateChanged(QAudio::State state);
@@ -45,12 +54,18 @@ private :
 								  int fetching_wave_interval_in_milliseconds);
 	void AppendWave(QByteArray wave_bytearray);
 	void ClearOutMidiFileAudioResources();
+
+	void OrganizeConnection(void);
+
 private:
 	QAudioOutput * m_p_audio_output;
 	QIODevice *m_p_audio_io_device;
 	TuneManager *m_p_tune_manager;
 
-	QMutex m_accessing_io_device_mutex;
+	Qt::ConnectionType m_connection_type;
+
+	//QMutex m_accessing_io_device_mutex;
+	QMutex m_mutex;
 };
 
 #endif // _AUDIOPLAYER_H_

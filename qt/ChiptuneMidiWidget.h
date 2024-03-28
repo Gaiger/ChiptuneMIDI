@@ -71,6 +71,7 @@ private :
 	QThread				m_tune_manager_working_thread;
 
 	AudioPlayer *		m_p_audio_player;
+	QThread				m_audio_player_working_thread;
 
 	QFileInfo			m_opened_file_info;
 	uint32_t			m_midi_file_duration_in_milliseconds;

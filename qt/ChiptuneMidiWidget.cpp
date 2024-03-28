@@ -167,6 +167,9 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	m_tune_manager_working_thread.start(QThread::HighPriority);
 	m_p_audio_player = new AudioPlayer(m_p_tune_manager, nullptr);
 
+	m_p_audio_player->moveToThread(&m_audio_player_working_thread);
+	m_audio_player_working_thread.start(QThread::NormalPriority);
+
 	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
 					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
 
@@ -186,17 +189,20 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 ChiptuneMidiWidget::~ChiptuneMidiWidget()
 {
-
-	if(nullptr != m_p_audio_player){
-		m_p_audio_player->Stop();
-	}
-
 	m_tune_manager_working_thread.quit();
 	while( false == m_tune_manager_working_thread.isFinished()){
 		QThread::msleep(10);
 	}
 
+	if(nullptr != m_p_audio_player){
+		m_p_audio_player->Stop();
+	}
 	delete m_p_audio_player; m_p_audio_player = nullptr;
+
+	m_audio_player_working_thread.quit();
+	while( false == m_audio_player_working_thread.isFinished()){
+		QThread::msleep(10);
+	}
 }
 
 /**********************************************************************************/

@@ -1,5 +1,7 @@
 #include <QBuffer>
-#include <QEventLoop>
+#include <QThread>
+
+#include <QIODevice>
 
 #include <QDebug>
 
@@ -32,15 +34,17 @@ private:
 		QByteArray m_audio_data_bytearray;
 };
 
+
 /**********************************************************************************/
 
 AudioPlayer::AudioPlayer(TuneManager *p_tune_manager, QObject *parent)
-	: QObject(parent),
-	m_p_audio_output(nullptr),
-	m_p_audio_io_device(nullptr),
-	m_p_tune_manager(p_tune_manager)
+	: QObject(parent)
 {
 
+	m_p_audio_output = nullptr;
+	m_p_audio_io_device = nullptr;
+	m_p_tune_manager = p_tune_manager;
+	m_connection_type = Qt::AutoConnection;
 	if( QMetaType::UnknownType == QMetaType::type("PlaybackState")){
 			qRegisterMetaType<TuneManager::SamplingSize>("PlaybackState");
 	}
@@ -51,7 +55,6 @@ AudioPlayer::AudioPlayer(TuneManager *p_tune_manager, QObject *parent)
 AudioPlayer::~AudioPlayer(void)
 {
 	AudioPlayer::Stop();
-	//AudioPlayer::ClearOutMidiFileAudioResources();
 }
 
 /**********************************************************************************/
@@ -124,10 +127,9 @@ void AudioPlayer::InitializeAudioResources(int const number_of_channels, int con
 
 /**********************************************************************************/
 
-void AudioPlayer::Play(bool const is_blocking)
+void AudioPlayer::HandlePlayRequested(void)
 {
-	QMutexLocker lock(&m_accessing_io_device_mutex);
-	//qDebug() <<Q_FUNC_INFO <<"QThread::currentThread() = " << QThread::currentThread();
+	//QMutexLocker lock(&m_accessing_io_device_mutex);
 	do {
 		if(nullptr != m_p_audio_output){
 			if(QAudio::ActiveState == m_p_audio_output->state()){
@@ -150,37 +152,87 @@ void AudioPlayer::Play(bool const is_blocking)
 		AudioPlayer::AppendWave(m_p_tune_manager->FetchWave(m_p_audio_output->bufferSize()));
 		m_p_audio_output->start(m_p_audio_io_device);
 	} while(0);
+}
 
-	do {
-		if(false == is_blocking){
-			break;
+/**********************************************************************************/
+
+void AudioPlayer::OrganizeConnection(void)
+{
+	bool is_to_reconnect = false;
+	do{
+		if( QObject::thread() == QThread::currentThread()){
+			if(Qt::DirectConnection != m_connection_type){
+				m_connection_type = Qt::DirectConnection;
+				is_to_reconnect = true;
+			}
 		}
 
-		QEventLoop loop;
-		QObject::connect(m_p_audio_output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
-		do {
-			loop.exec();
-		} while(m_p_audio_output->state() == QAudio::ActiveState);
-	} while(0);
+		if(Qt::BlockingQueuedConnection != m_connection_type){
+			m_connection_type = Qt::BlockingQueuedConnection;
+			is_to_reconnect = true;
+		}
+	}while(0);
 
+	if(true == is_to_reconnect){
+		QObject::disconnect(this, &AudioPlayer::PlayRequested,
+							this, &AudioPlayer::HandlePlayRequested);
+		QObject::connect(this, &AudioPlayer::PlayRequested,
+						 this, &AudioPlayer::HandlePlayRequested, m_connection_type);
+
+		QObject::disconnect(this, &AudioPlayer::StopRequested,
+							this, &AudioPlayer::HandleStopRequested);
+		QObject::connect(this, &AudioPlayer::StopRequested,
+						 this, &AudioPlayer::HandleStopRequested, m_connection_type);
+
+		QObject::disconnect(this, &AudioPlayer::PauseRequested,
+							this, &AudioPlayer::HandlePauseRequested);
+		QObject::connect(this, &AudioPlayer::PauseRequested,
+						 this, &AudioPlayer::HandlePauseRequested, m_connection_type);
+	}
+}
+
+/**********************************************************************************/
+
+void AudioPlayer::HandleStopRequested(void)
+{
+	//QMutexLocker lock(&m_accessing_io_device_mutex);
+	AudioPlayer::ClearOutMidiFileAudioResources();
+}
+/**********************************************************************************/
+
+void AudioPlayer::HandlePauseRequested(void)
+{
+	//QMutexLocker lock(&m_accessing_io_device_mutex);
+	if(nullptr != m_p_audio_output){
+		m_p_audio_output->suspend();
+	}
+}
+
+/**********************************************************************************/
+
+void AudioPlayer::Play(void)
+{
+	QMutexLocker locker(&m_mutex);
+	OrganizeConnection();
+	emit PlayRequested();
 }
 
 /**********************************************************************************/
 
 void AudioPlayer::Stop(void)
 {
-	QMutexLocker lock(&m_accessing_io_device_mutex);
-	AudioPlayer::ClearOutMidiFileAudioResources();
+	QMutexLocker locker(&m_mutex);
+	OrganizeConnection();
+	emit StopRequested();
 }
 
 /**********************************************************************************/
 
 void AudioPlayer::Pause(void)
 {
-	QMutexLocker lock(&m_accessing_io_device_mutex);
-	if(nullptr != m_p_audio_output){
-		m_p_audio_output->suspend();
-	}
+	QMutexLocker locker(&m_mutex);
+	OrganizeConnection();
+	emit PauseRequested();
 }
 
 /**********************************************************************************/
@@ -198,6 +250,7 @@ void AudioPlayer::AppendWave(QByteArray audio_bytearray)
 
 void AudioPlayer::HandleAudioNotify(void)
 {
+	//QMutexLocker lock(&m_accessing_io_device_mutex);
 	//qDebug() << Q_FUNC_INFO  << "elapsed " <<
 	//qDebug() <<Q_FUNC_INFO <<"QThread::currentThread() = " << QThread::currentThread();
 	//qDebug() << Q_FUNC_INFO  << "elapsed " <<
