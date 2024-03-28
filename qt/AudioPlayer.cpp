@@ -34,17 +34,14 @@ private:
 		QByteArray m_audio_data_bytearray;
 };
 
-
 /**********************************************************************************/
 
 AudioPlayer::AudioPlayer(TuneManager *p_tune_manager, QObject *parent)
-	: QObject(parent)
+	: QObject(parent),
+	m_p_audio_output(nullptr), m_p_audio_io_device(nullptr),
+	m_p_tune_manager(p_tune_manager),
+	m_connection_type(Qt::AutoConnection)
 {
-
-	m_p_audio_output = nullptr;
-	m_p_audio_io_device = nullptr;
-	m_p_tune_manager = p_tune_manager;
-	m_connection_type = Qt::AutoConnection;
 	if( QMetaType::UnknownType == QMetaType::type("PlaybackState")){
 			qRegisterMetaType<TuneManager::SamplingSize>("PlaybackState");
 	}
@@ -165,6 +162,7 @@ void AudioPlayer::OrganizeConnection(void)
 				m_connection_type = Qt::DirectConnection;
 				is_to_reconnect = true;
 			}
+			break;
 		}
 
 		if(Qt::BlockingQueuedConnection != m_connection_type){

@@ -67,6 +67,7 @@ public:
 	QList<int> m_noted_channel_list;
 
 	TuneManager *m_p_public;
+	Qt::ConnectionType m_connection_type;
 };
 
 /**********************************************************************************/
@@ -108,6 +109,7 @@ TuneManager::TuneManager(bool is_stereo,
 	} while(0);
 	m_p_private->m_p_midi_file = nullptr;
 	m_p_private->m_noted_channel_list.clear();
+	m_p_private->m_connection_type = Qt::AutoConnection;
 	m_p_private->m_p_public = this;
 
 	s_p_private_instance = m_p_private;
@@ -213,25 +215,39 @@ void TuneManager::HandleGenerateWaveRequested(int const length)
 
 void TuneManager::GenerateWave(int const length, bool const is_synchronized)
 {
-	QObject::disconnect(this, &TuneManager::GenerateWaveRequested,
-						this, &TuneManager::HandleGenerateWaveRequested);
-
-	Qt::ConnectionType type = Qt::DirectConnection;
-	do {
-		if( QObject::thread() == QThread::currentThread()){
+	bool is_to_reconnect = false;
+	do{
+		if(QObject::thread() == QThread::currentThread()){
+			if(Qt::DirectConnection != m_p_private->m_connection_type){
+				m_p_private->m_connection_type = Qt::DirectConnection;
+				is_to_reconnect = true;
+			}
 			break;
 		}
 
 		//qDebug() << Q_FUNC_INFO << "is_synchronized = " << is_synchronized;
 		if(false == is_synchronized){
-			type = Qt::QueuedConnection;
+			if(Qt::QueuedConnection != m_p_private->m_connection_type){
+				m_p_private->m_connection_type = Qt::QueuedConnection;
+				is_to_reconnect = true;
+			}
 			break;
 		}
-		type = Qt::BlockingQueuedConnection;
-	} while(0);
 
-	QObject::connect(this, &TuneManager::GenerateWaveRequested,
-					 this, &TuneManager::HandleGenerateWaveRequested, type);
+		if(Qt::BlockingQueuedConnection != m_p_private->m_connection_type){
+			m_p_private->m_connection_type = Qt::BlockingQueuedConnection;
+			is_to_reconnect = true;
+		}
+	}while(0);
+
+	if(true == is_to_reconnect){
+		QObject::disconnect(this, &TuneManager::GenerateWaveRequested,
+							this, &TuneManager::HandleGenerateWaveRequested);
+		QObject::connect(this, &TuneManager::GenerateWaveRequested,
+						 this, &TuneManager::HandleGenerateWaveRequested,
+						 m_p_private->m_connection_type);
+	}
+
 	emit GenerateWaveRequested(length);
 }
 
