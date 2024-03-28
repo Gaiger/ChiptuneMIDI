@@ -57,6 +57,7 @@ void PitchTimbreFrame::EmitValuesChanged(void)
 			break;
 		case 2: //125
 			waveform = TuneManager::WAVEFORM_SQUARE_DUDYCYCLE_125;
+			break;
 		case 3: //75
 		default:
 			waveform = TuneManager::WAVEFORM_SQUARE_DUDYCYCLE_75;
