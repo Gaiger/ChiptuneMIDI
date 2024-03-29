@@ -588,7 +588,7 @@ void ChiptuneMidiWidget::on_SaveSaveFilePushButton_released(void)
 			break;
 		}
 
-
+		QString original_text_string = ui->MessageLabel->text();
 		ui->MessageLabel->setText(QString("saving file :: ") + QFileInfo(save_filename_string).fileName());
 		QWidget::setEnabled(false);
 		SaveAsWavFileThread save_as_wav_file_thread(m_p_tune_manager, save_filename_string);
@@ -601,7 +601,7 @@ void ChiptuneMidiWidget::on_SaveSaveFilePushButton_released(void)
 			loop.exec();
 		} while(false == save_as_wav_file_thread.isFinished());
 
-		ui->MessageLabel->setText("");
+		ui->MessageLabel->setText(original_text_string);
 		QWidget::setEnabled(true);
 	} while(0);
 

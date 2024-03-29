@@ -1390,7 +1390,7 @@ bool chiptune_is_tune_ending(void)
 
 /**********************************************************************************/
 
-void chiptune_set_channel_output_enabled(int8_t const channel_index, bool is_enabled)
+void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const is_enabled)
 {
 	if( 0 > channel_index  || channel_index >= MIDI_MAX_CHANNEL_NUMBER){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: channel_index = %d is not acceptable for %s\r\n",
