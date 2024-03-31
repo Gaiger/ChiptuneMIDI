@@ -767,7 +767,13 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 			envelope_same_index_number = p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number;
 			break;
 		case ENVELOPE_RELEASE:
-			envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
+			do {
+				if(true == IS_RESTING(p_oscillator->state_bits)){
+					envelope_same_index_number = p_channel_controller->envelope_attack_same_index_number;
+					break;
+				}
+				envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
+			} while(0);
 			break;
 		};
 
@@ -828,7 +834,6 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 		int16_t shift_amplitude = 0;
 		switch(p_oscillator->envelope_state)
 		{
-		default:
 		case ENVELOPE_ATTACK:
 			p_envelope_table = p_channel_controller->p_envelope_attack_table;
 			delta_amplitude = p_oscillator->loudness;
@@ -845,7 +850,13 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 			delta_amplitude = p_oscillator->loudness;
 			break;
 		case ENVELOPE_RELEASE:
-			p_envelope_table = p_channel_controller->p_envelope_release_table;
+			do{
+				if(true == IS_RESTING(p_oscillator->state_bits)){
+					p_envelope_table = p_channel_controller->p_envelope_attack_table;
+					break;
+				}
+				p_envelope_table = p_channel_controller->p_envelope_release_table;
+			}while(0);
 			delta_amplitude = p_oscillator->release_reference_amplitude;
 			break;
 		}
