@@ -83,6 +83,14 @@ void PitchTimbreFrame::EmitValuesChanged(void)
 						ui->DamperOnButNoteOffSustainCurveComboBox->currentIndex(),
 						ui->DamperOnButNoteOffSustainTimeDoubleSpinBox->value());
 }
+
+/**********************************************************************************/
+
+void PitchTimbreFrame::setOutputEnabled(bool is_to_enabled)
+{
+	ui->OutputEnabledCheckBox->setChecked(is_to_enabled);
+}
+
 /**********************************************************************************/
 
 void PitchTimbreFrame::on_OutputEnabledCheckBox_stateChanged(int state)

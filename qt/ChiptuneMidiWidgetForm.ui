@@ -21,7 +21,7 @@ color: rgb(208, 208, 208);
 
 QPushButton{
   background-color: rgb(96, 96, 96); 
- color: rgb(48, 48, 48);
+color: rgb(204, 204, 204);
 }
 
 QPushButton:pressed{
@@ -217,10 +217,10 @@ color: rgb(208, 208, 208);
   <widget class="QSlider" name="AmplitudeGainSlider">
    <property name="geometry">
     <rect>
-     <x>648</x>
-     <y>8</y>
-     <width>18</width>
-     <height>160</height>
+     <x>650</x>
+     <y>10</y>
+     <width>20</width>
+     <height>71</height>
     </rect>
    </property>
    <property name="minimum">
@@ -244,6 +244,32 @@ color: rgb(208, 208, 208);
      <width>348</width>
      <height>628</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="DisableAllOutputPushButton">
+   <property name="geometry">
+    <rect>
+     <x>588</x>
+     <y>88</y>
+     <width>80</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Disable all</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="EnableAllOutputPushButton">
+   <property name="geometry">
+    <rect>
+     <x>588</x>
+     <y>120</y>
+     <width>80</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Enable all</string>
    </property>
   </widget>
  </widget>

@@ -40,6 +40,9 @@ private slots:
 	void on_StopPushButton_released(void);
 	void on_PlayPausePushButton_released(void);
 	void on_AmplitudeGainSlider_sliderMoved(int value);
+	void on_DisableAllOutputPushButton_released(void);
+	void on_EnableAllOutputPushButton_released(void);
+
 private slots:
 	void on_PlayProgressSlider_sliderMoved(int value);
 private slots:

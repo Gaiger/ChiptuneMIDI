@@ -37,6 +37,8 @@ public:
 					   int envelope_damper_on_but_note_off_sustain_level,
 					   int envelope_damper_on_but_note_off_sustain_curve,
 					   double envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+public :
+	void setOutputEnabled(bool is_to_enabled);
 private slots:
 	void on_OutputEnabledCheckBox_stateChanged(int state);
 
