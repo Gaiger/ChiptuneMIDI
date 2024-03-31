@@ -110,7 +110,7 @@ color: rgb(208, 208, 208);
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
    <property name="maximum">
-    <number>3000</number>
+    <number>9999</number>
    </property>
    <property name="singleStep">
     <number>10</number>
@@ -188,7 +188,7 @@ color: rgb(208, 208, 208);
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
    <property name="maximum">
-    <number>3000</number>
+    <number>9999</number>
    </property>
    <property name="singleStep">
     <number>10</number>
@@ -340,7 +340,7 @@ color: rgb(208, 208, 208);
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
    <property name="maximum">
-    <number>3000</number>
+    <number>9999</number>
    </property>
    <property name="singleStep">
     <number>10</number>
@@ -472,7 +472,7 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="SecLabel">
    <property name="geometry">
     <rect>
-     <x>284</x>
+     <x>288</x>
      <y>180</y>
      <width>24</width>
      <height>24</height>
@@ -487,12 +487,18 @@ color: rgb(208, 208, 208);
     <rect>
      <x>224</x>
      <y>180</y>
-     <width>51</width>
+     <width>54</width>
      <height>25</height>
     </rect>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
    <property name="decimals">
     <number>1</number>
+   </property>
+   <property name="maximum">
+    <double>99.900000000000006</double>
    </property>
    <property name="singleStep">
     <double>0.500000000000000</double>

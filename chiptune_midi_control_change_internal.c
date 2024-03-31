@@ -130,13 +130,20 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, int
 				p_oscillator->loudness = (p_oscillator->loudness * value)/original_value;
 				p_oscillator->envelope_table_index = 0;
 				p_oscillator->envelope_same_index_count = 0;
+				//TODO :: the envelope may be discontinuous
 				switch(p_oscillator->envelope_state){
 				case ENVELOPE_ATTACK:
 					break;
 				case ENVELOPE_DECAY:
 					break;
 				case ENVELOPE_SUSTAIN:
-					p_oscillator->envelope_state = ENVELOPE_DECAY;
+					do {
+						if(value < original_value){
+							p_oscillator->envelope_state = ENVELOPE_DECAY;
+							break;
+						}
+						p_oscillator->envelope_state = ENVELOPE_ATTACK;
+					} while(0);
 					break;
 				}
 			} while(0);
