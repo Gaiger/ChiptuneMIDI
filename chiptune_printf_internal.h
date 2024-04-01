@@ -27,9 +27,10 @@ enum
 
 	cMidiNote			= 1,
 	cMidiControlChange	= 2,
-	cMidiPitchWheel		= 3,
+	cMidiProgramChange	= 3,
+	cMidiPitchWheel		= 4,
 
-	cEventTriggering	= 4,
+	cEventTriggering	= 5,
 };
 
 void chiptune_printf(int const print_type, const char* fmt, ...);

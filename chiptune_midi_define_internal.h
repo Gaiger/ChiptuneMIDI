@@ -58,6 +58,180 @@
 
 /**********************************************************************************/
 
+#define EXPAND_ENUM(ITEM, VAL)						ITEM = VAL,
+
+#define EXPAND_CASE_TO_STR(X, DUMMY_VAR)			case X:	return #X;
+
+#include <stdint.h>
+#ifdef __clang__
+	#define MAYBE_UNUSED_FUNCTION __attribute__((unused))
+#else
+	#define MAYBE_UNUSED_FUNCTION
+#endif
+
+/**********************************************************************************/
+
+#define INSTRUMENT_CODE_LIST(X)	\
+	X(AcousticGrandPiano,		0) \
+	X(BrightAcousticPiano,		1) \
+	X(ElectricGrandPiano,		2) \
+	X(HonkyTonkPiano,			3) \
+	X(RhodesPiano,				4) \
+	X(ChorusedPiano,			5) \
+	X(Harpsichord,				6) \
+	X(Clavinet,					7) \
+	\
+	X(Celesta,					8) \
+	X(Glockenspiel,				9) \
+	X(MusicBox,					10) \
+	X(Vibraphone,				11) \
+	X(Marimba,					12) \
+	X(Xylophone,				13) \
+	X(TubularBells,				14) \
+	X(Dulcimer,					15) \
+	\
+	X(HammondOrgan,				16) \
+	X(PercussiveOrgan,			17) \
+	X(RockOrgan,				18) \
+	X(ChurchOrgan,				19) \
+	X(ReedOrgan,				20) \
+	X(Accordion,				21) \
+	X(Harmonica,				22) \
+	X(TangoAccordion,			23) \
+	\
+	X(AcousticGuitarNylon,		24) \
+	X(AcousticGuitarSteel,		25) \
+	X(ElectricGuitarJazz,		26) \
+	X(ElectricGuitarClean,		27) \
+	X(ElectricGuitarMuted,		28) \
+	X(OverdrivenGuitar,			29) \
+	X(DistortionGuitar,			30) \
+	X(GuitarHarmonics,			31) \
+	\
+	X(AcousticBass,				32) \
+	X(ElectricBassFinger,		33) \
+	X(ElectricBassPick,			34) \
+	X(FretlessBass,				35) \
+	X(SlapBass1,				36) \
+	X(SlapBass2,				37) \
+	X(SynthBass1,				38) \
+	X(SynthBass2,				39) \
+	\
+	X(Violin,					40) \
+	X(Viola,					41) \
+	X(Cello,					42) \
+	X(Contrabass,				43) \
+	X(TremoloStrings,			44) \
+	X(PizzicatoStrings,			45) \
+	X(OrchestralHarp,			46) \
+	X(Timpani,					47) \
+	\
+	X(StringEnsemble1,			48) \
+	X(StringEnsemble2,			49) \
+	X(SynthStrings1,			50) \
+	X(SynthStrings2,			51) \
+	X(ChoirAahs,				52) \
+	X(VoiceOohs,				53) \
+	X(SynthVoice,				54) \
+	X(OrchestraHit,				55) \
+	\
+	X(Trumpet,					56) \
+	X(Trombone,					57) \
+	X(Tuba,						58) \
+	X(MutedTrumpet,				59) \
+	X(FrenchHorn,				60) \
+	X(BrassSection,				61) \
+	X(SynthBrass1,				62) \
+	X(SynthBrass2,				63) \
+	\
+	X(SopranoSax,				64) \
+	X(AltoSax,					65) \
+	X(TenorSax,					66) \
+	X(BaritoneSax,				67) \
+	X(Oboe,						68) \
+	X(EnglishHorn,				69) \
+	X(Bassoon,					70) \
+	X(Clarinet,					71) \
+	\
+	X(Piccolo,					72) \
+	X(Flute,					73) \
+	X(Recorder,					74) \
+	X(PanFlute,					75) \
+	X(BottleBlow,				76) \
+	X(Shakuhachi,				77) \
+	X(Whistle,					78) \
+	X(Ocarina,					79) \
+	\
+	X(Lead1Square,				80) \
+	X(Lead2Sawtooth,			81) \
+	X(Lead3CalliopeLead,		82) \
+	X(Lead4ChifferLead,			83) \
+	X(Lead5Charang,				84) \
+	X(Lead6Voice,				85) \
+	X(Lead7Fifths,				86) \
+	X(Lead8BrassLead,			87) \
+	\
+	X(Pad1NewAge,				88) \
+	X(Pad2Warm,					89) \
+	X(Pad3Polysynth,			90) \
+	X(Pad4Choir,				91) \
+	X(Pad5Bowed,				92) \
+	X(Pad6Metallic,				93) \
+	X(Pad7Halo,					94) \
+	X(Pad8Sweep,				95) \
+	\
+	X(FX1Rain,					96) \
+	X(FX2Soundtrack,			97) \
+	X(FX3Crystal,				98) \
+	X(FX4Atmosphere,			99) \
+	X(FX5Brightness,			100) \
+	X(FX6Goblins,				101) \
+	X(FX7Echoes,				102) \
+	X(FX8SciFi,					103) \
+	\
+	X(Sitar,					104) \
+	X(Banjo,					105) \
+	X(Shamisen,					106) \
+	X(Koto,						107) \
+	X(Kalimba,					108) \
+	X(Bagpipe,					109) \
+	X(Fiddle,					110) \
+	X(Shana,					111) \
+	\
+	X(TinkleBell,				112) \
+	X(Agogo,					113) \
+	X(SteelDrums,				114) \
+	X(Woodblock,				115) \
+	X(TaikoDrum,				116) \
+	X(MelodicTom,				117) \
+	X(SynthDrum,				118) \
+	X(ReverseCymbal,			119) \
+	\
+	X(GuitarFretNoise,			120) \
+	X(BreathNoise,				121) \
+	X(Seashore,					122) \
+	X(BirdTweet,				123) \
+	X(TelephoneRing,			124) \
+	X(Helicopter,				125) \
+	X(Applause,					126) \
+	X(Gunshot,					127) \
+
+enum INSTRUMENT_CODE
+{
+	INSTRUMENT_CODE_LIST(EXPAND_ENUM)
+};
+
+MAYBE_UNUSED_FUNCTION static inline char const * const get_instrument_name_string(int8_t const index)
+{
+	switch (index)
+	{
+		INSTRUMENT_CODE_LIST(EXPAND_CASE_TO_STR)
+	}
+
+	return "UNKNOWN_INSTRUMENT";
+}
+/**********************************************************************************/
+
 #define MIDI_PERCUSSION_INSTRUMENT_CHANNEL			(9)
 
 //https://usermanuals.finalemusic.com/SongWriter2012Win/Content/PercussionMaps.htm
@@ -132,7 +306,6 @@
 	X(OCEAN_DRUM,			92) \
 	X(SNARE_DRUM_BRUSH,		93) \
 
-#define EXPAND_ENUM(ITEM, VAL)						ITEM = VAL,
 
 enum PERCUSSION_CODE
 {
@@ -141,15 +314,6 @@ enum PERCUSSION_CODE
 
 /**********************************************************************************/
 
-#define EXPAND_CASE_TO_STR(X, DUMMY_VAR)			case X:	return #X;
-
-#include <stdint.h>
-#ifdef __clang__
-	#define MAYBE_UNUSED_FUNCTION __attribute__((unused))
-#else
-	#define MAYBE_UNUSED_FUNCTION
-#endif
-
 MAYBE_UNUSED_FUNCTION static inline char const * const get_percussion_name_string(int8_t const index)
 {
 	switch (index)
@@ -157,7 +321,7 @@ MAYBE_UNUSED_FUNCTION static inline char const * const get_percussion_name_strin
 		PERCUSSION_CODE_LIST(EXPAND_CASE_TO_STR)
 	}
 
-	return "NOT_IMPLEMENTED";
+	return "UNKNOWN_PERCUSSIOM";
 }
 
 #endif // _CHIPTUNE_MIDI_DEFINE_H_
