@@ -64,9 +64,8 @@ public:
 	int m_wave_prebuffer_length;
 	QByteArray m_wave_bytearray;
 
-	QList<int> m_noted_channel_list;
+	QList<QPair<int, int>> m_channel_instrument_pair_list;
 
-	TuneManager *m_p_public;
 	Qt::ConnectionType m_connection_type;
 };
 
@@ -108,9 +107,8 @@ TuneManager::TuneManager(bool is_stereo,
 		m_p_private->m_number_of_channels = 1;
 	} while(0);
 	m_p_private->m_p_midi_file = nullptr;
-	m_p_private->m_noted_channel_list.clear();
+	m_p_private->m_channel_instrument_pair_list.clear();
 	m_p_private->m_connection_type = Qt::AutoConnection;
-	m_p_private->m_p_public = this;
 
 	s_p_private_instance = m_p_private;
 	chiptune_set_midi_message_callback(get_midi_message);
@@ -125,7 +123,7 @@ TuneManager::~TuneManager(void)
 		delete m_p_private->m_p_midi_file;
 		m_p_private->m_p_midi_file = nullptr;
 	}
-	m_p_private->m_noted_channel_list.clear();
+	m_p_private->m_channel_instrument_pair_list.clear();
 
 	delete m_p_private;
 	m_p_private = nullptr;
@@ -166,7 +164,7 @@ void TuneManager::ClearOutMidiFile(void)
 		delete m_p_private->m_p_midi_file;
 		m_p_private->m_p_midi_file = nullptr;
 	}
-	m_p_private->m_noted_channel_list.clear();
+	m_p_private->m_channel_instrument_pair_list.clear();
 }
 
 /**********************************************************************************/
@@ -180,14 +178,14 @@ int TuneManager::InitializeTune(void)
 		return -1;
 	}
 
-	m_p_private->m_noted_channel_list.clear();
-	bool is_channels_noted_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
+	m_p_private->m_channel_instrument_pair_list.clear();
+	int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
 	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
 						 (uint32_t)m_p_private->m_sampling_rate, m_p_private->m_p_midi_file->resolution(),
-						 &is_channels_noted_array[0]);
+						 &channel_instrument_array[0]);
 	for(int i = 0; i < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; i++){
-		if(true == is_channels_noted_array[i]){
-			m_p_private->m_noted_channel_list.append(i);
+		if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL != channel_instrument_array[i]){
+			m_p_private->m_channel_instrument_pair_list.append(QPair<int, int>(i, channel_instrument_array[i]));
 		}
 	}
 	return 0;
@@ -408,9 +406,9 @@ int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 
 /**********************************************************************************/
 
-QList<int> TuneManager::GetNotedChannelList(void)
+QList<QPair<int, int>> TuneManager::GetChannelInstrumentPairList(void)
 {
-	return m_p_private->m_noted_channel_list;
+	return m_p_private->m_channel_instrument_pair_list;
 }
 
 /**********************************************************************************/

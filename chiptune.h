@@ -13,8 +13,12 @@ void chiptune_set_midi_message_callback(
 		int(*handler_get_midi_message)(uint32_t const index, uint32_t * const p_tick, uint32_t * const p_message) );
 
 #define CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER			(16)
+#define CHIPTUNE_INSTRUMENT_NOT_SPECIFIED			(-1)
+#define CHIPTUNE_INSTRUMENT_PERCUSSION				(-2)
+#define CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL			(-3)
+
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution,
-						 bool is_channels_noted_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
+						 int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
 
 void chiptune_set_tempo(float const tempo);
 

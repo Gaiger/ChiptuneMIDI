@@ -115,7 +115,7 @@ QSlider::handle {
     <rect>
      <x>16</x>
      <y>76</y>
-     <width>784</width>
+     <width>632</width>
      <height>24</height>
     </rect>
    </property>
@@ -249,8 +249,8 @@ color: rgb(208, 208, 208);
   <widget class="QPushButton" name="DisableAllOutputPushButton">
    <property name="geometry">
     <rect>
-     <x>588</x>
-     <y>88</y>
+     <x>592</x>
+     <y>108</y>
      <width>80</width>
      <height>24</height>
     </rect>
@@ -262,8 +262,8 @@ color: rgb(208, 208, 208);
   <widget class="QPushButton" name="EnableAllOutputPushButton">
    <property name="geometry">
     <rect>
-     <x>588</x>
-     <y>120</y>
+     <x>592</x>
+     <y>140</y>
      <width>80</width>
      <height>24</height>
     </rect>

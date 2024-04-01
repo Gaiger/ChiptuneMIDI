@@ -42,7 +42,7 @@ public:
 	float GetCurrentElapsedTimeInSeconds(void);
 	int SetStartTimeInSeconds(float target_start_time_in_seconds);
 
-	QList<int> GetNotedChannelList(void);
+	QList<QPair<int, int>> GetChannelInstrumentPairList(void);
 	void SetChannelOutputEnabled(int index, bool is_enabled);
 	enum WaveformType
 	{

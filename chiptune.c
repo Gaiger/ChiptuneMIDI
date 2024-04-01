@@ -143,33 +143,17 @@ static inline void swap_processing_channel() { s_is_processing_left_channel = !s
 
 /**********************************************************************************/
 
-static int process_program_change_message(uint32_t const tick, int8_t const voice, uint8_t const number)
+static int process_program_change_message(uint32_t const tick, int8_t const voice, int8_t const number)
 {
-	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: ", tick);
-	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
-		p_channel_controller->waveform = WAVEFORM_NOISE;
-		p_channel_controller->envelope_sustain_level = 8;
+	if(CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED != get_channel_controller_pointer_from_index(voice)->instrument){
+		if(number != get_channel_controller_pointer_from_index(voice)->instrument){
+			CHIPTUNE_PRINTF(cMidiControlChange, "WARNING :: tick = %u, orverwrite voice = %d instrument from %d to %d\r\n",
+							tick, voice, get_channel_controller_pointer_from_index(voice)->instrument, number);
+		}
 	}
-
-	switch(p_channel_controller->waveform)
-	{
-	case WAVEFORM_SQUARE:
-		CHIPTUNE_PRINTF(cMidiControlChange, "%voice = %d instrument = %d, is WAVEFORM_SQUARE\r\n", voice, number);
-		break;
-	case WAVEFORM_TRIANGLE:
-		CHIPTUNE_PRINTF(cMidiControlChange, "%voice = %d instrument = %d, is WAVEFORM_TRIANGLE\r\n", voice, number);
-		break;
-	case WAVEFORM_SAW:
-		CHIPTUNE_PRINTF(cMidiControlChange, "%voice = %d instrument = %d, is WAVEFORM_SAW\r\n", voice, number);
-		break;
-	case WAVEFORM_NOISE:
-		CHIPTUNE_PRINTF(cMidiControlChange, "%voice = %d instrument = %d, is WAVEFORM_NOISE\r\n", voice, number);
-		break;
-	default:
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: "
-									 " %voice = %d instrument = %d, is WAVEFORM_UNKOWN\r\n", voice, number);
-	}
+	get_channel_controller_pointer_from_index(voice)->instrument = number;
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: voice = %d, instrument = %d\r\n",
+					tick, voice, get_channel_controller_pointer_from_index(voice)->instrument);
 	return 0;
 }
 
@@ -1098,14 +1082,14 @@ static int64_t chiptune_fetch_64bit_wave(void)
 #endif
 
 static void pass_through_midi_messages(const uint32_t end_midi_message_index,
-									   bool * const p_is_channels_noted_array)
+									   int8_t * const p_channel_instrument_array)
 {
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		reset_channel_controller_midi_parameters(i);
+		reset_channel_controller_midi_control_change_parameters(i);
 	}
-	if(NULL != p_is_channels_noted_array){
+	if(NULL != p_channel_instrument_array){
 		for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-			p_is_channels_noted_array[i] = false;
+			p_channel_instrument_array[i] = CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL;
 		}
 	}
 
@@ -1186,15 +1170,16 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 			if(max_event_occupied_oscillator_number < get_event_occupied_oscillator_number()){
 				max_event_occupied_oscillator_number = get_event_occupied_oscillator_number();
 			}
-			if(NULL == p_is_channels_noted_array){
+			if(NULL == p_channel_instrument_array){
 				break;
 			}
+
 			int16_t oscillator_index = get_event_occupied_oscillator_head_index();
 			int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
 			for(int16_t i = 0; i < occupied_oscillator_number; i++,
 				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index)){
 				oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-				p_is_channels_noted_array[p_oscillator->voice] = true;
+				p_channel_instrument_array[p_oscillator->voice] = CHIPTUNE_INSTRUMENT_NOT_SPECIFIED;
 			}
 		}while(0);
 
@@ -1214,6 +1199,19 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 			break;
 		}
 	}
+
+	if(NULL != p_channel_instrument_array){
+		for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
+			if(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED == p_channel_instrument_array[i]){
+				p_channel_instrument_array[i] = get_channel_controller_pointer_from_index(i)->instrument;
+			}
+		}
+
+		if(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED == p_channel_instrument_array[MIDI_PERCUSSION_INSTRUMENT_CHANNEL]){
+			p_channel_instrument_array[MIDI_PERCUSSION_INSTRUMENT_CHANNEL] = CHIPTUNE_INSTRUMENT_PERCUSSION;
+		}
+	}
+
 
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
 }
@@ -1279,11 +1277,11 @@ static int32_t s_amplitude_normaliztion_gain = DEFAULT_AMPLITUDE_NORMALIZATION_G
 
 /**********************************************************************************/
 
-static void get_noted_channel_array(bool is_channels_noted_array[MIDI_MAX_CHANNEL_NUMBER])
+static void get_channel_instruments(int8_t channel_instrument_array[MIDI_MAX_CHANNEL_NUMBER])
 {
-	pass_through_midi_messages(-1, &is_channels_noted_array[0]);
+	pass_through_midi_messages(-1, &channel_instrument_array[0]);
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		reset_channel_controller_midi_parameters(i);
+		reset_channel_controller_midi_control_change_parameters(i);
 	}
 	clean_all_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
@@ -1293,7 +1291,7 @@ static void get_noted_channel_array(bool is_channels_noted_array[MIDI_MAX_CHANNE
 /**********************************************************************************/
 
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution,
-						 bool is_channels_noted_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER])
+						 int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER])
 {
 	s_is_stereo = is_stereo;
 	s_is_processing_left_channel = true;
@@ -1312,7 +1310,7 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 	clean_all_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
-	get_noted_channel_array(&is_channels_noted_array[0]);
+	get_channel_instruments(&channel_instrument_array[0]);
 	process_timely_midi_message_and_event();
 	return ;
 }

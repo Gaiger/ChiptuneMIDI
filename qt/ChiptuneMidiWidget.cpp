@@ -239,13 +239,14 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			break;
 		}
 
-		int channel_number = m_p_tune_manager->GetNotedChannelList().size();
+		int channel_number = m_p_tune_manager->GetChannelInstrumentPairList().size();
 
 		ui->TimbreListTableWidget->setRowCount(channel_number);
 		ui->TimbreListTableWidget->setColumnCount(1);
 		for(int i = 0; i < channel_number; i++){
-			int channel_index = m_p_tune_manager->GetNotedChannelList().at(i);
-			PitchTimbreFrame *p_pitch_timbre_frame = new PitchTimbreFrame(channel_index, ui->TimbreListTableWidget);
+			int channel_index = m_p_tune_manager->GetChannelInstrumentPairList().at(i).first;
+			int instrument = m_p_tune_manager->GetChannelInstrumentPairList().at(i).second;
+			PitchTimbreFrame *p_pitch_timbre_frame = new PitchTimbreFrame(channel_index, instrument, ui->TimbreListTableWidget);
 			ui->TimbreListTableWidget->setCellWidget(i, 0, p_pitch_timbre_frame);
 			ui->TimbreListTableWidget->setColumnWidth(i, 320);
 			ui->TimbreListTableWidget->setRowHeight(i, 240);

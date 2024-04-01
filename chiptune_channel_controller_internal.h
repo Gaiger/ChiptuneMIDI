@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED	(-1)
+
 #define CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH		(64)
 
 #define CHANNEL_CONTROLLER_DIVIDE_BY_128(VALUE)		((VALUE) >> 7)
@@ -64,6 +66,7 @@ enum
 
 typedef struct _channel_controller
 {
+	int8_t				instrument;
 	int8_t				coarse_tuning_value;
 	int16_t				fine_tuning_value;
 	float				tuning_in_semitones;
@@ -132,7 +135,7 @@ void initialize_channel_controller(void);
 void update_channel_controller_parameters_related_to_tempo(void);
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index);
 
-void reset_channel_controller_midi_parameters(int8_t const index);
+void reset_channel_controller_midi_control_change_parameters(int8_t const index);
 void reset_channel_controller_all_parameters(int8_t const index);
 
 percussion_t * const get_percussion_pointer_from_index(int8_t const index);

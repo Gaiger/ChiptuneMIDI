@@ -11,7 +11,7 @@ class PitchTimbreFrame : public QFrame
 {
 	Q_OBJECT
 public:
-	explicit PitchTimbreFrame(int index, QWidget *parent = nullptr);
+	explicit PitchTimbreFrame(int index, int instrument = -1, QWidget *parent = nullptr);
 	~PitchTimbreFrame(void) Q_DECL_OVERRIDE;
 public:
 	enum WaveformType
@@ -59,7 +59,7 @@ private slots:
 	void on_DamperOnButNoteOffSustainTimeDoubleSpinBox_valueChanged(double value);
 	void on_DamperOnButNoteOffSustainCurveComboBox_currentIndexChanged(int index);
 	void on_DamperOnButNoteOffSustainSustainLevelSpinBox_valueChanged(int value);
-private:
+private :
 	void EmitValuesChanged(void);
 private:
 	int m_previous_sustain_level;

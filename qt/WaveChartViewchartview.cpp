@@ -39,7 +39,7 @@ WaveChartView::WaveChartView(int const number_of_channels,
 		p_chart->addSeries(p_series);
 		p_series->attachAxis(p_chart->axes(Qt::Horizontal).at(0));
 		p_series->attachAxis(p_chart->axes(Qt::Vertical).at(0));
-		p_series->setUseOpenGL(true);
+		//p_series->setUseOpenGL(true);
 		QPen pen = p_series->pen();
 		pen.setWidth(3);
 		p_series->setPen(pen);
