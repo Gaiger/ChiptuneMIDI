@@ -1173,11 +1173,12 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 
 			s_previous_timely_tick = CURRENT_TICK();
 
-			if(max_event_occupied_oscillator_number < get_event_occupied_oscillator_number()){
-				max_event_occupied_oscillator_number = get_event_occupied_oscillator_number();
-			}
 			if(NULL == p_channel_instrument_array){
 				break;
+			}
+
+			if(max_event_occupied_oscillator_number < get_event_occupied_oscillator_number()){
+				max_event_occupied_oscillator_number = get_event_occupied_oscillator_number();
 			}
 
 			int16_t oscillator_index = get_event_occupied_oscillator_head_index();
@@ -1207,14 +1208,13 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 	}
 
 	if(NULL != p_channel_instrument_array){
+		CHIPTUNE_PRINTF(cDeveloping, "max_event_occupied_oscillator_number = %d\r\n",
+						max_event_occupied_oscillator_number);
+
 		for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 			if(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED == p_channel_instrument_array[i]){
 				p_channel_instrument_array[i] = get_channel_controller_pointer_from_index(i)->instrument;
 			}
-		}
-
-		if(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED == p_channel_instrument_array[MIDI_PERCUSSION_INSTRUMENT_CHANNEL]){
-			p_channel_instrument_array[MIDI_PERCUSSION_INSTRUMENT_CHANNEL] = CHIPTUNE_INSTRUMENT_PERCUSSION;
 		}
 	}
 
