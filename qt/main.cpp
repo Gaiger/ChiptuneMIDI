@@ -34,28 +34,6 @@ static void ListAvailableMidiDevices(void)
 	}
 }
 
-
-/**********************************************************************************/
-
-void PilotRun(TuneManager *p_tune_manager)
-{
-	QElapsedTimer elasped_timer;
-
-	elasped_timer.start();
-	p_tune_manager->SetStartTimeInSeconds(0);
-	int data_buffer_size = p_tune_manager->GetNumberOfChannels()
-			* p_tune_manager->GetSamplingRate() * p_tune_manager->GetSamplingSize()/8;
-	QByteArray wave_data;
-	while(1)
-	{
-		wave_data = p_tune_manager->FetchWave(data_buffer_size);
-		if(true == p_tune_manager->IsTuneEnding()){
-			break;
-		}
-	}
-	qDebug() <<Q_FUNC_INFO << " elpased" << elasped_timer.elapsed() << "ms";
-}
-
 /**********************************************************************************/
 
 int main(int argc, char* argv[])
@@ -84,9 +62,7 @@ int main(int argc, char* argv[])
 	//p_player->moveToThread(a.thread());
 	p_player->Play();
 #endif
-
 	TuneManager tune_manager(true, 16000, 16);
-	//PilotRun(&tune_manager);
 
 	ChiptuneMidiWidget chiptune_midi_widget(&tune_manager);
 	chiptune_midi_widget.show();
