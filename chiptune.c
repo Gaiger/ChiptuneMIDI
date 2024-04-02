@@ -1,9 +1,8 @@
 #include <string.h>
+#include <stdio.h>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
-
-#include<stdarg.h>
-#include <stdio.h>
 
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
@@ -826,13 +825,20 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 		{
 		case ENVELOPE_ATTACK:
 			p_envelope_table = p_channel_controller->p_envelope_attack_table;
-			delta_amplitude = p_oscillator->loudness;
+			delta_amplitude = p_oscillator->loudness - p_oscillator->attack_decay_reference_amplitude;
+			shift_amplitude = p_oscillator->attack_decay_reference_amplitude;
 			break;
 		case ENVELOPE_DECAY: {
 			p_envelope_table = p_channel_controller->p_envelope_decay_table;
 			int16_t sustain_ampitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
 														 p_channel_controller->envelope_sustain_level);
-			delta_amplitude = p_oscillator->loudness - sustain_ampitude;
+			do {
+				if(0 != p_oscillator->attack_decay_reference_amplitude){
+					delta_amplitude = p_oscillator->attack_decay_reference_amplitude - sustain_ampitude;
+					break;
+				}
+				delta_amplitude = p_oscillator->loudness - sustain_ampitude;
+			} while(0);
 			shift_amplitude = sustain_ampitude;
 		}	break;
 		case ENVELOPE_SUSTAIN:
