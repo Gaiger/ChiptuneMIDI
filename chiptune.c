@@ -1218,7 +1218,6 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 		}
 	}
 
-
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
 }
 
@@ -1312,7 +1311,7 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 	for(int i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 		s_is_channels_output_enabled_array[i] = true;
 	}
-	initialize_channel_controller();
+	initialize_channel_controllers();
 	clean_all_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
@@ -1346,7 +1345,7 @@ void chiptune_set_tempo(float const tempo)
 	adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), tempo);
 	UPDATE_TEMPO(tempo);
 	update_effect_tick();
-	update_channel_controller_parameters_related_to_tempo();
+	update_channel_controllers_parameters_related_to_tempo();
 }
 
 /**********************************************************************************/

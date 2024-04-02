@@ -62,6 +62,7 @@ private slots:
 private :
 	void EmitValuesChanged(void);
 private:
+	int m_previous_dutycycle;
 	int m_previous_sustain_level;
 	int m_index;
 private:

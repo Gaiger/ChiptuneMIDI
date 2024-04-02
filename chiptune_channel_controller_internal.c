@@ -11,17 +11,17 @@ static channel_controller_t s_channel_controllers[MIDI_MAX_CHANNEL_NUMBER];
 
 static int8_t s_vibrato_phase_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
 
-static int8_t s_linear_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
-static int8_t s_linear_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+static int8_t s_linear_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
+static int8_t s_linear_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
 
-static int8_t s_exponential_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
-static int8_t s_exponential_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+static int8_t s_exponential_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
+static int8_t s_exponential_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
 
-static int8_t s_gaussian_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
-static int8_t s_gaussian_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+static int8_t s_gaussian_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
+static int8_t s_gaussian_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
 
-static int8_t s_fermi_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
-static int8_t s_fermi_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH];
+static int8_t s_fermi_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
+static int8_t s_fermi_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH]  = {0};
 
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index)
 {
@@ -240,7 +240,7 @@ void reset_channel_controller_all_parameters(int8_t const index)
 
 /**********************************************************************************/
 
-void update_channel_controller_parameters_related_to_tempo(void)
+void update_channel_controllers_parameters_related_to_tempo(void)
 {
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 		update_channel_controller_envelope_parameters_related_to_tempo(i);
@@ -307,7 +307,7 @@ static void initialize_envelope_tables(void)
 
 void reset_percussion_all_parameters_from_index(int8_t const index);
 
-void initialize_channel_controller(void)
+void initialize_channel_controllers(void)
 {
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
 		s_vibrato_phase_table[i] = (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));

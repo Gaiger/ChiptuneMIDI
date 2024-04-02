@@ -426,6 +426,7 @@ PitchTimbreFrame::PitchTimbreFrame(int index, int inustrument, QWidget *parent)
 	  ui(new Ui::PitchTimbreFrame)
 {
 	ui->setupUi(this);
+	m_previous_dutycycle = 0;// dutycycle 50
 	m_previous_sustain_level = ui->SustainLevelSpinBox->value();
 
 	ui->IndexLabel->setText( "#" + QString::number(index) + " " + GetInstrumentNameString(inustrument));
@@ -517,12 +518,11 @@ void PitchTimbreFrame::on_OutputEnabledCheckBox_stateChanged(int state)
 void PitchTimbreFrame::on_WaveFormComboBox_currentIndexChanged(int index)
 {
 	Q_UNUSED(index);
-	qDebug() << Q_FUNC_INFO;
 	do {
 		if(QString("Square") == ui->WaveFormComboBox->currentText()){
-			QObject::blockSignals(true);
-			ui->DutyCycleComboBox->setCurrentIndex(0);
-			QObject::blockSignals(false);
+			ui->DutyCycleComboBox->blockSignals(true);
+			ui->DutyCycleComboBox->setCurrentIndex(m_previous_dutycycle);
+			ui->DutyCycleComboBox->blockSignals(false);
 			ui->DutyCycleComboBox->setEnabled(true);
 			break;
 		}
@@ -539,7 +539,9 @@ void PitchTimbreFrame::on_WaveFormComboBox_currentIndexChanged(int index)
 void PitchTimbreFrame::on_DutyCycleComboBox_currentIndexChanged(int index)
 {
 	Q_UNUSED(index);
-	qDebug() << Q_FUNC_INFO;
+	if(4 != index){
+		m_previous_dutycycle = ui->DutyCycleComboBox->currentIndex();
+	}
 	EmitValuesChanged();
 }
 
@@ -548,7 +550,6 @@ void PitchTimbreFrame::on_DutyCycleComboBox_currentIndexChanged(int index)
 void PitchTimbreFrame::on_AttackCurveComboBox_currentIndexChanged(int index)
 {
 	Q_UNUSED(index);
-	qDebug() << Q_FUNC_INFO;
 	EmitValuesChanged();
 }
 /**********************************************************************************/
@@ -556,7 +557,6 @@ void PitchTimbreFrame::on_AttackCurveComboBox_currentIndexChanged(int index)
 void PitchTimbreFrame::on_AttackTimeSpinBox_valueChanged(int value)
 {
 	Q_UNUSED(value);
-	qDebug() << Q_FUNC_INFO;
 	EmitValuesChanged();
 }
 
@@ -564,7 +564,6 @@ void PitchTimbreFrame::on_AttackTimeSpinBox_valueChanged(int value)
 
 void PitchTimbreFrame::on_DecayCurveComboBox_currentIndexChanged(int index)
 {
-	qDebug() << Q_FUNC_INFO;
 	Q_UNUSED(index);
 	EmitValuesChanged();
 }
@@ -574,7 +573,6 @@ void PitchTimbreFrame::on_DecayCurveComboBox_currentIndexChanged(int index)
 void PitchTimbreFrame::on_DecayTimeSpinBox_valueChanged(int value)
 {
 	Q_UNUSED(value);
-	qDebug() << Q_FUNC_INFO;
 	do
 	{
 		if(0 == value){
@@ -602,7 +600,6 @@ void PitchTimbreFrame::on_DecayTimeSpinBox_valueChanged(int value)
 void PitchTimbreFrame::on_SustainLevelSpinBox_valueChanged(int value)
 {
 	Q_UNUSED(value);
-	qDebug() << Q_FUNC_INFO;
 	EmitValuesChanged();
 }
 
@@ -611,7 +608,6 @@ void PitchTimbreFrame::on_SustainLevelSpinBox_valueChanged(int value)
 void PitchTimbreFrame::on_ReleaseCurveComboBox_currentIndexChanged(int index)
 {
 	Q_UNUSED(index);
-	qDebug() << Q_FUNC_INFO;
 	EmitValuesChanged();
 }
 
@@ -620,7 +616,6 @@ void PitchTimbreFrame::on_ReleaseCurveComboBox_currentIndexChanged(int index)
 void PitchTimbreFrame::on_ReleaseTimeSpinBox_valueChanged(int value)
 {
 	Q_UNUSED(value);
-	qDebug() << Q_FUNC_INFO;
 	EmitValuesChanged();
 }
 
@@ -629,7 +624,6 @@ void PitchTimbreFrame::on_ReleaseTimeSpinBox_valueChanged(int value)
 void PitchTimbreFrame::on_DamperOnButNoteOffSustainTimeDoubleSpinBox_valueChanged(double value)
 {
 	Q_UNUSED(value);
-	qDebug() << Q_FUNC_INFO;
 	EmitValuesChanged();
 }
 
@@ -638,7 +632,6 @@ void PitchTimbreFrame::on_DamperOnButNoteOffSustainTimeDoubleSpinBox_valueChange
 void PitchTimbreFrame::on_DamperOnButNoteOffSustainCurveComboBox_currentIndexChanged(int index)
 {
 	Q_UNUSED(index);
-	qDebug() << Q_FUNC_INFO;
 	EmitValuesChanged();
 }
 
@@ -647,6 +640,5 @@ void PitchTimbreFrame::on_DamperOnButNoteOffSustainCurveComboBox_currentIndexCha
 void PitchTimbreFrame::on_DamperOnButNoteOffSustainSustainLevelSpinBox_valueChanged(int value)
 {
 	Q_UNUSED(value);
-	qDebug() << Q_FUNC_INFO;
 	EmitValuesChanged();
 }
