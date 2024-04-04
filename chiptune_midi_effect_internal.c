@@ -14,8 +14,13 @@
 #define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
 
 #define ASSOCIATE_OSCILLATOR_NUMBER					(4 - 1)
+
+#define TOP_LEVEL									(0)
+#define REVERB_LEVEL								(0)
+#define CHORUS_LEVEL								(1)
+
 #define REVERB_ASSOCIATE_START_INDEX				(0)
-#define CHORUS_ASSOCIATE_START_INDEX				(ASSOCIATE_OSCILLATOR_NUMBER)
+#define CHORUS_ASSOCIATE_START_INDEX				((CHORUS_LEVEL) * ASSOCIATE_OSCILLATOR_NUMBER)
 
 /**********************************************************************************/
 #define ASSOCIATE_REVERB_OSCILLATOR_NUMBER			(ASSOCIATE_OSCILLATOR_NUMBER)
@@ -57,8 +62,51 @@ static inline uint32_t obtain_reverb_delta_tick(int8_t reverb)
 }
 
 /**********************************************************************************/
+
+int find_associate_oscillator_indexes(int16_t const native_index,
+									  uint8_t const find_level, uint8_t current_level,
+									  int oscillator_indexes[], int const max_oscillator_number,
+									  int * const p_oscillator_number)
+{
+	if(find_level < current_level){
+		return 0;
+	}
+
+	oscillator_t  * const p_native_oscillator = get_event_oscillator_pointer_from_index(native_index);
+	for(int i = 0; i < ASSOCIATE_OSCILLATOR_NUMBER; i++){
+		int16_t asscociate_oscillator_index
+				= p_native_oscillator->asscociate_oscillators[find_level * ASSOCIATE_OSCILLATOR_NUMBER + i];
+		if(UNOCCUPIED_OSCILLATOR == asscociate_oscillator_index){
+			continue;
+		}
+		if(max_oscillator_number == *p_oscillator_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator_indexes is full in %s \r\n", __func__);
+			return -1;
+		}
+
+		oscillator_indexes[*p_oscillator_number] = asscociate_oscillator_index;
+		*p_oscillator_number += 1;
+
+		if(find_level == current_level ){
+			continue;
+		}
+		asscociate_oscillator_index = p_native_oscillator->asscociate_oscillators[current_level * ASSOCIATE_OSCILLATOR_NUMBER + i];
+		if(UNOCCUPIED_OSCILLATOR == asscociate_oscillator_index){
+			continue;
+		}
+		find_associate_oscillator_indexes(asscociate_oscillator_index, find_level, current_level + 1,
+										  &oscillator_indexes[0], max_oscillator_number, p_oscillator_number);
+	}
+
+	return 0;
+}
+
+/**********************************************************************************/
+//#define ENHANCE_REVERB_LOUDNESS(LOUDNESS, REVERB_VALUE) \
+//								DIVIDE_BY_128((LOUDNESS) * ((INT8_MAX + 1) + ((REVERB_VALUE) + 1)/2))
+
 #define ENHANCE_REVERB_LOUDNESS(LOUDNESS, REVERB_VALUE) \
-								DIVIDE_BY_128((LOUDNESS) * ((INT8_MAX + 1) + ((REVERB_VALUE) + 1)/2))
+								(LOUDNESS)
 
 static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 						  int8_t const voice, int8_t const note, int8_t const velocity,
@@ -134,19 +182,18 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 
 	uint32_t chorus_delta_tick = obtain_chorus_delta_tick(p_channel_controller->chorus);
 	oscillator_t  * p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_index);
-	int native_oscillator_indexes[1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER]
-			= {native_oscillator_index,
-			   p_native_oscillator->asscociate_oscillators[REVERB_ASSOCIATE_START_INDEX + 0],
-			   p_native_oscillator->asscociate_oscillators[REVERB_ASSOCIATE_START_INDEX + 1],
-			   p_native_oscillator->asscociate_oscillators[REVERB_ASSOCIATE_START_INDEX + 2]};
 
 	do {
 		if(EVENT_ACTIVATE == event_type){
-			for(int k = 0; k < 1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER; k++){
-				if(UNOCCUPIED_OSCILLATOR == native_oscillator_indexes[k]){
-					break;
-				}
+			int native_oscillator_indexes[1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
+			int native_oscillator_number = 0;
+			native_oscillator_indexes[0] = native_oscillator_index;
+			native_oscillator_number += 1;
+			find_associate_oscillator_indexes(native_oscillator_index, REVERB_LEVEL, TOP_LEVEL,
+											  &native_oscillator_indexes[0], 1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER,
+					&native_oscillator_number);
 
+			for(int k = 0; k < native_oscillator_number; k++){
 				p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_indexes[k]);
 
 				int16_t const loudness = p_native_oscillator->loudness;
@@ -158,7 +205,6 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 							5 * loudness_over_16};
 				loudnesses[0] = loudness - (4 + 3 + 5) * loudness_over_16;
 				p_native_oscillator->loudness = loudnesses[0];
-
 				int16_t assocatiate_oscillator_indexes[ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
 				for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
 					int16_t oscillator_index;
@@ -190,19 +236,18 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 							  tick + (i + 1) * chorus_delta_tick);
 				}
 			}
+
 			break;
 		}
 
-		for(int k = 0; k < 1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER; k++){
-			if(UNOCCUPIED_OSCILLATOR == native_oscillator_indexes[k]){
-				break;
-			}
-
-			p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_indexes[k]);
-			for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
-				put_event(event_type, p_native_oscillator->asscociate_oscillators[CHORUS_ASSOCIATE_START_INDEX + i],
-						  tick + (i + 1) * chorus_delta_tick);
-			}
+		int oscillator_indexes[(1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER) * ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
+		int oscillator_number = 0;
+		find_associate_oscillator_indexes(native_oscillator_index, CHORUS_LEVEL, TOP_LEVEL,
+										  &oscillator_indexes[0],
+				(1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER) * ASSOCIATE_REVERB_OSCILLATOR_NUMBER,
+				&oscillator_number);
+		for(int16_t i = 0; i < oscillator_number; i++){
+			put_event(event_type, oscillator_indexes[i], tick + (i + 1) * chorus_delta_tick);
 		}
 	} while(0);
 
