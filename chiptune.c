@@ -244,8 +244,7 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
 				break;
 			}
 			put_event(EVENT_REST, oscillator_index, tick);
-			process_chorus_effect(tick, EVENT_REST, voice, note, velocity, oscillator_index);
-			process_reverb_effect(tick, EVENT_REST, voice, note, velocity, oscillator_index);
+			process_effects(tick, EVENT_REST, voice, note, velocity, oscillator_index);
 		} while(0);
 		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 	}
@@ -310,8 +309,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			} while(0);
 
 			put_event(EVENT_ACTIVATE, oscillator_index, tick);
-			process_reverb_effect(tick, EVENT_ACTIVATE, voice, note, velocity, oscillator_index);
-			process_chorus_effect(tick, EVENT_ACTIVATE, voice, note, velocity, oscillator_index);
+			process_effects(tick, EVENT_ACTIVATE, voice, note, velocity, oscillator_index);
 			break;
 		}
 
@@ -351,8 +349,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					break;
 				}
 				put_event(EVENT_FREE, oscillator_index, tick);
-				process_reverb_effect(tick, EVENT_FREE, voice, note, velocity, oscillator_index);
-				process_chorus_effect(tick, EVENT_FREE, voice, note, velocity, oscillator_index);
+				process_effects(tick, EVENT_FREE, voice, note, velocity, oscillator_index);
 				is_found = true;
 			} while(0);
 			if(true == is_found){
@@ -391,8 +388,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->envelope_table_index = 0;
 			p_oscillator->release_reference_amplitude = 0;
 			put_event(EVENT_ACTIVATE, reduced_loundness_oscillator_index, tick);
-			process_reverb_effect(tick, EVENT_ACTIVATE, voice, note, velocity, reduced_loundness_oscillator_index);
-			process_chorus_effect(tick, EVENT_ACTIVATE, voice, note, velocity, reduced_loundness_oscillator_index);
+			process_effects(tick, EVENT_ACTIVATE, voice, note, velocity, reduced_loundness_oscillator_index);
 		} while(0);
 
 	} while(0);

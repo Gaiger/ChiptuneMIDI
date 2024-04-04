@@ -236,10 +236,8 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 
 			int32_t expression_multiply_volume = p_channel_controller->expression * p_channel_controller->volume;
 			expression_multiply_volume += !expression_multiply_volume;
-			process_chorus_effect(tick, EVENT_FREE, voice, p_oscillator->note,
-								  p_oscillator->loudness * INT8_MAX/ expression_multiply_volume, oscillator_index);
-			process_reverb_effect(tick, EVENT_FREE, voice, p_oscillator->note,
-								  p_oscillator->loudness * INT8_MAX/expression_multiply_volume, oscillator_index);
+			process_effects(tick, EVENT_FREE, voice, p_oscillator->note,
+							p_oscillator->loudness * INT8_MAX/ expression_multiply_volume, oscillator_index);
 		} while(0);
 		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 	}

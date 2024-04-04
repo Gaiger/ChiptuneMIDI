@@ -59,7 +59,7 @@ static inline uint32_t obtain_reverb_delta_tick(int8_t reverb)
 #define ENHANCE_REVERB_LOUDNESS(LOUDNESS, REVERB_VALUE) \
 								DIVIDE_BY_128((LOUDNESS) * ((INT8_MAX + 1) + ((REVERB_VALUE) + 1))/2)
 
-int process_reverb_effect(uint32_t const tick, int8_t const event_type,
+static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 						  int8_t const voice, int8_t const note, int8_t const velocity,
 						  int16_t const native_oscillator_index)
 {
@@ -112,7 +112,7 @@ int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 
 /**********************************************************************************/
 
-int process_chorus_effect(uint32_t const tick, int8_t const event_type,
+static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 						  int8_t const voice, int8_t const note, int8_t const velocity,
 						  int16_t const native_oscillator_index)
 {
@@ -139,6 +139,7 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 				if(UNOCCUPIED_OSCILLATOR == native_oscillator_indexes[k]){
 					break;
 				}
+
 				p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_indexes[k]);
 
 				int16_t const loudness = p_native_oscillator->loudness;
@@ -192,6 +193,15 @@ int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 		}
 	} while(0);
 
+	return 0;
+}
+
+int process_effects(uint32_t const tick, int8_t const event_type,
+					int8_t const voice, int8_t const note, int8_t const velocity,
+					int16_t const native_oscillator_index)
+{
+	process_reverb_effect(tick, event_type, voice, note, velocity, native_oscillator_index);
+	process_chorus_effect(tick, event_type, voice, note, velocity, native_oscillator_index);
 	return 0;
 }
 

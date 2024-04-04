@@ -135,9 +135,9 @@ color: rgb(208, 208, 208);
   <widget class="QComboBox" name="AttackCurveComboBox">
    <property name="geometry">
     <rect>
-     <x>75</x>
+     <x>68</x>
      <y>60</y>
-     <width>111</width>
+     <width>128</width>
      <height>24</height>
     </rect>
    </property>
@@ -200,9 +200,9 @@ color: rgb(208, 208, 208);
   <widget class="QComboBox" name="DecayCurveComboBox">
    <property name="geometry">
     <rect>
-     <x>75</x>
+     <x>68</x>
      <y>90</y>
-     <width>111</width>
+     <width>128</width>
      <height>24</height>
     </rect>
    </property>
@@ -297,9 +297,9 @@ color: rgb(208, 208, 208);
   <widget class="QComboBox" name="ReleaseCurveComboBox">
    <property name="geometry">
     <rect>
-     <x>75</x>
+     <x>68</x>
      <y>150</y>
-     <width>111</width>
+     <width>128</width>
      <height>24</height>
     </rect>
    </property>
@@ -404,9 +404,9 @@ color: rgb(208, 208, 208);
   <widget class="QComboBox" name="DamperOnButNoteOffSustainCurveComboBox">
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>16</x>
      <y>210</y>
-     <width>111</width>
+     <width>128</width>
      <height>24</height>
     </rect>
    </property>
