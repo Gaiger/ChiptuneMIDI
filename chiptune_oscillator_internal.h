@@ -11,6 +11,8 @@ enum EnvelopeType
 	ENVELOPE_RELEASE,
 };
 
+#define MAX_ASSOCIATE_OSCILLATOR_NUMBER				(6)
+
 typedef struct _oscillator
 {
 	uint8_t		state_bits;
@@ -27,8 +29,7 @@ typedef struct _oscillator
 
 union{
 	struct {
-		int16_t		chorus_asscociate_oscillators[3];
-		int16_t		reverb_asscociate_oscillators[3];
+		int16_t		asscociate_oscillators[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
 
 		uint16_t	envelope_table_index;
 		uint16_t	envelope_same_index_count;

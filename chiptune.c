@@ -295,8 +295,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->note = note;
 			p_oscillator->loudness = (int16_t)(
 						(velocity * p_channel_controller->expression * p_channel_controller->volume)/INT8_MAX);
-			memset(&p_oscillator->chorus_asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, 3 * sizeof(int16_t));
-			memset(&p_oscillator->reverb_asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, 3 * sizeof(int16_t));
+			memset(&p_oscillator->asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
 
 			p_oscillator->current_phase = 0;
 			do {
@@ -378,8 +377,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				   sizeof(oscillator_t));
 			RESET_STATE_BITES(p_oscillator->state_bits);
 			SET_NOTE_OFF(p_oscillator->state_bits);
-			memset(&p_oscillator->chorus_asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, 3 * sizeof(int16_t));
-			memset(&p_oscillator->reverb_asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, 3 * sizeof(int16_t));
+			memset(&p_oscillator->asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
 			p_oscillator->loudness =
 					LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->loudness,
 															   p_channel_controller->envelop_damper_on_but_note_off_sustain_level);
@@ -412,8 +410,6 @@ static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, 
 
 	CHIPTUNE_PRINTF(cMidiPitchWheel, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %d, pitch_wheel_bend_in_semitones = %+3.2f\r\n",
 					tick, voice, p_channel_controller->pitch_wheel_bend_in_semitones);
-
-
 	for(int16_t i = 0; i < occupied_oscillator_number; i++){
 		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
 		do {
