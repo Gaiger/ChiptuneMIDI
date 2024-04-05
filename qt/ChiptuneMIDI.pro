@@ -23,6 +23,7 @@ SOURCES += \
         ../chiptune_oscillator_internal.c \
         ../chiptune_printf_internal.c \
         ChiptuneMidiWidget.cpp \
+        GetInstrumentNameString.cpp \
         PitchTimbreFrame.cpp \
         ProgressSlider.cpp \
         TuneManager.cpp \
@@ -46,6 +47,7 @@ HEADERS += \
     ../chiptune_oscillator_internal.h \
     ../chiptune_printf_internal.h \
     ChiptuneMidiWidget.h \
+    GetInstrumentNameString.h \
     MidiPlayer.h \
     PitchTimbreFrame.h \
     ProgressSlider.h \
