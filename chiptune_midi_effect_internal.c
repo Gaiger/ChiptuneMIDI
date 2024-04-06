@@ -25,10 +25,10 @@
 /**********************************************************************************/
 #define ASSOCIATE_REVERB_OSCILLATOR_NUMBER			(ASSOCIATE_OSCILLATOR_NUMBER)
 #define MAX_REVERB_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND	\
-															(0.180)
+															(0.150)
 #define EACH_REVERB_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND	\
 															(MAX_REVERB_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND / \
-															(float)( (ASSOCIATE_REVERB_OSCILLATOR_NUMBER + 1) *(INT8_MAX + 1)))
+															(float)( ASSOCIATE_REVERB_OSCILLATOR_NUMBER *(INT8_MAX + 1)))
 
 #define ASSOCIATE_CHORUS_OSCILLATOR_NUMBER			(ASSOCIATE_OSCILLATOR_NUMBER)
 #define MAX_CHORUS_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND	\
@@ -159,7 +159,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 	uint32_t reverb_delta_tick = obtain_reverb_delta_tick(p_channel_controller->reverb);
 	for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
 		put_event(event_type, p_native_oscillator->asscociate_oscillators[REVERB_ASSOCIATE_START_INDEX + i],
-				  tick + (i + 2) * reverb_delta_tick);
+				  tick + (i + 1) * reverb_delta_tick);
 	}
 
 	return 0;

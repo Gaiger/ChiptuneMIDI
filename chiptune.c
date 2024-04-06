@@ -289,6 +289,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			if(NULL == p_oscillator){
 				return -1;
 			}
+			memset(p_oscillator, 0, sizeof(oscillator_t));
 			RESET_STATE_BITES(p_oscillator->state_bits);
 			SET_NOTE_ON(p_oscillator->state_bits);
 			p_oscillator->voice = voice;
