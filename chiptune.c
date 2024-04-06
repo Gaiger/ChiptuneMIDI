@@ -146,7 +146,7 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 {
 	if(CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED != get_channel_controller_pointer_from_index(voice)->instrument){
 		if(number != get_channel_controller_pointer_from_index(voice)->instrument){
-			CHIPTUNE_PRINTF(cMidiProgramChange, "WARNING :: tick = %u, orverwrite voice = %d instrument from %d(%s) to %d(%s)\r\n",
+			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE::orverwrite voice = %d instrument from %d(%s) to %d(%s)\r\n",
 							tick, voice,
 							get_channel_controller_pointer_from_index(voice)->instrument,
 							get_instrument_name_string(get_channel_controller_pointer_from_index(voice)->instrument),
