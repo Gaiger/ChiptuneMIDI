@@ -507,23 +507,10 @@ color: rgb(208, 208, 208);
     <double>8.000000000000000</double>
    </property>
   </widget>
-  <widget class="QLabel" name="IndexLabel">
-   <property name="geometry">
-    <rect>
-     <x>12</x>
-     <y>8</y>
-     <width>196</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string># 16</string>
-   </property>
-  </widget>
   <widget class="QCheckBox" name="OutputEnabledCheckBox">
    <property name="geometry">
     <rect>
-     <x>228</x>
+     <x>8</x>
      <y>8</y>
      <width>84</width>
      <height>16</height>

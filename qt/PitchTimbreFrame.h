@@ -11,7 +11,7 @@ class PitchTimbreFrame : public QFrame
 {
 	Q_OBJECT
 public:
-	explicit PitchTimbreFrame(int index, int instrument = -1, QWidget *parent = nullptr);
+	explicit PitchTimbreFrame(int index, QWidget *parent = nullptr);
 	~PitchTimbreFrame(void) Q_DECL_OVERRIDE;
 public:
 	enum WaveformType
@@ -62,9 +62,9 @@ private slots:
 private :
 	void EmitValuesChanged(void);
 private:
+	int m_index;
 	int m_previous_dutycycle;
 	int m_previous_sustain_level;
-	int m_index;
 private:
 	Ui::PitchTimbreFrame *ui;
 };

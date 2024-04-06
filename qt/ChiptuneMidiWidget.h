@@ -3,6 +3,7 @@
 #include <QTimer>
 #include <QThread>
 #include <QWidget>
+#include <QToolBox>
 #include <QFileInfo>
 
 #include "TuneManager.h"
@@ -70,7 +71,7 @@ private:
 	void SetPlayPausePushButtonAsPlayIcon(bool is_play_icon);
 private:
 	WaveChartView *		m_p_wave_chartview;
-
+	QToolBox *			m_p_timbre_list_toobox;
 private :
 	TuneManager *		m_p_tune_manager;
 	QThread				m_tune_manager_working_thread;

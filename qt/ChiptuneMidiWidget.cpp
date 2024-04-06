@@ -14,6 +14,8 @@
 #include <QWinTaskbarProgress>
 #endif
 
+#include "GetInstrumentNameString.h"
+
 #include "ui_ChiptuneMidiWidgetForm.h"
 #include "ProgressSlider.h"
 #include "PitchTimbreFrame.h"
@@ -132,9 +134,9 @@ private:
 
 /**********************************************************************************/
 
-void ReplaceWidget(QWidget *p_widget, QWidget *p_replaced_widget)
+void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
 {
-	QGridLayout *p_layout = new QGridLayout(p_replaced_widget);
+	QGridLayout *p_layout = new QGridLayout(p_filled_widget);
 	p_layout->addWidget(p_widget, 0, 0);
 	p_layout->setContentsMargins(0, 0, 0, 0);
 	p_layout->setSpacing(0);
@@ -144,7 +146,9 @@ void ReplaceWidget(QWidget *p_widget, QWidget *p_replaced_widget)
 
 ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidget *parent)
 	: QWidget(parent),
+	m_p_timbre_list_toobox(nullptr),
 	m_p_tune_manager(p_tune_manager),
+	m_inquiring_playback_status_timer_id(-1),
 	ui(new Ui::ChiptuneMidiWidget)
 {
 	ui->setupUi(this);
@@ -158,7 +162,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 		m_p_wave_chartview = new WaveChartView(
 					p_tune_manager->GetNumberOfChannels(),
 					p_tune_manager->GetSamplingRate(), p_tune_manager->GetSamplingSize(), this);
-		ReplaceWidget(m_p_wave_chartview, ui->WaveWidget);
+		FillWidget(m_p_wave_chartview, ui->WaveWidget);
 	} while(0);
 
 	QWidget::setAcceptDrops(true);
@@ -181,9 +185,6 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
 	ui->SaveSaveFilePushButton->setToolTip(tr("Save as .wav file"));
-
-	ui->TimbreListTableWidget->verticalHeader()->setVisible(false);
-	ui->TimbreListTableWidget->horizontalHeader()->setVisible(false);
 
 	QWidget::setFocusPolicy(Qt::StrongFocus);
 	QWidget::setFixedSize(QWidget::size());
@@ -239,20 +240,24 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			break;
 		}
 
-		int channel_number = m_p_tune_manager->GetChannelInstrumentPairList().size();
+		m_p_timbre_list_toobox = new QToolBox();
+		FillWidget(m_p_timbre_list_toobox, ui->TimbreListWidget);
 
-		ui->TimbreListTableWidget->setRowCount(channel_number);
-		ui->TimbreListTableWidget->setColumnCount(1);
+		int channel_number = m_p_tune_manager->GetChannelInstrumentPairList().size();
 		for(int i = 0; i < channel_number; i++){
 			int channel_index = m_p_tune_manager->GetChannelInstrumentPairList().at(i).first;
 			int instrument = m_p_tune_manager->GetChannelInstrumentPairList().at(i).second;
-			PitchTimbreFrame *p_pitch_timbre_frame = new PitchTimbreFrame(channel_index, instrument, ui->TimbreListTableWidget);
-			ui->TimbreListTableWidget->setCellWidget(i, 0, p_pitch_timbre_frame);
-			ui->TimbreListTableWidget->setColumnWidth(i, 320);
-			ui->TimbreListTableWidget->setRowHeight(i, 240);
+			PitchTimbreFrame *p_pitch_timbre_frame = new PitchTimbreFrame(channel_index);
+			QString instrument_name = GetInstrumentNameString(instrument);
+#define MIDI_PERCUSSION_INSTRUMENT_CHANNEL			(9)
+			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == channel_index){
+				instrument_name = QString("Percussion");
+			}
+			m_p_timbre_list_toobox->addItem(p_pitch_timbre_frame,
+											"#"+ QString::number(channel_index) +" " + instrument_name);
+
 			QObject::connect(p_pitch_timbre_frame, &PitchTimbreFrame::OutputEnabled,
 							 this, &ChiptuneMidiWidget::HandleChannelOutputEnabled);
-
 			QObject::connect(p_pitch_timbre_frame, &PitchTimbreFrame::ValuesChanged,
 							 this, &ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged);
 		}
@@ -303,9 +308,23 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 	SetPlayPausePushButtonAsPlayIcon(true);
 	m_p_wave_chartview->Reset();
 
-	ui->TimbreListTableWidget->clear();
-	ui->TimbreListTableWidget->setRowCount(0);
-	ui->TimbreListTableWidget->setColumnCount(0);
+	do {
+		if(nullptr == m_p_timbre_list_toobox){
+			break;
+		}
+		for(int i = 0; i < m_p_timbre_list_toobox->count(); i++){
+			QWidget *p_item = m_p_timbre_list_toobox->widget(i);
+			p_item->setVisible(false);
+			m_p_timbre_list_toobox->removeItem(i);
+			delete p_item; p_item = nullptr;
+		}
+
+		ui->TimbreListWidget->layout()->removeWidget(m_p_timbre_list_toobox);
+		delete m_p_timbre_list_toobox;
+		m_p_timbre_list_toobox = nullptr;
+		delete ui->TimbreListWidget->layout();
+	} while(0);
+
 	ui->SaveSaveFilePushButton->setEnabled(false);
 }
 
@@ -669,8 +688,8 @@ void ChiptuneMidiWidget::on_AmplitudeGainSlider_sliderMoved(int value)
 
 void ChiptuneMidiWidget::on_DisableAllOutputPushButton_released(void)
 {
-	for(int i = 0; i < ui->TimbreListTableWidget->rowCount(); i++){
-		((PitchTimbreFrame*)ui->TimbreListTableWidget->cellWidget(i, 0))->setOutputEnabled(false);
+	for(int i = 0; i < m_p_timbre_list_toobox->count(); i++){
+		((PitchTimbreFrame*)m_p_timbre_list_toobox->widget(i))->setOutputEnabled(false);
 	}
 }
 
@@ -678,7 +697,7 @@ void ChiptuneMidiWidget::on_DisableAllOutputPushButton_released(void)
 
 void ChiptuneMidiWidget::on_EnableAllOutputPushButton_released(void)
 {
-	for(int i = 0; i < ui->TimbreListTableWidget->rowCount(); i++){
-		((PitchTimbreFrame*)ui->TimbreListTableWidget->cellWidget(i, 0))->setOutputEnabled(true);
+	for(int i = 0; i < m_p_timbre_list_toobox->count(); i++){
+		((PitchTimbreFrame*)m_p_timbre_list_toobox->widget(i))->setOutputEnabled(true);
 	}
 }
