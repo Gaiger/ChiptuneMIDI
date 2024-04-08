@@ -354,8 +354,8 @@ percussion_t s_percussion[PERCUSSION_CODE_MAX - PERCUSSION_CODE_MIN + 1];
 percussion_t * const get_percussion_pointer_from_index(int8_t const index)
 {
 	if(false == (PERCUSSION_CODE_MIN <= index && PERCUSSION_CODE_MAX >= index)){
-		CHIPTUNE_PRINTF(cDeveloping, "percussion = %d, out of range\r\n");
-		return NULL;
+		//CHIPTUNE_PRINTF(cDeveloping, "WARNING :: percussion = %d, out of range, as SNARE_DRUM_1\r\n", index);
+		return &s_percussion[SNARE_DRUM_1 - PERCUSSION_CODE_MIN];
 	}
 	return &s_percussion[index - PERCUSSION_CODE_MIN];
 }
@@ -365,7 +365,7 @@ percussion_t * const get_percussion_pointer_from_index(int8_t const index)
 void reset_percussion_all_parameters_from_index(int8_t const index)
 {
 	if(false == (PERCUSSION_CODE_MIN <= index && PERCUSSION_CODE_MAX >= index)){
-		CHIPTUNE_PRINTF(cDeveloping, "percussion = %d, out of range\r\n");;
+		CHIPTUNE_PRINTF(cDeveloping, "percussion = %d, out of range\r\n", index);
 		return;
 	}
 

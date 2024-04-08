@@ -261,6 +261,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 			do {
 				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
+					if(false == (PERCUSSION_CODE_MIN <= note && PERCUSSION_CODE_MAX >= note)){
+						CHIPTUNE_PRINTF(cDeveloping, "WARNING:: tick = %u, PERCUSSION_INSTRUMENT = %d"
+													 " does not be defined in the MIDI standard\r\n", tick, note);
+					}
 					percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
 					char not_implemented_string[24] = {0};
 					if(false == p_percussion->is_implemented){
