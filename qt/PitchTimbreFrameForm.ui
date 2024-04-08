@@ -385,7 +385,7 @@ color: rgb(208, 208, 208);
     </rect>
    </property>
    <property name="text">
-    <string>Sustian</string>
+    <string>Sustain</string>
    </property>
   </widget>
   <widget class="QLabel" name="DamperOnButNoteOffSustainLabel">

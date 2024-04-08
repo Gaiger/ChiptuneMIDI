@@ -17,7 +17,9 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 {
 	ui->setupUi(this);
 
-	QString background_color_string = "background-color: " + GetColorNumberString(channel_index) + ";";
+	QColor color = GetChannelColor(channel_index);
+	QString color_string = QString::asprintf("#%02x%02x%02x", color.red(), color.green(), color.blue() );
+	QString background_color_string = "background-color: " + color_string + ";";
 	ui->ColorWidget->setStyleSheet(background_color_string);
 	m_expanded_size = QWidget::size();
 	m_collapsed_size = QSize(m_expanded_size.width(), m_expanded_size.height() - ui->PitchTimbreWidget->height());

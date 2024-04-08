@@ -416,64 +416,65 @@ QString GetInstrumentNameString(int instrument)
 
 /**********************************************************************************/
 
-QString GetColorNumberString(int index)
+QColor GetChannelColor(int channel_index)
 {
-	QString color_string = "#000000";
-	switch(index){
+	QColor color = QColor(Qt::GlobalColor::black);
+	switch(channel_index){
 	case 0:
-		color_string = "#000000";
+		color = QColor(0x00, 0x00, 0x00);
 		break;
 	case 1:
-		color_string = "#800000";
+		color = QColor(0x80, 0x00, 0x00);
 		break;
 	case 2:
-		color_string = "#008000";
+		color = QColor(0x00, 0x80, 0x00);
 		break;
 	case 3:
-		color_string = "#808000";
+		color = QColor(0x80, 0x80, 0x00);
 		break;
 
 	case 4:
-		color_string = "#000080";
+		color = QColor(0x00, 0x00, 0x80);
 		break;
 	case 5:
-		color_string = "#800080";
+		color = QColor(0x80, 0x00, 0x80);
 		break;
 	case 6:
-		color_string = "#008080";
+		color = QColor(0x00, 0x80, 0x00);
 		break;
 	case 7:
-		color_string = "#C0C0C0";
+		color = QColor(0xC0, 0xC0, 0xC0);
 		break;
 
 	case 8:
-		color_string = "#808080";
+		color = QColor(0x80, 0x80, 0x80);
 		break;
 	case 9:
-		color_string = "#FF0000";
+		color = QColor(0xFF, 0x00, 0x00);
 		break;
+
 	case 10:
-		color_string = "#00FF00";
+		color = QColor(0x00, 0xFF, 0x00);
 		break;
 	case 11:
-		color_string = "#FFFF00";
+		color = QColor(0xFF, 0xFF, 0x00);
 		break;
 
 	case 12:
-		color_string = "#0000FF";
+		color = QColor(0x00, 0x00, 0xFF);
 		break;
 	case 13:
-		color_string = "#FF00FF";
+		color = QColor(0xFF, 0x00, 0xFF);
 		break;
 	case 14:
-		color_string = "#00FFFF";
+		color = QColor(0x00, 0xFF, 0xFF);
 		break;
 	case 15:
-		color_string = "#FFFFFF";
+		color = QColor(0xFF, 0xFF, 0xFF);
 		break;
 	default:
 		break;
 	}
 
-	return color_string;
+	return color;
 }
