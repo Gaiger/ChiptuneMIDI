@@ -18,7 +18,8 @@
 
 #include "ui_ChiptuneMidiWidgetForm.h"
 #include "ProgressSlider.h"
-#include "PitchTimbreFrame.h"
+#include "ChannelListWidget.h"
+
 #include "ChiptuneMidiWidget.h"
 
 struct wav_header_t
@@ -146,7 +147,7 @@ void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
 
 ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidget *parent)
 	: QWidget(parent),
-	m_p_timbre_list_toobox(nullptr),
+	//m_p_timbre_list_toobox(nullptr),
 	m_p_tune_manager(p_tune_manager),
 	m_inquiring_playback_status_timer_id(-1),
 	ui(new Ui::ChiptuneMidiWidget)
@@ -240,25 +241,17 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			break;
 		}
 
-		m_p_timbre_list_toobox = new QToolBox();
-		FillWidget(m_p_timbre_list_toobox, ui->TimbreListWidget);
-
+		ChannelListWidget *p_channellist_widget = new ChannelListWidget(ui->TimbreListWidget);
+		FillWidget(p_channellist_widget, ui->TimbreListWidget);
 		int channel_number = m_p_tune_manager->GetChannelInstrumentPairList().size();
 		for(int i = 0; i < channel_number; i++){
 			int channel_index = m_p_tune_manager->GetChannelInstrumentPairList().at(i).first;
 			int instrument = m_p_tune_manager->GetChannelInstrumentPairList().at(i).second;
-			PitchTimbreFrame *p_pitch_timbre_frame = new PitchTimbreFrame(channel_index);
-			QString instrument_name = GetInstrumentNameString(instrument);
-#define MIDI_PERCUSSION_INSTRUMENT_CHANNEL			(9)
-			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == channel_index){
-				instrument_name = QString("Percussion");
-			}
-			m_p_timbre_list_toobox->addItem(p_pitch_timbre_frame,
-											"#"+ QString::number(channel_index) +" " + instrument_name);
+			p_channellist_widget->AddChannel(channel_index, instrument);
 
-			QObject::connect(p_pitch_timbre_frame, &PitchTimbreFrame::OutputEnabled,
+			QObject::connect(p_channellist_widget, &ChannelListWidget::OutputEnabled,
 							 this, &ChiptuneMidiWidget::HandleChannelOutputEnabled);
-			QObject::connect(p_pitch_timbre_frame, &PitchTimbreFrame::ValuesChanged,
+			QObject::connect(p_channellist_widget, &ChannelListWidget::TimbreChanged,
 							 this, &ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged);
 		}
 
@@ -309,19 +302,18 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 	m_p_wave_chartview->Reset();
 
 	do {
-		if(nullptr == m_p_timbre_list_toobox){
+		if(nullptr == ui->TimbreListWidget->layout()){
 			break;
 		}
-		for(int i = 0; i < m_p_timbre_list_toobox->count(); i++){
-			QWidget *p_item = m_p_timbre_list_toobox->widget(i);
-			p_item->setVisible(false);
-			m_p_timbre_list_toobox->removeItem(i);
-			delete p_item; p_item = nullptr;
+		QLayoutItem *p_layoutitem = ui->TimbreListWidget->layout()->takeAt(0);
+		if(nullptr == p_layoutitem){
+			break;
 		}
-
-		ui->TimbreListWidget->layout()->removeWidget(m_p_timbre_list_toobox);
-		delete m_p_timbre_list_toobox;
-		m_p_timbre_list_toobox = nullptr;
+		QWidget *p_widget = p_layoutitem->widget();
+		if(nullptr == p_widget){
+			break;
+		}
+		delete p_widget;
 		delete ui->TimbreListWidget->layout();
 	} while(0);
 
@@ -686,18 +678,27 @@ void ChiptuneMidiWidget::on_AmplitudeGainSlider_sliderMoved(int value)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_DisableAllOutputPushButton_released(void)
+void ChiptuneMidiWidget::on_AllOutputDisabledPushButton_released(void)
 {
-	for(int i = 0; i < m_p_timbre_list_toobox->count(); i++){
-		((PitchTimbreFrame*)m_p_timbre_list_toobox->widget(i))->setOutputEnabled(false);
-	}
+	do {
+		if(nullptr == ui->TimbreListWidget->layout()){
+			break;
+		}
+		ChannelListWidget *p_channellist_widget = (ChannelListWidget*)ui->TimbreListWidget->layout()->itemAt(0)->widget();
+		p_channellist_widget->SetAllOutputEnabled(false);
+	} while(0);
+
 }
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_EnableAllOutputPushButton_released(void)
+void ChiptuneMidiWidget::on_AllOutputEnabledPushButton_released(void)
 {
-	for(int i = 0; i < m_p_timbre_list_toobox->count(); i++){
-		((PitchTimbreFrame*)m_p_timbre_list_toobox->widget(i))->setOutputEnabled(true);
-	}
+	do {
+		if(nullptr == ui->TimbreListWidget->layout()){
+			break;
+		}
+		ChannelListWidget *p_channellist_widget = (ChannelListWidget*)ui->TimbreListWidget->layout()->itemAt(0)->widget();
+		p_channellist_widget->SetAllOutputEnabled(true);
+	} while(0);
 }

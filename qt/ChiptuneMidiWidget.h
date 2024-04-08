@@ -41,8 +41,8 @@ private slots:
 	void on_StopPushButton_released(void);
 	void on_PlayPausePushButton_released(void);
 	void on_AmplitudeGainSlider_sliderMoved(int value);
-	void on_DisableAllOutputPushButton_released(void);
-	void on_EnableAllOutputPushButton_released(void);
+	void on_AllOutputDisabledPushButton_released(void);
+	void on_AllOutputEnabledPushButton_released(void);
 
 private slots:
 	void on_PlayProgressSlider_sliderMoved(int value);
@@ -69,9 +69,7 @@ private:
 private:
 	bool IsPlayPausePushButtonPlayIcon(void);
 	void SetPlayPausePushButtonAsPlayIcon(bool is_play_icon);
-private:
-	WaveChartView *		m_p_wave_chartview;
-	QToolBox *			m_p_timbre_list_toobox;
+
 private :
 	TuneManager *		m_p_tune_manager;
 	QThread				m_tune_manager_working_thread;
@@ -85,6 +83,9 @@ private :
 	QString				m_midi_file_duration_time_string;
 
 	QTimer				m_set_start_time_postpone_timer;
+
+private:
+	WaveChartView *		m_p_wave_chartview;
 private:
 	Ui::ChiptuneMidiWidget *ui;
 };

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ChannelNodeWidget</class>
+ <widget class="QWidget" name="ChannelNodeWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>320</width>
+    <height>268</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget {
+background-color: rgb(64, 64, 64); 
+color: rgb(208, 208, 208);
+}</string>
+  </property>
+  <widget class="QCheckBox" name="OutputEnabledCheckBox">
+   <property name="geometry">
+    <rect>
+     <x>4</x>
+     <y>4</y>
+     <width>74</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Output</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="CollapsePushButton">
+   <property name="geometry">
+    <rect>
+     <x>108</x>
+     <y>4</y>
+     <width>216</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QWidget" name="PitchTimbreWidget" native="true">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>28</y>
+     <width>320</width>
+     <height>240</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QWidget {
+background-color: rgb(56, 56, 56); 
+color: rgb(208, 208, 208);
+}</string>
+   </property>
+  </widget>
+  <widget class="QWidget" name="ColorWidget" native="true">
+   <property name="geometry">
+    <rect>
+     <x>84</x>
+     <y>4</y>
+     <width>16</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

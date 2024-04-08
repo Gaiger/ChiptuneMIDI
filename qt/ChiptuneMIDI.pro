@@ -22,6 +22,8 @@ SOURCES += \
         ../chiptune_midi_effect_internal.c \
         ../chiptune_oscillator_internal.c \
         ../chiptune_printf_internal.c \
+        ChannelListWidget.cpp \
+        ChannelNodeWidget.cpp \
         ChiptuneMidiWidget.cpp \
         GetInstrumentNameString.cpp \
         PitchTimbreFrame.cpp \
@@ -46,6 +48,8 @@ HEADERS += \
     ../chiptune_midi_effect_internal.h \
     ../chiptune_oscillator_internal.h \
     ../chiptune_printf_internal.h \
+    ChannelListWidget.h \
+    ChannelNodeWidget.h \
     ChiptuneMidiWidget.h \
     GetInstrumentNameString.h \
     MidiPlayer.h \
@@ -56,7 +60,10 @@ HEADERS += \
     WaveChartView.h
 
 FORMS += \
+    ChannelListWidgetForm.ui \
+    ChannelNodeWidgetForm.ui \
+    PitchTimbreFrameForm.ui \
     ChiptuneMidiWidgetForm.ui \
-    PitchTimbreFrameForm.ui
+
 
 RC_ICONS = chiptune.ico

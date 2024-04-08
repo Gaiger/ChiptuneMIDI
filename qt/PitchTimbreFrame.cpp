@@ -42,11 +42,14 @@ PitchTimbreFrame::PitchTimbreFrame(int index, QWidget *parent)
 
 /**********************************************************************************/
 
-PitchTimbreFrame::~PitchTimbreFrame(void) { }
+PitchTimbreFrame::~PitchTimbreFrame(void)
+{
+	delete ui;
+}
 
 /**********************************************************************************/
 
-void PitchTimbreFrame::EmitValuesChanged(void)
+void PitchTimbreFrame::EmitTimbreChanged(void)
 {
 	int waveform;
 	switch(ui->WaveFormComboBox->currentIndex())
@@ -77,7 +80,7 @@ void PitchTimbreFrame::EmitValuesChanged(void)
 		break;
 	}
 
-	emit ValuesChanged(m_index, waveform,
+	emit TimbreChanged(m_index, waveform,
 						ui->AttackCurveComboBox->currentIndex(), ui->AttackTimeSpinBox->value()/1000.0,
 						ui->DecayCurveComboBox->currentIndex(), ui->DecayTimeSpinBox->value()/1000.0,
 						ui->SustainLevelSpinBox->value(),
@@ -87,19 +90,6 @@ void PitchTimbreFrame::EmitValuesChanged(void)
 						ui->DamperOnButNoteOffSustainTimeDoubleSpinBox->value());
 }
 
-/**********************************************************************************/
-
-void PitchTimbreFrame::setOutputEnabled(bool is_to_enabled)
-{
-	ui->OutputEnabledCheckBox->setChecked(is_to_enabled);
-}
-
-/**********************************************************************************/
-
-void PitchTimbreFrame::on_OutputEnabledCheckBox_stateChanged(int state)
-{
-	emit OutputEnabled(m_index, (bool)state);
-}
 
 /**********************************************************************************/
 
@@ -119,7 +109,7 @@ void PitchTimbreFrame::on_WaveFormComboBox_currentIndexChanged(int index)
 		ui->DutyCycleComboBox->setCurrentIndex(4);
 		QObject::blockSignals(false);
 	} while(0);
-	EmitValuesChanged();
+	EmitTimbreChanged();
 }
 
 /**********************************************************************************/
@@ -130,7 +120,7 @@ void PitchTimbreFrame::on_DutyCycleComboBox_currentIndexChanged(int index)
 	if(4 != index){
 		m_previous_dutycycle = ui->DutyCycleComboBox->currentIndex();
 	}
-	EmitValuesChanged();
+	EmitTimbreChanged();
 }
 
 /**********************************************************************************/
@@ -138,14 +128,14 @@ void PitchTimbreFrame::on_DutyCycleComboBox_currentIndexChanged(int index)
 void PitchTimbreFrame::on_AttackCurveComboBox_currentIndexChanged(int index)
 {
 	Q_UNUSED(index);
-	EmitValuesChanged();
+	EmitTimbreChanged();
 }
 /**********************************************************************************/
 
 void PitchTimbreFrame::on_AttackTimeSpinBox_valueChanged(int value)
 {
 	Q_UNUSED(value);
-	EmitValuesChanged();
+	EmitTimbreChanged();
 }
 
 /**********************************************************************************/
@@ -153,7 +143,7 @@ void PitchTimbreFrame::on_AttackTimeSpinBox_valueChanged(int value)
 void PitchTimbreFrame::on_DecayCurveComboBox_currentIndexChanged(int index)
 {
 	Q_UNUSED(index);
-	EmitValuesChanged();
+	EmitTimbreChanged();
 }
 
 /**********************************************************************************/
@@ -180,7 +170,7 @@ void PitchTimbreFrame::on_DecayTimeSpinBox_valueChanged(int value)
 		}
 	} while(0);
 
-	EmitValuesChanged();
+	EmitTimbreChanged();
 }
 
 /**********************************************************************************/
@@ -188,7 +178,7 @@ void PitchTimbreFrame::on_DecayTimeSpinBox_valueChanged(int value)
 void PitchTimbreFrame::on_SustainLevelSpinBox_valueChanged(int value)
 {
 	Q_UNUSED(value);
-	EmitValuesChanged();
+	EmitTimbreChanged();
 }
 
 /**********************************************************************************/
@@ -196,7 +186,7 @@ void PitchTimbreFrame::on_SustainLevelSpinBox_valueChanged(int value)
 void PitchTimbreFrame::on_ReleaseCurveComboBox_currentIndexChanged(int index)
 {
 	Q_UNUSED(index);
-	EmitValuesChanged();
+	EmitTimbreChanged();
 }
 
 /**********************************************************************************/
@@ -204,7 +194,7 @@ void PitchTimbreFrame::on_ReleaseCurveComboBox_currentIndexChanged(int index)
 void PitchTimbreFrame::on_ReleaseTimeSpinBox_valueChanged(int value)
 {
 	Q_UNUSED(value);
-	EmitValuesChanged();
+	EmitTimbreChanged();
 }
 
 /**********************************************************************************/
@@ -212,7 +202,7 @@ void PitchTimbreFrame::on_ReleaseTimeSpinBox_valueChanged(int value)
 void PitchTimbreFrame::on_DamperOnButNoteOffSustainTimeDoubleSpinBox_valueChanged(double value)
 {
 	Q_UNUSED(value);
-	EmitValuesChanged();
+	EmitTimbreChanged();
 }
 
 /**********************************************************************************/
@@ -220,7 +210,7 @@ void PitchTimbreFrame::on_DamperOnButNoteOffSustainTimeDoubleSpinBox_valueChange
 void PitchTimbreFrame::on_DamperOnButNoteOffSustainCurveComboBox_currentIndexChanged(int index)
 {
 	Q_UNUSED(index);
-	EmitValuesChanged();
+	EmitTimbreChanged();
 }
 
 /**********************************************************************************/
@@ -228,5 +218,5 @@ void PitchTimbreFrame::on_DamperOnButNoteOffSustainCurveComboBox_currentIndexCha
 void PitchTimbreFrame::on_DamperOnButNoteOffSustainSustainLevelSpinBox_valueChanged(int value)
 {
 	Q_UNUSED(value);
-	EmitValuesChanged();
+	EmitTimbreChanged();
 }

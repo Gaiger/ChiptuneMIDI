@@ -236,7 +236,7 @@ color: rgb(208, 208, 208);
     <enum>Qt::Vertical</enum>
    </property>
   </widget>
-  <widget class="QPushButton" name="DisableAllOutputPushButton">
+  <widget class="QPushButton" name="AllOutputDisabledPushButton">
    <property name="geometry">
     <rect>
      <x>1024</x>
@@ -246,10 +246,10 @@ color: rgb(208, 208, 208);
     </rect>
    </property>
    <property name="text">
-    <string>Disable all</string>
+    <string>Silence All</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="EnableAllOutputPushButton">
+  <widget class="QPushButton" name="AllOutputEnabledPushButton">
    <property name="geometry">
     <rect>
      <x>932</x>
@@ -259,7 +259,7 @@ color: rgb(208, 208, 208);
     </rect>
    </property>
    <property name="text">
-    <string>Enable all</string>
+    <string>Output All</string>
    </property>
   </widget>
   <widget class="QWidget" name="TimbreListWidget" native="true">

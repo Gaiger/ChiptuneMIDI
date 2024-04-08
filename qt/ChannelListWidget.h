@@ -1,0 +1,39 @@
+#ifndef CHANNELLISTWIDGET_H
+#define CHANNELLISTWIDGET_H
+
+#include <QWidget>
+#include <QVBoxLayout>
+
+namespace Ui {
+class ChannelListWidget;
+}
+
+class ChannelListWidget : public QWidget
+{
+	Q_OBJECT
+
+public :
+	explicit ChannelListWidget(QWidget *parent = nullptr);
+	~ChannelListWidget();
+
+	void AddChannel(int channel_index, int instrument_index);
+	void SetAllOutputEnabled(bool is_enabled);
+public:
+	signals:
+void OutputEnabled(int index, bool is_enabled);
+void TimbreChanged(int index,
+				   int waveform,
+				   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
+				   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
+				   int envelope_sustain_level,
+				   int envelope_release_curve, double envelope_release_duration_in_seconds,
+				   int envelope_damper_on_but_note_off_sustain_level,
+				   int envelope_damper_on_but_note_off_sustain_curve,
+				   double envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+private:
+	QVBoxLayout *m_p_vboxlayout;
+private:
+	Ui::ChannelListWidget *ui;
+};
+
+#endif // CHANNELLISTWIDGET_H

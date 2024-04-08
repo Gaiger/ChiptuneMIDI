@@ -31,8 +31,8 @@ color: rgb(208, 208, 208);
   <widget class="QComboBox" name="WaveFormComboBox">
    <property name="geometry">
     <rect>
-     <x>48</x>
-     <y>28</y>
+     <x>16</x>
+     <y>8</y>
      <width>120</width>
      <height>24</height>
     </rect>
@@ -62,8 +62,8 @@ color: rgb(208, 208, 208);
    </property>
    <property name="geometry">
     <rect>
-     <x>180</x>
-     <y>28</y>
+     <x>148</x>
+     <y>8</y>
      <width>120</width>
      <height>24</height>
     </rect>
@@ -100,8 +100,8 @@ color: rgb(208, 208, 208);
   <widget class="QSpinBox" name="AttackTimeSpinBox">
    <property name="geometry">
     <rect>
-     <x>198</x>
-     <y>60</y>
+     <x>204</x>
+     <y>40</y>
      <width>64</width>
      <height>24</height>
     </rect>
@@ -122,8 +122,8 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="msLabel">
    <property name="geometry">
     <rect>
-     <x>270</x>
-     <y>60</y>
+     <x>276</x>
+     <y>40</y>
      <width>24</width>
      <height>24</height>
     </rect>
@@ -135,8 +135,8 @@ color: rgb(208, 208, 208);
   <widget class="QComboBox" name="AttackCurveComboBox">
    <property name="geometry">
     <rect>
-     <x>68</x>
-     <y>60</y>
+     <x>74</x>
+     <y>40</y>
      <width>128</width>
      <height>24</height>
     </rect>
@@ -165,8 +165,8 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="AttackLabel">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>60</y>
+     <x>26</x>
+     <y>40</y>
      <width>51</width>
      <height>24</height>
     </rect>
@@ -178,8 +178,8 @@ color: rgb(208, 208, 208);
   <widget class="QSpinBox" name="DecayTimeSpinBox">
    <property name="geometry">
     <rect>
-     <x>198</x>
-     <y>90</y>
+     <x>204</x>
+     <y>70</y>
      <width>64</width>
      <height>24</height>
     </rect>
@@ -200,8 +200,8 @@ color: rgb(208, 208, 208);
   <widget class="QComboBox" name="DecayCurveComboBox">
    <property name="geometry">
     <rect>
-     <x>68</x>
-     <y>90</y>
+     <x>74</x>
+     <y>70</y>
      <width>128</width>
      <height>24</height>
     </rect>
@@ -233,8 +233,8 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="DecayLabel">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>90</y>
+     <x>26</x>
+     <y>70</y>
      <width>51</width>
      <height>24</height>
     </rect>
@@ -246,8 +246,8 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="msLabel_2">
    <property name="geometry">
     <rect>
-     <x>270</x>
-     <y>90</y>
+     <x>276</x>
+     <y>70</y>
      <width>24</width>
      <height>24</height>
     </rect>
@@ -259,8 +259,8 @@ color: rgb(208, 208, 208);
   <widget class="QSpinBox" name="SustainLevelSpinBox">
    <property name="geometry">
     <rect>
-     <x>124</x>
-     <y>120</y>
+     <x>130</x>
+     <y>100</y>
      <width>58</width>
      <height>24</height>
     </rect>
@@ -284,8 +284,8 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="ReleaseLabel">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>150</y>
+     <x>26</x>
+     <y>130</y>
      <width>51</width>
      <height>24</height>
     </rect>
@@ -297,8 +297,8 @@ color: rgb(208, 208, 208);
   <widget class="QComboBox" name="ReleaseCurveComboBox">
    <property name="geometry">
     <rect>
-     <x>68</x>
-     <y>150</y>
+     <x>74</x>
+     <y>130</y>
      <width>128</width>
      <height>24</height>
     </rect>
@@ -330,8 +330,8 @@ color: rgb(208, 208, 208);
   <widget class="QSpinBox" name="ReleaseTimeSpinBox">
    <property name="geometry">
     <rect>
-     <x>198</x>
-     <y>150</y>
+     <x>204</x>
+     <y>130</y>
      <width>64</width>
      <height>24</height>
     </rect>
@@ -352,8 +352,8 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="msLabel_3">
    <property name="geometry">
     <rect>
-     <x>270</x>
-     <y>150</y>
+     <x>276</x>
+     <y>130</y>
      <width>24</width>
      <height>24</height>
     </rect>
@@ -365,8 +365,8 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="LevelLabel">
    <property name="geometry">
     <rect>
-     <x>80</x>
-     <y>120</y>
+     <x>86</x>
+     <y>100</y>
      <width>41</width>
      <height>24</height>
     </rect>
@@ -378,8 +378,8 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="SustainLabel">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>120</y>
+     <x>26</x>
+     <y>100</y>
      <width>51</width>
      <height>24</height>
     </rect>
@@ -391,8 +391,8 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="DamperOnButNoteOffSustainLabel">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>180</y>
+     <x>26</x>
+     <y>160</y>
      <width>201</width>
      <height>24</height>
     </rect>
@@ -404,8 +404,8 @@ color: rgb(208, 208, 208);
   <widget class="QComboBox" name="DamperOnButNoteOffSustainCurveComboBox">
    <property name="geometry">
     <rect>
-     <x>16</x>
-     <y>210</y>
+     <x>22</x>
+     <y>190</y>
      <width>128</width>
      <height>24</height>
     </rect>
@@ -434,8 +434,8 @@ color: rgb(208, 208, 208);
   <widget class="QSpinBox" name="DamperOnButNoteOffSustainSustainLevelSpinBox">
    <property name="geometry">
     <rect>
-     <x>234</x>
-     <y>210</y>
+     <x>240</x>
+     <y>190</y>
      <width>58</width>
      <height>24</height>
     </rect>
@@ -459,8 +459,8 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="LevelLabel_2">
    <property name="geometry">
     <rect>
-     <x>148</x>
-     <y>210</y>
+     <x>154</x>
+     <y>190</y>
      <width>72</width>
      <height>24</height>
     </rect>
@@ -472,8 +472,8 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="SecLabel">
    <property name="geometry">
     <rect>
-     <x>288</x>
-     <y>180</y>
+     <x>294</x>
+     <y>160</y>
      <width>24</width>
      <height>24</height>
     </rect>
@@ -485,8 +485,8 @@ color: rgb(208, 208, 208);
   <widget class="QDoubleSpinBox" name="DamperOnButNoteOffSustainTimeDoubleSpinBox">
    <property name="geometry">
     <rect>
-     <x>224</x>
-     <y>180</y>
+     <x>230</x>
+     <y>160</y>
      <width>54</width>
      <height>25</height>
     </rect>
@@ -505,22 +505,6 @@ color: rgb(208, 208, 208);
    </property>
    <property name="value">
     <double>8.000000000000000</double>
-   </property>
-  </widget>
-  <widget class="QCheckBox" name="OutputEnabledCheckBox">
-   <property name="geometry">
-    <rect>
-     <x>8</x>
-     <y>8</y>
-     <width>84</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Enabled</string>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
    </property>
   </widget>
  </widget>

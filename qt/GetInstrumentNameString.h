@@ -4,5 +4,6 @@
 #include <QString>
 
 QString GetInstrumentNameString(int instrument);
+QString GetColorNumberString(int index);
 
 #endif // GETINSTRUMENTNAMESTRING_H
