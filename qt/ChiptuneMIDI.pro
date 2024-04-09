@@ -65,5 +65,10 @@ FORMS += \
     PitchTimbreFrameForm.ui \
     ChiptuneMidiWidgetForm.ui \
 
-
-RC_ICONS = chiptune.ico
+win32{
+    RC_ICONS = chiptune.ico
+    VERSION = 0.0.0.1
+    QMAKE_TARGET_PRODUCT = "CHiptuneMIDI"
+    QMAKE_TARGET_DESCRIPTION = "Covert .Mid file into chiptune"
+    QMAKE_TARGET_COPYRIGHT = "Copyright 2024 by Chen Gaiger"
+}
