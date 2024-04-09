@@ -33,11 +33,6 @@ bool s_is_processing_left_channel = true;
 static uint32_t s_current_sample_index = 0;
 static chiptune_float s_tick_to_sample_index_ratio = (chiptune_float)(DEFAULT_SAMPLING_RATE * 1.0/(MIDI_DEFAULT_TEMPO/60.0)/MIDI_DEFAULT_RESOLUTION);
 
-#define RESET_CURRENT_TICK()						\
-													do { \
-														s_current_sample_index = 0; \
-													} while(0)
-
 #define UPDATE_SAMPLES_TO_TICK_RATIO()				\
 													do { \
 														s_tick_to_sample_index_ratio \
@@ -64,15 +59,26 @@ static chiptune_float s_tick_to_sample_index_ratio = (chiptune_float)(DEFAULT_SA
 													} while(0)
 
 #define TICK_TO_SAMPLE_INDEX(TICK)					((uint32_t)(s_tick_to_sample_index_ratio * (chiptune_float)(TICK) + 0.5))
-#define CURRENT_TICK()								( (uint32_t)(s_current_sample_index/(s_tick_to_sample_index_ratio) + 0.5))
-#else
-static chiptune_float s_current_tick = (chiptune_float)0.0;
-static chiptune_float s_delta_tick_per_sample = (MIDI_DEFAULT_RESOLUTION / ( (chiptune_float)DEFAULT_SAMPLING_RATE/((chiptune_float)MIDI_DEFAULT_TEMPO / (chiptune_float)60.0) ) );
 
 #define RESET_CURRENT_TICK()						\
 													do { \
-														s_current_tick = 0.0; \
+														s_current_sample_index = 0; \
 													} while(0)
+
+#define CURRENT_TICK()								( (uint32_t)(s_current_sample_index/(s_tick_to_sample_index_ratio) + 0.5))
+
+#define INCREMENT_CURRENT_TICK_BY_ONE_SAMPLE()			\
+													do { \
+														s_current_sample_index += 1; \
+													} while(0)
+
+#define UPDATE_CURRENT_TICK(TICK)					do { \
+														s_current_sample_index = (uint32_t)((TICK) * s_tick_to_sample_index_ratio + 0.5); \
+													} while(0)
+
+#else
+static chiptune_float s_current_tick = (chiptune_float)0.0;
+static chiptune_float s_delta_tick_per_sample = (MIDI_DEFAULT_RESOLUTION / ( (chiptune_float)DEFAULT_SAMPLING_RATE/((chiptune_float)MIDI_DEFAULT_TEMPO / (chiptune_float)60.0) ) );
 
 #define	UPDATE_DELTA_TICK_PER_SAMPLE()				\
 													do { \
@@ -97,7 +103,22 @@ static chiptune_float s_delta_tick_per_sample = (MIDI_DEFAULT_RESOLUTION / ( (ch
 														UPDATE_DELTA_TICK_PER_SAMPLE(); \
 													} while(0)
 
+#define RESET_CURRENT_TICK()						\
+													do { \
+														s_current_tick = 0.0; \
+													} while(0)
+
 #define CURRENT_TICK()								((uint32_t)(s_current_tick + 0.5))
+
+#define INCREMENT_CURRENT_TICK_BY_ONE_SAMPLE()			\
+													do { \
+														s_current_tick += s_delta_tick_per_sample; \
+													} while(0)
+
+#define UPDATE_CURRENT_TICK(TICK)					do { \
+														s_current_tick = (chiptune_float)(TICK); \
+													} while(0)
+
 #endif
 
 #define SINE_TABLE_LENGTH							(2048)
@@ -598,7 +619,6 @@ int process_ending(const uint32_t tick)
 }
 
 /**********************************************************************************/
-
 static uint32_t s_midi_messge_index = 0;
 
 static uint32_t s_previous_timely_tick = NULL_TICK;
@@ -1025,18 +1045,6 @@ int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
 }
 
 /**********************************************************************************/
-#ifdef _INCREMENTAL_SAMPLE_INDEX
-#define INCREMENT_BASE_TIME()						\
-													do { \
-														s_current_sample_index += 1; \
-													} while(0)
-#else
-#define INCREMENT_BASE_TIME()						\
-													do { \
-														s_current_tick += s_delta_tick_per_sample; \
-													} while(0)
-#endif
-
 static bool s_is_channels_output_enabled_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
 
 static int64_t chiptune_fetch_64bit_wave(void)
@@ -1072,7 +1080,7 @@ static int64_t chiptune_fetch_64bit_wave(void)
 
 	if(false == is_stereo()
 			|| false == is_processing_left_channel()){
-		INCREMENT_BASE_TIME();
+		INCREMENT_CURRENT_TICK_BY_ONE_SAMPLE();
 	}
 
 	if(true == is_stereo()){
@@ -1083,15 +1091,6 @@ static int64_t chiptune_fetch_64bit_wave(void)
 }
 
 /**********************************************************************************/
-#ifdef _INCREMENTAL_SAMPLE_INDEX
-#define UPDATE_CURRENT_TICK(TICK)					do { \
-														s_current_sample_index = (uint32_t)((TICK) * s_tick_to_sample_index_ratio + 0.5); \
-													} while(0)
-#else
-#define UPDATE_CURRENT_TICK(TICK)					do { \
-														s_current_tick = (chiptune_float)(TICK); \
-													} while(0)
-#endif
 
 static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 									   int8_t * const p_channel_instrument_array)
@@ -1228,7 +1227,6 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index,
 }
 
 /**********************************************************************************/
-
 #ifdef AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
 
 uint32_t number_of_roundup_to_power2_left_shift_bits(uint32_t const value)
@@ -1285,8 +1283,6 @@ static int32_t s_amplitude_normaliztion_gain = DEFAULT_AMPLITUDE_NORMALIZATION_G
 
 #define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE)/(int32_t)s_amplitude_normaliztion_gain))
 #endif
-
-/**********************************************************************************/
 
 static void get_channel_instruments(int8_t channel_instrument_array[MIDI_MAX_CHANNEL_NUMBER])
 {
@@ -1385,7 +1381,6 @@ int16_t chiptune_fetch_16bit_wave(void)
 }
 
 /**********************************************************************************/
-
 #define INT8_MAX_PLUS_1								(INT8_MAX + 1)
 #define REDUCE_INT16_PRECISION_TO_INT8(VALUE)		((VALUE) >> 8)
 
