@@ -277,26 +277,28 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 int8_t const voice, int8_t const note, int8_t const velocity)
 {
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-	int8_t effective_note = note;
+	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
+		if(false == (PERCUSSION_CODE_MIN <= note && PERCUSSION_CODE_MAX >= note)){
+			CHIPTUNE_PRINTF(cDeveloping, "WARNING:: tick = %u, PERCUSSION_INSTRUMENT = %d"
+										 " does not be defined in the MIDI standard, ignore\r\n",
+							tick, note);
+			return 1;
+		}
+	}
+
 	do {
 		if(true == is_note_on){
 
 			do {
 				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
-					if(false == (PERCUSSION_CODE_MIN <= effective_note && PERCUSSION_CODE_MAX >= effective_note)){
-						effective_note = SNARE_DRUM_1;
-						CHIPTUNE_PRINTF(cDeveloping, "WARNING:: tick = %u, PERCUSSION_INSTRUMENT = %d"
-													 " does not be defined in the MIDI standard, use SNARE_DRUM_1 instead\r\n",
-										tick, note);
-					}
-					percussion_t const * const p_percussion = get_percussion_pointer_from_index(effective_note);
+					percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
 					char not_implemented_string[24] = {0};
 					if(false == p_percussion->is_implemented){
 						snprintf(&not_implemented_string[0], sizeof(not_implemented_string), "%s", "(NOT IMPLEMENTED)");
 					}
 					CHIPTUNE_PRINTF(cMidiNote, "tick = %u, %s :: voice = %d, %s%s, velocity = %d\r\n",
 								tick,  "MIDI_MESSAGE_NOTE_ON",
-								voice, get_percussion_name_string(effective_note), not_implemented_string, velocity);
+								voice, get_percussion_name_string(note), not_implemented_string, velocity);
 					break;
 				}
 				char pitch_wheel_bend_string[32] = "";
@@ -308,9 +310,9 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 #endif
 				CHIPTUNE_PRINTF(cMidiNote, "tick = %u, %s :: voice = %d, note = %d, velocity = %d%s\r\n",
 								tick, "MIDI_MESSAGE_NOTE_ON",
-								voice, effective_note, velocity, &pitch_wheel_bend_string[0]);
+								voice, note, velocity, &pitch_wheel_bend_string[0]);
 			} while(0);
-			rest_occupied_oscillator_with_same_voice_note(tick, voice, effective_note, velocity);
+			rest_occupied_oscillator_with_same_voice_note(tick, voice, note, velocity);
 
 			int16_t oscillator_index;
 			oscillator_t * const p_oscillator = acquire_event_freed_oscillator(&oscillator_index);
@@ -321,7 +323,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			RESET_STATE_BITES(p_oscillator->state_bits);
 			SET_NOTE_ON(p_oscillator->state_bits);
 			p_oscillator->voice = voice;
-			p_oscillator->note = effective_note;
+			p_oscillator->note = note;
 			p_oscillator->loudness = (int16_t)(
 						(velocity * p_channel_controller->expression * p_channel_controller->volume)/INT8_MAX);
 			memset(&p_oscillator->asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
@@ -329,15 +331,15 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->current_phase = 0;
 			do {
 				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
-					setup_percussion_oscillator(tick, voice, effective_note, velocity, p_oscillator);
+					setup_percussion_oscillator(tick, voice, note, velocity, p_oscillator);
 					break;
 				}
 
-				setup_pitch_oscillator(tick, voice, effective_note, velocity, p_oscillator);
+				setup_pitch_oscillator(tick, voice, note, velocity, p_oscillator);
 			} while(0);
 
 			put_event(EVENT_ACTIVATE, oscillator_index, tick);
-			process_effects(tick, EVENT_ACTIVATE, voice, effective_note, velocity, oscillator_index);
+			process_effects(tick, EVENT_ACTIVATE, voice, note, velocity, oscillator_index);
 			break;
 		}
 
@@ -345,13 +347,13 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 				CHIPTUNE_PRINTF(cMidiNote, "tick = %u, %s :: voice = %d, %s, velocity = %d\r\n",
 								tick,  "MIDI_MESSAGE_NOTE_OFF",
-								voice, get_percussion_name_string(effective_note), velocity);
+								voice, get_percussion_name_string(note), velocity);
 				break;
 			}
 
 			CHIPTUNE_PRINTF(cMidiNote, "tick = %u, %s :: voice = %d, note = %d, velocity = %d\r\n",
 							tick,  "MIDI_MESSAGE_NOTE_OFF",
-							voice, effective_note, velocity);
+							voice, note, velocity);
 		} while(0);
 
 		bool is_found = false;
@@ -360,7 +362,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		for(int16_t i = 0; i < occupied_oscillator_number; i++){
 			oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
 			do {
-				if(effective_note != p_oscillator->note){
+				if(note != p_oscillator->note){
 					break;
 				}
 				if(voice != p_oscillator->voice){
@@ -377,7 +379,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					break;
 				}
 				put_event(EVENT_FREE, oscillator_index, tick);
-				process_effects(tick, EVENT_FREE, voice, effective_note, velocity, oscillator_index);
+				process_effects(tick, EVENT_FREE, voice, note, velocity, oscillator_index);
 				is_found = true;
 			} while(0);
 			if(true == is_found){
@@ -388,7 +390,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 		if(false == is_found){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR::no corresponding note for off :: tick = %u, voice = %d,  note = %u\r\n",
-							tick, voice, effective_note);
+							tick, voice, note);
 			return -2;
 		}
 
@@ -415,7 +417,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->envelope_table_index = 0;
 			p_oscillator->release_reference_amplitude = 0;
 			put_event(EVENT_ACTIVATE, reduced_loundness_oscillator_index, tick);
-			process_effects(tick, EVENT_ACTIVATE, voice, effective_note, velocity, reduced_loundness_oscillator_index);
+			process_effects(tick, EVENT_ACTIVATE, voice, note, velocity, reduced_loundness_oscillator_index);
 		} while(0);
 
 	} while(0);
