@@ -67,7 +67,6 @@ enum
 
 typedef struct _channel_controller
 {
-	bool				is_to_output;
 	int8_t				instrument;
 	int8_t				coarse_tuning_value;
 	int16_t				fine_tuning_value;

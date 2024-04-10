@@ -1050,6 +1050,7 @@ int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
 }
 
 /**********************************************************************************/
+static bool s_is_channels_output_enabled_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
 
 static int64_t chiptune_fetch_64bit_wave(void)
 {
@@ -1063,7 +1064,7 @@ static int64_t chiptune_fetch_64bit_wave(void)
 	for(int16_t k = 0; k < occupied_oscillator_number; k++){
 		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
 		do {
-			if(false == get_channel_controller_pointer_from_index(p_oscillator->voice)->is_to_output){
+			if(false == s_is_channels_output_enabled_array[p_oscillator->voice]){
 				break;
 			}
 			if(false == IS_ACTIVATED(p_oscillator->state_bits)){
@@ -1305,7 +1306,9 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 	for(int16_t i = 0; i < SINE_TABLE_LENGTH; i++){
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
 	}
-
+	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
+		s_is_channels_output_enabled_array[i] = true;
+	}
 	initialize_channel_controllers();
 	clean_all_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
@@ -1415,7 +1418,7 @@ void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const 
 		return ;
 	}
 
-	get_channel_controller_pointer_from_index(channel_index)->is_to_output = is_enabled;
+	s_is_channels_output_enabled_array[channel_index] = is_enabled;
 }
 
 /**********************************************************************************/
