@@ -182,13 +182,6 @@ int TuneManager::InitializeTune(void)
 	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
 						 (uint32_t)m_p_private->m_sampling_rate, m_p_private->m_p_midi_file->resolution());
 
-	int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
-	chiptune_get_channel_instruments(&channel_instrument_array[0]);
-	for(int i = 0; i < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; i++){
-		if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL != channel_instrument_array[i]){
-			m_p_private->m_channel_instrument_pair_list.append(QPair<int, int>(i, channel_instrument_array[i]));
-		}
-	}
 	return 0;
 }
 
@@ -409,6 +402,21 @@ int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 
 QList<QPair<int, int>> TuneManager::GetChannelInstrumentPairList(void)
 {
+	QMutexLocker locker(&m_mutex);
+	do {
+		if(0 != m_p_private->m_channel_instrument_pair_list.size()){
+			break;
+		}
+
+		int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
+		chiptune_get_channel_instruments(&channel_instrument_array[0]);
+		m_p_private->m_channel_instrument_pair_list.clear();
+		for(int i = 0; i < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; i++){
+			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL != channel_instrument_array[i]){
+				m_p_private->m_channel_instrument_pair_list.append(QPair<int, int>(i, channel_instrument_array[i]));
+			}
+		}
+	} while(0);
 	return m_p_private->m_channel_instrument_pair_list;
 }
 

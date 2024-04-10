@@ -166,7 +166,7 @@ static inline void swap_processing_channel() { s_is_processing_left_channel = !s
 static int process_program_change_message(uint32_t const tick, int8_t const voice, int8_t const number)
 {
 	if(CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED != get_channel_controller_pointer_from_index(voice)->instrument){
-		if(0 != tick && number != get_channel_controller_pointer_from_index(voice)->instrument ){
+		if(0 != tick && number != get_channel_controller_pointer_from_index(voice)->instrument){
 			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: tick = %u, voice = %d, MIDI_MESSAGE_PROGRAM_CHANGE: from %s(%d) to %s(%d)\r\n",
 							tick, voice,
 							get_instrument_name_string(get_channel_controller_pointer_from_index(voice)->instrument),
@@ -180,6 +180,8 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 	CHIPTUNE_PRINTF(cMidiProgramChange, "tick = %u, MIDI_MESSAGE_PROGRAM_CHANGE :: voice = %d, instrument = %d(%s)\r\n",
 					tick, voice, get_channel_controller_pointer_from_index(voice)->instrument,
 					get_instrument_name_string(get_channel_controller_pointer_from_index(voice)->instrument));
+
+
 	return 0;
 }
 
@@ -1286,7 +1288,9 @@ static int32_t s_amplitude_normaliztion_gain = DEFAULT_AMPLITUDE_NORMALIZATION_G
 #define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE)/(int32_t)s_amplitude_normaliztion_gain))
 #endif
 
-static void get_channel_instruments(int8_t channel_instrument_array[MIDI_MAX_CHANNEL_NUMBER])
+int8_t s_channel_instrument_array[MIDI_MAX_CHANNEL_NUMBER];
+
+static void get_ending_channel_instruments(int8_t channel_instrument_array[MIDI_MAX_CHANNEL_NUMBER])
 {
 	pass_through_midi_messages(-1, &channel_instrument_array[0]);
 	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
@@ -1318,6 +1322,8 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 	clean_all_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
+	get_ending_channel_instruments(&s_channel_instrument_array[0]);
+
 	process_timely_midi_message_and_event();
 	return ;
 }
@@ -1354,7 +1360,7 @@ void chiptune_set_tempo(float const tempo)
 
 int chiptune_get_channel_instruments(int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER])
 {
-	get_channel_instruments(&channel_instrument_array[0]);
+	memcpy(&channel_instrument_array[0], &s_channel_instrument_array[0], CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER * sizeof(int8_t));
 	return 0;
 }
 
