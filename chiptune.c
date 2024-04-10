@@ -278,7 +278,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 {
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
-		if(false == (PERCUSSION_CODE_MIN <= note && PERCUSSION_CODE_MAX >= note)){
+		if(NULL == get_percussion_pointer_from_index(note)){
 			CHIPTUNE_PRINTF(cDeveloping, "WARNING:: tick = %u, PERCUSSION_INSTRUMENT = %d"
 										 " does not be defined in the MIDI standard, ignore\r\n",
 							tick, note);

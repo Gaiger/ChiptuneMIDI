@@ -354,7 +354,7 @@ percussion_t s_percussion[PERCUSSION_CODE_MAX - PERCUSSION_CODE_MIN + 1];
 percussion_t * const get_percussion_pointer_from_index(int8_t const index)
 {
 	if(false == (PERCUSSION_CODE_MIN <= index && PERCUSSION_CODE_MAX >= index)){
-		return &s_percussion[SNARE_DRUM_1 - PERCUSSION_CODE_MIN];
+		return NULL;
 	}
 	return &s_percussion[index - PERCUSSION_CODE_MIN];
 }
