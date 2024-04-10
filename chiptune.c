@@ -1299,8 +1299,7 @@ static void get_channel_instruments(int8_t channel_instrument_array[MIDI_MAX_CHA
 
 /**********************************************************************************/
 
-void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution,
-						 int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER])
+void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution)
 {
 	s_is_stereo = is_stereo;
 	s_is_processing_left_channel = true;
@@ -1319,7 +1318,6 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 	clean_all_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
-	get_channel_instruments(&channel_instrument_array[0]);
 	process_timely_midi_message_and_event();
 	return ;
 }
@@ -1350,6 +1348,14 @@ void chiptune_set_tempo(float const tempo)
 	UPDATE_TEMPO(tempo);
 	update_effect_tick();
 	update_channel_controllers_parameters_related_to_tempo();
+}
+
+/**********************************************************************************/
+
+int chiptune_get_channel_instruments(int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER])
+{
+	get_channel_instruments(&channel_instrument_array[0]);
+	return 0;
 }
 
 /**********************************************************************************/

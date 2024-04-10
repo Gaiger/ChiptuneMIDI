@@ -179,10 +179,11 @@ int TuneManager::InitializeTune(void)
 	}
 
 	m_p_private->m_channel_instrument_pair_list.clear();
-	int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
 	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
-						 (uint32_t)m_p_private->m_sampling_rate, m_p_private->m_p_midi_file->resolution(),
-						 &channel_instrument_array[0]);
+						 (uint32_t)m_p_private->m_sampling_rate, m_p_private->m_p_midi_file->resolution());
+
+	int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
+	chiptune_get_channel_instruments(&channel_instrument_array[0]);
 	for(int i = 0; i < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; i++){
 		if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL != channel_instrument_array[i]){
 			m_p_private->m_channel_instrument_pair_list.append(QPair<int, int>(i, channel_instrument_array[i]));

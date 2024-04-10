@@ -12,14 +12,16 @@ extern "C"
 void chiptune_set_midi_message_callback(
 		int(*handler_get_midi_message)(uint32_t const index, uint32_t * const p_tick, uint32_t * const p_message) );
 
+
+void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution);
+
+void chiptune_set_tempo(float const tempo);
+
 #define CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER			(16)
 #define CHIPTUNE_INSTRUMENT_NOT_SPECIFIED			(-1)
 #define CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL			(-2)
 
-void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution,
-						 int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
-
-void chiptune_set_tempo(float const tempo);
+int chiptune_get_channel_instruments(int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
 
 enum CHIPTUNE_WAVEFORM_TYPE
 {
