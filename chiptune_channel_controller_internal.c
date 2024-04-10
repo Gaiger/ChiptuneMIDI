@@ -38,6 +38,7 @@ channel_controller_t * const get_channel_controller_pointer_from_index(int8_t co
 void reset_channel_controller_midi_control_change_parameters(int8_t const index)
 {
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
+	p_channel_controller->is_to_output = true;
 	p_channel_controller->coarse_tuning_value = MIDI_SEVEN_BITS_CENTER_VALUE;
 	p_channel_controller->fine_tuning_value = MIDI_FOURTEEN_BITS_CENTER_VALUE;
 	p_channel_controller->tuning_in_semitones
@@ -234,7 +235,7 @@ void reset_channel_controller_all_parameters(int8_t const index)
 									  DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND);
 
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
-	p_channel_controller->instrument		= CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED;
+	p_channel_controller->instrument = CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED;
 
 	reset_channel_controller_midi_control_change_parameters(index);
 }

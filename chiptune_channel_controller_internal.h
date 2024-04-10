@@ -4,7 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED	(-1)
+#define CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED		(-1)
+#define CHANNEL_CONTROLLER_INSTRUMENT_UNUSED_CHANNEL	(-2)
 
 #define CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH		(64)
 
@@ -66,6 +67,7 @@ enum
 
 typedef struct _channel_controller
 {
+	bool				is_to_output;
 	int8_t				instrument;
 	int8_t				coarse_tuning_value;
 	int16_t				fine_tuning_value;
