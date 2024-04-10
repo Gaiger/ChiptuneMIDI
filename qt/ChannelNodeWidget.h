@@ -32,7 +32,7 @@ public :
 	void setOutputEnabled(bool is_to_enabled);
 private slots:
 	void on_OutputEnabledCheckBox_stateChanged(int state);
-	void on_CollapsePushButton_clicked(bool checked);
+	void on_ExpandCollapsePushButton_clicked(bool checked);
 
 private:
 	int m_channel_index;

@@ -30,8 +30,8 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 		instrument_name = QString("Percussion");
 	}
 	QString string = "#"+ QString::number(channel_index) +" " + instrument_name;
-	ui->CollapsePushButton->setStyleSheet("text-align:left;");
-	ui->CollapsePushButton->setText(string);
+	ui->ExpandCollapsePushButton->setStyleSheet("text-align:left;");
+	ui->ExpandCollapsePushButton->setText(string);
 	PitchTimbreFrame *p_pitchtimbre_frame = new PitchTimbreFrame(channel_index, this);
 
 	QGridLayout *p_layout = new QGridLayout(ui->PitchTimbreWidget);
@@ -42,7 +42,7 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 	QObject::connect(p_pitchtimbre_frame, &PitchTimbreFrame::TimbreChanged, this,
 					 &ChannelNodeWidget::TimbreChanged);
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == channel_index){
-		ui->CollapsePushButton->setEnabled(false);
+		ui->ExpandCollapsePushButton->setEnabled(false);
 	}
 }
 
@@ -70,7 +70,7 @@ void ChannelNodeWidget::on_OutputEnabledCheckBox_stateChanged(int state)
 
 /**********************************************************************************/
 
-void ChannelNodeWidget::on_CollapsePushButton_clicked(bool checked)
+void ChannelNodeWidget::on_ExpandCollapsePushButton_clicked(bool checked)
 {
 	do
 	{

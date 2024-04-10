@@ -35,7 +35,7 @@ color: rgb(208, 208, 208);
     <bool>true</bool>
    </property>
   </widget>
-  <widget class="QPushButton" name="CollapsePushButton">
+  <widget class="QPushButton" name="ExpandCollapsePushButton">
    <property name="geometry">
     <rect>
      <x>108</x>
