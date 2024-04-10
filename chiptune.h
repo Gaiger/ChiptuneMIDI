@@ -21,7 +21,7 @@ void chiptune_set_tempo(float const tempo);
 #define CHIPTUNE_INSTRUMENT_NOT_SPECIFIED			(-1)
 #define CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL			(-2)
 
-int chiptune_get_channel_instruments(int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
+int chiptune_get_ending_instruments(int8_t instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
 
 enum CHIPTUNE_WAVEFORM_TYPE
 {

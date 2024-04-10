@@ -408,12 +408,12 @@ QList<QPair<int, int>> TuneManager::GetChannelInstrumentPairList(void)
 			break;
 		}
 
-		int8_t channel_instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
-		chiptune_get_channel_instruments(&channel_instrument_array[0]);
+		int8_t instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
+		chiptune_get_ending_instruments(&instrument_array[0]);
 		m_p_private->m_channel_instrument_pair_list.clear();
 		for(int i = 0; i < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; i++){
-			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL != channel_instrument_array[i]){
-				m_p_private->m_channel_instrument_pair_list.append(QPair<int, int>(i, channel_instrument_array[i]));
+			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL != instrument_array[i]){
+				m_p_private->m_channel_instrument_pair_list.append(QPair<int, int>(i, instrument_array[i]));
 			}
 		}
 	} while(0);

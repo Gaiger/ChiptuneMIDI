@@ -636,7 +636,7 @@ int adjust_event_triggering_tick_by_tempo(uint32_t const tick, float const new_t
 	float tempo_ratio = new_tempo/get_tempo();
 	uint16_t event_index = s_event_head_index;
 	bool is_reported = false;
-	for(int i = 0; i < s_upcoming_event_number; i++){
+	for(int16_t i = 0; i < s_upcoming_event_number; i++){
 		do
 		{
 			if(tick >= s_events[event_index].triggering_tick){
