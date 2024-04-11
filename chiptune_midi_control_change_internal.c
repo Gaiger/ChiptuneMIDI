@@ -155,6 +155,17 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, int
 
 /**********************************************************************************/
 
+static void process_breath_controller(uint32_t const tick, int8_t const voice, int8_t const value)
+{
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_BREATH_CONTROLLER(%d) :: voice = %d, value = %d\r\n",
+					tick, MIDI_CC_BREATH_CONTROLLER, voice, value);
+	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	process_loudness_change(tick, voice, value, LoudnessChangeExpression);
+	p_channel_controller->expression = value;
+}
+
+/**********************************************************************************/
+
 static void process_cc_volume(uint32_t const tick, int8_t const voice, int8_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_VOLUME(%d) :: voice = %d, value = %d\r\n",
@@ -280,6 +291,9 @@ int process_control_change_message(uint32_t const tick, int8_t const voice, int8
 	{
 	case MIDI_CC_MODULATION_WHEEL:
 		process_modulation_wheel(tick, voice, value);
+		break;
+	case MIDI_CC_BREATH_CONTROLLER:
+		process_breath_controller(tick, voice, value);
 		break;
 	case MIDI_CC_DATA_ENTRY_MSB:
 		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_DATA_ENTRY_MSB(%d) :: voice = %d, value = %d\r\n",

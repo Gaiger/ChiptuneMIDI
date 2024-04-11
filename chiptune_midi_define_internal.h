@@ -21,7 +21,7 @@
 /**********************************************************************************/
 //https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
 #define MIDI_CC_MODULATION_WHEEL					(1)
-
+#define MIDI_CC_BREATH_CONTROLLER					(2)
 #define MIDI_CC_DATA_ENTRY_MSB						(6)
 #define MIDI_CC_VOLUME								(7)
 #define MIDI_CC_PAN									(10)
