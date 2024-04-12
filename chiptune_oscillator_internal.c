@@ -2,8 +2,7 @@
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
 #include "chiptune_channel_controller_internal.h"
-
-
+#include "chiptune_oscillator_internal.h"
 
 uint16_t const calculate_oscillator_delta_phase(int8_t const voice,
 												int16_t const note, float const pitch_chorus_bend_in_semitones)
@@ -56,4 +55,20 @@ float const obtain_oscillator_pitch_chorus_bend_in_semitones(int8_t const chorus
 	pitch_chorus_bend_in_semitones *= max_pitch_chorus_bend_in_semitones;
 	//CHIPTUNE_PRINTF(cDeveloping, "pitch_chorus_bend_in_semitones = %3.2f\r\n", pitch_chorus_bend_in_semitones);
 	return pitch_chorus_bend_in_semitones;
+}
+
+/**********************************************************************************/
+
+int setup_envelope_state(oscillator_t *p_oscillator, uint8_t evelope_state){
+
+	if(ENVELOPE_STATE_MAX <= evelope_state){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: undefined state number = %u in %s\r\n",
+						evelope_state, __func__);
+		return -1;
+	}
+
+	p_oscillator->envelope_state = evelope_state;
+	p_oscillator->envelope_table_index = 0;
+	p_oscillator->envelope_same_index_count = 0;
+	return 0;
 }

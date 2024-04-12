@@ -519,7 +519,7 @@ int process_events(uint32_t const tick)
 				return -1;
 			}
 			SET_ACTIVATED(p_oscillator->state_bits);
-			p_oscillator->envelope_state = ENVELOPE_ATTACK;
+			setup_envelope_state(p_oscillator, ENVELOPE_STATE_ATTACK);
 			break;
 
 		case EVENT_FREE:
@@ -543,7 +543,7 @@ int process_events(uint32_t const tick)
 				}
 #endif
 				/*It does not a matter there is a postponement to discard the resting oscillator*/
-				p_oscillator->envelope_state = ENVELOPE_RELEASE;
+				setup_envelope_state(p_oscillator, ENVELOPE_STATE_RELEASE);
 				put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
 				tick + p_channel_controller->envelope_release_tick_number);
 			} while(0);
@@ -569,7 +569,7 @@ int process_events(uint32_t const tick)
 				break;
 			}
 			SET_RESTING(p_oscillator->state_bits);
-			p_oscillator->envelope_state = ENVELOPE_RELEASE;
+			setup_envelope_state(p_oscillator, ENVELOPE_STATE_RELEASE);
 			break;
 		case EVENT_DEACTIVATE:
 			CHIPTUNE_PRINTF(cEventTriggering,

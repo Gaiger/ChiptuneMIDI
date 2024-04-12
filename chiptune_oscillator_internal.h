@@ -3,12 +3,13 @@
 
 #include <stdint.h>
 
-enum EnvelopeType
+enum EnvelopeState
 {
-	ENVELOPE_ATTACK,
-	ENVELOPE_DECAY,
-	ENVELOPE_SUSTAIN,
-	ENVELOPE_RELEASE,
+	ENVELOPE_STATE_ATTACK,
+	ENVELOPE_STATE_DECAY,
+	ENVELOPE_STATE_SUSTAIN,
+	ENVELOPE_STATE_RELEASE,
+	ENVELOPE_STATE_MAX,
 };
 
 #define MAX_ASSOCIATE_OSCILLATOR_NUMBER				(6)
@@ -101,4 +102,7 @@ uint16_t const calculate_oscillator_delta_phase(int8_t const voice,
 
 float const obtain_oscillator_pitch_chorus_bend_in_semitones(int8_t const chorus,
 															float const max_pitch_chorus_bend_in_semitones);
+
+int setup_envelope_state(oscillator_t *p_oscillator, uint8_t evelope_state);
+
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_

@@ -755,7 +755,7 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 		channel_controller_t const *p_channel_controller
 				= get_channel_controller_pointer_from_index(p_oscillator->voice);
 
-		if(ENVELOPE_SUSTAIN == p_oscillator->envelope_state){
+		if(ENVELOPE_STATE_SUSTAIN == p_oscillator->envelope_state){
 			if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 				break;
 			}
@@ -771,16 +771,16 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 		uint16_t envelope_same_index_number = 0;
 		switch(p_oscillator->envelope_state)
 		{
-		case ENVELOPE_ATTACK:
+		case ENVELOPE_STATE_ATTACK:
 			envelope_same_index_number = p_channel_controller->envelope_attack_same_index_number;
 			break;
-		case ENVELOPE_DECAY:
+		case ENVELOPE_STATE_DECAY:
 			envelope_same_index_number = p_channel_controller->envelope_decay_same_index_number;
 			break;
-		case ENVELOPE_SUSTAIN:
+		case ENVELOPE_STATE_SUSTAIN:
 			envelope_same_index_number = p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number;
 			break;
-		case ENVELOPE_RELEASE:
+		case ENVELOPE_STATE_RELEASE:
 			do {
 				if(true == IS_RESTING(p_oscillator->state_bits)){
 					envelope_same_index_number = p_channel_controller->envelope_attack_same_index_number;
@@ -791,19 +791,14 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 			break;
 		};
 
-		p_oscillator->envelope_same_index_count += 1;
+
 		if(envelope_same_index_number > p_oscillator->envelope_same_index_count){
+			p_oscillator->envelope_same_index_count += 1;
 			break;
 		}
-
 		p_oscillator->envelope_same_index_count = 0;
-		do {
-			if(0 == envelope_same_index_number){
-				p_oscillator->envelope_table_index = CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH;
-				break;
-			}
-			p_oscillator->envelope_table_index += 1;
-		} while(0);
+		p_oscillator->envelope_table_index += 1;
+
 		bool is_out_of_lookup_table_range = false;
 		do {
 			if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH > p_oscillator->envelope_table_index){
@@ -813,14 +808,15 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 			p_oscillator->envelope_table_index = 0;
 			switch(p_oscillator->envelope_state)
 			{
-			case ENVELOPE_ATTACK:
+			case ENVELOPE_STATE_ATTACK:
+				p_oscillator->attack_decay_reference_amplitude = 0;
 				if(0 < p_channel_controller->envelope_decay_same_index_number){
-					p_oscillator->envelope_state = ENVELOPE_DECAY;
-					p_oscillator->amplitude = p_oscillator->loudness;
+					p_oscillator->envelope_state = ENVELOPE_STATE_DECAY;
+					//p_oscillator->amplitude = p_oscillator->loudness;
 					break;
 				}
-			case ENVELOPE_DECAY:
-				p_oscillator->envelope_state = ENVELOPE_SUSTAIN;
+			case ENVELOPE_STATE_DECAY:
+				p_oscillator->envelope_state = ENVELOPE_STATE_SUSTAIN;
 				p_oscillator->amplitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
 							  p_channel_controller->envelope_sustain_level);
 				if(true == IS_NOTE_ON(p_oscillator->state_bits)){
@@ -829,10 +825,10 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 				if(0 < p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number){
 					break;
 				}
-				p_oscillator->envelope_state = ENVELOPE_RELEASE;
+				p_oscillator->envelope_state = ENVELOPE_STATE_RELEASE;
 				break;
-			case ENVELOPE_SUSTAIN:
-			case ENVELOPE_RELEASE:
+			case ENVELOPE_STATE_SUSTAIN:
+			case ENVELOPE_STATE_RELEASE:
 				SET_DEACTIVATED(p_oscillator->state_bits);
 				break;
 			}
@@ -848,12 +844,12 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 		int16_t shift_amplitude = 0;
 		switch(p_oscillator->envelope_state)
 		{
-		case ENVELOPE_ATTACK:
+		case ENVELOPE_STATE_ATTACK:
 			p_envelope_table = p_channel_controller->p_envelope_attack_table;
 			delta_amplitude = p_oscillator->loudness - p_oscillator->attack_decay_reference_amplitude;
 			shift_amplitude = p_oscillator->attack_decay_reference_amplitude;
 			break;
-		case ENVELOPE_DECAY: {
+		case ENVELOPE_STATE_DECAY: {
 			p_envelope_table = p_channel_controller->p_envelope_decay_table;
 			int16_t sustain_ampitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
 														 p_channel_controller->envelope_sustain_level);
@@ -866,11 +862,12 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 			} while(0);
 			shift_amplitude = sustain_ampitude;
 		}	break;
-		case ENVELOPE_SUSTAIN:
+		case ENVELOPE_STATE_SUSTAIN:
 			p_envelope_table = p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table;
 			delta_amplitude = p_oscillator->loudness;
 			break;
-		case ENVELOPE_RELEASE:
+		default:
+		case ENVELOPE_STATE_RELEASE:
 			do{
 				if(true == IS_RESTING(p_oscillator->state_bits)){
 					p_envelope_table = p_channel_controller->p_envelope_attack_table;
@@ -885,7 +882,7 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 		p_oscillator->amplitude = ENVELOPE_AMPLITUDE(delta_amplitude,
 													 p_envelope_table[p_oscillator->envelope_table_index]);
 		p_oscillator->amplitude	+= shift_amplitude;
-		if(ENVELOPE_RELEASE == p_oscillator->envelope_state){
+		if(ENVELOPE_STATE_RELEASE == p_oscillator->envelope_state){
 			break;
 		}
 		p_oscillator->release_reference_amplitude = p_oscillator->amplitude;
@@ -907,7 +904,6 @@ void perform_percussion(oscillator_t * const p_oscillator)
 		}
 
 		percussion_t const * const p_percussion = get_percussion_pointer_from_index(p_oscillator->note);
-		p_oscillator->percussion_duration_sample_count += 1;
 		int8_t waveform_index = p_oscillator->percussion_waveform_index;
 		if (p_percussion->waveform_duration_sample_number[waveform_index]
 				== p_oscillator->percussion_duration_sample_count){
@@ -917,11 +913,11 @@ void perform_percussion(oscillator_t * const p_oscillator)
 				p_oscillator->percussion_waveform_index = MAX_WAVEFORM_CHANGE_NUMBER - 1;
 			}
 		}
-
+		p_oscillator->percussion_duration_sample_count += 1;
 		p_oscillator->current_phase += PERCUSSION_ENVELOPE(p_percussion->max_delta_modulation_phase,
 											p_percussion->p_modulation_envelope_table[p_oscillator->percussion_table_index]);
-		p_oscillator->percussion_same_index_count += 1;
 		if(p_percussion->envelope_same_index_number > p_oscillator->percussion_same_index_count){
+			p_oscillator->percussion_same_index_count += 1;
 			break;
 		}
 
@@ -1414,7 +1410,7 @@ void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const 
 {
 	if( 0 > channel_index  || channel_index >= MIDI_MAX_CHANNEL_NUMBER){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: channel_index = %d is not acceptable for %s\r\n",
-						channel_index, __FUNCTION__);
+						channel_index, __func__);
 		return ;
 	}
 
@@ -1434,12 +1430,12 @@ int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const w
 {
 	if( 0 > channel_index  || channel_index >= MIDI_MAX_CHANNEL_NUMBER){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: channel_index = %d is not acceptable for %s\r\n",
-						channel_index, __FUNCTION__);
+						channel_index, __func__);
 		return -1;
 	}
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == channel_index){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: channel_index = %d is MIDI_PERCUSSION_INSTRUMENT_CHANNEL %s\r\n",
-						MIDI_PERCUSSION_INSTRUMENT_CHANNEL, __FUNCTION__);
+		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: channel_index = %d is MIDI_PERCUSSION_INSTRUMENT_CHANNEL %s\r\n",
+						MIDI_PERCUSSION_INSTRUMENT_CHANNEL, __func__);
 		return 1;
 	}
 
@@ -1467,7 +1463,7 @@ int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const w
 		break;
 	default:
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: waveform = %d is not acceptable for %s\r\n",
-						waveform, __FUNCTION__);
+						waveform, __func__);
 		return -2;
 	}
 

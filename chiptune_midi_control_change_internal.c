@@ -113,7 +113,6 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, int
 			break;
 		}
 
-
 		int16_t oscillator_index = get_event_occupied_oscillator_head_index();
 		int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
 		for(int16_t i = 0; i < occupied_oscillator_number; i++){
@@ -126,27 +125,18 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, int
 					break;
 				}
 
-				original_value += !original_value;
-				p_oscillator->loudness = (p_oscillator->loudness * value)/original_value;
-				p_oscillator->envelope_table_index = 0;
-				p_oscillator->envelope_same_index_count = 0;
-				p_oscillator->attack_decay_reference_amplitude
-						= p_oscillator->amplitude;
-				switch(p_oscillator->envelope_state){
-				case ENVELOPE_ATTACK:
-					break;
-				case ENVELOPE_DECAY:
-					break;
-				case ENVELOPE_SUSTAIN:
-					do {
-						if(value < original_value){
-							p_oscillator->envelope_state = ENVELOPE_DECAY;
-							break;
-						}
-						p_oscillator->envelope_state = ENVELOPE_ATTACK;
-					} while(0);
+				if(ENVELOPE_STATE_RELEASE == p_oscillator->envelope_state){
 					break;
 				}
+
+				original_value += !original_value;
+				p_oscillator->loudness = (p_oscillator->loudness * value)/original_value;
+				p_oscillator->attack_decay_reference_amplitude = p_oscillator->amplitude;
+				if( p_oscillator->amplitude > p_oscillator->loudness){
+					setup_envelope_state(p_oscillator, ENVELOPE_STATE_DECAY);
+					break;
+				}
+				setup_envelope_state(p_oscillator, ENVELOPE_STATE_ATTACK);
 			} while(0);
 			oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 		}
