@@ -267,7 +267,6 @@ static void initialize_envelope_tables(void)
 	 *  INT8_MAX * exp(-alpha * (TABLE_LENGTH -1)) = 1 -> alpha = -ln(1/INT8_MAX)/(TABLE_LENGTH -1)
 	*/
 	const float alpha = -logf(1/(float)INT8_MAX)/(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1);
-	s_exponential_decline_table[0] = INT8_MAX;
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
 		s_exponential_decline_table[i] = (int8_t)(INT8_MAX * expf( -alpha * i) + 0.5);
 	}
@@ -290,15 +289,17 @@ static void initialize_envelope_tables(void)
 
 	/*
 	 *  fermi
-	 *  INT8_MAX * 1/(exp( -gamma*((TABLE_LENGTH - 1) - TABLE_LENGTH/2)) + 1) = 1
-	 *   -> gamma = -ln(INT8_MAX - 1)/((TABLE_LENGTH -1) - TABLE_LENGTH/2)
+	 *  A * 1/(exp( -gamma*((TABLE_LENGTH - 1) - TABLE_LENGTH/2)) + 1) = 1
+	 *   -> gamma = -ln(A - 1)/((TABLE_LENGTH -1) - TABLE_LENGTH/2)
+	 *   Here uses A = INT8_MAX + 1
 	*/
-	const float gamma = -logf(INT8_MAX - 1)
+	const float gamma = -logf((INT8_MAX + 1) - 1)
 			/ ((CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1) - CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/2);
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
 		float exp_x = expf(-gamma * (i - CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/2));
-		s_fermi_decline_table[i] = (int8_t)(INT8_MAX * 1.0f/(exp_x + 1.0f) + 0.5);
+		s_fermi_decline_table[i] = (int8_t)((INT8_MAX + 1) * 1.0f/(exp_x + 1.0f) + 0.5);
 	}
+
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
 		s_fermi_growth_table[i] = s_fermi_decline_table[(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1) - i];
 	}
