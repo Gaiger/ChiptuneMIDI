@@ -282,9 +282,9 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 		if(NULL == get_percussion_pointer_from_index(note)){
-			CHIPTUNE_PRINTF(cDeveloping, "WARNING:: tick = %u, PERCUSSION_INSTRUMENT = %d"
-										 " does not be defined in the MIDI standard, ignore\r\n",
-							tick, note);
+			CHIPTUNE_PRINTF(cDeveloping, "WARNING:: tick = %u, PERCUSSION_INSTRUMENT = %d (%s)"
+										 " does not be defined in the MIDI standard, ignored\r\n",
+							tick, note, is_note_on ? "on" : "off");
 			return 1;
 		}
 	}
@@ -791,13 +791,16 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 			break;
 		};
 
-
 		if(envelope_same_index_number > p_oscillator->envelope_same_index_count){
 			p_oscillator->envelope_same_index_count += 1;
 			break;
 		}
+
 		p_oscillator->envelope_same_index_count = 0;
 		p_oscillator->envelope_table_index += 1;
+		if(0 == envelope_same_index_number){
+			p_oscillator->envelope_table_index = CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH;
+		}
 
 		bool is_out_of_lookup_table_range = false;
 		do {
