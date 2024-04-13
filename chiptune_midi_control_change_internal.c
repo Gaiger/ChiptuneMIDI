@@ -88,8 +88,9 @@ static void process_cc_registered_parameter(uint32_t const tick, int8_t const vo
 /**********************************************************************************/
 enum
 {
-	LoudnessChangeVolume = 0,
-	LoudnessChangeExpression = 1,
+	LoudnessChangeVolume,
+	LoudnessChangeExpression,
+	LoundessBreathController,
 };
 
 static void process_loudness_change(uint32_t const tick, int8_t const voice, int8_t const value,
@@ -103,6 +104,7 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, int
 		original_value = p_channel_controller->volume;
 		break;
 	case LoudnessChangeExpression:
+	case LoundessBreathController:
 	default:
 		original_value = p_channel_controller->expression;
 		break;
@@ -132,11 +134,16 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, int
 				original_value += !original_value;
 				p_oscillator->loudness = (p_oscillator->loudness * value)/original_value;
 				p_oscillator->attack_decay_reference_amplitude = p_oscillator->amplitude;
-				if( p_oscillator->amplitude > p_oscillator->loudness){
-					setup_envelope_state(p_oscillator, ENVELOPE_STATE_DECAY);
-					break;
+
+				uint8_t to_envelope_state = ENVELOPE_STATE_DECAY;
+				if(LoundessBreathController != loudness_change_type){
+					if(p_oscillator->amplitude < p_oscillator->loudness){
+						to_envelope_state = ENVELOPE_STATE_ATTACK;
+					}
 				}
-				setup_envelope_state(p_oscillator, ENVELOPE_STATE_ATTACK);
+
+				setup_envelope_state(p_oscillator, to_envelope_state);
+
 			} while(0);
 			oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
 		}
@@ -150,7 +157,7 @@ static void process_breath_controller(uint32_t const tick, int8_t const voice, i
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_BREATH_CONTROLLER(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_BREATH_CONTROLLER, voice, value);
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-	process_loudness_change(tick, voice, value, LoudnessChangeExpression);
+	process_loudness_change(tick, voice, value, LoundessBreathController);
 	p_channel_controller->expression = value;
 }
 
