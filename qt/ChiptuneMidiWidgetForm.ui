@@ -115,7 +115,7 @@ QSlider::handle {
     <rect>
      <x>16</x>
      <y>76</y>
-     <width>632</width>
+     <width>836</width>
      <height>24</height>
     </rect>
    </property>
@@ -217,10 +217,10 @@ color: rgb(208, 208, 208);
   <widget class="QSlider" name="AmplitudeGainSlider">
    <property name="geometry">
     <rect>
-     <x>870</x>
+     <x>864</x>
      <y>20</y>
      <width>20</width>
-     <height>71</height>
+     <height>72</height>
     </rect>
    </property>
    <property name="minimum">
@@ -270,6 +270,23 @@ color: rgb(208, 208, 208);
      <width>348</width>
      <height>716</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QWidget" name="SequencerWidget" native="true">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>108</y>
+     <width>852</width>
+     <height>608</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QWidget {
+background-color: rgb(56, 56, 56); 
+color: rgb(208, 208, 208);
+}
+</string>
    </property>
   </widget>
  </widget>
