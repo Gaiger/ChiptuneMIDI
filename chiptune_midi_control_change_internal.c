@@ -202,9 +202,7 @@ static void process_cc_expression(uint32_t const tick, int8_t const voice, int8_
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EXPRESSION(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_EXPRESSION, voice, value);
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-#if(0)
 	process_loudness_change(tick, voice, value, LoudnessChangeExpression);
-#endif
 	p_channel_controller->expression = value;
 }
 
