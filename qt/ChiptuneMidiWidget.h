@@ -15,6 +15,7 @@ namespace Ui {
 class ChiptuneMidiWidget;
 }
 
+class SequencerWidget;
 
 class ChiptuneMidiWidget : public QWidget
 {
@@ -80,11 +81,13 @@ private :
 	QFileInfo			m_opened_file_info;
 	uint32_t			m_midi_file_duration_in_milliseconds;
 	int					m_inquiring_playback_status_timer_id;
+	int					m_inquireing_playback_tick_timer_id;
 	QString				m_midi_file_duration_time_string;
 
 	QTimer				m_set_start_time_postpone_timer;
 
 private:
+	SequencerWidget	*	m_p_sequencer_widget;
 	WaveChartView *		m_p_wave_chartview;
 private:
 	Ui::ChiptuneMidiWidget *ui;

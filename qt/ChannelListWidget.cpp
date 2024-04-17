@@ -19,7 +19,7 @@ ChannelListWidget::ChannelListWidget(QWidget *parent) :
 	vBoxLayout->addLayout(m_p_vboxlayout);
 	vBoxLayout->addStretch(1);
 
-	 ui->scrollArea->setWidget(p_widget);
+	ui->scrollArea->setWidget(p_widget);
 }
 
 /**********************************************************************************/

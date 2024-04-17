@@ -27,7 +27,7 @@ public:
 
 	int LoadMidiFile(QString const midi_file_name_string);
 	void ClearOutMidiFile(void);
-
+	QMidiFile* GetMidiFilePointer(void);
 	bool IsFileLoaded(void);
 	int GetNumberOfChannels(void);
 	int GetSamplingRate(void);
@@ -40,6 +40,7 @@ public:
 
 	float GetMidiFileDurationInSeconds(void);
 	float GetCurrentElapsedTimeInSeconds(void);
+	int GetCurrentTick(void);
 	int SetStartTimeInSeconds(float target_start_time_in_seconds);
 
 	QList<QPair<int, int>> GetChannelInstrumentPairList(void);

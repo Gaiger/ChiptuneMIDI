@@ -18,6 +18,8 @@
 
 #include "ui_ChiptuneMidiWidgetForm.h"
 #include "ProgressSlider.h"
+#include "SequencerWidget.h"
+
 #include "ChannelListWidget.h"
 
 #include "ChiptuneMidiWidget.h"
@@ -150,6 +152,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	//m_p_timbre_list_toobox(nullptr),
 	m_p_tune_manager(p_tune_manager),
 	m_inquiring_playback_status_timer_id(-1),
+	m_inquireing_playback_tick_timer_id(-1),
 	ui(new Ui::ChiptuneMidiWidget)
 {
 	ui->setupUi(this);
@@ -255,6 +258,28 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 							 this, &ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged);
 		}
 
+
+		QWidget *p_widget = new QWidget(ui->SequencerScrollArea);
+		QHBoxLayout *p_layout = new QHBoxLayout(p_widget);
+		p_layout->setContentsMargins(0, 0, 0, 0);
+		p_layout->setSpacing(0);
+		ui->SequencerScrollArea->setWidget(p_widget);
+		QHBoxLayout *p_layout_for_containing_working_widgets = new QHBoxLayout();
+		p_layout_for_containing_working_widgets->setContentsMargins(0, 0, 0, 0);
+		p_layout_for_containing_working_widgets->setSpacing(0);
+
+		p_layout->addLayout(p_layout_for_containing_working_widgets);
+
+		NoteNameWidget *p_note_name_widget = new NoteNameWidget(p_widget);
+		SequencerWidget *p_sequencer_widget = new SequencerWidget(m_p_tune_manager->GetMidiFilePointer(),
+																  ui->SequencerScrollArea->verticalScrollBar(),
+																 p_widget);
+
+		m_p_sequencer_widget = p_sequencer_widget;
+		p_layout_for_containing_working_widgets->addWidget(p_note_name_widget);
+		p_layout_for_containing_working_widgets->addWidget(p_sequencer_widget);
+		m_p_sequencer_widget->DrawSequencer(0);
+
 		ui->AmplitudeGainSlider->setValue(UINT16_MAX - m_p_tune_manager->GetAmplitudeGain());
 		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
 		m_midi_file_duration_time_string = FormatTimeString(m_midi_file_duration_in_milliseconds);
@@ -268,6 +293,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		message_string = QString::asprintf("Playing file");
 		ui->MessageLabel->setText(message_string);
 		m_inquiring_playback_status_timer_id = QObject::startTimer(500);
+		m_inquireing_playback_tick_timer_id = QObject::startTimer(50);
 
 		ui->PlayPausePushButton->setEnabled(true);
 		SetPlayPausePushButtonAsPlayIcon(false);
@@ -283,12 +309,19 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 
 void ChiptuneMidiWidget::StopMidiFile(void)
 {
+	m_p_sequencer_widget = nullptr;
+
 	m_p_audio_player->Stop();
 	m_p_tune_manager->ClearOutMidiFile();
 
 	if(-1 != m_inquiring_playback_status_timer_id){
 		QObject::killTimer(m_inquiring_playback_status_timer_id);
 		m_inquiring_playback_status_timer_id = -1;
+	}
+
+	if(-1 != m_inquireing_playback_tick_timer_id){
+		QObject::killTimer(m_inquireing_playback_tick_timer_id);
+		m_inquireing_playback_tick_timer_id = -1;
 	}
 
 	ui->PlayPositionLabel->setText("00:00 / 00:00");
@@ -299,7 +332,18 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 
 	ui->PlayPausePushButton->setEnabled(false);
 	SetPlayPausePushButtonAsPlayIcon(true);
+
 	m_p_wave_chartview->Reset();
+
+	do{
+		if(nullptr == ui->SequencerScrollArea->widget()){
+			break;
+		}
+
+		QWidget *p_widget = ui->SequencerScrollArea->takeWidget();
+		delete p_widget->layout();
+		delete p_widget;
+	} while(0);
 
 	do {
 		if(nullptr == ui->TimbreListWidget->layout()){
@@ -406,6 +450,7 @@ void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton bu
 void ChiptuneMidiWidget::HandleChannelOutputEnabled(int index, bool is_enabled)
 {
 	m_p_tune_manager->SetChannelOutputEnabled(index, is_enabled);
+	m_p_sequencer_widget->DrawChannelEnabled(index, is_enabled);
 }
 
 /**********************************************************************************/
@@ -461,6 +506,11 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 			}
 			break;
 		}
+
+		if(event->timerId() == m_inquireing_playback_tick_timer_id){
+			m_p_sequencer_widget->DrawSequencer(m_p_tune_manager->GetCurrentTick());
+		}
+
 	}while(0);
 }
 

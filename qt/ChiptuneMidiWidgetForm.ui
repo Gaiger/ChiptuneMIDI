@@ -272,12 +272,12 @@ color: rgb(208, 208, 208);
     </rect>
    </property>
   </widget>
-  <widget class="QWidget" name="SequencerWidget" native="true">
+  <widget class="QScrollArea" name="SequencerScrollArea">
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>16</x>
      <y>108</y>
-     <width>852</width>
+     <width>860</width>
      <height>608</height>
     </rect>
    </property>
@@ -285,9 +285,21 @@ color: rgb(208, 208, 208);
     <string notr="true">QWidget {
 background-color: rgb(56, 56, 56); 
 color: rgb(208, 208, 208);
-}
-</string>
+}</string>
    </property>
+   <property name="widgetResizable">
+    <bool>true</bool>
+   </property>
+   <widget class="QWidget" name="scrollAreaWidgetContents">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>858</width>
+      <height>606</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
  </widget>
  <customwidgets>

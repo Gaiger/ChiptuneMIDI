@@ -28,6 +28,7 @@ SOURCES += \
         GetInstrumentNameString.cpp \
         PitchTimbreFrame.cpp \
         ProgressSlider.cpp \
+        SequencerWidget.cpp \
         TuneManager.cpp \
         AudioPlayer.cpp \
         WaveChartViewchartview.cpp \
@@ -55,6 +56,7 @@ HEADERS += \
     MidiPlayer.h \
     PitchTimbreFrame.h \
     ProgressSlider.h \
+    SequencerWidget.h \
     TuneManager.h \
     AudioPlayer.h \
     WaveChartView.h
@@ -63,7 +65,7 @@ FORMS += \
     ChannelListWidgetForm.ui \
     ChannelNodeWidgetForm.ui \
     PitchTimbreFrameForm.ui \
-    ChiptuneMidiWidgetForm.ui \
+    ChiptuneMidiWidgetForm.ui
 
 win32{
     RC_ICONS = chiptune.ico

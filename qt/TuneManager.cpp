@@ -169,6 +169,17 @@ void TuneManager::ClearOutMidiFile(void)
 
 /**********************************************************************************/
 
+QMidiFile * TuneManager::GetMidiFilePointer(void)
+{
+	if(false == IsFileLoaded()){
+		return nullptr;
+	}
+
+	return m_p_private->m_p_midi_file;
+}
+
+/**********************************************************************************/
+
 int TuneManager::InitializeTune(void)
 {
 	m_p_private->m_wave_bytearray.clear();
@@ -336,6 +347,17 @@ float TuneManager::GetCurrentElapsedTimeInSeconds(void)
 	}
 
 	return m_p_private->m_p_midi_file->timeFromTick(chiptune_get_current_tick());
+}
+
+/**********************************************************************************/
+
+int TuneManager::GetCurrentTick(void)
+{
+	if(nullptr == m_p_private->m_p_midi_file){
+		return -1;
+	}
+
+	return chiptune_get_current_tick();
 }
 
 /**********************************************************************************/
