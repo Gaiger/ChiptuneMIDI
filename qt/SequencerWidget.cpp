@@ -16,10 +16,7 @@ NoteNameWidget::NoteNameWidget(QWidget *parent)
 	setFixedSize(size);
 }
 
-NoteNameWidget::~NoteNameWidget(void)
-{
-	qDebug() << Q_FUNC_INFO;
-}
+NoteNameWidget::~NoteNameWidget(void) { }
 
 /**********************************************************************************/
 
@@ -72,7 +69,9 @@ void NoteNameWidget::paintEvent(QPaintEvent *event) {
 SequencerWidget::SequencerWidget(QMidiFile *p_midi_file, QScrollBar *p_scrollbar, QWidget *parent) :
 	QWidget(parent),
 	m_p_scrollbar(p_scrollbar),
-	m_is_corrected_posistion(false)
+	m_is_corrected_posistion(false),
+	m_last_sought_index(0),
+	m_last_tick_in_center(0)
 {
 	QSize size = QSize(parent->width() - ONE_NAME_WIDTH * 3 /2, (INT8_MAX - A0 + 1) * ONE_NAME_HEIGHT);
 
@@ -95,7 +94,7 @@ SequencerWidget::SequencerWidget(QMidiFile *p_midi_file, QScrollBar *p_scrollbar
 
 /**********************************************************************************/
 
-SequencerWidget::~SequencerWidget(){ qDebug() << Q_FUNC_INFO; }
+SequencerWidget::~SequencerWidget(){ }
 
 /**********************************************************************************/
 
@@ -136,7 +135,13 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 
 	QList<draw_note_t> draw_note_list;
 
-	for(int i = 0; i < midievent_list.size(); i++){
+	int sought_index = -1;
+	int start_index = 0;
+	if(m_last_tick_in_center <= tick_in_center){
+		start_index = m_last_sought_index;
+	}
+
+	for(int i = start_index; i < midievent_list.size(); i++){
 		QMidiEvent * const p_event = midievent_list.at(i);
 
 		int tick_x_position = tickToX(p_event->tick(), tick_in_center);
@@ -144,6 +149,9 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 			continue;
 		}
 
+		if(-1 == sought_index){
+			sought_index = i;
+		}
 		if(tick_x_position > QWidget::width()){
 			break;
 		}
@@ -243,6 +251,9 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 	}
 #endif
 	m_drawing_index = preparing_index;
+
+	m_last_sought_index = sought_index;
+	m_last_tick_in_center = tick_in_center;
 	QWidget::update();
 }
 

@@ -45,6 +45,8 @@ private:
 	QMutex m_mutex;
 	bool m_is_channel_to_draw[16];
 	bool m_is_corrected_posistion;
+	int m_last_sought_index;
+	int m_last_tick_in_center;
 };
 
 #endif // SEQUENCERWIDGET_H
