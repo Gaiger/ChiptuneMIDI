@@ -146,18 +146,15 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 
 	QList<draw_note_t> draw_note_list;
 
-	int left_tick = XtoTick(0, tick_in_center);
-
-	qDebug() << "left_tick = " << left_tick;
+	int const left_tick = XtoTick(0, tick_in_center);
+	//qDebug() << "left_tick = " << left_tick;
 	int start_index = 0;
 	if(m_last_tick_in_center <= tick_in_center){
 		start_index = m_last_sought_index;
 	}
 	//start_index = 0;
 	//qDebug() << "start_index " << start_index;
-	QList<int> start_index_list;
-
-	int sought_index = 0;
+	int sought_index = INT32_MAX;
 	for(int i = start_index; i < midievent_list.size(); i++){
 		QMidiEvent * const p_event = midievent_list.at(i);
 
@@ -195,7 +192,8 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 
 			if(QMidiEvent::NoteOff == p_event->type()){
 				bool is_matched = false;
-				for(int k = 0; k < draw_note_list.size(); k++){
+				int k;
+				for(k = 0; k < draw_note_list.size(); k++){
 					draw_note_t *p_draw_note = &draw_note_list[k];
 					if(-1 != p_draw_note->end_tick){
 						continue;
@@ -214,7 +212,7 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 					do
 					{
 						p_draw_note->end_tick = p_event->tick();
-						if(p_draw_note->end_tick < left_tick){
+						if(left_tick > p_draw_note->end_tick){
 							break;
 						}
 
@@ -222,38 +220,35 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 						int y = (QWidget::height() - (p_draw_note->note - A0 - 1) * ONE_BEAT_HEIGHT);
 						int width = tickToX(p_draw_note->end_tick, tick_in_center) - x;
 						int height = ONE_BEAT_HEIGHT;
+
 						m_rectangle_vector_list[preparing_index][p_draw_note->voice].append(QRect(x, y, width, height));
-						start_index_list.append(p_draw_note->note_on_midievent_index);
+						if(sought_index > p_draw_note->note_on_midievent_index){
+							sought_index = p_draw_note->note_on_midievent_index;
+						}
 					} while(0);
-					draw_note_list.removeAt(k);
 					break;
 				}
 
-				if(false == is_matched){
-					if( p_event->tick() > left_tick ){
+				do {
+					if(true == is_matched){
+						draw_note_list.removeAt(k);
+						break;
+					}
+					if(left_tick < p_event->tick()){
 						qDebug() << "ERROR, note not matched!!!";
 					}
-				}
+				} while(0);
 			}
-
 		}while(0);
-	}
-
-	if(start_index_list.size() > 0){
-		sought_index = start_index_list.at(0);
-		for(int i = 1; i < start_index_list.size(); i++){
-			if( sought_index > start_index_list.at(i)){
-				sought_index = start_index_list.at(i);
-			}
-		}
 	}
 
 	//qDebug() << "sought_index " << sought_index;
 	//qDebug() << "start_index_list.size() " << start_index_list.size();
 	m_last_tick_in_center = tick_in_center;
-	m_last_sought_index = sought_index;
+	if(INT32_MAX != sought_index){
+		m_last_sought_index = sought_index;
+	}
 	m_drawing_index = preparing_index;
-
 	QWidget::update();
 }
 
