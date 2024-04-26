@@ -107,6 +107,16 @@ int SequencerWidget::tickToX(int tick, int const tick_in_center)
 
 /**********************************************************************************/
 
+int SequencerWidget::XtoTick(int x, int const tick_in_center)
+{
+	int tick  = tick_in_center;
+	x -= QWidget::width()/2;
+	tick += ( x / (double) ONE_BEAT_WIDTH) * m_p_midi_file->resolution();
+	return tick;
+}
+
+/**********************************************************************************/
+
 void SequencerWidget::DrawChannelEnabled(int channel_index, bool is_enabled)
 {
 	m_is_channel_to_draw[channel_index] = is_enabled;
@@ -127,6 +137,7 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 
 	typedef struct
 	{
+		int note_on_midievent_index;
 		int start_tick;
 		int end_tick;
 		int note;
@@ -135,25 +146,35 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 
 	QList<draw_note_t> draw_note_list;
 
-	int sought_index = -1;
+	int left_tick = XtoTick(0, tick_in_center);
+
+	qDebug() << "left_tick = " << left_tick;
 	int start_index = 0;
 	if(m_last_tick_in_center <= tick_in_center){
 		start_index = m_last_sought_index;
 	}
+	//start_index = 0;
+	//qDebug() << "start_index " << start_index;
+	QList<int> start_index_list;
 
+	int sought_index = 0;
 	for(int i = start_index; i < midievent_list.size(); i++){
 		QMidiEvent * const p_event = midievent_list.at(i);
 
 		int tick_x_position = tickToX(p_event->tick(), tick_in_center);
-		if(tick_x_position < 0){
-			continue;
-		}
-
-		if(-1 == sought_index){
-			sought_index = i;
-		}
 		if(tick_x_position > QWidget::width()){
-			break;
+			bool is_all_closed = true;
+			for(int j = 0; j < draw_note_list.size(); j++){
+				if(-1 == draw_note_list.at(j).start_tick
+						|| -1 == draw_note_list.at(j).end_tick){
+					is_all_closed = false;
+					break;
+				}
+			}
+
+			if(true == is_all_closed){
+				break;
+			}
 		}
 
 		if(false == m_is_channel_to_draw[p_event->voice()]){
@@ -163,6 +184,7 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 		do {
 			if(QMidiEvent::NoteOn == p_event->type()){
 				draw_note_t draw_note;
+				draw_note.note_on_midievent_index = i;
 				draw_note.start_tick = p_event->tick();
 				draw_note.end_tick = -1;
 				draw_note.note = p_event->note();
@@ -172,88 +194,66 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 			}
 
 			if(QMidiEvent::NoteOff == p_event->type()){
-				bool is_make_closed = false;
-				int kk = 0;
-				for( ; kk < draw_note_list.size(); kk++){
-					draw_note_t draw_note = draw_note_list.at(kk);
-
-					if(-1 == draw_note.start_tick){
+				bool is_matched = false;
+				for(int k = 0; k < draw_note_list.size(); k++){
+					draw_note_t *p_draw_note = &draw_note_list[k];
+					if(-1 != p_draw_note->end_tick){
 						continue;
 					}
-					if(draw_note.voice != p_event->voice()){
+					if(p_draw_note->voice != p_event->voice()){
 						continue;
 					}
-					if(draw_note.note != p_event->note()){
+					if(p_draw_note->note != p_event->note()){
 						continue;
 					}
-					if(draw_note.start_tick > p_event->tick()){
+					if(p_draw_note->start_tick > p_event->tick()){
 						continue;
 					}
 
+					is_matched = true;
+					do
+					{
+						p_draw_note->end_tick = p_event->tick();
+						if(p_draw_note->end_tick < left_tick){
+							break;
+						}
 
-					int x = tickToX(draw_note.start_tick, tick_in_center);
-					int y = (QWidget::height() - (draw_note.note - A0 - 1) * ONE_BEAT_HEIGHT);
-					int width = tickToX(p_event->tick(), tick_in_center) - x;
-
-					int height = ONE_BEAT_HEIGHT;
-					m_rectangle_vector_list[preparing_index][draw_note.voice].append(QRect(x, y, width, height));
-					is_make_closed = true;
+						int x = tickToX(p_draw_note->start_tick, tick_in_center);
+						int y = (QWidget::height() - (p_draw_note->note - A0 - 1) * ONE_BEAT_HEIGHT);
+						int width = tickToX(p_draw_note->end_tick, tick_in_center) - x;
+						int height = ONE_BEAT_HEIGHT;
+						m_rectangle_vector_list[preparing_index][p_draw_note->voice].append(QRect(x, y, width, height));
+						start_index_list.append(p_draw_note->note_on_midievent_index);
+					} while(0);
+					draw_note_list.removeAt(k);
 					break;
 				}
 
-				do {
-					if(true == is_make_closed){
-						draw_note_list.removeAt(kk);
-						break;
+				if(false == is_matched){
+					if( p_event->tick() > left_tick ){
+						qDebug() << "ERROR, note not matched!!!";
 					}
-
-					draw_note_t draw_note;
-					draw_note.start_tick = -1;
-					draw_note.end_tick = p_event->tick();
-					draw_note.note = p_event->note();
-					draw_note.voice = p_event->voice();
-					draw_note_list.append(draw_note);
-				}while(0);
+				}
 			}
+
 		}while(0);
 	}
 
-	for(int i = 0; i < draw_note_list.size(); i++){
-		draw_note_t draw_note = draw_note_list.at(i);
-		int x = 0;
-		int width = 0;
-		do{
-			if(-1 == draw_note.end_tick){
-				x = tickToX(draw_note.start_tick, tick_in_center);
-				//width = x;
-				width = QWidget::width() - x;
-				break;
+	if(start_index_list.size() > 0){
+		sought_index = start_index_list.at(0);
+		for(int i = 1; i < start_index_list.size(); i++){
+			if( sought_index > start_index_list.at(i)){
+				sought_index = start_index_list.at(i);
 			}
-
-			if(-1 == draw_note.start_tick){
-				x = 0;
-				width = tickToX(draw_note.end_tick, tick_in_center);
-				break;
-			}
-
-			qDebug() << "ERROR :: draw_note_list";
-		}while(0);
-		int y = (QWidget::height() - (draw_note.note - A0 - 1) * ONE_BEAT_HEIGHT);
-		int height = ONE_BEAT_HEIGHT;
-		m_rectangle_vector_list[preparing_index][draw_note.voice].append(QRect(x, y, width, height));
-	}
-
-#if(0)
-	for(int i = 0; i < 16;i++){
-		for(int j = 0; j < m_rectangle_vector_list[preparing_index][i].size(); j++){
-			qDebug() << m_rectangle_vector_list[preparing_index][i].at(j);
 		}
 	}
-#endif
+
+	//qDebug() << "sought_index " << sought_index;
+	//qDebug() << "start_index_list.size() " << start_index_list.size();
+	m_last_tick_in_center = tick_in_center;
+	m_last_sought_index = sought_index;
 	m_drawing_index = preparing_index;
 
-	m_last_sought_index = sought_index;
-	m_last_tick_in_center = tick_in_center;
 	QWidget::update();
 }
 
@@ -277,13 +277,15 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 	}
 
 	QPainter painter(this);
-
+	int total = 0;
 	for(int k = 0; k < 16; k++){
 		QColor color = GetChannelColor(k);
 		color.setAlpha(192);
 		painter.setBrush(color);
 		for(int i = 0; i < m_rectangle_vector_list[m_drawing_index].at(k).size(); i++){
+			total += 1;
 			painter.drawRect(m_rectangle_vector_list[m_drawing_index].at(k).at(i));
 		}
 	}
+	//qDebug() << "total = " << total;
 }

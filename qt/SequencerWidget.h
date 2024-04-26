@@ -33,6 +33,7 @@ public :
 	void DrawChannelEnabled(int channel_index, bool is_enabled);
 private :
 	int tickToX(int tick, int const tick_in_center);
+	int XtoTick(int x, int const tick_in_center);
 
 private:
 	virtual void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
