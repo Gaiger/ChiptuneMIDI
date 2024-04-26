@@ -1348,6 +1348,13 @@ void chiptune_set_tempo(float const tempo)
 
 /**********************************************************************************/
 
+float chiptune_get_tempo(void)
+{
+	return get_tempo();
+}
+
+/**********************************************************************************/
+
 int chiptune_get_ending_instruments(int8_t instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER])
 {
 	memcpy(&instrument_array[0], &s_ending_instrument_array[0], CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER * sizeof(int8_t));

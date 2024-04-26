@@ -6,7 +6,7 @@
 #include <QMutex>
 
 #include <QScrollBar>
-
+#include "TuneManager.h"
 
 class QMidiEvent;
 
@@ -26,7 +26,7 @@ class SequencerWidget : public QWidget
 	Q_OBJECT
 
 public:
-	explicit SequencerWidget(QMidiFile *p_midi_file, QScrollBar *p_scrollbar, QWidget *parent = nullptr);
+	explicit SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar, QWidget *parent = nullptr);
 	~SequencerWidget(void);
 public :
 	void DrawSequencer(int tick_in_center);
@@ -39,7 +39,7 @@ private:
 	virtual void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
 private:
 	QScrollBar *m_p_scrollbar;
-	QMidiFile *m_p_midi_file;
+	TuneManager *m_p_tune_manager;
 
 	QList<QVector<QRect>>  m_rectangle_vector_list[2];
 	int m_drawing_index;

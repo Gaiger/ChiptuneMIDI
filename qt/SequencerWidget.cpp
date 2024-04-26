@@ -66,10 +66,10 @@ void NoteNameWidget::paintEvent(QPaintEvent *event) {
 #define ONE_BEAT_WIDTH					(64)
 #define ONE_BEAT_HEIGHT					(ONE_NAME_HEIGHT)
 
-SequencerWidget::SequencerWidget(QMidiFile *p_midi_file, QScrollBar *p_scrollbar, QWidget *parent) :
+SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar, QWidget *parent) :
 	QWidget(parent),
 	m_p_scrollbar(p_scrollbar),
-	m_p_midi_file(p_midi_file),
+	m_p_tune_manager(p_tune_manager),
 	m_is_corrected_posistion(false),
 	m_last_sought_index(0),
 	m_last_tick_in_center(0)
@@ -116,7 +116,7 @@ SequencerWidget::~SequencerWidget(){ }
 
 int SequencerWidget::tickToX(int tick, int const tick_in_center)
 {
-	int x = ONE_BEAT_WIDTH * (tick - tick_in_center)/(double)m_p_midi_file->resolution();
+	int x = ONE_BEAT_WIDTH * (tick - tick_in_center)/(double)m_p_tune_manager->GetMidiFilePointer()->resolution();
 	x += QWidget::width()/2;
 	return x;
 }
@@ -127,7 +127,7 @@ int SequencerWidget::XtoTick(int x, int const tick_in_center)
 {
 	int tick  = tick_in_center;
 	x -= QWidget::width()/2;
-	tick += ( x / (double) ONE_BEAT_WIDTH) * m_p_midi_file->resolution();
+	tick += ( x / (double) ONE_BEAT_WIDTH) * m_p_tune_manager->GetMidiFilePointer()->resolution();
 	return tick;
 }
 
@@ -149,7 +149,7 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 		m_rectangle_vector_list[preparing_index][k].clear();
 	}
 
-	QList<QMidiEvent*> midievent_list = m_p_midi_file->events();
+	QList<QMidiEvent*> midievent_list = m_p_tune_manager->GetMidiFilePointer()->events();
 
 	typedef struct
 	{
@@ -278,7 +278,7 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 	QWidget::paintEvent(event);
 
 	if(false == m_is_corrected_posistion){
-		QList<QMidiEvent*> midievent_list = m_p_midi_file->events();
+		QList<QMidiEvent*> midievent_list = m_p_tune_manager->GetMidiFilePointer()->events();
 		for(int i = 0; i < midievent_list.size(); i++){
 			QMidiEvent * const p_event = midievent_list.at(i);
 			if(QMidiEvent::NoteOn == p_event->type()){
@@ -300,5 +300,12 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 			painter.drawRect(m_rectangle_vector_list[m_drawing_index].at(k).at(i));
 		}
 	}
-	//qDebug() << "total = " << total;
+
+	QColor color = QColor(0x40, 0x40, 0x40);
+	color.setAlpha(0);
+	painter.setBrush(color);
+	int delay_x = (2 * 0.1 + m_p_tune_manager->GetBufferLengthInSeconds()) * m_p_tune_manager->GetTempo()/60.0 * ONE_BEAT_WIDTH; //AUDIO buffer size = 2 * 100 ms
+
+
+	painter.drawLine(QWidget::width()/2 - delay_x, 0, QWidget::width()/2 - delay_x, QWidget::height());
 }

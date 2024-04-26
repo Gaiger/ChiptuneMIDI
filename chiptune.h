@@ -16,6 +16,7 @@ void chiptune_set_midi_message_callback(
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution);
 
 void chiptune_set_tempo(float const tempo);
+float chiptune_get_tempo(void);
 
 #define CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER			(16)
 #define CHIPTUNE_INSTRUMENT_NOT_SPECIFIED			(-1)

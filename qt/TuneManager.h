@@ -41,6 +41,8 @@ public:
 	float GetMidiFileDurationInSeconds(void);
 	float GetCurrentElapsedTimeInSeconds(void);
 	int GetCurrentTick(void);
+	double GetTempo(void);
+
 	int SetStartTimeInSeconds(float target_start_time_in_seconds);
 
 	QList<QPair<int, int>> GetChannelInstrumentPairList(void);
@@ -73,6 +75,8 @@ public:
 							  uint8_t const envelope_damper_on_but_note_off_sustain_level = 24,
 							  int8_t const envelope_damper_on_but_note_off_sustain_curve = ENVELOPE_CURVE_LINEAR,
 							  float const envelope_damper_on_but_note_off_sustain_duration_in_seconds = 8.0);
+
+	int GetBufferLengthInSeconds(void);
 public:
 	signals:
 	void WaveFetched(QByteArray const wave_bytearray);

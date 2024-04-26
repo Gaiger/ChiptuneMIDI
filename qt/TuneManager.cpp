@@ -360,6 +360,17 @@ int TuneManager::GetCurrentTick(void)
 	return chiptune_get_current_tick();
 }
 
+
+/**********************************************************************************/
+
+double TuneManager::GetTempo(void)
+{
+	if(nullptr == m_p_private->m_p_midi_file){
+		return FLT_MAX;
+	}
+	return chiptune_get_tempo();
+}
+
 /**********************************************************************************/
 
 int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
@@ -480,4 +491,12 @@ int TuneManager::SetPitchChannelTimbre(int8_t const channel_index,
 									  envelope_damper_on_but_note_off_sustain_curve,
 									  envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 	return ret;
+}
+
+/**********************************************************************************/
+
+int TuneManager::GetBufferLengthInSeconds(void)
+{
+	int one_second_data_length = m_p_private->m_sampling_rate * (m_p_private->m_sampling_size/2) * m_p_private->m_number_of_channels;
+	return m_p_private->m_wave_prebuffer_length/(double)one_second_data_length;
 }
