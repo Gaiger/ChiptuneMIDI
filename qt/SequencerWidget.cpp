@@ -69,16 +69,32 @@ void NoteNameWidget::paintEvent(QPaintEvent *event) {
 SequencerWidget::SequencerWidget(QMidiFile *p_midi_file, QScrollBar *p_scrollbar, QWidget *parent) :
 	QWidget(parent),
 	m_p_scrollbar(p_scrollbar),
+	m_p_midi_file(p_midi_file),
 	m_is_corrected_posistion(false),
 	m_last_sought_index(0),
 	m_last_tick_in_center(0)
 {
 	QSize size = QSize(parent->width() - ONE_NAME_WIDTH * 3 /2, (INT8_MAX - A0 + 1) * ONE_NAME_HEIGHT);
-
 	setFixedSize(size);
+#if(0)
+	QList<QMidiEvent*> midievent_list = m_p_midi_file->events();
+	//QList<QMidiEvent*> midievent_list = m_p_midi_file->events();
+	int highest_pitch = A0;
+	for(int i = 0; i < midievent_list.size(); i++){
+		QMidiEvent * const p_event = midievent_list.at(i);
+		if(QMidiEvent::NoteOn == p_event->type()){
+			if(p_event->note() > highest_pitch){
+				highest_pitch = p_event->note();
+			}
+		}
+	}
+
+	int y = (QWidget::height() - (highest_pitch - A0 - 1) * ONE_BEAT_HEIGHT);
+	qDebug() << "y  = " << y;
+	p_scrollbar->setMaximum(y);
+#endif
 	//QWidget::setAutoFillBackground(true);
 
-	m_p_midi_file = p_midi_file;
 	for(int j = 0; j < 2; j++){
 		for(int i = 0; i < 16; i++){
 			m_rectangle_vector_list[j].append(QVector<QRect>());
@@ -235,7 +251,9 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 						break;
 					}
 					if(left_tick < p_event->tick()){
-						qDebug() << "ERROR, note not matched!!!";
+						qDebug() << "WARNING :: note not matched : voice = " << p_event->voice()
+								 << ", note =" << p_event->note()
+								 << "(might be double off)";
 					}
 				} while(0);
 			}
