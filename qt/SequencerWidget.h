@@ -26,7 +26,8 @@ class SequencerWidget : public QWidget
 	Q_OBJECT
 
 public:
-	explicit SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar, QWidget *parent = nullptr);
+	explicit SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar,
+							 double audio_out_latency_in_seconds = 0.0, QWidget *parent = nullptr);
 	~SequencerWidget(void);
 public :
 	void DrawSequencer(int tick_in_center);
@@ -38,16 +39,19 @@ private :
 private:
 	virtual void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
 private:
-	QScrollBar *m_p_scrollbar;
 	TuneManager *m_p_tune_manager;
+	QScrollBar *m_p_scrollbar;
+
+	double m_audio_out_latency_in_seconds;
 
 	QList<QVector<QRect>>  m_rectangle_vector_list[2];
 	int m_drawing_index;
-	QMutex m_mutex;
 	bool m_is_channel_to_draw[16];
 	bool m_is_corrected_posistion;
 	int m_last_sought_index;
 	int m_last_tick_in_center;
+
+	QMutex m_mutex;
 };
 
 #endif // SEQUENCERWIDGET_H

@@ -86,6 +86,7 @@ private :
 
 	QTimer				m_set_start_time_postpone_timer;
 
+	int					m_audio_player_buffer_in_milliseconds;
 private:
 	SequencerWidget	*	m_p_sequencer_widget;
 	WaveChartView *		m_p_wave_chartview;

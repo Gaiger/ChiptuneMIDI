@@ -149,10 +149,11 @@ void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
 
 ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidget *parent)
 	: QWidget(parent),
-	//m_p_timbre_list_toobox(nullptr),
 	m_p_tune_manager(p_tune_manager),
+
 	m_inquiring_playback_status_timer_id(-1),
 	m_inquireing_playback_tick_timer_id(-1),
+	m_audio_player_buffer_in_milliseconds(200),
 	ui(new Ui::ChiptuneMidiWidget)
 {
 	ui->setupUi(this);
@@ -173,7 +174,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	m_p_tune_manager->moveToThread(&m_tune_manager_working_thread);
 	m_tune_manager_working_thread.start(QThread::HighPriority);
-	m_p_audio_player = new AudioPlayer(m_p_tune_manager, nullptr);
+	m_p_audio_player = new AudioPlayer(m_p_tune_manager, m_audio_player_buffer_in_milliseconds/2, nullptr);
 
 	m_p_audio_player->moveToThread(&m_audio_player_working_thread);
 	m_audio_player_working_thread.start(QThread::NormalPriority);
@@ -272,7 +273,9 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 
 		NoteNameWidget *p_note_name_widget = new NoteNameWidget(p_widget);
 		SequencerWidget *p_sequencer_widget
-				= new SequencerWidget(m_p_tune_manager, ui->SequencerScrollArea->verticalScrollBar(), p_widget);
+				= new SequencerWidget(m_p_tune_manager, ui->SequencerScrollArea->verticalScrollBar(),
+									  2 * m_audio_player_buffer_in_milliseconds/1000.0,
+									  p_widget);
 
 		m_p_sequencer_widget = p_sequencer_widget;
 		p_layout_for_containing_working_widgets->addWidget(p_note_name_widget);

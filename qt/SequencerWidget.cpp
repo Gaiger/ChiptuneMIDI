@@ -66,10 +66,13 @@ void NoteNameWidget::paintEvent(QPaintEvent *event) {
 #define ONE_BEAT_WIDTH					(64)
 #define ONE_BEAT_HEIGHT					(ONE_NAME_HEIGHT)
 
-SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar, QWidget *parent) :
+SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar,
+								 double audio_out_latency_in_seconds, QWidget *parent) :
 	QWidget(parent),
-	m_p_scrollbar(p_scrollbar),
 	m_p_tune_manager(p_tune_manager),
+	m_p_scrollbar(p_scrollbar),
+	m_audio_out_latency_in_seconds(audio_out_latency_in_seconds),
+
 	m_is_corrected_posistion(false),
 	m_last_sought_index(0),
 	m_last_tick_in_center(0)
@@ -96,12 +99,12 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scro
 	//QWidget::setAutoFillBackground(true);
 
 	for(int j = 0; j < 2; j++){
-		for(int i = 0; i < 16; i++){
+		for(int i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 			m_rectangle_vector_list[j].append(QVector<QRect>());
 		}
 	}
 
-	for(int i = 0; i < 16; i++){
+	for(int i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
 		m_is_channel_to_draw[i] = true;
 	}
 	m_drawing_index = 0;
@@ -145,7 +148,7 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 	QMutexLocker locker(&m_mutex);
 	int preparing_index = (m_drawing_index + 1) % 2;
 
-	for(int k = 0; k < 16; k++){
+	for(int k = 0; k < MIDI_MAX_CHANNEL_NUMBER; k++){
 		m_rectangle_vector_list[preparing_index][k].clear();
 	}
 
@@ -290,20 +293,16 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 	}
 
 	QPainter painter(this);
-	int total = 0;
-	for(int k = 0; k < 16; k++){
+	for(int k = 0; k < MIDI_MAX_CHANNEL_NUMBER; k++){
 		QColor color = GetChannelColor(k);
 		painter.setBrush(color);
 		for(int i = 0; i < m_rectangle_vector_list[m_drawing_index].at(k).size(); i++){
-			total += 1;
 			painter.drawRect(m_rectangle_vector_list[m_drawing_index].at(k).at(i));
 		}
 	}
 
 	QColor color = QColor(0xE0, 0xE0, 0xE0, 0xE0);
-	//color.setAlpha(0xFF);
 	painter.setPen(color);
-	int delay_x = (2 * 2 * 0.1) * m_p_tune_manager->GetTempo()/60.0 * ONE_BEAT_WIDTH;
-	//AUDIO buffer size = 2 * 100 ms, the sme value for tunemanager pre-buffer
+	int delay_x = m_audio_out_latency_in_seconds * m_p_tune_manager->GetTempo()/60.0 * ONE_BEAT_WIDTH;
 	painter.drawLine(QWidget::width()/2 - delay_x, 0, QWidget::width()/2 - delay_x, QWidget::height());
 }

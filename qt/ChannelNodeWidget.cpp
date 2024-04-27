@@ -20,7 +20,12 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 	QColor color = GetChannelColor(channel_index);
 	QString color_string = QString::asprintf("rgba(%d, %d, %d, %f%%)", color.red(), color.green(), color.blue(),
 											 color.alpha() * 100/(double)UINT8_MAX);
-	QString background_color_string = "QWidget { border-width : 1px; border-style: solid; border-color: rgba(255, 255, 255, 75%) ; background-color : " + color_string + "; }";
+	QString background_color_string = "QWidget { "
+									  "border-width: 1px;"
+									  "border-style: solid;"
+									  "border-color: rgba(255, 255, 255, 75%);"
+									  "background-color: " + color_string + ";"
+									"}";
 
 	ui->ColorWidget->setStyleSheet(background_color_string);
 	m_expanded_size = QWidget::size();

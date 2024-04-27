@@ -12,7 +12,8 @@ class AudioPlayer : public QObject
 {
 	Q_OBJECT
 public:
-	AudioPlayer(TuneManager *p_tune_manager, QObject *parent = nullptr);
+	AudioPlayer(TuneManager *p_tune_manager, int fetching_wave_interval_in_milliseconds = 100,
+				QObject *parent = nullptr);
 	~AudioPlayer()  Q_DECL_OVERRIDE;
 
 	void Play(void);
@@ -58,12 +59,13 @@ private :
 	void OrganizeConnection(void);
 
 private:
+	TuneManager *m_p_tune_manager;
+	int m_fetching_wave_interval_in_milliseconds;
+
 	QAudioOutput * m_p_audio_output;
 	QIODevice *m_p_audio_io_device;
-	TuneManager *m_p_tune_manager;
 
 	Qt::ConnectionType m_connection_type;
-
 	//QMutex m_accessing_io_device_mutex;
 	QMutex m_mutex;
 };

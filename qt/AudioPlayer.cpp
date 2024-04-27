@@ -36,10 +36,12 @@ private:
 
 /**********************************************************************************/
 
-AudioPlayer::AudioPlayer(TuneManager *p_tune_manager, QObject *parent)
+AudioPlayer::AudioPlayer(TuneManager *p_tune_manager, int fetching_wave_interval_in_milliseconds, QObject *parent)
 	: QObject(parent),
-	m_p_audio_output(nullptr), m_p_audio_io_device(nullptr),
 	m_p_tune_manager(p_tune_manager),
+	m_fetching_wave_interval_in_milliseconds(fetching_wave_interval_in_milliseconds),
+
+	m_p_audio_output(nullptr), m_p_audio_io_device(nullptr),
 	m_connection_type(Qt::AutoConnection)
 {
 	if( QMetaType::UnknownType == QMetaType::type("PlaybackState")){
@@ -145,7 +147,8 @@ void AudioPlayer::HandlePlayRequested(void)
 		qDebug() << Q_FUNC_INFO << "Start Play";
 
 		InitializeAudioResources(m_p_tune_manager->GetNumberOfChannels(),
-								 m_p_tune_manager->GetSamplingRate(), m_p_tune_manager->GetSamplingSize(), 100);
+								 m_p_tune_manager->GetSamplingRate(), m_p_tune_manager->GetSamplingSize(),
+								 m_fetching_wave_interval_in_milliseconds);
 		AudioPlayer::AppendWave(m_p_tune_manager->FetchWave(m_p_audio_output->bufferSize()));
 		m_p_audio_output->start(m_p_audio_io_device);
 	} while(0);

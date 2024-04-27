@@ -8,6 +8,8 @@
 
 class TuneManagerPrivate;
 
+#define MIDI_MAX_CHANNEL_NUMBER			(16)
+
 class TuneManager : public QObject
 {
 	Q_OBJECT
