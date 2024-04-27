@@ -193,10 +193,6 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 			}
 		}
 
-		if(false == m_is_channel_to_draw[p_event->voice()]){
-			continue;
-		}
-
 		do {
 			if(QMidiEvent::NoteOn == p_event->type()){
 				draw_note_t draw_note;
@@ -293,9 +289,33 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 	}
 
 	QPainter painter(this);
-	for(int k = 0; k < MIDI_MAX_CHANNEL_NUMBER; k++){
+	for(int k = MIDI_MAX_CHANNEL_NUMBER -1; k >= 0 ; k--){
+
+		if(true == m_is_channel_to_draw[k]){
+			continue;
+		}
+		QColor color = GetChannelColor(k);
+
+		painter.setBrush(QColor(0xff, 0xff, 0xff, 0x00));
+		color.setAlpha(0x40);
+		QPen pen(color.lighter(75));
+		pen.setWidth(4);
+		painter.setPen(pen);
+		//painter.setPen(color);
+		painter.setBrush(color);
+		for(int i = 0; i < m_rectangle_vector_list[m_drawing_index].at(k).size(); i++){
+			painter.drawRect(m_rectangle_vector_list[m_drawing_index].at(k).at(i));
+		}
+	}
+
+	for(int k = MIDI_MAX_CHANNEL_NUMBER -1; k >= 0 ; k--){
+		if(false == m_is_channel_to_draw[k]){
+			continue;
+		}
 		QColor color = GetChannelColor(k);
 		painter.setBrush(color);
+		painter.setPen(QColor(0xFF, 0xFF, 0xFF, 0xC0));
+
 		for(int i = 0; i < m_rectangle_vector_list[m_drawing_index].at(k).size(); i++){
 			painter.drawRect(m_rectangle_vector_list[m_drawing_index].at(k).at(i));
 		}
