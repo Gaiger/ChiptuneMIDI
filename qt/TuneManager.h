@@ -76,7 +76,6 @@ public:
 							  int8_t const envelope_damper_on_but_note_off_sustain_curve = ENVELOPE_CURVE_LINEAR,
 							  float const envelope_damper_on_but_note_off_sustain_duration_in_seconds = 8.0);
 
-	int GetBufferLengthInSeconds(void);
 public:
 	signals:
 	void WaveFetched(QByteArray const wave_bytearray);

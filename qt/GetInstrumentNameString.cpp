@@ -440,7 +440,7 @@ QColor GetChannelColor(int channel_index)
 		color = QColor(0x80, 0x00, 0x80);
 		break;
 	case 6:
-		color = QColor(0x00, 0x80, 0x00);
+		color = QColor(0x00, 0x80, 0x80);
 		break;
 	case 7:
 		color = QColor(0xC0, 0xC0, 0xC0);
@@ -475,6 +475,6 @@ QColor GetChannelColor(int channel_index)
 	default:
 		break;
 	}
-
+	color.setAlpha(0xC0);
 	return color;
 }

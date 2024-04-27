@@ -493,10 +493,3 @@ int TuneManager::SetPitchChannelTimbre(int8_t const channel_index,
 	return ret;
 }
 
-/**********************************************************************************/
-
-int TuneManager::GetBufferLengthInSeconds(void)
-{
-	int one_second_data_length = m_p_private->m_sampling_rate * (m_p_private->m_sampling_size/2) * m_p_private->m_number_of_channels;
-	return m_p_private->m_wave_prebuffer_length/(double)one_second_data_length;
-}

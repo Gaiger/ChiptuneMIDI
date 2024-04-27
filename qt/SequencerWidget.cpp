@@ -293,7 +293,6 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 	int total = 0;
 	for(int k = 0; k < 16; k++){
 		QColor color = GetChannelColor(k);
-		color.setAlpha(192);
 		painter.setBrush(color);
 		for(int i = 0; i < m_rectangle_vector_list[m_drawing_index].at(k).size(); i++){
 			total += 1;
@@ -301,11 +300,10 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 		}
 	}
 
-	QColor color = QColor(0x40, 0x40, 0x40);
-	color.setAlpha(0);
-	painter.setBrush(color);
-	int delay_x = (2 * 0.1 + m_p_tune_manager->GetBufferLengthInSeconds()) * m_p_tune_manager->GetTempo()/60.0 * ONE_BEAT_WIDTH; //AUDIO buffer size = 2 * 100 ms
-
-
+	QColor color = QColor(0xE0, 0xE0, 0xE0, 0xE0);
+	//color.setAlpha(0xFF);
+	painter.setPen(color);
+	int delay_x = (2 * 2 * 0.1) * m_p_tune_manager->GetTempo()/60.0 * ONE_BEAT_WIDTH;
+	//AUDIO buffer size = 2 * 100 ms, the sme value for tunemanager pre-buffer
 	painter.drawLine(QWidget::width()/2 - delay_x, 0, QWidget::width()/2 - delay_x, QWidget::height());
 }
