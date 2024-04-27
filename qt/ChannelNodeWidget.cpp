@@ -18,16 +18,16 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 	ui->setupUi(this);
 
 	QColor color = GetChannelColor(channel_index);
-	QString color_string = QString::asprintf("rgba(%d, %d, %d, %f%%)", color.red(), color.green(), color.blue(),
+	QString background_color_string = QString::asprintf("rgba(%d, %d, %d, %f%%)", color.red(), color.green(), color.blue(),
 											 color.alpha() * 100/(double)UINT8_MAX);
-	QString background_color_string = "QWidget { "
+	QString style_sheet_string = "QWidget { "
 									  "border-width: 1px;"
 									  "border-style: solid;"
 									  "border-color: rgba(255, 255, 255, 75%);"
-									  "background-color: " + color_string + ";"
+									  "background-color: " + background_color_string + ";"
 									"}";
 
-	ui->ColorWidget->setStyleSheet(background_color_string);
+	ui->ColorWidget->setStyleSheet(style_sheet_string);
 	m_expanded_size = QWidget::size();
 	m_collapsed_size = QSize(m_expanded_size.width(), m_expanded_size.height() - ui->PitchTimbreWidget->height());
 	QWidget::setFixedSize(m_collapsed_size);
@@ -72,6 +72,42 @@ void ChannelNodeWidget::setOutputEnabled(bool is_to_enabled)
 
 void ChannelNodeWidget::on_OutputEnabledCheckBox_stateChanged(int state)
 {
+#if(0)
+	QColor color = GetChannelColor(m_channel_index);
+	QString style_sheet_string;
+	do {
+		if(true == (bool)state){
+			QString background_color_string = QString::asprintf("rgba(%d, %d, %d, %f%%)", color.red(), color.green(), color.blue(),
+													 color.alpha() * 100/(double)UINT8_MAX);
+			style_sheet_string = "QWidget { "
+										  "border-width: 1px;"
+										  "border-style: solid;"
+										  "border-color: rgba(255, 255, 255, 75%);"
+										  "background-color: " + background_color_string + ";"
+										"}";
+			break;
+		}
+
+		color.setAlpha(0x40);
+		//QPen pen(color.lighter(75));
+		//pen.setWidth(4);
+		//painter.setPen(pen);
+
+		QString background_color_string = QString::asprintf("rgba(%d, %d, %d, %f%%)", color.red(), color.green(), color.blue(),
+												 color.alpha() * 100/(double)UINT8_MAX);
+		color = color.lighter(75);
+		QString border_color_string = QString::asprintf("rgba(%d, %d, %d, %f%%)", color.red(), color.green(), color.blue(),
+														color.alpha() * 100/(double)UINT8_MAX);
+
+		style_sheet_string = "QWidget { "
+								  "border-width: 4px;"
+								  "border-style: solid;"
+								  "border-color:" + border_color_string +";"
+								  "background-color: " + background_color_string + ";"
+								"}";
+	}while(0);
+	ui->ColorWidget->setStyleSheet(style_sheet_string);
+#endif
 	emit OutputEnabled(m_channel_index, (bool)state);
 }
 
