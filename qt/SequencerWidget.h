@@ -46,7 +46,7 @@ private:
 
 	QList<QVector<QRect>>  m_rectangle_vector_list[2];
 	int m_drawing_index;
-	bool m_is_channel_to_draw[16];
+	bool m_is_channel_to_draw[MIDI_MAX_CHANNEL_NUMBER];
 	bool m_is_corrected_posistion;
 	int m_last_sought_index;
 	int m_last_tick_in_center;

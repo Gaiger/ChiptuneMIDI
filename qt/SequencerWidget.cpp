@@ -99,13 +99,13 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scro
 	//QWidget::setAutoFillBackground(true);
 
 	for(int j = 0; j < 2; j++){
-		for(int i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
+		for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 			m_rectangle_vector_list[j].append(QVector<QRect>());
 		}
 	}
 
-	for(int i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		m_is_channel_to_draw[i] = true;
+	for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		m_is_channel_to_draw[voice] = true;
 	}
 	m_drawing_index = 0;
 
@@ -148,8 +148,8 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 	QMutexLocker locker(&m_mutex);
 	int preparing_index = (m_drawing_index + 1) % 2;
 
-	for(int k = 0; k < MIDI_MAX_CHANNEL_NUMBER; k++){
-		m_rectangle_vector_list[preparing_index][k].clear();
+	for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		m_rectangle_vector_list[preparing_index][voice].clear();
 	}
 
 	QList<QMidiEvent*> midievent_list = m_p_tune_manager->GetMidiFilePointer()->events();
@@ -289,12 +289,12 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 	}
 
 	QPainter painter(this);
-	for(int k = MIDI_MAX_CHANNEL_NUMBER -1; k >= 0 ; k--){
+	for(int voice = MIDI_MAX_CHANNEL_NUMBER -1; voice >= 0 ; voice--){
 
-		if(true == m_is_channel_to_draw[k]){
+		if(true == m_is_channel_to_draw[voice]){
 			continue;
 		}
-		QColor color = GetChannelColor(k);
+		QColor color = GetChannelColor(voice);
 
 		painter.setBrush(QColor(0xff, 0xff, 0xff, 0x00));
 		color.setAlpha(0x40);
@@ -303,21 +303,21 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 		painter.setPen(pen);
 		//painter.setPen(color);
 		painter.setBrush(color);
-		for(int i = 0; i < m_rectangle_vector_list[m_drawing_index].at(k).size(); i++){
-			painter.drawRect(m_rectangle_vector_list[m_drawing_index].at(k).at(i));
+		for(int i = 0; i < m_rectangle_vector_list[m_drawing_index].at(voice).size(); i++){
+			painter.drawRect(m_rectangle_vector_list[m_drawing_index].at(voice).at(i));
 		}
 	}
 
-	for(int k = MIDI_MAX_CHANNEL_NUMBER -1; k >= 0 ; k--){
-		if(false == m_is_channel_to_draw[k]){
+	for(int voice = MIDI_MAX_CHANNEL_NUMBER -1; voice >= 0 ; voice--){
+		if(false == m_is_channel_to_draw[voice]){
 			continue;
 		}
-		QColor color = GetChannelColor(k);
+		QColor color = GetChannelColor(voice);
 		painter.setBrush(color);
 		painter.setPen(QColor(0xFF, 0xFF, 0xFF, 0xC0));
 
-		for(int i = 0; i < m_rectangle_vector_list[m_drawing_index].at(k).size(); i++){
-			painter.drawRect(m_rectangle_vector_list[m_drawing_index].at(k).at(i));
+		for(int i = 0; i < m_rectangle_vector_list[m_drawing_index].at(voice).size(); i++){
+			painter.drawRect(m_rectangle_vector_list[m_drawing_index].at(voice).at(i));
 		}
 	}
 

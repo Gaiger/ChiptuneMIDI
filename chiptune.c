@@ -1098,8 +1098,8 @@ static int64_t chiptune_fetch_64bit_wave(void)
 
 static void pass_through_midi_messages(const uint32_t end_midi_message_index)
 {
-	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		reset_channel_controller_midi_control_change_parameters(i);
+	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		reset_channel_controller_midi_control_change_parameters(voice);
 	}
 
 	clean_all_events();
@@ -1280,12 +1280,12 @@ int8_t s_ending_instrument_array[MIDI_MAX_CHANNEL_NUMBER];
 static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER])
 {
 	pass_through_midi_messages(-1);
-	for(int8_t i = 0; i < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; i++){
-		instrument_array[i] = get_channel_controller_pointer_from_index(i)->instrument;
+	for(int8_t voice = 0; voice < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; voice++){
+		instrument_array[voice] = get_channel_controller_pointer_from_index(voice)->instrument;
 	}
 
-	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		reset_channel_controller_midi_control_change_parameters(i);
+	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		reset_channel_controller_midi_control_change_parameters(voice);
 	}
 	clean_all_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
@@ -1305,8 +1305,8 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 	for(int16_t i = 0; i < SINE_TABLE_LENGTH; i++){
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
 	}
-	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		s_is_channels_output_enabled_array[i] = true;
+	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		s_is_channels_output_enabled_array[voice] = true;
 	}
 	initialize_channel_controllers();
 	clean_all_events();

@@ -244,8 +244,8 @@ void reset_channel_controller_all_parameters(int8_t const index)
 
 void update_channel_controllers_parameters_related_to_tempo(void)
 {
-	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		update_channel_controller_envelope_parameters_related_to_tempo(i);
+	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		update_channel_controller_envelope_parameters_related_to_tempo(voice);
 	}
 }
 
@@ -317,8 +317,8 @@ void initialize_channel_controllers(void)
 	}
 	initialize_envelope_tables();
 
-	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		channel_controller_t * const p_channel_controller = &s_channel_controllers[i];
+	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		channel_controller_t * const p_channel_controller = &s_channel_controllers[voice];
 #define	DEFAULT_VIBRATO_MODULATION_IN_SEMITINE		(1)
 #define DEFAULT_VIBRATO_RATE						(4)
 		p_channel_controller->vibrato_modulation_in_semitones = DEFAULT_VIBRATO_MODULATION_IN_SEMITINE;
@@ -344,8 +344,8 @@ void initialize_channel_controllers(void)
 		reset_percussion_all_parameters_from_index(i);
 	}
 
-	for(int8_t i = 0; i < MIDI_MAX_CHANNEL_NUMBER; i++){
-		reset_channel_controller_all_parameters(i);
+	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		reset_channel_controller_all_parameters(voice);
 	}
 }
 

@@ -444,9 +444,9 @@ QList<QPair<int, int>> TuneManager::GetChannelInstrumentPairList(void)
 		int8_t instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
 		chiptune_get_ending_instruments(&instrument_array[0]);
 		m_p_private->m_channel_instrument_pair_list.clear();
-		for(int i = 0; i < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; i++){
-			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL != instrument_array[i]){
-				m_p_private->m_channel_instrument_pair_list.append(QPair<int, int>(i, instrument_array[i]));
+		for(int voice = 0; voice < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; voice++){
+			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL != instrument_array[voice]){
+				m_p_private->m_channel_instrument_pair_list.append(QPair<int, int>(voice, instrument_array[voice]));
 			}
 		}
 	} while(0);
