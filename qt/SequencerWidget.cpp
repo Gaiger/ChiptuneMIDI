@@ -297,7 +297,7 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 		QColor color = GetChannelColor(voice);
 
 		painter.setBrush(QColor(0xff, 0xff, 0xff, 0x00));
-		color.setAlpha(0x40);
+		color.setAlpha(0x20);
 		QPen pen(color.lighter(75));
 		pen.setWidth(4);
 		painter.setPen(pen);

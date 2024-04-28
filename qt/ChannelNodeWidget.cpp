@@ -88,7 +88,7 @@ void ChannelNodeWidget::on_OutputEnabledCheckBox_stateChanged(int state)
 			break;
 		}
 
-		color.setAlpha(0x40);
+		color.setAlpha(0x20);
 		//QPen pen(color.lighter(75));
 		//pen.setWidth(4);
 		//painter.setPen(pen);
