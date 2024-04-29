@@ -30,8 +30,10 @@ public:
 							 double audio_out_latency_in_seconds = 0.0, QWidget *parent = nullptr);
 	~SequencerWidget(void);
 public :
-	void DrawSequencer(int tick_in_center);
-	void DrawChannelEnabled(int channel_index, bool is_enabled);
+	void PrepareSequencer(int tick_in_center);
+	void DrawSequencer(void);
+
+	void SetChannelToDrawEnabled(int channel_index, bool is_enabled);
 private :
 	int tickToX(int tick, int const tick_in_center);
 	int XtoTick(int x, int const tick_in_center);
@@ -47,7 +49,7 @@ private:
 	QList<QVector<QRect>>  m_rectangle_vector_list[2];
 	int m_drawing_index;
 	bool m_is_channel_to_draw[MIDI_MAX_CHANNEL_NUMBER];
-	bool m_is_corrected_posistion;
+	bool m_is_scrollbar_posistion_corrected;
 	int m_last_sought_index;
 	int m_last_tick_in_center;
 

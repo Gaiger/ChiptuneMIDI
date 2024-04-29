@@ -73,7 +73,7 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scro
 	m_p_scrollbar(p_scrollbar),
 	m_audio_out_latency_in_seconds(audio_out_latency_in_seconds),
 
-	m_is_corrected_posistion(false),
+	m_is_scrollbar_posistion_corrected(false),
 	m_last_sought_index(0),
 	m_last_tick_in_center(0)
 {
@@ -136,14 +136,14 @@ int SequencerWidget::XtoTick(int x, int const tick_in_center)
 
 /**********************************************************************************/
 
-void SequencerWidget::DrawChannelEnabled(int channel_index, bool is_enabled)
+void SequencerWidget::SetChannelToDrawEnabled(int channel_index, bool is_enabled)
 {
 	m_is_channel_to_draw[channel_index] = is_enabled;
 }
 
 /**********************************************************************************/
 
-void SequencerWidget::DrawSequencer(int tick_in_center)
+void SequencerWidget::PrepareSequencer(int tick_in_center)
 {
 	QMutexLocker locker(&m_mutex);
 	int preparing_index = (m_drawing_index + 1) % 2;
@@ -266,7 +266,6 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 		m_last_sought_index = sought_index;
 	}
 	m_drawing_index = preparing_index;
-	QWidget::update();
 }
 
 /**********************************************************************************/
@@ -274,23 +273,23 @@ void SequencerWidget::DrawSequencer(int tick_in_center)
 void SequencerWidget::paintEvent(QPaintEvent *event)
 {
 	QMutexLocker locker(&m_mutex);
-	QWidget::paintEvent(event);
 
-	if(false == m_is_corrected_posistion){
-		QList<QMidiEvent*> midievent_list = m_p_tune_manager->GetMidiFilePointer()->events();
-		for(int i = 0; i < midievent_list.size(); i++){
-			QMidiEvent * const p_event = midievent_list.at(i);
-			if(QMidiEvent::NoteOn == p_event->type()){
-				m_p_scrollbar->setValue((QWidget::height() - (p_event->note() - A0 - 1) * ONE_BEAT_HEIGHT));
-				break;
+	if(false == m_is_scrollbar_posistion_corrected){
+			QList<QMidiEvent*> midievent_list = m_p_tune_manager->GetMidiFilePointer()->events();
+			for(int i = 0; i < midievent_list.size(); i++){
+				QMidiEvent * const p_event = midievent_list.at(i);
+				if(QMidiEvent::NoteOn == p_event->type()){
+					m_p_scrollbar->setValue((QWidget::height() - (p_event->note() - A0 - 1) * ONE_BEAT_HEIGHT));
+					QWidget::update();
+					break;
+				}
 			}
-		}
-		m_is_corrected_posistion = true;
+			m_is_scrollbar_posistion_corrected = true;
 	}
 
 	QPainter painter(this);
-	for(int voice = MIDI_MAX_CHANNEL_NUMBER -1; voice >= 0 ; voice--){
-
+	//painter.setRenderHint(QPainter::Antialiasing);
+	for(int voice = MIDI_MAX_CHANNEL_NUMBER - 1; voice >= 0 ; voice--){
 		if(true == m_is_channel_to_draw[voice]){
 			continue;
 		}
@@ -308,7 +307,7 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 		}
 	}
 
-	for(int voice = MIDI_MAX_CHANNEL_NUMBER -1; voice >= 0 ; voice--){
+	for(int voice = MIDI_MAX_CHANNEL_NUMBER - 1; voice >= 0 ; voice--){
 		if(false == m_is_channel_to_draw[voice]){
 			continue;
 		}
@@ -323,6 +322,20 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 
 	QColor color = QColor(0xE0, 0xE0, 0xE0, 0xE0);
 	painter.setPen(color);
-	int delay_x = m_audio_out_latency_in_seconds * m_p_tune_manager->GetTempo()/60.0 * ONE_BEAT_WIDTH;
-	painter.drawLine(QWidget::width()/2 - delay_x, 0, QWidget::width()/2 - delay_x, QWidget::height());
+	int latency_x = m_audio_out_latency_in_seconds * m_p_tune_manager->GetTempo()/60.0 * ONE_BEAT_WIDTH;
+	painter.drawLine(QWidget::width()/2 - latency_x, 0, QWidget::width()/2 - latency_x, QWidget::height());
+	QWidget::paintEvent(event);
+}
+
+/**********************************************************************************/
+
+void SequencerWidget::DrawSequencer(void)
+{
+	do {
+		if(false == m_is_scrollbar_posistion_corrected){
+			QWidget::update();
+			break;
+		}
+		QWidget::repaint();
+	} while(0);
 }

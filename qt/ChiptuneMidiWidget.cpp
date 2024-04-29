@@ -152,7 +152,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	m_p_tune_manager(p_tune_manager),
 
 	m_inquiring_playback_status_timer_id(-1),
-	m_inquireing_playback_tick_timer_id(-1),
+	m_inquiring_playback_tick_timer_id(-1),
 	m_audio_player_buffer_in_milliseconds(200),
 	ui(new Ui::ChiptuneMidiWidget)
 {
@@ -228,6 +228,7 @@ static QString FormatTimeString(qint64 timeMilliSeconds)
 }
 
 /**********************************************************************************/
+#define INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS		(35)
 
 int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 {
@@ -280,7 +281,6 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		m_p_sequencer_widget = p_sequencer_widget;
 		p_layout_for_containing_working_widgets->addWidget(p_note_name_widget);
 		p_layout_for_containing_working_widgets->addWidget(p_sequencer_widget);
-		m_p_sequencer_widget->DrawSequencer(0);
 
 		ui->AmplitudeGainSlider->setValue(UINT16_MAX - m_p_tune_manager->GetAmplitudeGain());
 		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
@@ -295,11 +295,28 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		message_string = QString::asprintf("Playing file");
 		ui->MessageLabel->setText(message_string);
 		m_inquiring_playback_status_timer_id = QObject::startTimer(500);
-		m_inquireing_playback_tick_timer_id = QObject::startTimer(50);
+		m_inquiring_playback_tick_timer_id = QObject::startTimer(INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS);
 
 		ui->PlayPausePushButton->setEnabled(true);
 		SetPlayPausePushButtonAsPlayIcon(false);
 		ui->SaveSaveFilePushButton->setEnabled(true);
+
+#if(0)
+		m_p_sequencer_widget->DrawSequencer();
+		m_p_sequencer_widget->PrepareSequencer(m_p_tune_manager->GetCurrentTick());
+		m_p_sequencer_widget->DrawSequencer();
+#if(0)
+		QEventLoop loop;
+		QObject::connect(m_p_sequencer_widget, &SequencerWidget::ReDrawed, &loop, &QEventLoop::quit);
+		do
+		{
+			loop.exec();
+		}while(0);
+#endif
+		m_p_sequencer_widget->PrepareSequencer(m_p_tune_manager->GetMidiFilePointer()->tickFromTime(INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS/1000.0f)
+											   + m_p_tune_manager->GetCurrentTick());
+#endif
+		SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(0);//walk-around : it makes the sequencer more smooth
 	}while(0);
 
 	message_string += QString::asprintf(" :: <b>%s</b>", m_opened_file_info.fileName().toUtf8().data());
@@ -321,9 +338,9 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 		m_inquiring_playback_status_timer_id = -1;
 	}
 
-	if(-1 != m_inquireing_playback_tick_timer_id){
-		QObject::killTimer(m_inquireing_playback_tick_timer_id);
-		m_inquireing_playback_tick_timer_id = -1;
+	if(-1 != m_inquiring_playback_tick_timer_id){
+		QObject::killTimer(m_inquiring_playback_tick_timer_id);
+		m_inquiring_playback_tick_timer_id = -1;
 	}
 
 	ui->PlayPositionLabel->setText("00:00 / 00:00");
@@ -452,7 +469,7 @@ void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton bu
 void ChiptuneMidiWidget::HandleChannelOutputEnabled(int index, bool is_enabled)
 {
 	m_p_tune_manager->SetChannelOutputEnabled(index, is_enabled);
-	m_p_sequencer_widget->DrawChannelEnabled(index, is_enabled);
+	m_p_sequencer_widget->SetChannelToDrawEnabled(index, is_enabled);
 }
 
 /**********************************************************************************/
@@ -508,12 +525,13 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 			}
 			break;
 		}
-
-		if(event->timerId() == m_inquireing_playback_tick_timer_id){
-			m_p_sequencer_widget->DrawSequencer(m_p_tune_manager->GetCurrentTick());
-		}
-
 	}while(0);
+
+	if(event->timerId() == m_inquiring_playback_tick_timer_id){
+		m_p_sequencer_widget->DrawSequencer();
+		m_p_sequencer_widget->PrepareSequencer(m_p_tune_manager->GetMidiFilePointer()->tickFromTime(INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS/1000.0f)
+											   + m_p_tune_manager->GetCurrentTick());
+	}
 }
 
 /**********************************************************************************/
