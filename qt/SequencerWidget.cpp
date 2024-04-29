@@ -259,6 +259,38 @@ void SequencerWidget::PrepareSequencer(int tick_in_center)
 		}while(0);
 	}
 
+#if(1)
+	// Reduce the rectangles from out of the widget boundary.
+	for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		QMutableVectorIterator<QRect> rect_vector_iterator(m_rectangle_vector_list[preparing_index][voice]);
+		while(rect_vector_iterator.hasNext()){
+			rect_vector_iterator.next();
+			QRect rect = rect_vector_iterator.value();
+
+			if(rect.right() < 0){
+				rect_vector_iterator.remove();
+				continue;
+			}
+
+			bool is_reduced = false;
+			do{
+				if(0 > rect.left()){
+					rect.setLeft(0);
+					is_reduced = true;
+				}
+				if(QWidget::width() <= rect.right()){
+					rect.setRight(QWidget::width() - 1);
+					is_reduced = true;
+				}
+			}while(0);
+
+			if(true == is_reduced){
+				rect_vector_iterator.setValue(rect);
+			}
+		}
+	}
+#endif
+
 	//qDebug() << "sought_index " << sought_index;
 	//qDebug() << "start_index_list.size() " << start_index_list.size();
 	m_last_tick_in_center = tick_in_center;
@@ -273,14 +305,16 @@ void SequencerWidget::PrepareSequencer(int tick_in_center)
 void SequencerWidget::paintEvent(QPaintEvent *event)
 {
 	QMutexLocker locker(&m_mutex);
+	QWidget::paintEvent(event);
 
 	if(false == m_is_scrollbar_posistion_corrected){
 			QList<QMidiEvent*> midievent_list = m_p_tune_manager->GetMidiFilePointer()->events();
 			for(int i = 0; i < midievent_list.size(); i++){
 				QMidiEvent * const p_event = midievent_list.at(i);
 				if(QMidiEvent::NoteOn == p_event->type()){
-					m_p_scrollbar->setValue((QWidget::height() - (p_event->note() - A0 - 1) * ONE_BEAT_HEIGHT));
-					QWidget::update();
+#define VERTICAL_SCROLLING_SHIFT					(16)
+					m_p_scrollbar->setValue(
+								(QWidget::height() - ((p_event->note() - A0 - 1) + VERTICAL_SCROLLING_SHIFT) * ONE_BEAT_HEIGHT));
 					break;
 				}
 			}
@@ -324,7 +358,6 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 	painter.setPen(color);
 	int latency_x = m_audio_out_latency_in_seconds * m_p_tune_manager->GetTempo()/60.0 * ONE_BEAT_WIDTH;
 	painter.drawLine(QWidget::width()/2 - latency_x, 0, QWidget::width()/2 - latency_x, QWidget::height());
-	QWidget::paintEvent(event);
 }
 
 /**********************************************************************************/
