@@ -40,6 +40,7 @@ private :
 	int tickToX(int tick, int const tick_in_center);
 	int XtoTick(int x, int const tick_in_center);
 
+	void ReduceRectangles(int preparing_index);
 private:
 	virtual void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
 private:
@@ -49,7 +50,7 @@ private:
 	double m_audio_out_latency_in_seconds;
 
 	QList<QVector<QRect>>  m_rectangle_vector_list[2];
-	int m_drawing_index;
+	int m_drawing_rectangle_vector_list_index;
 	bool m_is_channel_to_draw[MIDI_MAX_CHANNEL_NUMBER];
 	bool m_is_scrollbar_posistion_corrected;
 	int m_last_sought_index;

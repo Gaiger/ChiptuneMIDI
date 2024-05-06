@@ -107,7 +107,7 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scro
 	for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		m_is_channel_to_draw[voice] = true;
 	}
-	m_drawing_index = 0;
+	m_drawing_rectangle_vector_list_index = 0;
 
 }
 
@@ -164,13 +164,48 @@ bool SequencerWidget::IsTickOutOfRightBound(int tick, int tick_in_center)
 
 /**********************************************************************************/
 
+void SequencerWidget::ReduceRectangles(int working_rectangle_vector_list_index)
+{
+	// Reduce the rectangles from out of the widget boundary.
+	for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		QMutableVectorIterator<QRect> rect_vector_iterator(m_rectangle_vector_list[working_rectangle_vector_list_index][voice]);
+		while(rect_vector_iterator.hasNext()){
+			rect_vector_iterator.next();
+			QRect rect = rect_vector_iterator.value();
+
+			if(rect.right() < 0){
+				rect_vector_iterator.remove();
+				continue;
+			}
+
+			bool is_reduced = false;
+			do{
+				if(0 > rect.left()){
+					rect.setLeft(0);
+					is_reduced = true;
+				}
+				if(QWidget::width() <= rect.right()){
+					rect.setRight(QWidget::width() - 1);
+					is_reduced = true;
+				}
+			}while(0);
+
+			if(true == is_reduced){
+				rect_vector_iterator.setValue(rect);
+			}
+		}
+	}
+}
+
+/**********************************************************************************/
+
 void SequencerWidget::PrepareSequencer(int const tick_in_center)
 {
 	QMutexLocker locker(&m_mutex);
-	int preparing_index = (m_drawing_index + 1) % 2;
+	int working_rectangle_vector_list_index = (m_drawing_rectangle_vector_list_index + 1) % 2;
 
 	for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-		m_rectangle_vector_list[preparing_index][voice].clear();
+		m_rectangle_vector_list[working_rectangle_vector_list_index][voice].clear();
 	}
 
 	QList<QMidiEvent*> midievent_list = m_p_tune_manager->GetMidiFilePointer()->events();
@@ -247,10 +282,9 @@ void SequencerWidget::PrepareSequencer(int const tick_in_center)
 					do
 					{
 						p_draw_note->end_tick = p_event->tick();
-						m_rectangle_vector_list[preparing_index][p_draw_note->voice].append(NoteToQRect(p_draw_note->start_tick,
-																										p_draw_note->end_tick,
-																										tick_in_center,
-																										p_draw_note->note));
+						m_rectangle_vector_list[working_rectangle_vector_list_index][p_draw_note->voice].append(
+									NoteToQRect(p_draw_note->start_tick, p_draw_note->end_tick, tick_in_center, p_draw_note->note)
+									);
 						if(sought_index > p_draw_note->note_on_midievent_index){
 							sought_index = p_draw_note->note_on_midievent_index;
 						}
@@ -272,37 +306,7 @@ void SequencerWidget::PrepareSequencer(int const tick_in_center)
 		}while(0);
 	}
 
-#if(1)
-	// Reduce the rectangles from out of the widget boundary.
-	for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-		QMutableVectorIterator<QRect> rect_vector_iterator(m_rectangle_vector_list[preparing_index][voice]);
-		while(rect_vector_iterator.hasNext()){
-			rect_vector_iterator.next();
-			QRect rect = rect_vector_iterator.value();
-
-			if(rect.right() < 0){
-				rect_vector_iterator.remove();
-				continue;
-			}
-
-			bool is_reduced = false;
-			do{
-				if(0 > rect.left()){
-					rect.setLeft(0);
-					is_reduced = true;
-				}
-				if(QWidget::width() <= rect.right()){
-					rect.setRight(QWidget::width() - 1);
-					is_reduced = true;
-				}
-			}while(0);
-
-			if(true == is_reduced){
-				rect_vector_iterator.setValue(rect);
-			}
-		}
-	}
-#endif
+	ReduceRectangles(working_rectangle_vector_list_index);
 
 	//qDebug() << "sought_index " << sought_index;
 	//qDebug() << "start_index_list.size() " << start_index_list.size();
@@ -310,7 +314,7 @@ void SequencerWidget::PrepareSequencer(int const tick_in_center)
 	if(INT32_MAX != sought_index){
 		m_last_sought_index = sought_index;
 	}
-	m_drawing_index = preparing_index;
+	m_drawing_rectangle_vector_list_index = working_rectangle_vector_list_index;
 }
 
 /**********************************************************************************/
@@ -349,8 +353,8 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 		painter.setPen(pen);
 		//painter.setPen(color);
 		painter.setBrush(color);
-		for(int i = 0; i < m_rectangle_vector_list[m_drawing_index].at(voice).size(); i++){
-			painter.drawRect(m_rectangle_vector_list[m_drawing_index].at(voice).at(i));
+		for(int i = 0; i < m_rectangle_vector_list[m_drawing_rectangle_vector_list_index].at(voice).size(); i++){
+			painter.drawRect(m_rectangle_vector_list[m_drawing_rectangle_vector_list_index].at(voice).at(i));
 		}
 	}
 
@@ -362,8 +366,8 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 		painter.setBrush(color);
 		painter.setPen(QColor(0xFF, 0xFF, 0xFF, 0xC0));
 
-		for(int i = 0; i < m_rectangle_vector_list[m_drawing_index].at(voice).size(); i++){
-			painter.drawRect(m_rectangle_vector_list[m_drawing_index].at(voice).at(i));
+		for(int i = 0; i < m_rectangle_vector_list[m_drawing_rectangle_vector_list_index].at(voice).size(); i++){
+			painter.drawRect(m_rectangle_vector_list[m_drawing_rectangle_vector_list_index].at(voice).at(i));
 		}
 	}
 
