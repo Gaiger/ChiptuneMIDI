@@ -247,9 +247,6 @@ void SequencerWidget::PrepareSequencer(int const tick_in_center)
 					do
 					{
 						p_draw_note->end_tick = p_event->tick();
-						if(left_tick > p_draw_note->end_tick){
-							break;
-						}
 						m_rectangle_vector_list[preparing_index][p_draw_note->voice].append(NoteToQRect(p_draw_note->start_tick,
 																										p_draw_note->end_tick,
 																										tick_in_center,
@@ -266,12 +263,10 @@ void SequencerWidget::PrepareSequencer(int const tick_in_center)
 						draw_note_list.removeAt(k);
 						break;
 					}
-					if(left_tick < p_event->tick())
-					{
-						qDebug() << "WARNING :: note not matched : voice = " << p_event->voice()
-								 << ", note =" << p_event->note()
-								 << "(might be double off)";
-					}
+
+					qDebug() << "WARNING :: note not matched : voice = " << p_event->voice()
+							 << ", note =" << p_event->note()
+							 << "(might be double off)";
 				} while(0);
 			}
 		}while(0);
