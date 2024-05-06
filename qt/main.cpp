@@ -38,6 +38,7 @@ static void ListAvailableMidiDevices(void)
 
 int main(int argc, char* argv[])
 {
+#if(1)
 #if defined( Q_OS_WIN )
 	if (AttachConsole(ATTACH_PARENT_PROCESS) || AllocConsole()){
 		freopen("CONOUT$", "w", stdout);
@@ -45,6 +46,7 @@ int main(int argc, char* argv[])
 		freopen("CONIN$", "r", stdin);
 	}
 	setvbuf(stdout, NULL, _IONBF, 0);
+#endif
 #endif
 	QApplication a(argc, argv);
 

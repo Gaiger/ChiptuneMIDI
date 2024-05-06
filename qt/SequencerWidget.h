@@ -35,6 +35,8 @@ public :
 
 	void SetChannelToDrawEnabled(int channel_index, bool is_enabled);
 private :
+	QRect NoteToQRect(int start_tick, int end_tick, int tick_in_center, int note);
+	bool IsTickOutOfRightBound(int tick, int tick_in_center);
 	int tickToX(int tick, int const tick_in_center);
 	int XtoTick(int x, int const tick_in_center);
 

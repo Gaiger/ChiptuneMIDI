@@ -126,13 +126,14 @@ int SequencerWidget::tickToX(int tick, int const tick_in_center)
 
 /**********************************************************************************/
 
-int SequencerWidget::XtoTick(int x, int const tick_in_center)
+int SequencerWidget::XtoTick(int x, int tick_in_center)
 {
 	int tick  = tick_in_center;
 	x -= QWidget::width()/2;
 	tick += ( x / (double) ONE_BEAT_WIDTH) * m_p_tune_manager->GetMidiFilePointer()->resolution();
 	return tick;
 }
+
 
 /**********************************************************************************/
 
@@ -143,7 +144,27 @@ void SequencerWidget::SetChannelToDrawEnabled(int channel_index, bool is_enabled
 
 /**********************************************************************************/
 
-void SequencerWidget::PrepareSequencer(int tick_in_center)
+QRect SequencerWidget::NoteToQRect(int start_tick, int end_tick, int tick_in_center, int note)
+{
+	int x = tickToX(start_tick, tick_in_center);
+	int y = (QWidget::height() - (note - A0 - 1) * ONE_BEAT_HEIGHT);
+	int width = tickToX(end_tick, tick_in_center) - x;
+	int height = ONE_BEAT_HEIGHT;
+
+	return QRect(x, y, width, height);
+}
+
+/**********************************************************************************/
+
+bool SequencerWidget::IsTickOutOfRightBound(int tick, int tick_in_center)
+{
+	int tick_x_position = tickToX(tick, tick_in_center);
+	return (tick_x_position > QWidget::width() - 1) ? true : false;
+}
+
+/**********************************************************************************/
+
+void SequencerWidget::PrepareSequencer(int const tick_in_center)
 {
 	QMutexLocker locker(&m_mutex);
 	int preparing_index = (m_drawing_index + 1) % 2;
@@ -177,8 +198,7 @@ void SequencerWidget::PrepareSequencer(int tick_in_center)
 	for(int i = start_index; i < midievent_list.size(); i++){
 		QMidiEvent * const p_event = midievent_list.at(i);
 
-		int tick_x_position = tickToX(p_event->tick(), tick_in_center);
-		if(tick_x_position > QWidget::width()){
+		if(true == IsTickOutOfRightBound(p_event->tick(), tick_in_center)){
 			bool is_all_closed = true;
 			for(int j = 0; j < draw_note_list.size(); j++){
 				if(-1 == draw_note_list.at(j).start_tick
@@ -230,13 +250,10 @@ void SequencerWidget::PrepareSequencer(int tick_in_center)
 						if(left_tick > p_draw_note->end_tick){
 							break;
 						}
-
-						int x = tickToX(p_draw_note->start_tick, tick_in_center);
-						int y = (QWidget::height() - (p_draw_note->note - A0 - 1) * ONE_BEAT_HEIGHT);
-						int width = tickToX(p_draw_note->end_tick, tick_in_center) - x;
-						int height = ONE_BEAT_HEIGHT;
-
-						m_rectangle_vector_list[preparing_index][p_draw_note->voice].append(QRect(x, y, width, height));
+						m_rectangle_vector_list[preparing_index][p_draw_note->voice].append(NoteToQRect(p_draw_note->start_tick,
+																										p_draw_note->end_tick,
+																										tick_in_center,
+																										p_draw_note->note));
 						if(sought_index > p_draw_note->note_on_midievent_index){
 							sought_index = p_draw_note->note_on_midievent_index;
 						}
@@ -249,7 +266,8 @@ void SequencerWidget::PrepareSequencer(int tick_in_center)
 						draw_note_list.removeAt(k);
 						break;
 					}
-					if(left_tick < p_event->tick()){
+					if(left_tick < p_event->tick())
+					{
 						qDebug() << "WARNING :: note not matched : voice = " << p_event->voice()
 								 << ", note =" << p_event->note()
 								 << "(might be double off)";
