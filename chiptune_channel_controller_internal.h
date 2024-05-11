@@ -73,6 +73,7 @@ typedef struct _channel_controller
 	float				tuning_in_semitones;
 
 	int8_t				volume;
+	int8_t				pressure;
 	int8_t				expression;
 	int8_t				pan;
 

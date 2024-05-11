@@ -8,6 +8,7 @@
 		|| defined(_PRINT_MIDI_NOTE) \
 		|| defined(_PRINT_MIDI_CONTROLCHANGE) \
 		|| defined(_PRINT_MIDI_PROGRAMCHANGE) \
+		|| defined(_PRINT_MIDI_CHANNELPRESSURE) \
 		|| defined(_PRINT_MIDI_PITCH_WHEEL) \
 		|| defined(_PRINT_EVENT_TRIGGERING)
 #define CHIPTUNE_PRINTF(PRINT_TYPE, FMT, ...)		\
@@ -30,14 +31,15 @@
 
 enum
 {
-	cDeveloping			= 0,
+	cDeveloping				= 0,
 
-	cMidiNote			= 1,
-	cMidiControlChange	= 2,
-	cMidiProgramChange	= 3,
-	cMidiPitchWheel		= 4,
+	cMidiNote				= 1,
+	cMidiControlChange		= 2,
+	cMidiProgramChange		= 3,
+	cMidiChannelPressure	= 4,
+	cMidiPitchWheel			= 5,
 
-	cEventTriggering	= 5,
+	cEventTriggering		= 6,
 };
 
 void chiptune_printf(int const print_type, const char* fmt, ...);

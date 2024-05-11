@@ -46,6 +46,7 @@ void reset_channel_controller_midi_control_change_parameters(int8_t const index)
 			+ (p_channel_controller->fine_tuning_value - MIDI_FOURTEEN_BITS_CENTER_VALUE)/(float)MIDI_FOURTEEN_BITS_CENTER_VALUE;
 
 	p_channel_controller->volume = MIDI_SEVEN_BITS_CENTER_VALUE;
+	p_channel_controller->pressure = 0;
 	p_channel_controller->expression = INT8_MAX;
 	p_channel_controller->pan = MIDI_SEVEN_BITS_CENTER_VALUE;
 

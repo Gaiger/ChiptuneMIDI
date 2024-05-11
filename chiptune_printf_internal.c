@@ -46,6 +46,12 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 		//fprintf(stdout, "cMidiProgramChange:: ");
 	}
 #endif
+#ifdef _PRINT_MIDI_CHANNELPRESSURE
+	if(cMidiChannelPressure == print_type){
+		is_print_out = true;
+		//fprintf(stdout, "cMidiChannelPressure:: ");
+	}
+#endif
 #ifdef _PRINT_MIDI_PITCH_WHEEL
 	if(cMidiPitchWheel == print_type){
 		is_print_out = true;
