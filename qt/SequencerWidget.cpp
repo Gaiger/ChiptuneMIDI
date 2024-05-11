@@ -167,6 +167,8 @@ bool SequencerWidget::IsTickOutOfRightBound(int tick, int tick_in_center)
 void SequencerWidget::ReduceRectangles(int working_rectangle_vector_list_index)
 {
 	// Reduce the rectangles from out of the widget boundary.
+
+	int const right_endpoint = QWidget::width() + m_p_scrollbar->width() - 1;
 	for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		QMutableVectorIterator<QRect> rect_vector_iterator(m_rectangle_vector_list[working_rectangle_vector_list_index][voice]);
 		while(rect_vector_iterator.hasNext()){
@@ -184,8 +186,9 @@ void SequencerWidget::ReduceRectangles(int working_rectangle_vector_list_index)
 					rect.setLeft(0);
 					is_reduced = true;
 				}
-				if(QWidget::width() <= rect.right()){
-					rect.setRight(QWidget::width() - 1);
+
+				if(right_endpoint < rect.right()){
+					rect.setRight(right_endpoint - 1);
 					is_reduced = true;
 				}
 			}while(0);
@@ -221,7 +224,7 @@ void SequencerWidget::PrepareSequencer(int const tick_in_center)
 
 	QList<draw_note_t> draw_note_list;
 
-	int const left_tick = XtoTick(0, tick_in_center);
+	//int const left_tick = XtoTick(0, tick_in_center);
 	//qDebug() << "left_tick = " << left_tick;
 	int start_index = 0;
 	if(m_last_tick_in_center <= tick_in_center){
