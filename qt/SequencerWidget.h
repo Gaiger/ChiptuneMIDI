@@ -52,9 +52,12 @@ private:
 	QList<QVector<QRect>>  m_rectangle_vector_list[2];
 	int m_drawing_rectangle_vector_list_index;
 	bool m_is_channel_to_draw[MIDI_MAX_CHANNEL_NUMBER];
-	bool m_is_scrollbar_posistion_corrected;
+
 	int m_last_sought_index;
 	int m_last_tick_in_center;
+
+	bool m_is_scrollbar_posistion_corrected;
+	int m_scrollbar_minimum;
 
 	QMutex m_mutex;
 };

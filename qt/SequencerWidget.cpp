@@ -72,16 +72,15 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scro
 	m_p_tune_manager(p_tune_manager),
 	m_p_scrollbar(p_scrollbar),
 	m_audio_out_latency_in_seconds(audio_out_latency_in_seconds),
-
-	m_is_scrollbar_posistion_corrected(false),
 	m_last_sought_index(0),
-	m_last_tick_in_center(0)
+	m_last_tick_in_center(0),
+	m_is_scrollbar_posistion_corrected(false),
+	m_scrollbar_minimum(0)
 {
 	QSize size = QSize(parent->width() - ONE_NAME_WIDTH * 3 /2, (INT8_MAX - A0 + 1) * ONE_NAME_HEIGHT);
 	setFixedSize(size);
-#if(0)
-	QList<QMidiEvent*> midievent_list = m_p_midi_file->events();
-	//QList<QMidiEvent*> midievent_list = m_p_midi_file->events();
+
+	QList<QMidiEvent*> midievent_list = p_tune_manager->GetMidiFilePointer()->events();
 	int highest_pitch = A0;
 	for(int i = 0; i < midievent_list.size(); i++){
 		QMidiEvent * const p_event = midievent_list.at(i);
@@ -91,12 +90,11 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scro
 			}
 		}
 	}
-
-	int y = (QWidget::height() - (highest_pitch - A0 - 1) * ONE_BEAT_HEIGHT);
-	qDebug() << "y  = " << y;
-	p_scrollbar->setMaximum(y);
-#endif
-	//QWidget::setAutoFillBackground(true);
+#define SCROLLING_UPPER_BORDER_IN_PITCH				(3)
+	m_scrollbar_minimum = QWidget::height() - ((highest_pitch + SCROLLING_UPPER_BORDER_IN_PITCH) - A0 - 1) * ONE_BEAT_HEIGHT;
+	if(m_scrollbar_minimum < 0){
+		m_scrollbar_minimum = 0;
+	}
 
 	for(int j = 0; j < 2; j++){
 		for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
@@ -109,6 +107,7 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scro
 	}
 	m_drawing_rectangle_vector_list_index = 0;
 
+	m_p_scrollbar->setSingleStep(ONE_BEAT_HEIGHT);
 }
 
 /**********************************************************************************/
@@ -147,7 +146,7 @@ void SequencerWidget::SetChannelToDrawEnabled(int channel_index, bool is_enabled
 QRect SequencerWidget::NoteToQRect(int start_tick, int end_tick, int tick_in_center, int note)
 {
 	int x = tickToX(start_tick, tick_in_center);
-	int y = (QWidget::height() - (note - A0 - 1) * ONE_BEAT_HEIGHT);
+	int y = QWidget::height() - (note - A0 - 1) * ONE_BEAT_HEIGHT;
 	int width = tickToX(end_tick, tick_in_center) - x;
 	int height = ONE_BEAT_HEIGHT;
 
@@ -224,8 +223,6 @@ void SequencerWidget::PrepareSequencer(int const tick_in_center)
 
 	QList<draw_note_t> draw_note_list;
 
-	//int const left_tick = XtoTick(0, tick_in_center);
-	//qDebug() << "left_tick = " << left_tick;
 	int start_index = 0;
 	if(m_last_tick_in_center <= tick_in_center){
 		start_index = m_last_sought_index;
@@ -384,6 +381,7 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 
 void SequencerWidget::DrawSequencer(void)
 {
+	m_p_scrollbar->setMinimum(m_scrollbar_minimum);
 	do {
 		if(false == m_is_scrollbar_posistion_corrected){
 			QWidget::update();
@@ -392,3 +390,4 @@ void SequencerWidget::DrawSequencer(void)
 		QWidget::repaint();
 	} while(0);
 }
+
