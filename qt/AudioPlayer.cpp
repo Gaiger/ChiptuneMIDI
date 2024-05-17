@@ -16,9 +16,9 @@ protected :
 	qint64 readData(char *data, qint64 maxlen) Q_DECL_OVERRIDE
 	{
 		int read_size = maxlen;
-		if(m_audio_data_bytearray.size() < read_size)
+		if(m_audio_data_bytearray.size() < read_size){
 			read_size = m_audio_data_bytearray.size();
-
+		}
 		memcpy(data, m_audio_data_bytearray.data(), read_size);
 		m_audio_data_bytearray.remove(0, read_size);
 		return read_size;
