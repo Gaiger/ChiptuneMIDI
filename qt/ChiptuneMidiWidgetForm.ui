@@ -239,7 +239,7 @@ color: rgb(208, 208, 208);
   <widget class="QPushButton" name="AllOutputDisabledPushButton">
    <property name="geometry">
     <rect>
-     <x>1024</x>
+     <x>984</x>
      <y>732</y>
      <width>80</width>
      <height>24</height>
@@ -252,7 +252,7 @@ color: rgb(208, 208, 208);
   <widget class="QPushButton" name="AllOutputEnabledPushButton">
    <property name="geometry">
     <rect>
-     <x>932</x>
+     <x>892</x>
      <y>732</y>
      <width>80</width>
      <height>24</height>
@@ -300,6 +300,41 @@ color: rgb(208, 208, 208);
      </rect>
     </property>
    </widget>
+  </widget>
+  <widget class="QLabel" name="PitchShiftLabel">
+   <property name="geometry">
+    <rect>
+     <x>1100</x>
+     <y>732</y>
+     <width>68</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Pitch shfit</string>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="PitchShiftSpinBox">
+   <property name="geometry">
+    <rect>
+     <x>1172</x>
+     <y>732</y>
+     <width>40</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::ClickFocus</enum>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
+   <property name="minimum">
+    <number>-5</number>
+   </property>
+   <property name="maximum">
+    <number>5</number>
+   </property>
   </widget>
  </widget>
  <customwidgets>

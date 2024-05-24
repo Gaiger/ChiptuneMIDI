@@ -1569,3 +1569,10 @@ int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const w
 									  envelope_damper_on_but_note_off_sustain_curve,
 									  envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 }
+
+/**********************************************************************************/
+
+void chiptune_set_pitch_shift(int8_t pitch_shift_in_semitones)
+{
+	set_pitch_shift(pitch_shift_in_semitones);
+}

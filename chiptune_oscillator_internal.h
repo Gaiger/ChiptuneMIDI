@@ -102,7 +102,7 @@ uint16_t const calculate_oscillator_delta_phase(int8_t const voice,
 
 float const obtain_oscillator_pitch_chorus_bend_in_semitones(int8_t const chorus,
 															float const max_pitch_chorus_bend_in_semitones);
-
+void set_pitch_shift(int8_t pitch_shift_in_semitones);
 int setup_envelope_state(oscillator_t *p_oscillator, uint8_t evelope_state);
 
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_

@@ -45,6 +45,8 @@ public:
 	int GetCurrentTick(void);
 	double GetTempo(void);
 
+	void SetPitchShift(int pitch_shift_in_semitones);
+
 	int SetStartTimeInSeconds(float target_start_time_in_seconds);
 
 	QList<QPair<int, int>> GetChannelInstrumentPairList(void);

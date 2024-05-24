@@ -60,9 +60,10 @@ void chiptune_move_toward(uint32_t const index);
 uint32_t chiptune_get_current_tick(void);
 void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const is_enabled);
 
+void chiptune_set_pitch_shift(int8_t pitch_shift_in_semitones);
+
 int32_t chiptune_get_amplitude_gain(void);
 void chiptune_set_amplitude_gain(int32_t amplitude_gain);
-
 #ifdef __cplusplus
 }
 #endif

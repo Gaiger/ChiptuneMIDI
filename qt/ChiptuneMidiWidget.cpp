@@ -8,6 +8,7 @@
 #include <QMimeData>
 #include <QFileDialog>
 #include <QFile>
+#include <QLineEdit>
 
 #ifdef Q_OS_WIN
 #include <QWinTaskbarButton>
@@ -190,6 +191,10 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
 	ui->SaveSaveFilePushButton->setToolTip(tr("Save as .wav file"));
+
+	ui->PitchShiftSpinBox->setToolTip(tr("Shift the pitch in the unit of semitone"));
+	QLineEdit *p_lineEdit = ui->PitchShiftSpinBox->findChild<QLineEdit *>();
+	p_lineEdit->setReadOnly(true);
 
 	QWidget::setFocusPolicy(Qt::StrongFocus);
 	QWidget::setFixedSize(QWidget::size());
@@ -771,4 +776,17 @@ void ChiptuneMidiWidget::on_AllOutputEnabledPushButton_released(void)
 		ChannelListWidget *p_channellist_widget = (ChannelListWidget*)ui->TimbreListWidget->layout()->itemAt(0)->widget();
 		p_channellist_widget->SetAllOutputEnabled(true);
 	} while(0);
+}
+
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::on_PitchShiftSpinBox_valueChanged(int i)
+{
+	qDebug() << Q_FUNC_INFO << i;
+	QLineEdit *p_lineEdit = ui->PitchShiftSpinBox->findChild<QLineEdit *>();
+	if(i > 0){
+		p_lineEdit->setText("+" + p_lineEdit->text());
+	}
+
+	m_p_tune_manager->SetPitchShift((int8_t)i);
 }

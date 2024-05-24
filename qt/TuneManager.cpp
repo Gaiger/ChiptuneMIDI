@@ -373,6 +373,14 @@ double TuneManager::GetTempo(void)
 
 /**********************************************************************************/
 
+void TuneManager::SetPitchShift(int pitch_shift_in_semitones)
+{
+	QMutexLocker locker(&m_mutex);
+	chiptune_set_pitch_shift((int8_t)pitch_shift_in_semitones);
+}
+
+/**********************************************************************************/
+
 int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 {
 	QMutexLocker locker(&m_mutex);
