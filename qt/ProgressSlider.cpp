@@ -23,12 +23,16 @@ void ProgressSlider::SetPositionChangable(bool is_position_changabled)
 void ProgressSlider::mousePressEvent(QMouseEvent *ev)
 {
 	QSlider::mousePressEvent(ev);
-	if(Qt::LeftButton != ev->button()){
-		return;
-	}
 
-	int value = QStyle::sliderValueFromPosition(QSlider::minimum(), QSlider::maximum(), ev->x(), QWidget::width());
-	emit PositionChanged(value);
+	do {
+
+		if(Qt::LeftButton != ev->button()){
+			break;
+		}
+
+		int value = QStyle::sliderValueFromPosition(QSlider::minimum(), QSlider::maximum(), ev->x(), QWidget::width());
+		emit PositionChanged(value);
+	} while(0);
 }
 
 /**********************************************************************************/
@@ -36,8 +40,13 @@ void ProgressSlider::mousePressEvent(QMouseEvent *ev)
 void ProgressSlider::mouseReleaseEvent(QMouseEvent *ev)
 {
 	QSlider::mousePressEvent(ev);
-	int value = QStyle::sliderValueFromPosition(QSlider::minimum(), QSlider::maximum(), ev->x(), QWidget::width());
-	emit MouseRightReleased(ev->pos());
+	do {
+		if(Qt::RightButton != ev->button()){
+			break;
+		}
+
+		emit MouseRightReleased(ev->pos());
+	} while(0);
 }
 
 /**********************************************************************************/
