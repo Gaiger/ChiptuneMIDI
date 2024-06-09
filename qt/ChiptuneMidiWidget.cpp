@@ -183,8 +183,10 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
 					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
 
-	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::MousePressed, this,
-					 &ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed);
+	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::PositionChanged, this,
+					 &ChiptuneMidiWidget::HandlePlayProgressSliderPositionChanged);
+	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::MouseRightReleased, this,
+					 &ChiptuneMidiWidget::HandlePlayProgressSliderMouseRightReleased);
 
 	QObject::connect(m_p_audio_player, &AudioPlayer::StateChanged,
 					 this, &ChiptuneMidiWidget::HandleAudioPlayerStateChanged, Qt::DirectConnection);
@@ -293,7 +295,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		ui->PlayPositionLabel->setText(FormatTimeString(0) + " / " + m_midi_file_duration_time_string);
 		ui->PlayProgressSlider->setRange(0, m_midi_file_duration_in_milliseconds);
 		ui->PlayProgressSlider->setValue(0);
-		ui->PlayProgressSlider->setEnabled(true);
+		ui->PlayProgressSlider->SetPositionChangable(true);
 		m_p_wave_chartview->Reset();
 		m_p_audio_player->Play();
 		ui->SaveSaveFilePushButton->setEnabled(true);
@@ -351,7 +353,7 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 	ui->PlayPositionLabel->setText("00:00 / 00:00");
 	ui->PlayProgressSlider->setValue(0);
 
-	ui->PlayProgressSlider->setEnabled(false);
+	ui->PlayProgressSlider->SetPositionChangable(false);
 	ui->MessageLabel->setText("");
 
 	ui->PlayPausePushButton->setEnabled(false);
@@ -460,13 +462,32 @@ void ChiptuneMidiWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackStat
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value)
+void ChiptuneMidiWidget::HandlePlayProgressSliderPositionChanged(int value)
 {
-	if(button != Qt::LeftButton){
-		return ;
-	}
 	ui->PlayProgressSlider->setValue(value);
 	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
+}
+
+/**********************************************************************************/
+
+#include <QMenu>
+
+void ChiptuneMidiWidget::HandlePlayProgressSliderMouseRightReleased(QPoint position)
+{
+	qDebug() << Q_FUNC_INFO;
+	QMenu *p_speed_menu = new QMenu(this);
+	p_speed_menu->addSection("Change Speed");
+	p_speed_menu->addAction("x 0.25");
+	p_speed_menu->addAction("x 0.50");
+	p_speed_menu->addAction("x 0.75");
+	p_speed_menu->addAction("x 1.00");
+	p_speed_menu->addAction("x 1.25");
+	p_speed_menu->addAction("x 1.50");
+	p_speed_menu->addAction("x 1.75");
+	p_speed_menu->addAction("x 2.00");
+	p_speed_menu->setActiveAction(p_speed_menu->actionAt(QPoint(1, 0)));
+	position.setY(position.y() - p_speed_menu->height());
+	p_speed_menu->exec(ui->PlayProgressSlider->mapToGlobal(position));
 }
 
 /**********************************************************************************/
@@ -782,7 +803,6 @@ void ChiptuneMidiWidget::on_AllOutputEnabledPushButton_released(void)
 
 void ChiptuneMidiWidget::on_PitchShiftSpinBox_valueChanged(int i)
 {
-	qDebug() << Q_FUNC_INFO << i;
 	QLineEdit *p_lineEdit = ui->PitchShiftSpinBox->findChild<QLineEdit *>();
 	if(i > 0){
 		p_lineEdit->setText("+" + p_lineEdit->text());

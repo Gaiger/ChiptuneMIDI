@@ -140,9 +140,6 @@ color: rgb(208, 208, 208);
    </property>
   </widget>
   <widget class="ProgressSlider" name="PlayProgressSlider">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
    <property name="geometry">
     <rect>
      <x>72</x>

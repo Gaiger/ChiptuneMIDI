@@ -49,7 +49,8 @@ private slots:
 	void on_PlayProgressSlider_sliderMoved(int value);
 private slots:
 	void HandleWaveFetched(const QByteArray wave_bytearray);
-	void HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value);
+	void HandlePlayProgressSliderPositionChanged(int value);
+	void HandlePlayProgressSliderMouseRightReleased(QPoint position);
 	void HandleAudioPlayerStateChanged(AudioPlayer::PlaybackState state);
 
 	void HandleChannelOutputEnabled(int index, bool is_enabled);
