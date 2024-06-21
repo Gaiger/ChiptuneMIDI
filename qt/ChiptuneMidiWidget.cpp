@@ -470,24 +470,9 @@ void ChiptuneMidiWidget::HandlePlayProgressSliderPositionChanged(int value)
 
 /**********************************************************************************/
 
-#include <QMenu>
-
 void ChiptuneMidiWidget::HandlePlayProgressSliderMouseRightReleased(QPoint position)
 {
-	qDebug() << Q_FUNC_INFO;
-	QMenu *p_speed_menu = new QMenu(this);
-	p_speed_menu->addSection("Change Speed");
-	p_speed_menu->addAction("x 0.25");
-	p_speed_menu->addAction("x 0.50");
-	p_speed_menu->addAction("x 0.75");
-	p_speed_menu->addAction("x 1.00");
-	p_speed_menu->addAction("x 1.25");
-	p_speed_menu->addAction("x 1.50");
-	p_speed_menu->addAction("x 1.75");
-	p_speed_menu->addAction("x 2.00");
-	p_speed_menu->setActiveAction(p_speed_menu->actionAt(QPoint(1, 0)));
-	position.setY(position.y() - p_speed_menu->height());
-	p_speed_menu->exec(ui->PlayProgressSlider->mapToGlobal(position));
+
 }
 
 /**********************************************************************************/

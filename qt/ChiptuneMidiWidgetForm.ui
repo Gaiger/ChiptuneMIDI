@@ -298,23 +298,10 @@ color: rgb(208, 208, 208);
     </property>
    </widget>
   </widget>
-  <widget class="QLabel" name="PitchShiftLabel">
-   <property name="geometry">
-    <rect>
-     <x>1100</x>
-     <y>732</y>
-     <width>68</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Pitch shfit</string>
-   </property>
-  </widget>
   <widget class="QSpinBox" name="PitchShiftSpinBox">
    <property name="geometry">
     <rect>
-     <x>1172</x>
+     <x>1072</x>
      <y>732</y>
      <width>40</width>
      <height>24</height>
