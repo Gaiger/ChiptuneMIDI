@@ -373,6 +373,13 @@ double TuneManager::GetTempo(void)
 
 /**********************************************************************************/
 
+void TuneManager::SetPlayingSpeedRatio(double playing_speed_raio)
+{
+	qDebug() << Q_FUNC_INFO << playing_speed_raio;
+}
+
+/**********************************************************************************/
+
 void TuneManager::SetPitchShift(int pitch_shift_in_semitones)
 {
 	QMutexLocker locker(&m_mutex);

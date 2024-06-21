@@ -320,6 +320,59 @@ color: rgb(208, 208, 208);
     <number>5</number>
    </property>
   </widget>
+  <widget class="QComboBox" name="PlayingSpeedRatioComboBox">
+   <property name="geometry">
+    <rect>
+     <x>1124</x>
+     <y>732</y>
+     <width>108</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="currentIndex">
+    <number>3</number>
+   </property>
+   <item>
+    <property name="text">
+     <string>Speed x 0.25</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Speed x 0.5</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Speed x 0.75</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Speed x 1</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Speed x 1.25</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Speed x 1.5</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Speed x 2</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Speed x 4</string>
+    </property>
+   </item>
+  </widget>
  </widget>
  <customwidgets>
   <customwidget>

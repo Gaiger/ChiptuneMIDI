@@ -45,6 +45,7 @@ private slots:
 	void on_AllOutputDisabledPushButton_released(void);
 	void on_AllOutputEnabledPushButton_released(void);
 	void on_PitchShiftSpinBox_valueChanged(int i);
+	void on_PlayingSpeedRatioComboBox_currentIndexChanged(int i);
 private slots:
 	void on_PlayProgressSlider_sliderMoved(int value);
 private slots:

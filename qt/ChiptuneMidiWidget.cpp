@@ -472,7 +472,7 @@ void ChiptuneMidiWidget::HandlePlayProgressSliderPositionChanged(int value)
 
 void ChiptuneMidiWidget::HandlePlayProgressSliderMouseRightReleased(QPoint position)
 {
-
+	Q_UNUSED(position);
 }
 
 /**********************************************************************************/
@@ -794,4 +794,12 @@ void ChiptuneMidiWidget::on_PitchShiftSpinBox_valueChanged(int i)
 	}
 
 	m_p_tune_manager->SetPitchShift((int8_t)i);
+}
+
+/**********************************************************************************/
+
+void ChiptuneMidiWidget::on_PlayingSpeedRatioComboBox_currentIndexChanged(int i)
+{
+	Q_UNUSED(i);
+	m_p_tune_manager->SetPlayingSpeedRatio(ui->PlayingSpeedRatioComboBox->currentText().split("x").at(1).toDouble());
 }
