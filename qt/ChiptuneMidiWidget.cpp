@@ -281,10 +281,8 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 
 		NoteNameWidget *p_note_name_widget = new NoteNameWidget(p_widget);
 		SequencerWidget *p_sequencer_widget
-				= new SequencerWidget(m_p_tune_manager, ui->SequencerScrollArea->verticalScrollBar(),
-									  2 * m_audio_player_buffer_in_milliseconds/1000.0,
-									  p_widget);
-
+				= new SequencerWidget(m_p_tune_manager, ui->SequencerScrollArea->verticalScrollBar(), ui->SequencerScrollArea->height(),
+									  2 * m_audio_player_buffer_in_milliseconds/1000.0, p_widget);
 		m_p_sequencer_widget = p_sequencer_widget;
 		p_layout_for_containing_working_widgets->addWidget(p_note_name_widget);
 		p_layout_for_containing_working_widgets->addWidget(p_sequencer_widget);
@@ -542,6 +540,7 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 		m_p_sequencer_widget->DrawSequencer();
 		m_p_sequencer_widget->PrepareSequencer(m_p_tune_manager->GetMidiFilePointer()->tickFromTime(INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS/1000.0f)
 											   + m_p_tune_manager->GetCurrentTick());
+
 	}
 }
 

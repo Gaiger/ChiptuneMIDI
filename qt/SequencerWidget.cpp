@@ -66,7 +66,7 @@ void NoteNameWidget::paintEvent(QPaintEvent *event) {
 #define ONE_BEAT_WIDTH					(64)
 #define ONE_BEAT_HEIGHT					(ONE_NAME_HEIGHT)
 
-SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar,
+SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar, int display_height,
 								 double audio_out_latency_in_seconds, QWidget *parent) :
 	QWidget(parent),
 	m_p_tune_manager(p_tune_manager),
@@ -91,9 +91,11 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scro
 		}
 	}
 #define SCROLLING_UPPER_BORDER_IN_PITCH				(3)
-	m_scrollbar_minimum = QWidget::height() - ((highest_pitch + SCROLLING_UPPER_BORDER_IN_PITCH) - A0 - 1) * ONE_BEAT_HEIGHT;
-	if(m_scrollbar_minimum < 0){
-		m_scrollbar_minimum = 0;
+	int sequencer_height = ((highest_pitch + SCROLLING_UPPER_BORDER_IN_PITCH) - A0 - 1) * ONE_BEAT_HEIGHT;
+	m_scrollbar_minimum = QWidget::height() - sequencer_height;
+	if(sequencer_height < display_height){
+		sequencer_height = ((display_height/ONE_BEAT_HEIGHT) + 1) * ONE_BEAT_HEIGHT;
+		m_scrollbar_minimum = QWidget::height() - sequencer_height;
 	}
 
 	for(int j = 0; j < 2; j++){
