@@ -363,12 +363,12 @@ int TuneManager::GetCurrentTick(void)
 
 /**********************************************************************************/
 
-double TuneManager::GetTempo(void)
+double TuneManager::GetPlayingTempo(void)
 {
 	if(nullptr == m_p_private->m_p_midi_file){
 		return FLT_MAX;
 	}
-	return chiptune_get_tempo();
+	return chiptune_get_playing_tempo();
 }
 
 /**********************************************************************************/

@@ -1452,7 +1452,7 @@ void chiptune_set_tempo(float const tempo)
 
 /**********************************************************************************/
 
-float chiptune_get_tempo(void)
+float chiptune_get_playing_tempo(void)
 {
 	return get_tempo_mutliply_playing_speed_ratio();
 }
