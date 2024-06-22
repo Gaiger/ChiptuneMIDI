@@ -64,7 +64,7 @@ void reset_channel_controller_midi_control_change_parameters(int8_t const index)
 static void update_channel_controller_envelope_parameters_related_to_tempo(int8_t const index)
 {
 	uint32_t const resolution = get_resolution();
-	float const tempo = get_tempo();
+	float const tempo = get_tempo_mutliply_playing_speed_ratio();
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
 
 	p_channel_controller->envelope_release_tick_number

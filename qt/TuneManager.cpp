@@ -376,6 +376,7 @@ double TuneManager::GetTempo(void)
 void TuneManager::SetPlayingSpeedRatio(double playing_speed_raio)
 {
 	qDebug() << Q_FUNC_INFO << playing_speed_raio;
+	chiptune_set_playing_speed_ratio((float)playing_speed_raio);
 }
 
 /**********************************************************************************/

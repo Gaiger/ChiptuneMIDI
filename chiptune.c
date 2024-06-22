@@ -22,8 +22,10 @@ typedef double chiptune_float;
 #endif
 
 #define DEFAULT_SAMPLING_RATE						(16000)
+#define DEFAULT_PLAYING_SPEED_RATIO					(1.0)
 
 static float s_tempo = MIDI_DEFAULT_TEMPO;
+static float s_playing_speed_ratio = DEFAULT_PLAYING_SPEED_RATIO;
 static uint32_t s_sampling_rate = DEFAULT_SAMPLING_RATE;
 static uint32_t s_resolution = MIDI_DEFAULT_RESOLUTION;
 static bool s_is_stereo = false;
@@ -31,12 +33,13 @@ bool s_is_processing_left_channel = true;
 
 #ifdef _INCREMENTAL_SAMPLE_INDEX
 static uint32_t s_current_sample_index = 0;
-static chiptune_float s_tick_to_sample_index_ratio = (chiptune_float)(DEFAULT_SAMPLING_RATE * 1.0/(MIDI_DEFAULT_TEMPO/60.0)/MIDI_DEFAULT_RESOLUTION);
+static chiptune_float s_tick_to_sample_index_ratio = \
+		(chiptune_float)(DEFAULT_SAMPLING_RATE * 1.0/(MIDI_DEFAULT_TEMPO/DEFAULT_PLAYING_SPEED_RATIO/60.0)/MIDI_DEFAULT_RESOLUTION);
 
 #define UPDATE_SAMPLES_TO_TICK_RATIO()				\
 													do { \
 														s_tick_to_sample_index_ratio \
-														= (chiptune_float)(s_sampling_rate * 60.0/s_tempo/s_resolution); \
+														= (chiptune_float)(s_sampling_rate * 60.0/s_tempo/s_playing_speed_ratio/s_resolution); \
 													} while(0)
 
 #define UPDATE_SAMPLING_RATE(SAMPLING_RATE)			\
@@ -55,6 +58,14 @@ static chiptune_float s_tick_to_sample_index_ratio = (chiptune_float)(DEFAULT_SA
 													do { \
 														s_current_sample_index = (uint32_t)(s_current_sample_index * s_tempo/(TEMPO)); \
 														s_tempo = (TEMPO); \
+														UPDATE_SAMPLES_TO_TICK_RATIO(); \
+													} while(0)
+
+
+#define UPDATE_PLAYING_SPEED_RATIO(PLAYING_SPEED_RATIO) \
+													do { \
+														s_current_sample_index = (uint32_t)(s_current_sample_index * s_playing_speed_ratio/(PLAYING_SPEED_RATIO)); \
+														s_playing_speed_ratio = (PLAYING_SPEED_RATIO); \
 														UPDATE_SAMPLES_TO_TICK_RATIO(); \
 													} while(0)
 
@@ -82,7 +93,7 @@ static chiptune_float s_delta_tick_per_sample = (MIDI_DEFAULT_RESOLUTION / ( (ch
 
 #define	UPDATE_DELTA_TICK_PER_SAMPLE()				\
 													do { \
-														s_delta_tick_per_sample = ( s_resolution * s_tempo / (chiptune_float)s_sampling_rate/(chiptune_float)60.0 ); \
+														s_delta_tick_per_sample = ( s_resolution * s_tempo * s_playing_speed_ratio/ (chiptune_float)s_sampling_rate/(chiptune_float)60.0 ); \
 													} while(0)
 
 #define UPDATE_SAMPLING_RATE(SAMPLING_RATE)			\
@@ -101,6 +112,12 @@ static chiptune_float s_delta_tick_per_sample = (MIDI_DEFAULT_RESOLUTION / ( (ch
 													do { \
 														s_tempo = (TEMPO); \
 														UPDATE_DELTA_TICK_PER_SAMPLE(); \
+													} while(0)
+
+#define UPDATE_PLAYING_SPEED_RATIO(PLAYING_SPEED_RATIO) \
+													do { \
+														s_playing_speed_ratio = (PLAYING_SPEED_RATIO); \
+														UPDATE_TEMPO(s_tempo); \
 													} while(0)
 
 #define RESET_CURRENT_TICK()						\
@@ -147,7 +164,11 @@ uint32_t const get_resolution(void) { return s_resolution; }
 
 /**********************************************************************************/
 
-float const get_tempo(void) { return s_tempo; }
+float const get_tempo_mutliply_playing_speed_ratio(void) { return s_tempo * s_playing_speed_ratio; }
+
+/**********************************************************************************/
+
+static float const get_playing_speed_ratio(void) {return s_playing_speed_ratio; }
 
 /**********************************************************************************/
 
@@ -1423,7 +1444,7 @@ void chiptune_move_toward(uint32_t const index)
 void chiptune_set_tempo(float const tempo)
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %d, set tempo as %3.1f\r\n", CURRENT_TICK(), tempo);
-	adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), tempo);
+	adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), tempo * get_playing_speed_ratio());
 	UPDATE_TEMPO(tempo);
 	update_effect_tick();
 	update_channel_controllers_parameters_related_to_tempo();
@@ -1433,7 +1454,16 @@ void chiptune_set_tempo(float const tempo)
 
 float chiptune_get_tempo(void)
 {
-	return get_tempo();
+	return get_tempo_mutliply_playing_speed_ratio();
+}
+
+/**********************************************************************************/
+
+void chiptune_set_playing_speed_ratio(float playing_speed_ratio)
+{
+	UPDATE_PLAYING_SPEED_RATIO(playing_speed_ratio);
+	update_effect_tick();
+	update_channel_controllers_parameters_related_to_tempo();
 }
 
 /**********************************************************************************/

@@ -15,6 +15,7 @@ void chiptune_set_midi_message_callback(
 
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution);
 
+void chiptune_set_playing_speed_ratio(float playing_speed_ratio);
 void chiptune_set_tempo(float const tempo);
 float chiptune_get_tempo(void);
 
