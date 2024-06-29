@@ -6,7 +6,8 @@
 #include "chiptune_midi_define_internal.h"
 
 //#define _INCREMENTAL_SAMPLE_INDEX
-//#define AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
+//#define _AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
+//#define _KEEP_SET_BUT_EMPTY_NOTE_CHANNEL
 
 #define _PRINT_DEVELOPING
 //#define _PRINT_MIDI_NOTE

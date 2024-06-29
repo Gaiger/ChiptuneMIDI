@@ -1213,6 +1213,10 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index)
 	}
 
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(false);
+#ifndef _KEEP_SET_BUT_EMPTY_NOTE_CHANNEL
+	bool is_has_note[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
+	memset(&is_has_note[0], 0, sizeof(bool)*CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER);
+#endif
 	int16_t max_event_occupied_oscillator_number = 0;
 
 	fetch_midi_tick_message(s_midi_messge_index, &s_fetched_tick_message);
@@ -1289,9 +1293,13 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index)
 			for(int16_t i = 0; i < occupied_oscillator_number; i++,
 				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index)){
 				oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
-				if(CHANNEL_CONTROLLER_INSTRUMENT_UNUSED_CHANNEL == get_channel_controller_pointer_from_index(p_oscillator->voice)->instrument){
+				if(CHANNEL_CONTROLLER_INSTRUMENT_UNUSED_CHANNEL
+						== get_channel_controller_pointer_from_index(p_oscillator->voice)->instrument){
 					get_channel_controller_pointer_from_index(p_oscillator->voice)->instrument = CHIPTUNE_INSTRUMENT_NOT_SPECIFIED;
 				}
+#ifndef _KEEP_SET_BUT_EMPTY_NOTE_CHANNEL
+				is_has_note[p_oscillator->voice] = true;
+#endif
 			}
 		}while(0);
 
@@ -1317,11 +1325,19 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index)
 						max_event_occupied_oscillator_number);
 	}
 
+#ifndef _KEEP_SET_BUT_EMPTY_NOTE_CHANNEL
+	for(int8_t voice = 0; voice < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; voice++){
+		if(false == is_has_note[voice]){
+			get_channel_controller_pointer_from_index(voice)->instrument
+					= CHANNEL_CONTROLLER_INSTRUMENT_UNUSED_CHANNEL;
+		}
+	}
+#endif
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
 }
 
 /**********************************************************************************/
-#ifdef AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
+#ifdef _AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
 
 uint32_t number_of_roundup_to_power2_left_shift_bits(uint32_t const value)
 {
