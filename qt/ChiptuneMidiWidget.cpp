@@ -390,6 +390,21 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 
 /**********************************************************************************/
 
+void ChiptuneMidiWidget::UpdateTempoLabelText(void)
+{
+	double tempo = m_p_tune_manager->GetTempo();
+	QString tempo_string = QString::asprintf("= %3.0f", tempo);
+	do{
+		if( 0.1 < abs(tempo - (int)(tempo + 0.5))){
+			tempo_string = QString::asprintf("= %3.1f", tempo);
+			break;
+		}
+	} while(0);
+	ui->TempoLabel->setText(tempo_string);
+}
+
+/**********************************************************************************/
+
 void ChiptuneMidiWidget::HandleWaveFetched(const QByteArray wave_bytearray)
 {
 	m_p_wave_chartview->GiveWave(wave_bytearray);
@@ -434,6 +449,7 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 	m_set_start_time_postpone_timer.setSingleShot(true);
 	m_set_start_time_postpone_timer.start();
 
+	UpdateTempoLabelText();
 	QWidget::activateWindow();
 	QWidget::setFocus();
 }
@@ -521,6 +537,8 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 				}
 				break;
 			}
+
+			UpdateTempoLabelText();
 
 			int elapsed_time_in_milliseconds =
 					(int)(m_p_tune_manager->GetCurrentElapsedTimeInSeconds() * 1000);
@@ -703,6 +721,7 @@ void ChiptuneMidiWidget::on_SaveSaveFilePushButton_released(void)
 void ChiptuneMidiWidget::on_StopPushButton_released(void)
 {
 	StopMidiFile();
+	ui->TempoLabel->setText("");
 }
 
 /**********************************************************************************/

@@ -17,6 +17,7 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uin
 
 void chiptune_set_playing_speed_ratio(float playing_speed_ratio);
 void chiptune_set_tempo(float const tempo);
+float chiptune_get_tempo(void);
 float chiptune_get_playing_tempo(void);
 
 #define CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER			(16)

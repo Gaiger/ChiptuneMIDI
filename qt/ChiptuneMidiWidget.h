@@ -68,6 +68,7 @@ private:
 	int PlayMidiFile(QString filename_string);
 	void SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds);
 	void StopMidiFile(void);
+	void UpdateTempoLabelText(void);
 
 private:
 	bool IsPlayPausePushButtonPlayIcon(void);

@@ -360,6 +360,15 @@ int TuneManager::GetCurrentTick(void)
 	return chiptune_get_current_tick();
 }
 
+/**********************************************************************************/
+
+double TuneManager::GetTempo(void)
+{
+	if(nullptr == m_p_private->m_p_midi_file){
+		return FLT_MAX;
+	}
+	return chiptune_get_tempo();
+}
 
 /**********************************************************************************/
 

@@ -1475,6 +1475,13 @@ float chiptune_get_playing_tempo(void)
 
 /**********************************************************************************/
 
+float chiptune_get_tempo(void)
+{
+	return s_tempo;
+}
+
+/**********************************************************************************/
+
 void chiptune_set_playing_speed_ratio(float playing_speed_ratio)
 {
 	UPDATE_PLAYING_SPEED_RATIO(playing_speed_ratio);
