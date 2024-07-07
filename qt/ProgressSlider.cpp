@@ -9,7 +9,6 @@ ProgressSlider::ProgressSlider(QWidget *parent)
 	  m_is_position_changable(false)
 {
 	QSlider::installEventFilter(this);
-
 }
 
 /**********************************************************************************/
@@ -23,9 +22,9 @@ void ProgressSlider::SetPositionChangable(bool is_position_changabled)
 
 void ProgressSlider::mousePressEvent(QMouseEvent *ev)
 {
+	QSlider::mousePressEvent(ev);
 	int value = QStyle::sliderValueFromPosition(QSlider::minimum(), QSlider::maximum(), ev->x(), QWidget::width());
 	emit MousePressed(ev->button(), value);
-	QSlider::mousePressEvent(ev);
 }
 
 /**********************************************************************************/
