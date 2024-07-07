@@ -66,7 +66,7 @@ void NoteNameWidget::paintEvent(QPaintEvent *event) {
 #define ONE_BEAT_WIDTH					(64)
 #define ONE_BEAT_HEIGHT					(ONE_NAME_HEIGHT)
 
-SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar, int display_height,
+SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar,
 								 double audio_out_latency_in_seconds, QWidget *parent) :
 	QWidget(parent),
 	m_p_tune_manager(p_tune_manager),
@@ -77,7 +77,11 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scro
 	m_is_scrollbar_posistion_corrected(false),
 	m_scrollbar_minimum(0)
 {
-	QSize size = QSize(parent->width() - ONE_NAME_WIDTH * 3 /2, (INT8_MAX - A0 + 1) * ONE_NAME_HEIGHT);
+	QSize parent_size = QSize(600, 800);
+	if(nullptr != parent){
+		parent_size = parent->size();
+	}
+	QSize size = QSize(parent_size.width() - ONE_NAME_WIDTH * 3 /2, (INT8_MAX - A0 + 1) * ONE_NAME_HEIGHT);
 	setFixedSize(size);
 
 	QList<QMidiEvent*> midievent_list = p_tune_manager->GetMidiFilePointer()->events();
@@ -93,8 +97,10 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scro
 #define SCROLLING_UPPER_BORDER_IN_PITCH				(3)
 	int sequencer_height = ((highest_pitch + SCROLLING_UPPER_BORDER_IN_PITCH) - A0 - 1) * ONE_BEAT_HEIGHT;
 	m_scrollbar_minimum = QWidget::height() - sequencer_height;
-	if(sequencer_height < display_height){
-		sequencer_height = ((display_height/ONE_BEAT_HEIGHT) + 1) * ONE_BEAT_HEIGHT;
+	if(sequencer_height < parent_size.height()){
+		//sequencer_height = ((parent_size.height()/ONE_BEAT_HEIGHT) + 1) * ONE_BEAT_HEIGHT;
+#define LINE_BORDER_WIDTH							(1)
+		sequencer_height = parent_size.height() + LINE_BORDER_WIDTH;
 		m_scrollbar_minimum = QWidget::height() - sequencer_height;
 	}
 

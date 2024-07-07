@@ -26,7 +26,7 @@ class SequencerWidget : public QWidget
 	Q_OBJECT
 
 public:
-	explicit SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar, int display_height,
+	explicit SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar,
 							 double audio_out_latency_in_seconds = 0.0, QWidget *parent = nullptr);
 	~SequencerWidget(void);
 public :
