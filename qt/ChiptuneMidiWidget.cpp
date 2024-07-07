@@ -397,6 +397,19 @@ void ChiptuneMidiWidget::UpdateTempoLabelText(void)
 			break;
 		}
 	} while(0);
+
+	double playing_tempo = m_p_tune_manager->GetPlayingTempo();
+	do{
+		if(abs(playing_tempo - tempo) < 0.1){
+			break;
+		}
+
+		QString playing_tempo_string = QString::asprintf("(%3.0f)", playing_tempo);
+		if( 0.1 < abs(playing_tempo - (int)(playing_tempo + 0.5))){
+			playing_tempo_string = QString::asprintf("(%3.1f)", playing_tempo);
+		}
+		tempo_string += playing_tempo_string;
+	}while(0);
 	ui->TempoLabel->setText(tempo_string);
 }
 

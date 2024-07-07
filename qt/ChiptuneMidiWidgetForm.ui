@@ -115,7 +115,7 @@ QSlider::handle {
     <rect>
      <x>16</x>
      <y>80</y>
-     <width>780</width>
+     <width>748</width>
      <height>24</height>
     </rect>
    </property>
@@ -376,7 +376,7 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="MetronomeLabel">
    <property name="geometry">
     <rect>
-     <x>800</x>
+     <x>768</x>
      <y>80</y>
      <width>32</width>
      <height>24</height>
@@ -395,9 +395,9 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="TempoLabel">
    <property name="geometry">
     <rect>
-     <x>832</x>
+     <x>800</x>
      <y>80</y>
-     <width>44</width>
+     <width>76</width>
      <height>24</height>
     </rect>
    </property>
