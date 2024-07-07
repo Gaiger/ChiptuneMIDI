@@ -183,11 +183,8 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
 					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
 
-	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::PositionChanged, this,
-					 &ChiptuneMidiWidget::HandlePlayProgressSliderPositionChanged);
-	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::MouseRightReleased, this,
-					 &ChiptuneMidiWidget::HandlePlayProgressSliderMouseRightReleased);
-
+	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::MousePressed, this,
+						 &ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed);
 	QObject::connect(m_p_audio_player, &AudioPlayer::StateChanged,
 					 this, &ChiptuneMidiWidget::HandleAudioPlayerStateChanged, Qt::DirectConnection);
 
@@ -476,18 +473,12 @@ void ChiptuneMidiWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackStat
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::HandlePlayProgressSliderPositionChanged(int value)
+void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value)
 {
 	ui->PlayProgressSlider->setValue(value);
 	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
 }
 
-/**********************************************************************************/
-
-void ChiptuneMidiWidget::HandlePlayProgressSliderMouseRightReleased(QPoint position)
-{
-	Q_UNUSED(position);
-}
 
 /**********************************************************************************/
 
