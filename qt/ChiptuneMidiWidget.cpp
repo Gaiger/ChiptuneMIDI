@@ -387,13 +387,15 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 
 /**********************************************************************************/
 
+#define UNICODE_QUARTER_NOTE_ICON						u8"\u2669"
+
 void ChiptuneMidiWidget::UpdateTempoLabelText(void)
 {
 	double tempo = m_p_tune_manager->GetTempo();
-	QString tempo_string = QString::asprintf("= %3.0f", tempo);
+	QString tempo_string = QString::asprintf("= %2.0f", tempo);
 	do{
 		if( 0.1 < abs(tempo - (int)(tempo + 0.5))){
-			tempo_string = QString::asprintf("= %3.1f", tempo);
+			tempo_string = QString::asprintf("= %2.1f", tempo);
 			break;
 		}
 	} while(0);
@@ -404,13 +406,13 @@ void ChiptuneMidiWidget::UpdateTempoLabelText(void)
 			break;
 		}
 
-		QString playing_tempo_string = QString::asprintf("(%3.0f)", playing_tempo);
+		QString playing_tempo_string = QString::asprintf(" (%2.0f)", playing_tempo);
 		if( 0.1 < abs(playing_tempo - (int)(playing_tempo + 0.5))){
-			playing_tempo_string = QString::asprintf("(%3.1f)", playing_tempo);
+			playing_tempo_string = QString::asprintf(" (%2.1f)", playing_tempo);
 		}
 		tempo_string += playing_tempo_string;
 	}while(0);
-	ui->TempoLabel->setText(tempo_string);
+	ui->TempoLabel->setText(UNICODE_QUARTER_NOTE_ICON + tempo_string);
 }
 
 /**********************************************************************************/

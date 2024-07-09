@@ -373,36 +373,20 @@ color: rgb(208, 208, 208);
     </property>
    </item>
   </widget>
-  <widget class="QLabel" name="MetronomeLabel">
-   <property name="geometry">
-    <rect>
-     <x>768</x>
-     <y>80</y>
-     <width>32</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="pixmap">
-    <pixmap>icons/metronome.png</pixmap>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignCenter</set>
-   </property>
-  </widget>
   <widget class="QLabel" name="TempoLabel">
    <property name="geometry">
     <rect>
-     <x>800</x>
+     <x>780</x>
      <y>80</y>
-     <width>76</width>
+     <width>96</width>
      <height>24</height>
     </rect>
    </property>
    <property name="text">
     <string/>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
   </widget>
  </widget>
