@@ -266,23 +266,18 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 
 
 		QWidget *p_widget = new QWidget(ui->SequencerScrollArea);
+		ui->SequencerScrollArea->setWidget(p_widget);
 		QHBoxLayout *p_layout = new QHBoxLayout(p_widget);
 		p_layout->setContentsMargins(0, 0, 0, 0);
 		p_layout->setSpacing(0);
-		ui->SequencerScrollArea->setWidget(p_widget);
-		QHBoxLayout *p_layout_for_containing_working_widgets = new QHBoxLayout();
-		p_layout_for_containing_working_widgets->setContentsMargins(0, 0, 0, 0);
-		p_layout_for_containing_working_widgets->setSpacing(0);
-
-		p_layout->addLayout(p_layout_for_containing_working_widgets);
 
 		NoteNameWidget *p_note_name_widget = new NoteNameWidget(p_widget);
 		SequencerWidget *p_sequencer_widget
 				= new SequencerWidget(m_p_tune_manager, ui->SequencerScrollArea->verticalScrollBar(),
 									  2 * m_audio_player_buffer_in_milliseconds/1000.0, p_widget);
 		m_p_sequencer_widget = p_sequencer_widget;
-		p_layout_for_containing_working_widgets->addWidget(p_note_name_widget);
-		p_layout_for_containing_working_widgets->addWidget(p_sequencer_widget);
+		p_layout->addWidget(p_note_name_widget);
+		p_layout->addWidget(p_sequencer_widget);
 
 		ui->AmplitudeGainSlider->setValue(UINT16_MAX - m_p_tune_manager->GetAmplitudeGain());
 		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
