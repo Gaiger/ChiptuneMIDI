@@ -1,20 +1,38 @@
 #include <QDebug>
+#include <QHBoxLayout>
 #include <QPainter>
+
+#include <QScrollBar>
 
 #include "GetInstrumentNameString.h"
 
 #include "SequencerWidget.h"
-#include "ui_SequencerWidgetForm.h"
+
 
 #define A0											(21)
 #define ONE_NAME_WIDTH								(64)
 #define ONE_NAME_HEIGHT								(12)
+
+
+class NoteNameWidget : public QWidget
+{
+	//Q_OBJECT
+public:
+	explicit NoteNameWidget(QWidget *parent = nullptr);
+	~NoteNameWidget(void);
+private:
+	virtual void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
+};
+
+/**********************************************************************************/
 
 NoteNameWidget::NoteNameWidget(QWidget *parent)
 	: QWidget(parent) {
 	QSize size = QSize(ONE_NAME_WIDTH + 2, (INT8_MAX - A0 + 1) * ONE_NAME_HEIGHT);
 	setFixedSize(size);
 }
+
+/**********************************************************************************/
 
 NoteNameWidget::~NoteNameWidget(void) { }
 
@@ -63,6 +81,49 @@ void NoteNameWidget::paintEvent(QPaintEvent *event) {
 }
 
 /**********************************************************************************/
+
+class NoteDurationWidget : public QWidget
+{
+	//Q_OBJECT
+public:
+	explicit NoteDurationWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar,
+							 double audio_out_latency_in_seconds = 0.0, QWidget *parent = nullptr);
+	~NoteDurationWidget(void);
+public :
+	void Prepare(int tick_in_center);
+	void Update(void);
+
+	void SetChannelToDrawEnabled(int channel_index, bool is_enabled);
+private :
+	QRect NoteToQRect(int start_tick, int end_tick, int tick_in_center, int note);
+	bool IsTickOutOfRightBound(int tick, int tick_in_center);
+	int tickToX(int tick, int const tick_in_center);
+	int XtoTick(int x, int const tick_in_center);
+
+	void ReduceRectangles(int preparing_index);
+private:
+	virtual void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
+private:
+	TuneManager *m_p_tune_manager;
+	QScrollBar *m_p_scrollbar;
+
+	double m_audio_out_latency_in_seconds;
+
+	QList<QVector<QRect>>  m_rectangle_vector_list[2];
+	int m_drawing_rectangle_vector_list_index;
+	bool m_is_channel_to_draw[MIDI_MAX_CHANNEL_NUMBER];
+
+	int m_last_sought_index;
+	int m_last_tick_in_center;
+
+	bool m_is_scrollbar_posistion_corrected;
+	int m_scrollbar_minimum;
+
+	QMutex m_mutex;
+};
+
+/**********************************************************************************/
+
 #define ONE_BEAT_WIDTH					(64)
 #define ONE_BEAT_HEIGHT					(ONE_NAME_HEIGHT)
 
@@ -387,7 +448,7 @@ void NoteDurationWidget::paintEvent(QPaintEvent *event)
 
 /**********************************************************************************/
 
-void NoteDurationWidget::Draw(void)
+void NoteDurationWidget::Update(void)
 {
 	m_p_scrollbar->setMinimum(m_scrollbar_minimum);
 	do {
@@ -399,3 +460,49 @@ void NoteDurationWidget::Draw(void)
 	} while(0);
 }
 
+/**********************************************************************************/
+/**********************************************************************************/
+
+SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, double audio_out_latency_in_seconds,
+						 QScrollArea *p_parent_scroll_area)
+{
+	p_parent_scroll_area->setWidget(this);
+	QHBoxLayout *p_layout = new QHBoxLayout(this);
+	p_layout->setContentsMargins(0, 0, 0, 0);
+	p_layout->setSpacing(0);
+
+	m_p_note_name_widget = new NoteNameWidget(this);
+	m_p_note_duration_widget = new NoteDurationWidget(p_tune_manager, p_parent_scroll_area->verticalScrollBar(),
+								  audio_out_latency_in_seconds, this);
+	p_layout->addWidget(m_p_note_name_widget);
+	p_layout->addWidget(m_p_note_duration_widget);
+}
+
+/**********************************************************************************/
+
+SequencerWidget::~SequencerWidget(void)
+{
+	delete m_p_note_name_widget;
+	delete m_p_note_duration_widget;
+}
+
+/**********************************************************************************/
+
+void SequencerWidget::Prepare(int tick_in_center)
+{
+	m_p_note_duration_widget->Prepare(tick_in_center);
+}
+
+/**********************************************************************************/
+
+void SequencerWidget::Update(void)
+{
+	m_p_note_duration_widget->Update();
+}
+
+/**********************************************************************************/
+
+void SequencerWidget::SetChannelToDrawEnabled(int channel_index, bool is_enabled)
+{
+	m_p_note_duration_widget->SetChannelToDrawEnabled(channel_index, is_enabled);
+}

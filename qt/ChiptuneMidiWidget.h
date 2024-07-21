@@ -9,13 +9,13 @@
 #include "TuneManager.h"
 #include "AudioPlayer.h"
 
-#include "WaveChartView.h"
 
 namespace Ui {
 class ChiptuneMidiWidget;
 }
 
-class NoteDurationWidget;
+class WaveChartView;
+class SequencerWidget;
 
 class ChiptuneMidiWidget : public QWidget
 {
@@ -90,8 +90,8 @@ private :
 
 	int					m_audio_player_buffer_in_milliseconds;
 private:
-	NoteDurationWidget	*m_p_note_duration_widget;
 	WaveChartView *		m_p_wave_chartview;
+	SequencerWidget *	m_p_sequencer_widget;
 private:
 	Ui::ChiptuneMidiWidget *ui;
 };

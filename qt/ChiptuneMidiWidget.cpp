@@ -19,6 +19,8 @@
 
 #include "ui_ChiptuneMidiWidgetForm.h"
 #include "ProgressSlider.h"
+
+#include "WaveChartView.h"
 #include "SequencerWidget.h"
 
 #include "ChannelListWidget.h"
@@ -155,6 +157,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	m_inquiring_playback_status_timer_id(-1),
 	m_inquiring_playback_tick_timer_id(-1),
 	m_audio_player_buffer_in_milliseconds(200),
+	m_p_sequencer_widget(nullptr),
 	ui(new Ui::ChiptuneMidiWidget)
 {
 	ui->setupUi(this);
@@ -264,20 +267,9 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 							 this, &ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged);
 		}
 
-
-		QWidget *p_widget = new QWidget(ui->SequencerScrollArea);
-		ui->SequencerScrollArea->setWidget(p_widget);
-		QHBoxLayout *p_layout = new QHBoxLayout(p_widget);
-		p_layout->setContentsMargins(0, 0, 0, 0);
-		p_layout->setSpacing(0);
-
-		NoteNameWidget *p_note_name_widget = new NoteNameWidget(p_widget);
-		NoteDurationWidget *p_note_duration_widget
-				= new NoteDurationWidget(m_p_tune_manager, ui->SequencerScrollArea->verticalScrollBar(),
-									  2 * m_audio_player_buffer_in_milliseconds/1000.0, p_widget);
-		m_p_note_duration_widget = p_note_duration_widget;
-		p_layout->addWidget(p_note_name_widget);
-		p_layout->addWidget(p_note_duration_widget);
+		m_p_sequencer_widget = new SequencerWidget(m_p_tune_manager,
+											   2 * m_audio_player_buffer_in_milliseconds/1000.0,
+											   ui->SequencerScrollArea);
 
 		ui->AmplitudeGainSlider->setValue(UINT16_MAX - m_p_tune_manager->GetAmplitudeGain());
 		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
@@ -310,7 +302,10 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 
 void ChiptuneMidiWidget::StopMidiFile(void)
 {
-	m_p_note_duration_widget = nullptr;
+	if(nullptr != m_p_sequencer_widget){
+		delete m_p_sequencer_widget;
+	}
+	m_p_sequencer_widget = nullptr;
 
 	m_p_audio_player->Stop();
 	m_p_tune_manager->ClearOutMidiFile();
@@ -480,7 +475,7 @@ void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton bu
 void ChiptuneMidiWidget::HandleChannelOutputEnabled(int index, bool is_enabled)
 {
 	m_p_tune_manager->SetChannelOutputEnabled(index, is_enabled);
-	m_p_note_duration_widget->SetChannelToDrawEnabled(index, is_enabled);
+	m_p_sequencer_widget->SetChannelToDrawEnabled(index, is_enabled);
 }
 
 /**********************************************************************************/
@@ -541,9 +536,10 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 	}while(0);
 
 	if(event->timerId() == m_inquiring_playback_tick_timer_id){
-		m_p_note_duration_widget->Draw();
-		m_p_note_duration_widget->Prepare(m_p_tune_manager->GetMidiFilePointer()->tickFromTime(INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS/1000.0f)
-											   + m_p_tune_manager->GetCurrentTick());
+		m_p_sequencer_widget->Update();
+		m_p_sequencer_widget->Prepare(
+					m_p_tune_manager->GetMidiFilePointer()->tickFromTime(INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS/1000.0f)
+					+ m_p_tune_manager->GetCurrentTick());
 
 	}
 }
