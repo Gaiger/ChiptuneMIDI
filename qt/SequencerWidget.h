@@ -22,6 +22,9 @@ public :
 private:
 	NoteNameWidget *m_p_note_name_widget;
 	NoteDurationWidget *m_p_note_duration_widget;
+
+	QScrollArea *m_p_parent_scroll_area;
+	int m_vertical_scrolling_shift;
 };
 
 #endif // SEQUENCERWIDGET_H

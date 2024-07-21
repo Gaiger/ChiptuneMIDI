@@ -10,6 +10,8 @@
 
 
 #define A0											(21)
+#define G9											(127)
+
 #define ONE_NAME_WIDTH								(64)
 #define ONE_NAME_HEIGHT								(12)
 
@@ -18,17 +20,21 @@ class NoteNameWidget : public QWidget
 {
 	//Q_OBJECT
 public:
-	explicit NoteNameWidget(QWidget *parent = nullptr);
+	explicit NoteNameWidget(int drawn_highest_pitch, QWidget *parent = nullptr);
 	~NoteNameWidget(void);
 private:
 	virtual void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
+private:
+	int m_drawn_highest_pitch;
 };
 
 /**********************************************************************************/
 
-NoteNameWidget::NoteNameWidget(QWidget *parent)
-	: QWidget(parent) {
-	QSize size = QSize(ONE_NAME_WIDTH + 2, (INT8_MAX - A0 + 1) * ONE_NAME_HEIGHT);
+NoteNameWidget::NoteNameWidget(int drawn_highest_pitch, QWidget *parent)
+	: QWidget(parent),
+	m_drawn_highest_pitch(drawn_highest_pitch)
+{
+	QSize size = QSize(ONE_NAME_WIDTH + 2, (m_drawn_highest_pitch - A0 + 1) * ONE_NAME_HEIGHT);
 	setFixedSize(size);
 }
 
@@ -38,11 +44,12 @@ NoteNameWidget::~NoteNameWidget(void) { }
 
 /**********************************************************************************/
 
-void NoteNameWidget::paintEvent(QPaintEvent *event) {
+void NoteNameWidget::paintEvent(QPaintEvent *event)
+{
 	QWidget::paintEvent(event);
-
 	QPainter painter(this);
-	for(int i = 0; i < INT8_MAX - A0 + 1; i++){
+
+	for(int i = 0; i < (m_drawn_highest_pitch -  A0 + 1); i++){
 		painter.drawRect(QRect(0, i * ONE_NAME_HEIGHT, ONE_NAME_WIDTH, ONE_NAME_HEIGHT));
 	}
 
@@ -70,7 +77,7 @@ void NoteNameWidget::paintEvent(QPaintEvent *event) {
 	note_name_string_list.append("B1");
 
 	int kk = 0;
-	for(int i = 3; i < INT8_MAX - A0 + 1; i++){
+	for(int i = 3; i < (m_drawn_highest_pitch -  A0 + 1); i++){
 		QString note_name_string = note_name_string_list.at(kk % 12);
 		QString number_string = QString::number(kk / 12 + 1);;
 		note_name_string.replace("1", number_string);
@@ -86,13 +93,12 @@ class NoteDurationWidget : public QWidget
 {
 	//Q_OBJECT
 public:
-	explicit NoteDurationWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar,
+	explicit NoteDurationWidget(TuneManager *p_tune_manager, int drawn_highest_pitch,
 							 double audio_out_latency_in_seconds = 0.0, QWidget *parent = nullptr);
 	~NoteDurationWidget(void);
 public :
 	void Prepare(int tick_in_center);
 	void Update(void);
-
 	void SetChannelToDrawEnabled(int channel_index, bool is_enabled);
 private :
 	QRect NoteToQRect(int start_tick, int end_tick, int tick_in_center, int note);
@@ -105,7 +111,7 @@ private:
 	virtual void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
 private:
 	TuneManager *m_p_tune_manager;
-	QScrollBar *m_p_scrollbar;
+	int m_drawn_highest_pitch;
 
 	double m_audio_out_latency_in_seconds;
 
@@ -116,9 +122,6 @@ private:
 	int m_last_sought_index;
 	int m_last_tick_in_center;
 
-	bool m_is_scrollbar_posistion_corrected;
-	int m_scrollbar_minimum;
-
 	QMutex m_mutex;
 };
 
@@ -127,44 +130,19 @@ private:
 #define ONE_BEAT_WIDTH					(64)
 #define ONE_BEAT_HEIGHT					(ONE_NAME_HEIGHT)
 
-NoteDurationWidget::NoteDurationWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar,
+NoteDurationWidget::NoteDurationWidget(TuneManager *p_tune_manager, int drawn_highest_pitch,
 								 double audio_out_latency_in_seconds, QWidget *parent) :
 	QWidget(parent),
 	m_p_tune_manager(p_tune_manager),
-	m_p_scrollbar(p_scrollbar),
+	m_drawn_highest_pitch(drawn_highest_pitch),
 	m_audio_out_latency_in_seconds(audio_out_latency_in_seconds),
 	m_last_sought_index(0),
-	m_last_tick_in_center(0),
-	m_is_scrollbar_posistion_corrected(false),
-	m_scrollbar_minimum(0)
+	m_last_tick_in_center(0)
 {
-	QSize parent_size = QSize(600, 800);
-	if(nullptr != parent){
-		parent_size = parent->size();
-	}
-	QSize size = QSize(parent_size.width() - ONE_NAME_WIDTH * 3 /2, (INT8_MAX - A0 + 1) * ONE_NAME_HEIGHT);
+	QSize size = QSize(parent->width() - ONE_NAME_WIDTH * 3 / 2, (m_drawn_highest_pitch - A0 + 1) * ONE_NAME_HEIGHT);
 	setFixedSize(size);
 
 	QList<QMidiEvent*> midievent_list = p_tune_manager->GetMidiFilePointer()->events();
-	int highest_pitch = A0;
-	for(int i = 0; i < midievent_list.size(); i++){
-		QMidiEvent * const p_event = midievent_list.at(i);
-		if(QMidiEvent::NoteOn == p_event->type()){
-			if(p_event->note() > highest_pitch){
-				highest_pitch = p_event->note();
-			}
-		}
-	}
-#define SCROLLING_UPPER_BORDER_IN_PITCH				(3)
-	int sequencer_height = ((highest_pitch + SCROLLING_UPPER_BORDER_IN_PITCH) - A0 - 1) * ONE_BEAT_HEIGHT;
-	m_scrollbar_minimum = QWidget::height() - sequencer_height;
-	if(sequencer_height < parent_size.height()){
-		//sequencer_height = ((parent_size.height()/ONE_BEAT_HEIGHT) + 1) * ONE_BEAT_HEIGHT;
-#define LINE_BORDER_WIDTH							(1)
-		sequencer_height = parent_size.height() + LINE_BORDER_WIDTH;
-		m_scrollbar_minimum = QWidget::height() - sequencer_height;
-	}
-
 	for(int j = 0; j < 2; j++){
 		for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 			m_rectangle_vector_list[j].append(QVector<QRect>());
@@ -176,7 +154,6 @@ NoteDurationWidget::NoteDurationWidget(TuneManager *p_tune_manager, QScrollBar *
 	}
 	m_drawing_rectangle_vector_list_index = 0;
 
-	m_p_scrollbar->setSingleStep(ONE_BEAT_HEIGHT);
 }
 
 /**********************************************************************************/
@@ -215,7 +192,7 @@ void NoteDurationWidget::SetChannelToDrawEnabled(int channel_index, bool is_enab
 QRect NoteDurationWidget::NoteToQRect(int start_tick, int end_tick, int tick_in_center, int note)
 {
 	int x = tickToX(start_tick, tick_in_center);
-	int y = QWidget::height() - (note - A0 - 1) * ONE_BEAT_HEIGHT;
+	int y = (m_drawn_highest_pitch - note) * ONE_BEAT_HEIGHT;
 	int width = tickToX(end_tick, tick_in_center) - x;
 	int height = ONE_BEAT_HEIGHT;
 
@@ -235,8 +212,7 @@ bool NoteDurationWidget::IsTickOutOfRightBound(int tick, int tick_in_center)
 void NoteDurationWidget::ReduceRectangles(int working_rectangle_vector_list_index)
 {
 	// Reduce the rectangles from out of the widget boundary.
-
-	int const right_endpoint = QWidget::width() + m_p_scrollbar->width() - 1;
+	int const right_endpoint = QWidget::width() - 1;
 	for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		QMutableVectorIterator<QRect> rect_vector_iterator(m_rectangle_vector_list[working_rectangle_vector_list_index][voice]);
 		while(rect_vector_iterator.hasNext()){
@@ -393,20 +369,6 @@ void NoteDurationWidget::paintEvent(QPaintEvent *event)
 	QMutexLocker locker(&m_mutex);
 	QWidget::paintEvent(event);
 
-	if(false == m_is_scrollbar_posistion_corrected){
-			QList<QMidiEvent*> midievent_list = m_p_tune_manager->GetMidiFilePointer()->events();
-			for(int i = 0; i < midievent_list.size(); i++){
-				QMidiEvent * const p_event = midievent_list.at(i);
-				if(QMidiEvent::NoteOn == p_event->type()){
-#define VERTICAL_SCROLLING_SHIFT					(16)
-					m_p_scrollbar->setValue(
-								(QWidget::height() - ((p_event->note() - A0 - 1) + VERTICAL_SCROLLING_SHIFT) * ONE_BEAT_HEIGHT));
-					break;
-				}
-			}
-			m_is_scrollbar_posistion_corrected = true;
-	}
-
 	QPainter painter(this);
 	//painter.setRenderHint(QPainter::Antialiasing);
 	for(int voice = MIDI_MAX_CHANNEL_NUMBER - 1; voice >= 0 ; voice--){
@@ -450,12 +412,7 @@ void NoteDurationWidget::paintEvent(QPaintEvent *event)
 
 void NoteDurationWidget::Update(void)
 {
-	m_p_scrollbar->setMinimum(m_scrollbar_minimum);
 	do {
-		if(false == m_is_scrollbar_posistion_corrected){
-			QWidget::update();
-			break;
-		}
 		QWidget::repaint();
 	} while(0);
 }
@@ -465,17 +422,65 @@ void NoteDurationWidget::Update(void)
 
 SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, double audio_out_latency_in_seconds,
 						 QScrollArea *p_parent_scroll_area)
+	: QWidget(p_parent_scroll_area),
+	  m_p_parent_scroll_area(p_parent_scroll_area)
 {
 	p_parent_scroll_area->setWidget(this);
 	QHBoxLayout *p_layout = new QHBoxLayout(this);
 	p_layout->setContentsMargins(0, 0, 0, 0);
 	p_layout->setSpacing(0);
 
-	m_p_note_name_widget = new NoteNameWidget(this);
-	m_p_note_duration_widget = new NoteDurationWidget(p_tune_manager, p_parent_scroll_area->verticalScrollBar(),
-								  audio_out_latency_in_seconds, this);
+	QList<QMidiEvent*> midievent_list = p_tune_manager->GetMidiFilePointer()->events();
+	int highest_pitch = A0;
+	int lowest_pitch = G9;
+	int first_note_pitch = 0;
+	for(int i = 0; i < midievent_list.size(); i++){
+		QMidiEvent * const p_event = midievent_list.at(i);
+		if(QMidiEvent::NoteOn == p_event->type()){
+
+			if(0 == first_note_pitch){
+				first_note_pitch = p_event->note();
+			}
+			if(p_event->note() > highest_pitch){
+				highest_pitch = p_event->note();
+			}
+			if(p_event->note() < lowest_pitch){
+				lowest_pitch = p_event->note();
+			}
+		}
+	}
+	(void)lowest_pitch;
+#define UPPER_BORDER_IN_PITCH						(3)
+	int drawn_hightest_pitch = highest_pitch;
+	do{
+		if(G9 - UPPER_BORDER_IN_PITCH < drawn_hightest_pitch){
+			drawn_hightest_pitch = G9;
+			break;
+		}
+		drawn_hightest_pitch = highest_pitch + UPPER_BORDER_IN_PITCH;
+	} while(0);
+
+	if((drawn_hightest_pitch - A0 + 1) * ONE_BEAT_HEIGHT < QWidget::height()){
+		drawn_hightest_pitch = (QWidget::height()/ONE_BEAT_HEIGHT) + 1;
+	}
+	m_p_note_name_widget = new NoteNameWidget(drawn_hightest_pitch, this);
+	m_p_note_duration_widget = new NoteDurationWidget(p_tune_manager, drawn_hightest_pitch, audio_out_latency_in_seconds, this);
 	p_layout->addWidget(m_p_note_name_widget);
 	p_layout->addWidget(m_p_note_duration_widget);
+	//p_parent_scroll_area->verticalScrollBar()->setSingleStep(ONE_BEAT_HEIGHT);
+
+	int original_middle_pitch = drawn_hightest_pitch - (p_parent_scroll_area->height()/2/ONE_BEAT_HEIGHT);
+	m_vertical_scrolling_shift = (original_middle_pitch - first_note_pitch) * ONE_BEAT_HEIGHT;
+	do {
+		if(m_vertical_scrolling_shift < 0){
+			m_vertical_scrolling_shift = 0;
+			break;
+		}
+
+		if(m_vertical_scrolling_shift > m_p_note_duration_widget->height() - p_parent_scroll_area->height()){
+			m_vertical_scrolling_shift = m_p_note_duration_widget->height() - p_parent_scroll_area->height();
+		}
+	}while(0);
 }
 
 /**********************************************************************************/
@@ -497,6 +502,19 @@ void SequencerWidget::Prepare(int tick_in_center)
 
 void SequencerWidget::Update(void)
 {
+	if(0 != m_vertical_scrolling_shift){
+		m_p_parent_scroll_area->verticalScrollBar()->setValue((0xFFFF & m_vertical_scrolling_shift));
+		do {
+		// To make the scolling valid, it is necessary to set verticalScrollBar value twice.
+		// TODO : to remove the ugly walk-around
+#define SHIFT_STAGE_BIT									(30)
+			if((0x01 << SHIFT_STAGE_BIT) & m_vertical_scrolling_shift){
+				m_vertical_scrolling_shift = 0;
+				break;
+			}
+			m_vertical_scrolling_shift |= (0x01 << SHIFT_STAGE_BIT);
+		} while (0);
+	}
 	m_p_note_duration_widget->Update();
 }
 
