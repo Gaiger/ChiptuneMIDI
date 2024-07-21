@@ -272,12 +272,12 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		p_layout->setSpacing(0);
 
 		NoteNameWidget *p_note_name_widget = new NoteNameWidget(p_widget);
-		SequencerWidget *p_sequencer_widget
-				= new SequencerWidget(m_p_tune_manager, ui->SequencerScrollArea->verticalScrollBar(),
+		NoteDurationWidget *p_note_duration_widget
+				= new NoteDurationWidget(m_p_tune_manager, ui->SequencerScrollArea->verticalScrollBar(),
 									  2 * m_audio_player_buffer_in_milliseconds/1000.0, p_widget);
-		m_p_sequencer_widget = p_sequencer_widget;
+		m_p_note_duration_widget = p_note_duration_widget;
 		p_layout->addWidget(p_note_name_widget);
-		p_layout->addWidget(p_sequencer_widget);
+		p_layout->addWidget(p_note_duration_widget);
 
 		ui->AmplitudeGainSlider->setValue(UINT16_MAX - m_p_tune_manager->GetAmplitudeGain());
 		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
@@ -298,21 +298,6 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		SetPlayPausePushButtonAsPlayIcon(false);
 		ui->SaveSaveFilePushButton->setEnabled(true);
 
-#if(0)
-		m_p_sequencer_widget->DrawSequencer();
-		m_p_sequencer_widget->PrepareSequencer(m_p_tune_manager->GetCurrentTick());
-		m_p_sequencer_widget->DrawSequencer();
-#if(0)
-		QEventLoop loop;
-		QObject::connect(m_p_sequencer_widget, &SequencerWidget::ReDrawed, &loop, &QEventLoop::quit);
-		do
-		{
-			loop.exec();
-		}while(0);
-#endif
-		m_p_sequencer_widget->PrepareSequencer(m_p_tune_manager->GetMidiFilePointer()->tickFromTime(INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS/1000.0f)
-											   + m_p_tune_manager->GetCurrentTick());
-#endif
 		SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(0);//walk-around : it makes the sequencer more smooth
 	}while(0);
 
@@ -325,7 +310,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 
 void ChiptuneMidiWidget::StopMidiFile(void)
 {
-	m_p_sequencer_widget = nullptr;
+	m_p_note_duration_widget = nullptr;
 
 	m_p_audio_player->Stop();
 	m_p_tune_manager->ClearOutMidiFile();
@@ -495,7 +480,7 @@ void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton bu
 void ChiptuneMidiWidget::HandleChannelOutputEnabled(int index, bool is_enabled)
 {
 	m_p_tune_manager->SetChannelOutputEnabled(index, is_enabled);
-	m_p_sequencer_widget->SetChannelToDrawEnabled(index, is_enabled);
+	m_p_note_duration_widget->SetChannelToDrawEnabled(index, is_enabled);
 }
 
 /**********************************************************************************/
@@ -556,8 +541,8 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 	}while(0);
 
 	if(event->timerId() == m_inquiring_playback_tick_timer_id){
-		m_p_sequencer_widget->DrawSequencer();
-		m_p_sequencer_widget->PrepareSequencer(m_p_tune_manager->GetMidiFilePointer()->tickFromTime(INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS/1000.0f)
+		m_p_note_duration_widget->Draw();
+		m_p_note_duration_widget->Prepare(m_p_tune_manager->GetMidiFilePointer()->tickFromTime(INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS/1000.0f)
 											   + m_p_tune_manager->GetCurrentTick());
 
 	}

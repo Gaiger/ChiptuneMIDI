@@ -21,17 +21,17 @@ private:
 };
 
 
-class SequencerWidget : public QWidget
+class NoteDurationWidget : public QWidget
 {
 	Q_OBJECT
 
 public:
-	explicit SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar,
+	explicit NoteDurationWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar,
 							 double audio_out_latency_in_seconds = 0.0, QWidget *parent = nullptr);
-	~SequencerWidget(void);
+	~NoteDurationWidget(void);
 public :
-	void PrepareSequencer(int tick_in_center);
-	void DrawSequencer(void);
+	void Prepare(int tick_in_center);
+	void Draw(void);
 
 	void SetChannelToDrawEnabled(int channel_index, bool is_enabled);
 private :

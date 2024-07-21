@@ -66,7 +66,7 @@ void NoteNameWidget::paintEvent(QPaintEvent *event) {
 #define ONE_BEAT_WIDTH					(64)
 #define ONE_BEAT_HEIGHT					(ONE_NAME_HEIGHT)
 
-SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar,
+NoteDurationWidget::NoteDurationWidget(TuneManager *p_tune_manager, QScrollBar *p_scrollbar,
 								 double audio_out_latency_in_seconds, QWidget *parent) :
 	QWidget(parent),
 	m_p_tune_manager(p_tune_manager),
@@ -120,11 +120,11 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, QScrollBar *p_scro
 
 /**********************************************************************************/
 
-SequencerWidget::~SequencerWidget(){ }
+NoteDurationWidget::~NoteDurationWidget(){ }
 
 /**********************************************************************************/
 
-int SequencerWidget::tickToX(int tick, int const tick_in_center)
+int NoteDurationWidget::tickToX(int tick, int const tick_in_center)
 {
 	int x = ONE_BEAT_WIDTH * (tick - tick_in_center)/(double)m_p_tune_manager->GetMidiFilePointer()->resolution();
 	x += QWidget::width()/2;
@@ -133,7 +133,7 @@ int SequencerWidget::tickToX(int tick, int const tick_in_center)
 
 /**********************************************************************************/
 
-int SequencerWidget::XtoTick(int x, int tick_in_center)
+int NoteDurationWidget::XtoTick(int x, int tick_in_center)
 {
 	int tick  = tick_in_center;
 	x -= QWidget::width()/2;
@@ -144,14 +144,14 @@ int SequencerWidget::XtoTick(int x, int tick_in_center)
 
 /**********************************************************************************/
 
-void SequencerWidget::SetChannelToDrawEnabled(int channel_index, bool is_enabled)
+void NoteDurationWidget::SetChannelToDrawEnabled(int channel_index, bool is_enabled)
 {
 	m_is_channel_to_draw[channel_index] = is_enabled;
 }
 
 /**********************************************************************************/
 
-QRect SequencerWidget::NoteToQRect(int start_tick, int end_tick, int tick_in_center, int note)
+QRect NoteDurationWidget::NoteToQRect(int start_tick, int end_tick, int tick_in_center, int note)
 {
 	int x = tickToX(start_tick, tick_in_center);
 	int y = QWidget::height() - (note - A0 - 1) * ONE_BEAT_HEIGHT;
@@ -163,7 +163,7 @@ QRect SequencerWidget::NoteToQRect(int start_tick, int end_tick, int tick_in_cen
 
 /**********************************************************************************/
 
-bool SequencerWidget::IsTickOutOfRightBound(int tick, int tick_in_center)
+bool NoteDurationWidget::IsTickOutOfRightBound(int tick, int tick_in_center)
 {
 	int tick_x_position = tickToX(tick, tick_in_center);
 	return (tick_x_position > QWidget::width() - 1) ? true : false;
@@ -171,7 +171,7 @@ bool SequencerWidget::IsTickOutOfRightBound(int tick, int tick_in_center)
 
 /**********************************************************************************/
 
-void SequencerWidget::ReduceRectangles(int working_rectangle_vector_list_index)
+void NoteDurationWidget::ReduceRectangles(int working_rectangle_vector_list_index)
 {
 	// Reduce the rectangles from out of the widget boundary.
 
@@ -209,7 +209,7 @@ void SequencerWidget::ReduceRectangles(int working_rectangle_vector_list_index)
 
 /**********************************************************************************/
 
-void SequencerWidget::PrepareSequencer(int const tick_in_center)
+void NoteDurationWidget::Prepare(int const tick_in_center)
 {
 	QMutexLocker locker(&m_mutex);
 	int working_rectangle_vector_list_index = (m_drawing_rectangle_vector_list_index + 1) % 2;
@@ -327,7 +327,7 @@ void SequencerWidget::PrepareSequencer(int const tick_in_center)
 
 /**********************************************************************************/
 
-void SequencerWidget::paintEvent(QPaintEvent *event)
+void NoteDurationWidget::paintEvent(QPaintEvent *event)
 {
 	QMutexLocker locker(&m_mutex);
 	QWidget::paintEvent(event);
@@ -387,7 +387,7 @@ void SequencerWidget::paintEvent(QPaintEvent *event)
 
 /**********************************************************************************/
 
-void SequencerWidget::DrawSequencer(void)
+void NoteDurationWidget::Draw(void)
 {
 	m_p_scrollbar->setMinimum(m_scrollbar_minimum);
 	do {
