@@ -279,7 +279,10 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		ui->PlayProgressSlider->setValue(0);
 		ui->PlayProgressSlider->SetPositionChangable(true);
 		m_p_wave_chartview->Reset();
+
+		// This will bring there is a jittering in the sequencer, but it makes the sequencer much more smooth.
 		m_p_audio_player->Play();
+
 		ui->SaveSaveFilePushButton->setEnabled(true);
 		message_string = QString::asprintf("Playing file");
 		ui->MessageLabel->setText(message_string);
