@@ -97,7 +97,7 @@ void NoteNameWidget::paintEvent(QPaintEvent *event)
 		QString note_name_string = note_name_string_list.at(kk % 12);
 		QString number_string = QString::number(kk / 12 + 1);;
 		note_name_string.replace("1", number_string);
-		painter.drawText( QPoint(ONE_NAME_WIDTH*1/8, (QWidget::height() - (4 + kk) * ONE_NAME_HEIGHT + ONE_NAME_HEIGHT*2/3)),
+		painter.drawText( QPoint(ONE_NAME_WIDTH*1/8, (QWidget::height() - (4 + kk) * ONE_NAME_HEIGHT + ONE_NAME_HEIGHT*3/4)),
 						  note_name_string);
 		kk += 1;
 	}
