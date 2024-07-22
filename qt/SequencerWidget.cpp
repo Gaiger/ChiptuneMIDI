@@ -10,6 +10,7 @@
 
 
 #define A0											(21)
+#define A4											(69)
 #define G9											(127)
 
 #define ONE_NAME_WIDTH								(64)
@@ -49,10 +50,25 @@ void NoteNameWidget::paintEvent(QPaintEvent *event)
 	QWidget::paintEvent(event);
 	QPainter painter(this);
 
+#define _A4_IN_SPECIAL_COLOR
+#ifdef _A4_IN_SPECIAL_COLOR
+	int index_of_A4 = m_drawn_highest_pitch - A4;
+	for(int i = 0; i < (m_drawn_highest_pitch - A0 + 1); i++){
+		if(i == index_of_A4){
+			continue;
+		}
+		painter.drawRect(QRect(0, i * ONE_NAME_HEIGHT, ONE_NAME_WIDTH, ONE_NAME_HEIGHT));
+	}
+	QBrush original_brush = painter.brush();
+	QColor parent_background_color = QWidget::parentWidget()->palette().color(QWidget::parentWidget()->backgroundRole());
+	painter.setBrush(QBrush(parent_background_color.lighter(200)));
+	painter.drawRect(QRect(0, index_of_A4 * ONE_NAME_HEIGHT, ONE_NAME_WIDTH, ONE_NAME_HEIGHT));
+	painter.setBrush(original_brush);
+#else
 	for(int i = 0; i < (m_drawn_highest_pitch -  A0 + 1); i++){
 		painter.drawRect(QRect(0, i * ONE_NAME_HEIGHT, ONE_NAME_WIDTH, ONE_NAME_HEIGHT));
 	}
-
+#endif
 	QFont font = painter.font() ;
 	font.setPointSize(ONE_NAME_HEIGHT/2);
 	font.setBold(true);
@@ -226,13 +242,13 @@ void NoteDurationWidget::ReduceRectangles(int working_rectangle_vector_list_inde
 
 			bool is_reduced = false;
 			do{
-				if(0 > rect.left()){
+				if(rect.left() < 0){
 					rect.setLeft(0);
 					is_reduced = true;
 				}
 
 				if(right_endpoint < rect.right()){
-					rect.setRight(right_endpoint - 1);
+					rect.setRight(right_endpoint);
 					is_reduced = true;
 				}
 			}while(0);
