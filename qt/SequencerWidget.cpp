@@ -131,13 +131,13 @@ private:
 
 	double m_audio_out_latency_in_seconds;
 
-	QList<QVector<QRect>>  m_rectangle_vector_list[2];
+	QList<QVector<QRect>> m_rectangle_vector_list[2];
 	int m_drawing_rectangle_vector_list_index;
 	bool m_is_channel_to_draw[MIDI_MAX_CHANNEL_NUMBER];
 
 	int m_last_sought_index;
 	int m_last_tick_in_center;
-
+	QList<QMidiEvent *> m_ignored_midi_event_ptr_list;
 	QMutex m_mutex;
 };
 
@@ -169,7 +169,7 @@ NoteDurationWidget::NoteDurationWidget(TuneManager *p_tune_manager, int drawn_hi
 		m_is_channel_to_draw[voice] = true;
 	}
 	m_drawing_rectangle_vector_list_index = 0;
-
+	m_ignored_midi_event_ptr_list.clear();
 }
 
 /**********************************************************************************/
@@ -322,6 +322,18 @@ void NoteDurationWidget::Prepare(int const tick_in_center)
 			}
 
 			if(QMidiEvent::NoteOff == p_event->type()){
+
+				bool is_ignored = false;
+				QListIterator<QMidiEvent*> ignored_midi_event_ptr_list_interator(m_ignored_midi_event_ptr_list);
+				while(ignored_midi_event_ptr_list_interator.hasNext()){
+					if(ignored_midi_event_ptr_list_interator.next() == p_event){
+						is_ignored = true;
+					}
+				}
+				if(true == is_ignored){
+					break;
+				}
+
 				bool is_matched = false;
 				int k;
 				for(k = 0; k < draw_note_list.size(); k++){
@@ -358,10 +370,13 @@ void NoteDurationWidget::Prepare(int const tick_in_center)
 						draw_note_list.removeAt(k);
 						break;
 					}
-
-					qDebug() << "WARNING :: note not matched : voice = " << p_event->voice()
+					qDebug() << "WARNING ::"<< Q_FUNC_INFO
+							 << ":: dangling off note :"
+							 << "tick =" << p_event->tick()
+							 << ", voice ="<< p_event->voice()
 							 << ", note =" << p_event->note()
 							 << "(might be double off)";
+					m_ignored_midi_event_ptr_list.append(p_event);
 				} while(0);
 			}
 		}while(0);

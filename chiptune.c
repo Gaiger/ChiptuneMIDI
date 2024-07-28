@@ -394,7 +394,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}
 
 		if(false == is_found){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR::no corresponding note for off :: tick = %u, voice = %d,  note = %u\r\n",
+			CHIPTUNE_PRINTF(cDeveloping, "WARNING::dangling off note:: tick = %u, voice = %d, note = %u\r\n",
 							tick, voice, note);
 			return -2;
 		}
