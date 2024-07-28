@@ -9,7 +9,7 @@
 #include "chiptune_event_internal.h"
 
 
-#define MAX_OSCILLATOR_NUMBER						(MIDI_MAX_CHANNEL_NUMBER * 28)
+#define MAX_OSCILLATOR_NUMBER						(512)
 
 static oscillator_t s_oscillators[MAX_OSCILLATOR_NUMBER];
 static int16_t s_occupied_oscillator_number = 0;
