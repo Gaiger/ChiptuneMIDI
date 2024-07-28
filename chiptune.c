@@ -1484,6 +1484,7 @@ float chiptune_get_tempo(void)
 
 void chiptune_set_playing_speed_ratio(float playing_speed_ratio)
 {
+	adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), chiptune_get_tempo() * playing_speed_ratio);
 	UPDATE_PLAYING_SPEED_RATIO(playing_speed_ratio);
 	update_effect_tick();
 	update_channel_controllers_parameters_related_to_tempo();
