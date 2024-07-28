@@ -631,9 +631,9 @@ uint32_t const get_upcoming_event_number(void)
 
 /**********************************************************************************/
 
-int adjust_event_triggering_tick_by_tempo(uint32_t const tick, float const new_tempo_multiply_playing_speed_ratio)
+int adjust_event_triggering_tick_by_playing_tempo(uint32_t const tick, float const new_playing_tempo)
 {
-	float tempo_ratio = new_tempo_multiply_playing_speed_ratio/get_tempo_mutliply_playing_speed_ratio();
+	float tempo_ratio = new_playing_tempo/get_playing_tempo();
 	uint16_t event_index = s_event_head_index;
 	bool is_reported = false;
 	for(int16_t i = 0; i < s_upcoming_event_number; i++){
@@ -650,7 +650,7 @@ int adjust_event_triggering_tick_by_tempo(uint32_t const tick, float const new_t
 			}
 			if(false == is_reported){
 				CHIPTUNE_PRINTF(cEventTriggering, "tick = %u, tempo change from %3.1f to %3.1f\r\n",
-								tick, get_tempo_mutliply_playing_speed_ratio(), new_tempo_multiply_playing_speed_ratio);
+								tick, get_playing_tempo(), new_playing_tempo);
 			}
 			is_reported = true;
 			CHIPTUNE_PRINTF(cEventTriggering, "event = %d, oscillator = %d, triggering_tick %u ->%u\r\n",

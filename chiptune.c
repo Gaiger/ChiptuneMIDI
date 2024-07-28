@@ -162,13 +162,17 @@ uint32_t const get_sampling_rate(void) { return s_sampling_rate; }
 
 uint32_t const get_resolution(void) { return s_resolution; }
 
-/**********************************************************************************/
-
-float const get_tempo_mutliply_playing_speed_ratio(void) { return s_tempo * s_playing_speed_ratio; }
 
 /**********************************************************************************/
 
 static float const get_playing_speed_ratio(void) {return s_playing_speed_ratio; }
+
+/**********************************************************************************/
+
+float const get_playing_tempo(void)
+{
+	return s_tempo * s_playing_speed_ratio;
+}
 
 /**********************************************************************************/
 
@@ -1460,17 +1464,17 @@ void chiptune_move_toward(uint32_t const index)
 void chiptune_set_tempo(float const tempo)
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %d, set tempo as %3.1f\r\n", CURRENT_TICK(), tempo);
-	adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), tempo * get_playing_speed_ratio());
+	adjust_event_triggering_tick_by_playing_tempo(CURRENT_TICK(), tempo * get_playing_speed_ratio());
 	UPDATE_TEMPO(tempo);
 	update_effect_tick();
-	update_channel_controllers_parameters_related_to_tempo();
+	update_channel_controllers_parameters_related_to_playing_tempo();
 }
 
 /**********************************************************************************/
 
 float chiptune_get_playing_tempo(void)
 {
-	return get_tempo_mutliply_playing_speed_ratio();
+	return get_playing_tempo();
 }
 
 /**********************************************************************************/
@@ -1484,10 +1488,10 @@ float chiptune_get_tempo(void)
 
 void chiptune_set_playing_speed_ratio(float playing_speed_ratio)
 {
-	adjust_event_triggering_tick_by_tempo(CURRENT_TICK(), chiptune_get_tempo() * playing_speed_ratio);
+	adjust_event_triggering_tick_by_playing_tempo(CURRENT_TICK(), chiptune_get_tempo() * playing_speed_ratio);
 	UPDATE_PLAYING_SPEED_RATIO(playing_speed_ratio);
 	update_effect_tick();
-	update_channel_controllers_parameters_related_to_tempo();
+	update_channel_controllers_parameters_related_to_playing_tempo();
 }
 
 /**********************************************************************************/

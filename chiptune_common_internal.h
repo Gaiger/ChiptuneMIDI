@@ -25,7 +25,7 @@
 
 uint32_t const get_sampling_rate(void);
 uint32_t const get_resolution(void);
-float const get_tempo_mutliply_playing_speed_ratio(void);
+float const get_playing_tempo(void);
 
 enum
 {

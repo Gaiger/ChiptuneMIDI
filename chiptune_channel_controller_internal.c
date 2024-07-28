@@ -60,14 +60,14 @@ void reset_channel_controller_midi_control_change_parameters(int8_t const index)
 
 /**********************************************************************************/
 
-static void update_channel_controller_envelope_parameters_related_to_tempo(int8_t const index)
+static void update_channel_controller_envelope_parameters_related_to_playing_tempo(int8_t const index)
 {
 	uint32_t const resolution = get_resolution();
-	float const tempo = get_tempo_mutliply_playing_speed_ratio();
+	float const playing_tempo = get_playing_tempo();
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
 
 	p_channel_controller->envelope_release_tick_number
-		= (uint16_t)(p_channel_controller->envelope_release_duration_in_seconds * resolution * tempo/60.0f + 0.5f);
+		= (uint16_t)(p_channel_controller->envelope_release_duration_in_seconds * resolution * playing_tempo/60.0f + 0.5f);
 }
 
 /**********************************************************************************/
@@ -209,7 +209,7 @@ int set_pitch_channel_parameters(int8_t const index, int8_t const waveform, uint
 		ret |= 0x01 << 3;
 	}
 #endif
-	update_channel_controller_envelope_parameters_related_to_tempo(index);
+	update_channel_controller_envelope_parameters_related_to_playing_tempo(index);
 	return ret;
 }
 
@@ -242,10 +242,10 @@ void reset_channel_controller_all_parameters(int8_t const index)
 
 /**********************************************************************************/
 
-void update_channel_controllers_parameters_related_to_tempo(void)
+void update_channel_controllers_parameters_related_to_playing_tempo(void)
 {
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-		update_channel_controller_envelope_parameters_related_to_tempo(voice);
+		update_channel_controller_envelope_parameters_related_to_playing_tempo(voice);
 	}
 }
 
@@ -338,7 +338,7 @@ void initialize_channel_controllers(void)
 	p_channel_controller->envelope_release_same_index_number
 		= (uint16_t)((get_sampling_rate() * DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS)
 					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
-	update_channel_controller_envelope_parameters_related_to_tempo(MIDI_PERCUSSION_INSTRUMENT_CHANNEL);
+	update_channel_controller_envelope_parameters_related_to_playing_tempo(MIDI_PERCUSSION_INSTRUMENT_CHANNEL);
 
 	for(int8_t i = PERCUSSION_CODE_MIN; i <= PERCUSSION_CODE_MAX; i++){
 		reset_percussion_all_parameters_from_index(i);

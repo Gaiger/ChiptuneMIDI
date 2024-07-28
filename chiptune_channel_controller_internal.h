@@ -134,7 +134,7 @@ typedef struct _percussion
 } percussion_t;
 
 void initialize_channel_controllers(void);
-void update_channel_controllers_parameters_related_to_tempo(void);
+void update_channel_controllers_parameters_related_to_playing_tempo(void);
 channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index);
 
 void reset_channel_controller_midi_control_change_parameters(int8_t const index);

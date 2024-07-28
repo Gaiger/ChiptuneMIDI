@@ -269,8 +269,8 @@ int process_effects(uint32_t const tick, int8_t const event_type,
 
 void update_effect_tick(void)
 {
-	float const tempo = get_tempo_mutliply_playing_speed_ratio();
+	float const playing_tempo = get_playing_tempo();
 	uint32_t const resolution = get_resolution();
-	s_min_reverb_delta_tick = (float)(EACH_REVERB_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND * tempo * resolution / 60.0);
-	s_min_chorus_delta_tick = (float)(EACH_CHORUS_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND * tempo * resolution / 60.0);
+	s_min_reverb_delta_tick = (float)(EACH_REVERB_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND * playing_tempo * resolution / 60.0);
+	s_min_chorus_delta_tick = (float)(EACH_CHORUS_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND * playing_tempo * resolution / 60.0);
 }
