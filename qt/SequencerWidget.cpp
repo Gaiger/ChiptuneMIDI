@@ -328,6 +328,7 @@ void NoteDurationWidget::Prepare(int const tick_in_center)
 				while(ignored_midi_event_ptr_list_interator.hasNext()){
 					if(ignored_midi_event_ptr_list_interator.next() == p_event){
 						is_ignored = true;
+						break;
 					}
 				}
 				if(true == is_ignored){
