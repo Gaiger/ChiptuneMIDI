@@ -25,7 +25,16 @@ public:
 		WAVEFORM_NOISE,
 	}; Q_ENUM(WaveformType)
 
+	void GetTimbre(int *p_waveform,
+				   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,
+				   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
+				   int *p_envelope_sustain_level,
+				   int *p_envelope_release_curve, double *p_envelope_release_duration_in_seconds,
+				   int *p_envelope_damper_on_but_note_off_sustain_level,
+				   int *p_envelope_damper_on_but_note_off_sustain_curve,
+				   double *p_envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 
+public:
 	signals:
 	void TimbreChanged(int index,
 					   int waveform,
@@ -56,6 +65,7 @@ private slots:
 	void on_DamperOnButNoteOffSustainCurveComboBox_currentIndexChanged(int index);
 	void on_DamperOnButNoteOffSustainSustainLevelSpinBox_valueChanged(int value);
 private :
+	WaveformType GetWaveform(void);
 	void EmitTimbreChanged(void);
 private:
 	int m_index;

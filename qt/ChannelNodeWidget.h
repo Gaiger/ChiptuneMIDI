@@ -7,6 +7,8 @@ namespace Ui {
 class ChannelNodeWidget;
 }
 
+class PitchTimbreFrame;
+
 class ChannelNodeWidget : public QWidget
 {
 	Q_OBJECT
@@ -16,6 +18,14 @@ public:
 							   QWidget *parent = nullptr);
 	~ChannelNodeWidget();
 
+	void GetTimbre(int *p_waveform,
+				   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,
+				   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
+				   int *p_envelope_sustain_level,
+				   int *p_envelope_release_curve, double *p_envelope_release_duration_in_seconds,
+				   int *p_envelope_damper_on_but_note_off_sustain_level,
+				   int *p_envelope_damper_on_but_note_off_sustain_curve,
+				   double *p_envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 public :
 	signals:
 void OutputEnabled(int index, bool is_enabled);
@@ -39,6 +49,7 @@ private:
 	QSize m_expanded_size;
 	QSize m_collapsed_size;
 
+	PitchTimbreFrame *m_p_pitchtimbre_frame;
 private:
 	Ui::ChannelNodeWidget *ui;
 };

@@ -1,12 +1,13 @@
 #include <QDebug>
 
-#include "PitchTimbreFrame.h"
 #include "TuneManager.h"
 #include "GetInstrumentNameString.h"
 
 #include "ui_PitchTimbreFrameForm.h"
 
 #include <QStandardItemModel>
+
+#include "PitchTimbreFrame.h"
 
 /**********************************************************************************/
 
@@ -49,7 +50,7 @@ PitchTimbreFrame::~PitchTimbreFrame(void)
 
 /**********************************************************************************/
 
-void PitchTimbreFrame::EmitTimbreChanged(void)
+PitchTimbreFrame::WaveformType PitchTimbreFrame::GetWaveform(void)
 {
 	int waveform;
 	switch(ui->WaveFormComboBox->currentIndex())
@@ -79,8 +80,14 @@ void PitchTimbreFrame::EmitTimbreChanged(void)
 		waveform =TuneManager::WAVEFORM_SAW;
 		break;
 	}
+	return (PitchTimbreFrame::WaveformType)waveform;
+}
 
-	emit TimbreChanged(m_index, waveform,
+/**********************************************************************************/
+
+void PitchTimbreFrame::EmitTimbreChanged(void)
+{
+	emit TimbreChanged(m_index, GetWaveform(),
 						ui->AttackCurveComboBox->currentIndex(), ui->AttackTimeSpinBox->value()/1000.0,
 						ui->DecayCurveComboBox->currentIndex(), ui->DecayTimeSpinBox->value()/1000.0,
 						ui->SustainLevelSpinBox->value(),
@@ -90,6 +97,34 @@ void PitchTimbreFrame::EmitTimbreChanged(void)
 						ui->DamperOnButNoteOffSustainTimeDoubleSpinBox->value());
 }
 
+/**********************************************************************************/
+
+void PitchTimbreFrame::GetTimbre(int *p_waveform,
+			   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,
+			   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
+			   int *p_envelope_sustain_level,
+			   int *p_envelope_release_curve, double *p_envelope_release_duration_in_seconds,
+			   int *p_envelope_damper_on_but_note_off_sustain_level,
+			   int *p_envelope_damper_on_but_note_off_sustain_curve,
+			   double *p_envelope_damper_on_but_note_off_sustain_duration_in_seconds)
+{
+	*p_waveform = GetWaveform();
+
+	*p_envelope_attack_curve = ui->AttackCurveComboBox->currentIndex();
+	*p_envelope_attack_duration_in_seconds = ui->AttackTimeSpinBox->value()/1000.0,
+
+	*p_envelope_decay_curve = ui->DecayCurveComboBox->currentIndex();
+	*p_envelope_decay_duration_in_seconds = ui->DecayTimeSpinBox->value()/1000.0;
+
+	*p_envelope_sustain_level = ui->SustainLevelSpinBox->value();
+
+	*p_envelope_release_curve = ui->ReleaseCurveComboBox->currentIndex();
+	*p_envelope_release_duration_in_seconds = ui->ReleaseTimeSpinBox->value()/1000.0;
+
+	*p_envelope_damper_on_but_note_off_sustain_level = ui->DamperOnButNoteOffSustainSustainLevelSpinBox->value();
+	*p_envelope_damper_on_but_note_off_sustain_curve = ui->DamperOnButNoteOffSustainCurveComboBox->currentIndex();
+	*p_envelope_damper_on_but_note_off_sustain_duration_in_seconds = ui->DamperOnButNoteOffSustainTimeDoubleSpinBox->value();
+}
 
 /**********************************************************************************/
 

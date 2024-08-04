@@ -13,6 +13,7 @@
 ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QWidget *parent) :
 	QWidget(parent),
 	m_channel_index(channel_index),
+	m_p_pitchtimbre_frame(new PitchTimbreFrame(channel_index, this)),
 	ui(new Ui::ChannelNodeWidget)
 {
 	ui->setupUi(this);
@@ -39,14 +40,13 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 	QString string = "#"+ QString::number(channel_index) +" " + instrument_name;
 	ui->ExpandCollapsePushButton->setStyleSheet("text-align:left;");
 	ui->ExpandCollapsePushButton->setText(string);
-	PitchTimbreFrame *p_pitchtimbre_frame = new PitchTimbreFrame(channel_index, this);
 
 	QGridLayout *p_layout = new QGridLayout(ui->PitchTimbreWidget);
-	p_layout->addWidget(p_pitchtimbre_frame, 0, 0);
+	p_layout->addWidget(m_p_pitchtimbre_frame, 0, 0);
 	p_layout->setContentsMargins(0, 0, 0, 0);
 	p_layout->setSpacing(0);
 
-	QObject::connect(p_pitchtimbre_frame, &PitchTimbreFrame::TimbreChanged, this,
+	QObject::connect(m_p_pitchtimbre_frame, &PitchTimbreFrame::TimbreChanged, this,
 					 &ChannelNodeWidget::TimbreChanged);
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == channel_index){
 		ui->ExpandCollapsePushButton->setEnabled(false);
@@ -59,6 +59,26 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 ChannelNodeWidget::~ChannelNodeWidget()
 {
 	delete ui;
+}
+
+/**********************************************************************************/
+
+void ChannelNodeWidget::GetTimbre(int *p_waveform,
+			   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,
+			   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
+			   int *p_envelope_sustain_level,
+			   int *p_envelope_release_curve, double *p_envelope_release_duration_in_seconds,
+			   int *p_envelope_damper_on_but_note_off_sustain_level,
+			   int *p_envelope_damper_on_but_note_off_sustain_curve,
+			   double *p_envelope_damper_on_but_note_off_sustain_duration_in_seconds)
+{
+	m_p_pitchtimbre_frame->GetTimbre(p_waveform, p_envelope_attack_curve, p_envelope_attack_duration_in_seconds,
+									 p_envelope_decay_curve, p_envelope_decay_duration_in_seconds,
+									 p_envelope_sustain_level,
+									 p_envelope_release_curve, p_envelope_release_duration_in_seconds,
+									 p_envelope_damper_on_but_note_off_sustain_level,
+									 p_envelope_damper_on_but_note_off_sustain_curve,
+									 p_envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 }
 
 /**********************************************************************************/
