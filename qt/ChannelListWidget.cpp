@@ -10,16 +10,16 @@ ChannelListWidget::ChannelListWidget(QWidget *parent) :
 	ui->setupUi(this);
 
 	QWidget *p_widget = new QWidget(this);
-	m_p_vboxlayout = new QVBoxLayout;
+	ui->scrollArea->setWidget(p_widget);
+
+	m_p_vboxlayout = new QVBoxLayout();
 	m_p_vboxlayout->setContentsMargins(0, 0, 0, 0);
 	m_p_vboxlayout->setSpacing(2);
 
-	QVBoxLayout *vBoxLayout = new QVBoxLayout(p_widget);
-	vBoxLayout->setContentsMargins(0, 0, 0, 0);
-	vBoxLayout->addLayout(m_p_vboxlayout);
-	vBoxLayout->addStretch(1);
-
-	ui->scrollArea->setWidget(p_widget);
+	QVBoxLayout *p_appending_spacer_vBoxLayout = new QVBoxLayout(p_widget);
+	p_appending_spacer_vBoxLayout->setContentsMargins(0, 0, 0, 0);
+	p_appending_spacer_vBoxLayout->addLayout(m_p_vboxlayout);
+	p_appending_spacer_vBoxLayout->addStretch(1);
 }
 
 /**********************************************************************************/
