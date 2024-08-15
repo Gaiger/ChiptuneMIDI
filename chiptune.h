@@ -9,7 +9,7 @@ extern "C"
 {
 #endif
 
-void chiptune_set_midi_message_callback(
+void chiptune_set_handler_get_midi_message(
 		int(*handler_get_midi_message)(uint32_t const index, uint32_t * const p_tick, uint32_t * const p_message) );
 
 

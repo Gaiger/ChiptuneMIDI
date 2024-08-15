@@ -149,7 +149,7 @@ static bool s_is_tune_ending = false;
 
 /**********************************************************************************/
 
-void chiptune_set_midi_message_callback( int(*handler_get_midi_message)(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message) )
+void chiptune_set_handler_get_midi_message( int(*handler_get_midi_message)(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message) )
 {
 	s_handler_get_midi_message = handler_get_midi_message;
 }

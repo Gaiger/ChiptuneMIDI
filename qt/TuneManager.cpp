@@ -111,7 +111,7 @@ TuneManager::TuneManager(bool is_stereo,
 	m_p_private->m_connection_type = Qt::AutoConnection;
 
 	s_p_private_instance = m_p_private;
-	chiptune_set_midi_message_callback(get_midi_message);
+	chiptune_set_handler_get_midi_message(get_midi_message);
 }
 
 /**********************************************************************************/
