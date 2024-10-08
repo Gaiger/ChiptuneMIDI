@@ -69,9 +69,10 @@ void NoteNameWidget::paintEvent(QPaintEvent *event)
 		painter.drawRect(QRect(0, i * ONE_NAME_HEIGHT, ONE_NAME_WIDTH, ONE_NAME_HEIGHT));
 	}
 #endif
-	QFont font = painter.font() ;
-	font.setPointSize(ONE_NAME_HEIGHT/2);
-	font.setBold(true);
+    QFont font = painter.font();
+#define ADDITIONAL_FONT_POINT_SIZE                  (2)
+    font.setPointSize(ONE_NAME_HEIGHT/2 + ADDITIONAL_FONT_POINT_SIZE);
+    //font.setBold(true);
 	painter.setFont(font);
 
 	painter.drawText( QPoint(ONE_NAME_WIDTH*1/8, (QWidget::height() - ONE_NAME_HEIGHT + ONE_NAME_HEIGHT*2/3)), "A0");
@@ -95,9 +96,9 @@ void NoteNameWidget::paintEvent(QPaintEvent *event)
 	int kk = 0;
 	for(int i = 3; i < (m_drawn_highest_pitch -  A0 + 1); i++){
 		QString note_name_string = note_name_string_list.at(kk % 12);
-		QString number_string = QString::number(kk / 12 + 1);;
+        QString number_string = QString::number(kk / 12 + 1);
 		note_name_string.replace("1", number_string);
-		painter.drawText( QPoint(ONE_NAME_WIDTH*1/8, (QWidget::height() - (4 + kk) * ONE_NAME_HEIGHT + ONE_NAME_HEIGHT*3/4)),
+        painter.drawText( QPoint(ONE_NAME_WIDTH*1/8, (QWidget::height() - (4 + kk) * ONE_NAME_HEIGHT + ONE_NAME_HEIGHT*3/4) + ADDITIONAL_FONT_POINT_SIZE/2),
 						  note_name_string);
 		kk += 1;
 	}
