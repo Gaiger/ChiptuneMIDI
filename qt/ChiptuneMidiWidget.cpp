@@ -396,10 +396,10 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 void ChiptuneMidiWidget::UpdateTempoLabelText(void)
 {
 	double tempo = m_p_tune_manager->GetTempo();
-	QString tempo_string = QString::asprintf("= %2.0f", tempo);
+    QString tempo_string = QString::asprintf(" = %2.0f", tempo);
 	do{
 		if( 0.1 < abs(tempo - (int)(tempo + 0.5))){
-			tempo_string = QString::asprintf("= %2.1f", tempo);
+            tempo_string = QString::asprintf(" = %2.1f", tempo);
 			break;
 		}
 	} while(0);
