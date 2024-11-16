@@ -1382,7 +1382,7 @@ int32_t s_loudness_nomalization_right_shift = DEFAULT_AMPLITUDE_NORMALIZATION_RI
 													}while(0)
 #define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE) >> s_loudness_nomalization_right_shift))
 #else
-#define DEFAULT_AMPLITUDE_NORMALIZATION_GAIN		(8192)
+#define DEFAULT_AMPLITUDE_NORMALIZATION_GAIN		(1024)
 static int32_t s_amplitude_normaliztion_gain = DEFAULT_AMPLITUDE_NORMALIZATION_GAIN;
 #define RESET_AMPLITUDE_NORMALIZATION_GAIN()		\
 													do { \
