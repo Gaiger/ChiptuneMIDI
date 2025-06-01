@@ -8,8 +8,11 @@
 
 #include "chiptune_event_internal.h"
 
-
+#ifdef _FIXED_MAX_OSCILLATOR_AND_EVENT_NUMBER
 #define MAX_OSCILLATOR_NUMBER						(512)
+#else
+
+#endif
 
 static oscillator_t s_oscillators[MAX_OSCILLATOR_NUMBER];
 static int16_t s_occupied_oscillator_number = 0;

@@ -3,11 +3,12 @@
 
 #include <stdint.h>
 
-#include "chiptune_midi_define_internal.h"
+#include "chiptune_midi_define_internal.h" // IWYU pragma: export
 
 //#define _INCREMENTAL_SAMPLE_INDEX
 //#define _AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
 //#define _KEEP_SET_BUT_EMPTY_NOTE_CHANNELS
+#define _FIXED_MAX_OSCILLATOR_AND_EVENT_NUMBER
 
 #define _PRINT_DEVELOPING
 //#define _PRINT_MIDI_NOTE
