@@ -21,6 +21,11 @@
 #define _CHECK_OCCUPIED_OSCILLATOR_LIST
 #define _CHECK_EVENT_LIST
 
+#ifndef _FIXED_MAX_OSCILLATOR_AND_EVENT_NUMBER
+inline void* chiptune_malloc(size_t size);
+void chiptune_free(void* ptr);
+#endif
+
 
 #define NULL_TICK									(UINT32_MAX)
 
@@ -38,4 +43,5 @@ enum
 
 void process_loudness_change(uint32_t const tick, int8_t const voice, int8_t const value,
 									int loudness_change_type);
+
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_

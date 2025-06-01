@@ -21,6 +21,7 @@ include(QMidi/src/QMidi.pri)
 SOURCES += \
         ../chiptune.c \
         ../chiptune_channel_controller_internal.c \
+        ../chiptune_common_internal.c \
         ../chiptune_midi_control_change_internal.c \
         ../chiptune_event_internal.c \
         ../chiptune_midi_effect_internal.c \
