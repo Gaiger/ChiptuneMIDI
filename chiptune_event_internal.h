@@ -26,7 +26,6 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 int process_events(uint32_t const tick);
 
 uint32_t const get_next_event_triggering_tick(void);
-uint32_t const get_upcoming_event_number(void);
 
 int adjust_event_triggering_tick_by_playing_tempo(uint32_t const tick, float const new_playing_tempo);
 

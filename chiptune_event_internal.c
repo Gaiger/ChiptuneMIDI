@@ -8,23 +8,45 @@
 
 #include "chiptune_event_internal.h"
 
-#ifdef _FIXED_MAX_OSCILLATOR_AND_EVENT_NUMBER
-#define MAX_OSCILLATOR_NUMBER						(512)
+#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+#define OCCUPIABLE_OSCILLATOR_CAPACITY                      (512)
 #else
 
 #endif
 
-static oscillator_t s_oscillators[MAX_OSCILLATOR_NUMBER];
+
 static int16_t s_occupied_oscillator_number = 0;
 
-struct _occupied_oscillator_node
+typedef struct _oscillator_node
 {
 	int16_t previous;
 	int16_t next;
-}s_occupied_oscillator_nodes[MAX_OSCILLATOR_NUMBER];
+}oscillator_node_t;
+
 
 int16_t s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
 int16_t s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
+
+#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+
+static oscillator_t s_oscillators[OCCUPIABLE_OSCILLATOR_CAPACITY];
+oscillator_node_t s_oscillator_nodes[OCCUPIABLE_OSCILLATOR_CAPACITY];
+
+/**********************************************************************************/
+
+static inline int16_t const get_occupiable_oscillator_capacity()
+{
+    return OCCUPIABLE_OSCILLATOR_CAPACITY;
+}
+
+/**********************************************************************************/
+
+static inline oscillator_node_t * const get_oscillator_node_pointer_from_index(int16_t const index)
+{
+    return &s_oscillator_nodes[index];
+}
+
+#endif
 
 #ifdef _CHECK_OCCUPIED_OSCILLATOR_LIST
 /**********************************************************************************/
@@ -53,10 +75,10 @@ static int check_occupied_oscillator_list(void)
 
 		current_index = s_occupied_oscillator_head_index;
 		counter= 1;
-		while(UNOCCUPIED_OSCILLATOR != s_occupied_oscillator_nodes[current_index].next)
+        while(UNOCCUPIED_OSCILLATOR != get_oscillator_node_pointer_from_index(current_index)->next)
 		{
-			counter += 1;
-			current_index = s_occupied_oscillator_nodes[current_index].next;
+            counter += 1;
+            current_index = get_oscillator_node_pointer_from_index(current_index)->next;
 		}
 		if(counter != s_occupied_oscillator_number){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: FORWARDING occupied_oscillators list length = %d"
@@ -67,10 +89,10 @@ static int check_occupied_oscillator_list(void)
 
 		current_index = s_occupied_oscillator_last_index;
 		counter = 1;
-		while(UNOCCUPIED_OSCILLATOR != s_occupied_oscillator_nodes[current_index].previous)
+        while(UNOCCUPIED_OSCILLATOR != get_oscillator_node_pointer_from_index(current_index)->previous)
 		{
 			counter += 1;
-			current_index = s_occupied_oscillator_nodes[current_index].previous;
+            current_index = get_oscillator_node_pointer_from_index(current_index)->previous;
 		}
 
 		if(counter != s_occupied_oscillator_number){
@@ -100,15 +122,17 @@ static int check_occupied_oscillator_list(void)
 static int occupy_oscillator(int16_t const index)
 {
 	do {
+        oscillator_node_t * const p_this_index_oscillator_node = get_oscillator_node_pointer_from_index(index);
 		if(0 == s_occupied_oscillator_number){
-			s_occupied_oscillator_nodes[index].previous = UNOCCUPIED_OSCILLATOR;
-			s_occupied_oscillator_nodes[index].next = UNOCCUPIED_OSCILLATOR;
+            p_this_index_oscillator_node->previous = UNOCCUPIED_OSCILLATOR;
+            p_this_index_oscillator_node->next = UNOCCUPIED_OSCILLATOR;
 			s_occupied_oscillator_head_index = index;
 			break;
 		}
-		s_occupied_oscillator_nodes[s_occupied_oscillator_last_index].next = index;
-		s_occupied_oscillator_nodes[index].previous = s_occupied_oscillator_last_index;
-		s_occupied_oscillator_nodes[index].next = UNOCCUPIED_OSCILLATOR;
+
+        get_oscillator_node_pointer_from_index(s_occupied_oscillator_last_index)->next = index;
+        p_this_index_oscillator_node->previous = s_occupied_oscillator_last_index;
+        p_this_index_oscillator_node->next = UNOCCUPIED_OSCILLATOR;
 	} while(0);
 	s_occupied_oscillator_last_index = index;
 	s_occupied_oscillator_number += 1;
@@ -120,11 +144,11 @@ static int occupy_oscillator(int16_t const index)
 
 oscillator_t * const acquire_event_freed_oscillator(int16_t * const p_index)
 {
-	if(MAX_OSCILLATOR_NUMBER == s_occupied_oscillator_number){
+    if(get_occupiable_oscillator_capacity() == s_occupied_oscillator_number){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillators are used\r\n");
 		return NULL;
 	}
-	for(int16_t i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+    for(int16_t i = 0; i < get_occupiable_oscillator_capacity(); i++){
 		if(UNOCCUPIED_OSCILLATOR == s_oscillators[i].voice){
 			*p_index = i;
 			occupy_oscillator(i);
@@ -140,8 +164,9 @@ oscillator_t * const acquire_event_freed_oscillator(int16_t * const p_index)
 
 static int discard_oscillator(int16_t const index)
 {
-	int16_t previous_index = s_occupied_oscillator_nodes[index].previous;
-	int16_t next_index = s_occupied_oscillator_nodes[index].next;
+    oscillator_node_t * const p_this_index_oscillator_node = get_oscillator_node_pointer_from_index(index);
+    int16_t previous_index = p_this_index_oscillator_node->previous;
+    int16_t next_index = p_this_index_oscillator_node->next;
 
 	do {
 		if(0 == s_occupied_oscillator_number){
@@ -159,22 +184,22 @@ static int discard_oscillator(int16_t const index)
 	do {
 		if(index == s_occupied_oscillator_head_index){
 			s_occupied_oscillator_head_index = next_index;
-			s_occupied_oscillator_nodes[s_occupied_oscillator_head_index].previous = UNOCCUPIED_OSCILLATOR;
+            get_oscillator_node_pointer_from_index(s_occupied_oscillator_head_index)->previous = UNOCCUPIED_OSCILLATOR;
 			break;
 		}
 
 		if(index == s_occupied_oscillator_last_index){
 			s_occupied_oscillator_last_index = previous_index;
-			s_occupied_oscillator_nodes[s_occupied_oscillator_last_index].next = UNOCCUPIED_OSCILLATOR;
+            get_oscillator_node_pointer_from_index(s_occupied_oscillator_last_index)->next = UNOCCUPIED_OSCILLATOR;
 			break;
 		}
 
-		s_occupied_oscillator_nodes[previous_index].next = next_index;
-		s_occupied_oscillator_nodes[next_index].previous = previous_index;
+        get_oscillator_node_pointer_from_index(previous_index)->next = next_index;
+        get_oscillator_node_pointer_from_index(next_index)->previous = previous_index;
 	} while (0);
 
-	s_occupied_oscillator_nodes[index].previous = UNOCCUPIED_OSCILLATOR;
-	s_occupied_oscillator_nodes[index].next = UNOCCUPIED_OSCILLATOR;
+    p_this_index_oscillator_node->previous = UNOCCUPIED_OSCILLATOR;
+    p_this_index_oscillator_node->next = UNOCCUPIED_OSCILLATOR;
 	s_oscillators[index].voice = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number -= 1;
 	CHECK_OCCUPIED_OSCILLATOR_LIST();
@@ -204,19 +229,19 @@ int16_t const get_event_occupied_oscillator_head_index()
 
 int16_t const get_event_occupied_oscillator_next_index(int16_t const index)
 {
-	if(false == (index >= 0 && index < MAX_OSCILLATOR_NUMBER) ){
+    if(false == (index >= 0 && index < get_occupiable_oscillator_capacity()) ){
 		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
 		return UNOCCUPIED_OSCILLATOR;
 	}
 
-	return 	s_occupied_oscillator_nodes[index].next;
+    return get_oscillator_node_pointer_from_index(index)->next;
 }
 
 /**********************************************************************************/
 
 oscillator_t * const get_event_oscillator_pointer_from_index(int16_t const index)
 {
-	if(false == (index >= 0 && index < MAX_OSCILLATOR_NUMBER) ){
+    if(false == (index >= 0 && index < get_occupiable_oscillator_capacity()) ){
 		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
 		return NULL;
 	}
@@ -228,11 +253,12 @@ oscillator_t * const get_event_oscillator_pointer_from_index(int16_t const index
 
 static void reset_all_event_oscillators(void)
 {
-	for(int16_t i = 0; i < MAX_OSCILLATOR_NUMBER; i++){
+    for(int16_t i = 0; i < get_occupiable_oscillator_capacity(); i++){
 		s_oscillators[i].voice = UNOCCUPIED_OSCILLATOR;
-		s_occupied_oscillator_nodes[i]
-				= (struct _occupied_oscillator_node){.previous = UNOCCUPIED_OSCILLATOR, .next = UNOCCUPIED_OSCILLATOR};
-	}
+        oscillator_node_t * const p_oscillator_node = get_oscillator_node_pointer_from_index(i);
+        p_oscillator_node->previous = UNOCCUPIED_OSCILLATOR;
+        p_oscillator_node->next = UNOCCUPIED_OSCILLATOR;
+	}    
 	s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number = 0;
@@ -241,7 +267,7 @@ static void reset_all_event_oscillators(void)
 /**********************************************************************************/
 /**********************************************************************************/
 
-#define MAX_EVENT_NUMBER							(MAX_OSCILLATOR_NUMBER * 3 / 2)
+#define QUEUABLE_EVENT_CAPACITY							(OCCUPIABLE_OSCILLATOR_CAPACITY * 3 / 2)
 
 enum
 {
@@ -249,35 +275,57 @@ enum
 	EVENT_DISCARD = (EVENT_TYPE_MAX + 1),
 };
 
-struct _event
+typedef struct _event
 {
 	int8_t	type;
 	uint8_t : 8;
-	int16_t oscillator;
+    int16_t oscillator_index;
 	uint32_t triggering_tick;
-	int16_t next_event;
-} s_events[MAX_EVENT_NUMBER];
+    int16_t next_event_index;
+} event_t;
+
+#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+
+static event_t s_events[QUEUABLE_EVENT_CAPACITY];
+
+/**********************************************************************************/
+
+static inline int16_t const get_queuable_event_capacity()
+{
+    return QUEUABLE_EVENT_CAPACITY;
+}
+
+/**********************************************************************************/
+
+static inline event_t * const get_event_pointer_from_index(int16_t const index)
+{
+    return &s_events[index];
+}
+
+/**********************************************************************************/
+
+#endif
 
 #define NO_EVENT									(-1)
 
-int16_t s_upcoming_event_number = 0;
-int16_t s_event_head_index = NO_EVENT;
+int16_t s_queued_event_number = 0;
+int16_t s_queued_event_head_index = NO_EVENT;
 
 #ifdef _CHECK_EVENT_LIST
 /**********************************************************************************/
 
-static int check_upcoming_events(uint32_t const tick)
+static int check_queued_events(uint32_t const tick)
 {
 	int ret = 0;
-	int16_t index = s_event_head_index;
+    int16_t index = s_queued_event_head_index;
 	do {
-		if(NO_EVENT != s_event_head_index){
+        if(NO_EVENT != s_queued_event_head_index){
 			break;
 		}
-		if(0 != s_upcoming_event_number){
+        if(0 != s_queued_event_number){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: tick = %u,"
-										 " event head is NO_EVENT but s_upcoming_event_number = %d\r\n",
-										s_upcoming_event_number);
+                                         " event head is NO_EVENT but s_queued_event_number = %d\r\n",
+                                        tick, s_queued_event_number);
 			ret = -1;
 			break;
 		}
@@ -289,29 +337,31 @@ static int check_upcoming_events(uint32_t const tick)
 			break;
 		}
 		uint32_t previous_tick = 0;
-		for(int16_t i = 0; i < s_upcoming_event_number; i++){
-			if(UNUSED_EVENT == s_events[index].type){
+        for(int16_t i = 0; i < s_queued_event_number; i++){
+            event_t * const p_event = get_event_pointer_from_index(index);
+            if(UNUSED_EVENT == p_event->type){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event %d is UNUSED_EVENT but on the list\r\n", index);
 				is_listing_error_occur = true;
 			}
-			if(previous_tick > s_events[index].triggering_tick){
+            if(previous_tick > p_event->triggering_tick){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event is not in time order\r\n");
 				is_listing_error_occur = true;
 			}
-			if(UNOCCUPIED_OSCILLATOR == s_events[index].oscillator){
+            if(UNOCCUPIED_OSCILLATOR == p_event->oscillator_index){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event %d oscillator is UNOCCUPIED_OSCILLATOR\r\n", index);
 				is_listing_error_occur = true;
 			}
-			if(UNOCCUPIED_OSCILLATOR == get_event_oscillator_pointer_from_index(s_events[index].oscillator)->voice){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: oscillator %d is UNOCCUPIED_OSCILLATOR\r\n", s_events[index].oscillator);
+            if(UNOCCUPIED_OSCILLATOR == get_event_oscillator_pointer_from_index(p_event->oscillator_index)->voice){
+                CHIPTUNE_PRINTF(cDeveloping, "ERROR:: oscillator %d is UNOCCUPIED_OSCILLATOR\r\n",
+                                p_event->oscillator_index);
 				is_listing_error_occur = true;
 			}
 
 			if(true == is_listing_error_occur){
 				break;
 			}
-			previous_tick = s_events[index].triggering_tick;
-			index = s_events[index].next_event;
+            previous_tick = p_event->triggering_tick;
+            index = p_event->next_event_index;
 		}
 	} while(0);
 
@@ -320,11 +370,12 @@ static int check_upcoming_events(uint32_t const tick)
 			break;
 		}
 		CHIPTUNE_PRINTF(cDeveloping, "tick = %u\r\n", tick);
-		index = s_event_head_index;
-		for(int16_t i = 0; i < s_upcoming_event_number; i++){
+        index = s_queued_event_head_index;
+        for(int16_t i = 0; i < s_queued_event_number; i++){
+            event_t * const p_event = get_event_pointer_from_index(index);
 			CHIPTUNE_PRINTF(cDeveloping, "event = %d, type = %d, oscillator = %d, triggering_tick = %u\r\n",
-							index, s_events[index].type, s_events[index].oscillator, s_events[index].triggering_tick);
-			index = s_events[index].next_event;
+                            index, p_event->type, p_event->oscillator_index, p_event->triggering_tick);
+            index = p_event->next_event_index;
 		}
 		CHIPTUNE_PRINTF(cDeveloping, "-------------------------------------------------\r\n");
 		CHIPTUNE_PRINTF(cDeveloping, "-------------------------------------------------\r\n");
@@ -333,13 +384,13 @@ static int check_upcoming_events(uint32_t const tick)
 
 	return ret;
 }
-#define CHECK_UPCOMING_EVENTS(TICK)					\
+#define CHECK_QUEUED_EVENTS(TICK)					\
 													do { \
-														check_upcoming_events((TICK)); \
+                                                        check_queued_events((TICK)); \
 													} while(0)
 
 #else
-#define CHECK_UPCOMING_EVENTS(TICK)					\
+#define CHECK_QUEUED_EVENTS(TICK)					\
 													do { \
 														(void)0; \
 													} while(0)
@@ -349,7 +400,7 @@ static int check_upcoming_events(uint32_t const tick)
 
 int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const triggering_tick)
 {
-	if(MAX_EVENT_NUMBER == s_upcoming_event_number){
+    if(get_queuable_event_capacity() == s_queued_event_number){
 		CHIPTUNE_PRINTF(cDeveloping, "No unused event is available\r\n");
 		return -1;
 	}
@@ -360,51 +411,52 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 
 	do {
 		int16_t current_index;
-		for(current_index = 0; current_index < MAX_EVENT_NUMBER; current_index++){
-			if(UNUSED_EVENT == s_events[current_index].type){
+        for(current_index = 0; current_index < get_queuable_event_capacity(); current_index++){
+            if(UNUSED_EVENT == get_event_pointer_from_index(current_index)->type){
 				break;
 			}
 		}
-		if(MAX_EVENT_NUMBER == current_index){
+        if(get_queuable_event_capacity() == current_index){
 			CHIPTUNE_PRINTF(cDeveloping, "No available event is found\r\n");
 			return -2;
 		}
 
-		s_events[current_index].type = type;
-		s_events[current_index].oscillator = oscillator_index;
-		s_events[current_index].triggering_tick = triggering_tick;
-		s_events[current_index].next_event = NO_EVENT;
+        event_t * const p_current_event = get_event_pointer_from_index(current_index);
+        p_current_event->type = type;
+        p_current_event->oscillator_index = oscillator_index;
+        p_current_event->triggering_tick = triggering_tick;
+        p_current_event->next_event_index = NO_EVENT;
 
-		if(0 == s_upcoming_event_number){
-			s_event_head_index = current_index;
+        if(0 == s_queued_event_number){
+            s_queued_event_head_index = current_index;
 			break;
 		}
 
-		if(s_events[current_index].triggering_tick < s_events[s_event_head_index].triggering_tick){
-			s_events[current_index].next_event = s_event_head_index;
-			s_event_head_index = current_index;
+        if(p_current_event->triggering_tick < get_event_pointer_from_index(s_queued_event_head_index)->triggering_tick){
+            p_current_event->next_event_index = s_queued_event_head_index;
+            s_queued_event_head_index = current_index;
 			break;
 		}
 
-		int16_t previous_index = s_event_head_index;
+        int16_t previous_index = s_queued_event_head_index;
 		int16_t kk;
-		for(kk = 1; kk < s_upcoming_event_number; kk++){
-			int16_t next_index = s_events[previous_index].next_event;
-			if(s_events[current_index].triggering_tick < s_events[next_index].triggering_tick){
-				s_events[previous_index].next_event = current_index;
-				s_events[current_index].next_event = next_index;
+        for(kk = 1; kk < s_queued_event_number; kk++){
+            int16_t next_index = get_event_pointer_from_index(previous_index)->next_event_index;
+            if(p_current_event->triggering_tick < get_event_pointer_from_index(next_index)->triggering_tick){
+                get_event_pointer_from_index(previous_index)->next_event_index = current_index;
+                p_current_event->next_event_index = next_index;
 				break;
 			}
 			previous_index = next_index;
 		}
 
-		if(s_upcoming_event_number == kk){
-			s_events[previous_index].next_event = current_index;
+        if(s_queued_event_number == kk){
+            get_event_pointer_from_index(previous_index)->next_event_index = current_index;
 		}
 	} while(0);
-	s_upcoming_event_number += 1;
+    s_queued_event_number += 1;
 
-	oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+    oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
 	switch(type)
 	{
 	case EVENT_FREE:
@@ -417,16 +469,18 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 		break;
 	}
 
-	CHECK_UPCOMING_EVENTS(s_events[s_event_head_index].triggering_tick);
+    CHECK_QUEUED_EVENTS(get_event_pointer_from_index(s_queued_event_head_index)->triggering_tick);
 	return 0;
 }
 
 /**********************************************************************************/
+
 static char s_event_additional_string[32];
 
 static inline char const * const event_additional_string(int16_t const event_index)
 {
-	oscillator_t const * const p_oscillator = get_event_oscillator_pointer_from_index(s_events[event_index].oscillator);
+    oscillator_t const * const p_oscillator
+        = get_event_oscillator_pointer_from_index(get_event_pointer_from_index(event_index)->oscillator_index);
 	channel_controller_t const * const p_channel_controller =
 			get_channel_controller_pointer_from_index(p_oscillator->voice);
 	snprintf(&s_event_additional_string[0], sizeof(s_event_additional_string), "");
@@ -497,28 +551,30 @@ static inline char const * const event_additional_string(int16_t const event_ind
 
 int process_events(uint32_t const tick)
 {
-	while(NO_EVENT != s_event_head_index)
+    while(NO_EVENT != s_queued_event_head_index)
 	{
-		if(s_events[s_event_head_index].triggering_tick > tick){
+        event_t * const p_head_event = get_event_pointer_from_index(s_queued_event_head_index);
+        if(p_head_event->triggering_tick > tick){
 			break;
 		}
 
-		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(s_events[s_event_head_index].oscillator);
+        oscillator_t * const p_oscillator
+            = get_event_oscillator_pointer_from_index(p_head_event->oscillator_index);
 		channel_controller_t const * const p_channel_controller =
 				get_channel_controller_pointer_from_index(p_oscillator->voice);
 
-		int8_t const event_type = s_events[s_event_head_index].type;
+        int8_t const event_type = p_head_event->type;
 		switch(event_type)
 		{
 		case EVENT_ACTIVATE:
 			CHIPTUNE_PRINTF(cEventTriggering,
 							"tick = %u, ACTIVATE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
-							tick, s_events[s_event_head_index].oscillator,
+                            tick, p_head_event->oscillator_index,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness,
-							event_additional_string(s_event_head_index));
+                            event_additional_string(s_queued_event_head_index));
 			if(true == IS_ACTIVATED(p_oscillator->state_bits)){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: activate an activated oscillator = %d\r\n",
-								s_events[s_event_head_index].oscillator);
+                                p_head_event->oscillator_index);
 				return -1;
 			}
 			SET_ACTIVATED(p_oscillator->state_bits);
@@ -528,47 +584,47 @@ int process_events(uint32_t const tick)
 		case EVENT_FREE:
 			CHIPTUNE_PRINTF(cEventTriggering,
 							"tick = %u, FREE oscillator = %d, voice = %d, note = %d, amplitude = %2.1f%% of loudness %s\r\n",
-							tick, s_events[s_event_head_index].oscillator,
+                            tick, p_head_event->oscillator_index,
 							p_oscillator->voice, p_oscillator->note,
 							100.0f * p_oscillator->release_reference_amplitude/(float)p_oscillator->loudness,
-							event_additional_string(s_event_head_index));
+                            event_additional_string(s_queued_event_head_index));
 			if(true == IS_FREEING(p_oscillator->state_bits)) {
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: free a freeing oscillator = %d\r\n",
-							s_events[s_event_head_index].oscillator);
+                            p_head_event->oscillator_index);
 				return -1;
 			}
 			SET_FREEING(p_oscillator->state_bits);
 			do {
 #if(0)
 				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice){
-					put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator, tick);
+                    put_event(EVENT_DISCARD, p_head_event->oscillator_index, tick);
 					break;
 				}
 #endif
 				/*It does not a matter there is a postponement to discard the resting oscillator*/
 				setup_envelope_state(p_oscillator, ENVELOPE_STATE_RELEASE);
-				put_event(EVENT_DISCARD, s_events[s_event_head_index].oscillator,
+                put_event(EVENT_DISCARD, p_head_event->oscillator_index,
 				tick + p_channel_controller->envelope_release_tick_number);
 			} while(0);
 			break;
 
 		case EVENT_REST:
 			CHIPTUNE_PRINTF(cEventTriggering,
-							"tick = %u, REST oscillator = %d, voice = %d, note = %d, amplitude = %2.1f%% of loudness %s\r\n",
-							tick, s_events[s_event_head_index].oscillator,
+                            "tick = %u, REST oscillator = %d, voice = %d, note = %d, amplitude = %2.1f%% of loudness %s\r\n",
+                            tick, p_head_event->oscillator_index,
 							p_oscillator->voice, p_oscillator->note,
 							100.0f * p_oscillator->release_reference_amplitude/(float)p_oscillator->loudness,
-							event_additional_string(s_event_head_index));
+                            event_additional_string(s_queued_event_head_index));
 			if(true == IS_FREEING(p_oscillator->state_bits)
 					&& true == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
-				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: rest a freeing native oscillator = %d\r\n",
-							s_events[s_event_head_index].oscillator);
+                CHIPTUNE_PRINTF(cDeveloping, "WARNING :: rest a freeing native oscillator = %d\r\n",
+                            p_head_event->oscillator_index);
 				break;
 			}
 			if(true == IS_RESTING(p_oscillator->state_bits)
 					&& true == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
-				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: rest a resting native oscillator = %d\r\n",
-							s_events[s_event_head_index].oscillator);
+                CHIPTUNE_PRINTF(cDeveloping, "WARNING :: rest a resting native oscillator = %d\r\n",
+                            p_head_event->oscillator_index);
 				break;
 			}
 			SET_RESTING(p_oscillator->state_bits);
@@ -577,29 +633,29 @@ int process_events(uint32_t const tick)
 		case EVENT_DEACTIVATE:
 			CHIPTUNE_PRINTF(cEventTriggering,
 							"tick = %u, DEACTIVATE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
-							tick, s_events[s_event_head_index].oscillator,
+                            tick, p_head_event->oscillator_index,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness,
-							event_additional_string(s_event_head_index));
+                            event_additional_string(s_queued_event_head_index));
 			SET_DEACTIVATED(p_oscillator->state_bits);
 			break;
 		case EVENT_DISCARD:
 			CHIPTUNE_PRINTF(cEventTriggering,
 							"tick = %u, DISCARD oscillator = %d, voice = %d, note = %d, amplitude = %1.2f%% of loudness %s\r\n",
-							tick, s_events[s_event_head_index].oscillator,
+                            tick, p_head_event->oscillator_index,
 							p_oscillator->voice, p_oscillator->note,
 							100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness,
-							event_additional_string(s_event_head_index));
-			discard_oscillator(s_events[s_event_head_index].oscillator);
+                            event_additional_string(s_queued_event_head_index));
+            discard_oscillator(p_head_event->oscillator_index);
 			break;
 		default:
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: UNKOWN event type = %d\r\n");
 			break;
 		}
-		s_events[s_event_head_index].type = UNUSED_EVENT;
-		s_event_head_index = s_events[s_event_head_index].next_event;
-		s_upcoming_event_number -= 1;
+        p_head_event->type = UNUSED_EVENT;
+        s_queued_event_head_index = p_head_event->next_event_index;
+        s_queued_event_number -= 1;
 	}
-	CHECK_UPCOMING_EVENTS(tick);
+    CHECK_QUEUED_EVENTS(tick);
 	return 0;
 }
 
@@ -608,28 +664,21 @@ int process_events(uint32_t const tick)
 void clean_all_events(void)
 {
 	reset_all_event_oscillators();
-	for(int16_t i = 0; i < MAX_EVENT_NUMBER; i++){
-		s_events[i].type = UNUSED_EVENT;
+    for(int16_t i = 0; i < get_queuable_event_capacity(); i++){
+        get_event_pointer_from_index(i)->type = UNUSED_EVENT;
 	}
-	s_upcoming_event_number = 0;
+    s_queued_event_number = 0;
 }
 
 /**********************************************************************************/
 
 uint32_t const get_next_event_triggering_tick(void)
 {
-	if(0 == s_upcoming_event_number){
+    if(0 == s_queued_event_number){
 			return NULL_TICK;
 	}
 
-	return s_events[s_event_head_index].triggering_tick;
-}
-
-/**********************************************************************************/
-
-uint32_t const get_upcoming_event_number(void)
-{
-	return s_upcoming_event_number;
+    return get_event_pointer_from_index(s_queued_event_head_index)->triggering_tick;
 }
 
 /**********************************************************************************/
@@ -637,18 +686,19 @@ uint32_t const get_upcoming_event_number(void)
 int adjust_event_triggering_tick_by_playing_tempo(uint32_t const tick, float const new_playing_tempo)
 {
 	float tempo_ratio = new_playing_tempo/get_playing_tempo();
-	uint16_t event_index = s_event_head_index;
+    uint16_t event_index = s_queued_event_head_index;
 	bool is_reported = false;
-	for(int16_t i = 0; i < s_upcoming_event_number; i++){
+    for(int16_t i = 0; i < s_queued_event_number; i++){
+        event_t * const p_event = get_event_pointer_from_index(event_index);
 		do
 		{
-			if(tick >= s_events[event_index].triggering_tick){
+            if(tick >= p_event->triggering_tick){
 				break;
 			}
 
 			uint32_t const triggering_tick =
-					(uint32_t)((s_events[event_index].triggering_tick - tick) * tempo_ratio) + tick;
-			if(triggering_tick == s_events[event_index].triggering_tick){
+                    (uint32_t)((p_event->triggering_tick - tick) * tempo_ratio) + tick;
+            if(triggering_tick == p_event->triggering_tick){
 				break;
 			}
 			if(false == is_reported){
@@ -657,11 +707,11 @@ int adjust_event_triggering_tick_by_playing_tempo(uint32_t const tick, float con
 			}
 			is_reported = true;
 			CHIPTUNE_PRINTF(cEventTriggering, "event = %d, oscillator = %d, triggering_tick %u ->%u\r\n",
-							event_index, s_events[event_index].oscillator,
-							s_events[event_index].triggering_tick, triggering_tick);
-			s_events[event_index].triggering_tick = triggering_tick;
+                            event_index, p_event->oscillator_index,
+                            p_event->triggering_tick, triggering_tick);
+            p_event->triggering_tick = triggering_tick;
 		} while(0);
-		event_index = s_events[event_index].next_event;
+        event_index = p_event->next_event_index;
 	}
 
 	if(true == is_reported){
