@@ -9,13 +9,8 @@
 #include "chiptune_event_internal.h"
 
 #ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
-#define OCCUPIABLE_OSCILLATOR_CAPACITY                      (512)
-#else
-
+    #define OCCUPIABLE_OSCILLATOR_CAPACITY                      (512)
 #endif
-
-
-static int16_t s_occupied_oscillator_number = 0;
 
 typedef struct _oscillator_node
 {
@@ -23,15 +18,16 @@ typedef struct _oscillator_node
 	int16_t next;
 }oscillator_node_t;
 
+#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+static oscillator_t s_oscillators[OCCUPIABLE_OSCILLATOR_CAPACITY];
+oscillator_node_t s_oscillator_nodes[OCCUPIABLE_OSCILLATOR_CAPACITY];
+#endif
 
+static int16_t s_occupied_oscillator_number = 0;
 int16_t s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
 int16_t s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
 
 #ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
-
-static oscillator_t s_oscillators[OCCUPIABLE_OSCILLATOR_CAPACITY];
-oscillator_node_t s_oscillator_nodes[OCCUPIABLE_OSCILLATOR_CAPACITY];
-
 /**********************************************************************************/
 
 static inline int16_t const get_occupiable_oscillator_capacity()
@@ -46,6 +42,15 @@ static inline oscillator_node_t * const get_oscillator_node_pointer_from_index(i
     return &s_oscillator_nodes[index];
 }
 
+/**********************************************************************************/
+
+static inline bool is_unoccupied_oscillator_available()
+{
+    if(get_occupiable_oscillator_capacity() == s_occupied_oscillator_number){
+        return false;
+    }
+    return true;
+}
 #endif
 
 #ifdef _CHECK_OCCUPIED_OSCILLATOR_LIST
@@ -144,7 +149,7 @@ static int occupy_oscillator(int16_t const index)
 
 oscillator_t * const acquire_event_freed_oscillator(int16_t * const p_index)
 {
-    if(get_occupiable_oscillator_capacity() == s_occupied_oscillator_number){
+    if(false == is_unoccupied_oscillator_available()){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillators are used\r\n");
 		return NULL;
 	}
@@ -227,9 +232,28 @@ int16_t const get_event_occupied_oscillator_head_index()
 
 /**********************************************************************************/
 
+static inline bool is_occupied_oscillator_index_out_of_range(int16_t const index)
+{
+    bool is_out_of_range = true;
+    do
+    {
+        if(index < 0){
+            break;
+        }
+        if(index >= get_occupiable_oscillator_capacity()){
+            break;
+        }
+        is_out_of_range = false;
+    }while(0);
+
+    return is_out_of_range;
+}
+
+/**********************************************************************************/
+
 int16_t const get_event_occupied_oscillator_next_index(int16_t const index)
 {
-    if(false == (index >= 0 && index < get_occupiable_oscillator_capacity()) ){
+    if(true == is_occupied_oscillator_index_out_of_range(index)){
 		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
 		return UNOCCUPIED_OSCILLATOR;
 	}
@@ -241,7 +265,7 @@ int16_t const get_event_occupied_oscillator_next_index(int16_t const index)
 
 oscillator_t * const get_event_oscillator_pointer_from_index(int16_t const index)
 {
-    if(false == (index >= 0 && index < get_occupiable_oscillator_capacity()) ){
+    if(true == is_occupied_oscillator_index_out_of_range(index)){
 		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
 		return NULL;
 	}
@@ -267,12 +291,15 @@ static void reset_all_event_oscillators(void)
 /**********************************************************************************/
 /**********************************************************************************/
 
-#define QUEUABLE_EVENT_CAPACITY							(OCCUPIABLE_OSCILLATOR_CAPACITY * 3 / 2)
+#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+    #define QUEUABLE_EVENT_CAPACITY					(OCCUPIABLE_OSCILLATOR_CAPACITY * 3 / 2)
+#endif
+#define NO_EVENT									(-1)
 
 enum
 {
-	UNUSED_EVENT =  -1,
-	EVENT_DISCARD = (EVENT_TYPE_MAX + 1),
+    UNUSED_EVENT =  -1,
+    EVENT_DISCARD = (EVENT_TYPE_MAX + 1),
 };
 
 typedef struct _event
@@ -285,9 +312,12 @@ typedef struct _event
 } event_t;
 
 #ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
-
 static event_t s_events[QUEUABLE_EVENT_CAPACITY];
+#endif
+int16_t s_queued_event_number = 0;
+int16_t s_queued_event_head_index = NO_EVENT;
 
+#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
 /**********************************************************************************/
 
 static inline int16_t const get_queuable_event_capacity()
@@ -304,12 +334,14 @@ static inline event_t * const get_event_pointer_from_index(int16_t const index)
 
 /**********************************************************************************/
 
+static inline bool is_unqueued_event_available()
+{
+    if(get_queuable_event_capacity() == s_queued_event_number){
+        return false;
+    }
+    return true;
+}
 #endif
-
-#define NO_EVENT									(-1)
-
-int16_t s_queued_event_number = 0;
-int16_t s_queued_event_head_index = NO_EVENT;
 
 #ifdef _CHECK_EVENT_LIST
 /**********************************************************************************/
@@ -400,7 +432,7 @@ static int check_queued_events(uint32_t const tick)
 
 int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const triggering_tick)
 {
-    if(get_queuable_event_capacity() == s_queued_event_number){
+    if(false == is_unqueued_event_available()){
 		CHIPTUNE_PRINTF(cDeveloping, "No unused event is available\r\n");
 		return -1;
 	}
