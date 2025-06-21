@@ -9,18 +9,30 @@
 #include "chiptune_event_internal.h"
 
 #ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
-    #define OCCUPIABLE_OSCILLATOR_CAPACITY                      (512)
+    #define OCCUPIABLE_OSCILLATOR_CAPACITY      (512)
+#else
+    #define OSCILLATOR_POOL_CAPACITY            (64)
 #endif
 
-typedef struct _oscillator_node
+typedef struct _oscillator_link
 {
 	int16_t previous;
 	int16_t next;
-}oscillator_node_t;
+}oscillator_link_t;
 
 #ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
 static oscillator_t s_oscillators[OCCUPIABLE_OSCILLATOR_CAPACITY];
-oscillator_node_t s_oscillator_nodes[OCCUPIABLE_OSCILLATOR_CAPACITY];
+static oscillator_link_t s_oscillator_nodes[OCCUPIABLE_OSCILLATOR_CAPACITY];
+#else
+typedef struct _oscillator_pool
+{
+    oscillator_t oscillators[OSCILLATOR_POOL_CAPACITY];
+    oscillator_node_t oscillator_node[OSCILLATOR_POOL_CAPACITY];
+    struct _oscillator_pool *p_next;
+}oscillator_pool_t;
+
+static oscillator_pool_t *s_p_oscillator_pool_linkedlist_head = NULL;
+static int16_t s_number_of_oscillator_pool = 0;
 #endif
 
 static int16_t s_occupied_oscillator_number = 0;
@@ -37,9 +49,16 @@ static inline int16_t const get_occupiable_oscillator_capacity()
 
 /**********************************************************************************/
 
-static inline oscillator_node_t * const get_oscillator_node_pointer_from_index(int16_t const index)
+static inline oscillator_link_t * const get_oscillator_node_pointer_from_index(int16_t const index)
 {
     return &s_oscillator_nodes[index];
+}
+
+/**********************************************************************************/
+
+static inline oscillator_t * const get_oscillator_pointer_from_index(int16_t const index)
+{
+    return &s_oscillators[index];
 }
 
 /**********************************************************************************/
@@ -48,6 +67,80 @@ static inline bool is_unoccupied_oscillator_available()
 {
     if(get_occupiable_oscillator_capacity() == s_occupied_oscillator_number){
         return false;
+    }
+    return true;
+}
+#else
+/**********************************************************************************/
+
+static inline int16_t const get_occupiable_oscillator_capacity()
+{
+    return s_number_of_oscillator_pool * OSCILLATOR_POOL_CAPACITY;
+}
+
+/**********************************************************************************/
+
+static inline oscillator_node_t * const get_oscillator_node_pointer_from_index(int16_t const index)
+{
+    if(s_number_of_oscillator_pool* OSCILLATOR_POOL_CAPACITY < index){
+        CHIPTUNE_PRINTF(cDeveloping, "ERROR :: index out of bound : index = %d,"
+                                     " s_number_of_oscillator_pool * OSCILLATOR_POOL_CAPACITY = %d\r\n",
+                        index, s_number_of_oscillator_pool * OSCILLATOR_POOL_CAPACITY);
+        return NULL;
+    }
+
+    oscillator_pool_t const * p_oscillator_pool_node = s_p_oscillator_pool_linkedlist_head;
+    int16_t const pool_index = index/OSCILLATOR_POOL_CAPACITY;
+    for(int16_t i = 0; i < pool_index; i++ ){
+        p_oscillator_pool_node = p_oscillator_pool_node->p_next;
+    }
+
+    return (oscillator_node_t * const)
+        &p_oscillator_pool_node->oscillator_node[index % OSCILLATOR_POOL_CAPACITY];
+}
+
+/**********************************************************************************/
+
+static int append_oscillator_pool_node(void)
+{
+    int ret = 0;
+    do
+    {
+        oscillator_pool_t *p_appended_oscillator_pool_node
+            = (oscillator_pool_t*)chiptune_malloc(1 * sizeof(oscillator_pool_t));
+
+        if(NULL == p_appended_oscillator_pool_node){
+            CHIPTUNE_PRINTF(cDeveloping, "ERROR :: allocate oscillator_pool_t fail");
+            ret = -1;
+            break;
+        }
+        p_appended_oscillator_pool_node->p_next = NULL;
+        if(0 == s_number_of_oscillator_pool){
+            s_p_oscillator_pool_linkedlist_head = p_appended_oscillator_pool_node;
+            s_number_of_oscillator_pool = 1;
+            break;
+        }
+
+        oscillator_pool_t *p_last_oscillator_pool_node = s_p_oscillator_pool_linkedlist_head;
+        while(NULL != p_last_oscillator_pool_node->p_next){
+            p_appended_oscillator_pool_node = p_last_oscillator_pool_node->p_next;
+        }
+        p_last_oscillator_pool_node->p_next = p_appended_oscillator_pool_node;
+        s_number_of_oscillator_pool += 1;
+    }while(0);
+
+    return ret;
+}
+
+/**********************************************************************************/
+
+static bool is_unoccupied_oscillator_available()
+{
+
+    if(get_occupiable_oscillator_capacity() == s_occupied_oscillator_number){
+        if(0 > append_oscillator_pool_node()){
+            return false;
+        }
     }
     return true;
 }
@@ -127,7 +220,7 @@ static int check_occupied_oscillator_list(void)
 static int occupy_oscillator(int16_t const index)
 {
 	do {
-        oscillator_node_t * const p_this_index_oscillator_node = get_oscillator_node_pointer_from_index(index);
+        oscillator_link_t * const p_this_index_oscillator_node = get_oscillator_node_pointer_from_index(index);
 		if(0 == s_occupied_oscillator_number){
             p_this_index_oscillator_node->previous = UNOCCUPIED_OSCILLATOR;
             p_this_index_oscillator_node->next = UNOCCUPIED_OSCILLATOR;
@@ -154,10 +247,10 @@ oscillator_t * const acquire_event_freed_oscillator(int16_t * const p_index)
 		return NULL;
 	}
     for(int16_t i = 0; i < get_occupiable_oscillator_capacity(); i++){
-		if(UNOCCUPIED_OSCILLATOR == s_oscillators[i].voice){
+        if(UNOCCUPIED_OSCILLATOR == get_oscillator_pointer_from_index(i)->voice){
 			*p_index = i;
 			occupy_oscillator(i);
-			return &s_oscillators[i];
+            return get_oscillator_pointer_from_index(i);
 		}
 	}
 	CHIPTUNE_PRINTF(cDeveloping, "ERROR::available oscillator is not found\r\n");
@@ -169,7 +262,7 @@ oscillator_t * const acquire_event_freed_oscillator(int16_t * const p_index)
 
 static int discard_oscillator(int16_t const index)
 {
-    oscillator_node_t * const p_this_index_oscillator_node = get_oscillator_node_pointer_from_index(index);
+    oscillator_link_t * const p_this_index_oscillator_node = get_oscillator_node_pointer_from_index(index);
     int16_t previous_index = p_this_index_oscillator_node->previous;
     int16_t next_index = p_this_index_oscillator_node->next;
 
@@ -205,7 +298,7 @@ static int discard_oscillator(int16_t const index)
 
     p_this_index_oscillator_node->previous = UNOCCUPIED_OSCILLATOR;
     p_this_index_oscillator_node->next = UNOCCUPIED_OSCILLATOR;
-	s_oscillators[index].voice = UNOCCUPIED_OSCILLATOR;
+    get_oscillator_pointer_from_index(index)->voice = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number -= 1;
 	CHECK_OCCUPIED_OSCILLATOR_LIST();
 	return 0;
@@ -270,7 +363,7 @@ oscillator_t * const get_event_oscillator_pointer_from_index(int16_t const index
 		return NULL;
 	}
 
-	return &s_oscillators[index];
+    return get_oscillator_pointer_from_index(index);
 }
 
 /**********************************************************************************/
@@ -278,8 +371,8 @@ oscillator_t * const get_event_oscillator_pointer_from_index(int16_t const index
 static void reset_all_event_oscillators(void)
 {
     for(int16_t i = 0; i < get_occupiable_oscillator_capacity(); i++){
-		s_oscillators[i].voice = UNOCCUPIED_OSCILLATOR;
-        oscillator_node_t * const p_oscillator_node = get_oscillator_node_pointer_from_index(i);
+        get_oscillator_pointer_from_index(i)->voice = UNOCCUPIED_OSCILLATOR;
+        oscillator_link_t * const p_oscillator_node = get_oscillator_node_pointer_from_index(i);
         p_oscillator_node->previous = UNOCCUPIED_OSCILLATOR;
         p_oscillator_node->next = UNOCCUPIED_OSCILLATOR;
 	}    
