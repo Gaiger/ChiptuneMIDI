@@ -8,7 +8,7 @@
 //#define _INCREMENTAL_SAMPLE_INDEX
 //#define _AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
 //#define _KEEP_SET_BUT_EMPTY_NOTE_CHANNELS
-#define _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+//#define _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
 
 #define _PRINT_DEVELOPING
 //#define _PRINT_MIDI_NOTE
@@ -22,7 +22,7 @@
 #define _CHECK_EVENT_LIST
 
 #ifndef _FIXED_MAX_OSCILLATOR_AND_EVENT_NUMBER
-inline void* chiptune_malloc(size_t size);
+void* chiptune_malloc(size_t size);
 void chiptune_free(void* ptr);
 #endif
 
