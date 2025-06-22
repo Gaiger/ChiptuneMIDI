@@ -73,7 +73,7 @@ static inline bool is_unoccupied_oscillator_available()
 
 /**********************************************************************************/
 
-static int reset_all_oscillators_and_links(void)
+static int mark_all_oscillators_and_links_unused(void)
 {
     for(int16_t i = 0; i < get_occupiable_oscillator_capacity(); i++){
         get_oscillator_pointer_from_index(i)->voice = UNOCCUPIED_OSCILLATOR;
@@ -84,8 +84,12 @@ static int reset_all_oscillators_and_links(void)
     s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
     s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
     s_occupied_oscillator_number = 0;
+    return 0;
 }
 
+/**********************************************************************************/
+
+static inline int destroy_all_oscillator_pools(void) { return mark_all_oscillators_and_links_unused(); }
 #else
 /**********************************************************************************/
 
@@ -196,7 +200,32 @@ static bool is_unoccupied_oscillator_available()
 
 /**********************************************************************************/
 
-static int reset_all_oscillators_and_links(void)
+static int mark_all_oscillators_and_links_unused(void)
+{
+    oscillator_pool_t *p_oscillator_pool = s_p_oscillator_pool_link_head;
+
+    while(1){
+        if(NULL == p_oscillator_pool){
+            break;
+        }
+        for(int16_t i = 0; i < OSCILLATOR_POOL_CAPACITY; i++){
+            p_oscillator_pool->oscillators[i].voice = UNOCCUPIED_OSCILLATOR;
+            p_oscillator_pool->oscillator_links[i].previous = UNOCCUPIED_OSCILLATOR;
+            p_oscillator_pool->oscillator_links[i].next = UNOCCUPIED_OSCILLATOR;
+            p_oscillator_pool->p_next = NULL;
+        }
+        p_oscillator_pool = p_oscillator_pool->p_next;
+    }
+
+    s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
+    s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
+    s_occupied_oscillator_number = 0;
+    return 0;
+}
+
+/**********************************************************************************/
+
+static int destroy_all_oscillator_pools(void)
 {
     oscillator_pool_t *p_oscillator_pool = s_p_oscillator_pool_link_head;
 
@@ -507,7 +536,7 @@ static inline bool is_unqueued_event_available()
 
 /**********************************************************************************/
 
-static inline int reset_all_events(void)
+static int mark_all_events_unused(void)
 {
     for(int16_t i = 0; i < get_queuable_event_capacity(); i++){
         get_event_pointer_from_index(i)->type = UNUSED_EVENT;
@@ -515,6 +544,10 @@ static inline int reset_all_events(void)
     s_queued_event_number = 0;
     return 0;
 }
+
+/**********************************************************************************/
+
+static inline int destroy_all_event_pools(void) { return mark_all_events_unused(); }
 #else
 /**********************************************************************************/
 
@@ -604,7 +637,25 @@ static bool is_unqueued_event_available()
 
 /**********************************************************************************/
 
-static int reset_all_events(void)
+static int mark_all_events_unused(void)
+{
+    event_pool_t *p_event_pool = s_p_event_pool_link_head;
+
+    while(1){
+        if(NULL == p_event_pool){
+            break;
+        }
+        for(int16_t i = 0; i < EVENT_POOL_CAPACITY; i++){
+            p_event_pool->events[i].type = UNUSED_EVENT;
+        }
+        p_event_pool = p_event_pool->p_next;
+    }
+    s_queued_event_number = 0;
+}
+
+/**********************************************************************************/
+
+static int destroy_all_event_pools(void)
 {
     event_pool_t *p_event_pool = s_p_event_pool_link_head;
 
@@ -973,11 +1024,18 @@ int process_events(uint32_t const tick)
 }
 
 /**********************************************************************************/
+void reset_all_events(void)
+{
+    mark_all_oscillators_and_links_unused();
+    mark_all_events_unused();
+}
+
+/**********************************************************************************/
 
 void clean_all_events(void)
 {
-    reset_all_oscillators_and_links();
-    reset_all_events();
+    destroy_all_oscillator_pools();
+    destroy_all_event_pools();
 }
 
 /**********************************************************************************/
