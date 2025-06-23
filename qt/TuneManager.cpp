@@ -112,6 +112,8 @@ TuneManager::TuneManager(bool is_stereo,
 
 	s_p_private_instance = m_p_private;
 	chiptune_set_handler_get_midi_message(get_midi_message);
+    chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
+                        (uint32_t)m_p_private->m_sampling_rate);
 }
 
 /**********************************************************************************/
@@ -119,6 +121,8 @@ TuneManager::TuneManager(bool is_stereo,
 TuneManager::~TuneManager(void)
 {
 	QMutexLocker locker(&m_mutex);
+
+    chiptune_finalize();
 	if(nullptr != m_p_private->m_p_midi_file){
 		delete m_p_private->m_p_midi_file;
 		m_p_private->m_p_midi_file = nullptr;
@@ -148,7 +152,7 @@ int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 	}
 
 	qDebug()  << "Music time length = " << GetMidiFileDurationInSeconds() << "seconds";
-	InitializeTune();
+    ResetSongResources();
 	return 0;
 }
 
@@ -180,7 +184,7 @@ QMidiFile * TuneManager::GetMidiFilePointer(void)
 
 /**********************************************************************************/
 
-int TuneManager::InitializeTune(void)
+int TuneManager::ResetSongResources(void)
 {
 	m_p_private->m_wave_bytearray.clear();
 	m_p_private->m_wave_prebuffer_length = 0;
@@ -190,9 +194,7 @@ int TuneManager::InitializeTune(void)
 	}
 
 	m_p_private->m_channel_instrument_pair_list.clear();
-	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
-						 (uint32_t)m_p_private->m_sampling_rate, m_p_private->m_p_midi_file->resolution());
-
+    chiptune_prepare_song(m_p_private->m_p_midi_file->resolution());
 	return 0;
 }
 
@@ -393,7 +395,7 @@ void TuneManager::SetPlayingSpeedRatio(double playing_speed_raio)
 void TuneManager::SetPitchShift(int pitch_shift_in_semitones)
 {
 	QMutexLocker locker(&m_mutex);
-	chiptune_set_pitch_shift((int8_t)pitch_shift_in_semitones);
+    chiptune_set_pitch_shift_in_semitones((int8_t)pitch_shift_in_semitones);
 }
 
 /**********************************************************************************/

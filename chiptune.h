@@ -13,56 +13,61 @@ void chiptune_set_handler_get_midi_message(
 		int(*handler_get_midi_message)(uint32_t const index, uint32_t * const p_tick, uint32_t * const p_message) );
 
 
-void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate, uint32_t const resolution);
-
-void chiptune_set_playing_speed_ratio(float playing_speed_ratio);
-void chiptune_set_tempo(float const tempo);
-float chiptune_get_tempo(void);
-float chiptune_get_playing_tempo(void);
-
-#define CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER			(16)
-#define CHIPTUNE_INSTRUMENT_NOT_SPECIFIED			(-1)
-#define CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL			(-2)
-
-int chiptune_get_ending_instruments(int8_t instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
-
-enum CHIPTUNE_WAVEFORM_TYPE
-{
-	CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_50 = 0,
-	CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_25,
-	CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_125,
-	CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_75,
-	CHIPTUNE_WAVEFORM_TRIANGLE,
-	CHIPTUNE_WAVEFORM_SAW,
-	CHIPTUNE_WAVEFORM_NOISE,
-};
-
-enum CHIPTUNE_ENVELOPE_CURVE_TYPE
-{
-	CHIPTUNE_ENVELOPE_CURVE_LINEAR = 0,
-	CHIPTUNE_ENVELOPE_CURVE_EXPONENTIAL,
-	CHIPTUNE_ENVELOPE_CURVE_GAUSSIAN,
-	CHIPTUNE_ENVELOPE_CURVE_FERMI,
-};
-
-int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const waveform,
-									  int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
-									  int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
-									  uint8_t const envelope_sustain_level,
-									  int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
-									  uint8_t const envelope_damper_on_but_note_off_sustain_level,
-									  int8_t const envelope_damper_on_but_note_off_sustain_curve,
-									  float const envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate);
+void chiptune_finalize(void);
+void chiptune_prepare_song(uint32_t const resolution);
 
 uint8_t chiptune_fetch_8bit_wave(void);
 int16_t chiptune_fetch_16bit_wave(void);
 bool chiptune_is_tune_ending(void);
 
+void chiptune_set_tempo(float const tempo);
+float chiptune_get_tempo(void);
+void chiptune_set_playing_speed_ratio(float playing_speed_ratio);
+float chiptune_get_playing_tempo(void);
+
+#define CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER			(16)
+#define CHIPTUNE_INSTRUMENT_NOT_SPECIFIED			(-1)
+#define CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL			(-2)
+int chiptune_get_ending_instruments(int8_t instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
+
 void chiptune_move_toward(uint32_t const index);
 uint32_t chiptune_get_current_tick(void);
+
 void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const is_enabled);
 
-void chiptune_set_pitch_shift(int8_t pitch_shift_in_semitones);
+
+void chiptune_set_pitch_shift_in_semitones(int8_t pitch_shift_in_semitones);
+int8_t chiptune_get_pitch_shift_in_semitones(void);
+
+enum CHIPTUNE_WAVEFORM_TYPE
+{
+    CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_50 = 0,
+    CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_25,
+    CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_125,
+    CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_75,
+    CHIPTUNE_WAVEFORM_TRIANGLE,
+    CHIPTUNE_WAVEFORM_SAW,
+    CHIPTUNE_WAVEFORM_NOISE,
+};
+
+enum CHIPTUNE_ENVELOPE_CURVE_TYPE
+{
+    CHIPTUNE_ENVELOPE_CURVE_LINEAR = 0,
+    CHIPTUNE_ENVELOPE_CURVE_EXPONENTIAL,
+    CHIPTUNE_ENVELOPE_CURVE_GAUSSIAN,
+    CHIPTUNE_ENVELOPE_CURVE_FERMI,
+};
+
+int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const waveform,
+                                      int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
+                                      int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
+                                      uint8_t const envelope_sustain_level,
+                                      int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
+                                      uint8_t const envelope_damper_on_but_note_off_sustain_level,
+                                      int8_t const envelope_damper_on_but_note_off_sustain_curve,
+                                      float const envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+
 
 int32_t chiptune_get_amplitude_gain(void);
 void chiptune_set_amplitude_gain(int32_t amplitude_gain);

@@ -92,7 +92,7 @@ private slots:
 	void HandleGenerateWaveRequested(int const length);
 private:
 	void GenerateWave(int const length, bool const is_synchronized = true);
-	int InitializeTune(void);
+    int ResetSongResources(void);
 private:
 	TuneManagerPrivate *m_p_private;
 	QMutex m_mutex;
