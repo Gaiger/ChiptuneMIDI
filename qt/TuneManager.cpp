@@ -55,6 +55,20 @@ public:
 		m_wave_bytearray += generated_bytearray;
 	}
 
+    int ResetSongResources(void)
+    {
+        m_wave_bytearray.clear();
+        m_wave_prebuffer_length = 0;
+
+        if(nullptr == m_p_midi_file){
+            return -1;
+        }
+
+        m_channel_instrument_pair_list.clear();
+        chiptune_prepare_song(m_p_midi_file->resolution());
+        return 0;
+    }
+
 public:
 	QMidiFile *m_p_midi_file;
 	int m_number_of_channels;
@@ -152,7 +166,7 @@ int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 	}
 
 	qDebug()  << "Music time length = " << GetMidiFileDurationInSeconds() << "seconds";
-    ResetSongResources();
+    m_p_private->ResetSongResources();
 	return 0;
 }
 
@@ -182,21 +196,7 @@ QMidiFile * TuneManager::GetMidiFilePointer(void)
 	return m_p_private->m_p_midi_file;
 }
 
-/**********************************************************************************/
 
-int TuneManager::ResetSongResources(void)
-{
-	m_p_private->m_wave_bytearray.clear();
-	m_p_private->m_wave_prebuffer_length = 0;
-
-	if(nullptr == m_p_private->m_p_midi_file){
-		return -1;
-	}
-
-	m_p_private->m_channel_instrument_pair_list.clear();
-    chiptune_prepare_song(m_p_private->m_p_midi_file->resolution());
-	return 0;
-}
 
 /**********************************************************************************/
 
@@ -218,7 +218,7 @@ void TuneManager::HandleGenerateWaveRequested(int const length)
 
 /**********************************************************************************/
 
-void TuneManager::GenerateWave(int const length, bool const is_synchronized)
+void TuneManager::SubmitWaveGeneration(int const length, bool const is_synchronized)
 {
 	bool is_to_reconnect = false;
 	do{
@@ -294,7 +294,7 @@ QByteArray TuneManager::FetchWave(int const length)
 	}
 
 	if(m_p_private->m_wave_bytearray.mid(0, length).size() < length){
-			GenerateWave(length - m_p_private->m_wave_bytearray.mid(0, length).size(),
+            SubmitWaveGeneration(length - m_p_private->m_wave_bytearray.mid(0, length).size(),
 							 true);
 	}
 
@@ -302,7 +302,7 @@ QByteArray TuneManager::FetchWave(int const length)
 	m_p_private->m_wave_bytearray.remove(0, length);
 
 	if(m_p_private->m_wave_bytearray.mid(length, -1).size() < m_p_private->m_wave_prebuffer_length){
-		GenerateWave(m_p_private->m_wave_prebuffer_length, false);
+        SubmitWaveGeneration(m_p_private->m_wave_prebuffer_length, false);
 	}
 
 	emit WaveFetched(fetched_wave_bytearray);
