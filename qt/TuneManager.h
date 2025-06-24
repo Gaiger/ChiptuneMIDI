@@ -94,7 +94,6 @@ private:
     void SubmitWaveGeneration(int const length, bool const is_synchronized = true);
 private:
 	TuneManagerPrivate *m_p_private;
-	QMutex m_mutex;
 };
 
 #endif // TUNEMANAGER_H

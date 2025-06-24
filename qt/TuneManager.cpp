@@ -78,9 +78,10 @@ public:
 	int m_wave_prebuffer_length;
 	QByteArray m_wave_bytearray;
 
+    Qt::ConnectionType m_connection_type;
 	QList<QPair<int, int>> m_channel_instrument_pair_list;
 
-	Qt::ConnectionType m_connection_type;
+    QMutex m_mutex;
 };
 
 /**********************************************************************************/
@@ -96,14 +97,14 @@ extern "C" int get_midi_message(uint32_t index, uint32_t * const p_tick, uint32_
 
 TuneManager::TuneManager(bool is_stereo,
 						 int const sampling_rate, int const sampling_size, QObject *parent)
-	: QObject(parent)
+    : QObject(parent)
 {
-	QMutexLocker locker(&m_mutex);
+    m_p_private = new TuneManagerPrivate();
+    QMutexLocker locker(&m_p_private->m_mutex);
 	if( QMetaType::UnknownType == QMetaType::type("SamplingSize")){
 			qRegisterMetaType<TuneManager::SamplingSize>("SamplingSize");
 	}
 
-	m_p_private = new TuneManagerPrivate();
 	m_p_private->m_sampling_rate = sampling_rate;
 	do {
 		if(SamplingSize16Bit == sampling_size){
@@ -134,24 +135,25 @@ TuneManager::TuneManager(bool is_stereo,
 
 TuneManager::~TuneManager(void)
 {
-	QMutexLocker locker(&m_mutex);
+    {
+        QMutexLocker locker(&m_p_private->m_mutex);
 
-    chiptune_finalize();
-	if(nullptr != m_p_private->m_p_midi_file){
-		delete m_p_private->m_p_midi_file;
-		m_p_private->m_p_midi_file = nullptr;
-	}
-	m_p_private->m_channel_instrument_pair_list.clear();
-
-	delete m_p_private;
-	m_p_private = nullptr;
+        chiptune_finalize();
+        if(nullptr != m_p_private->m_p_midi_file){
+            delete m_p_private->m_p_midi_file;
+            m_p_private->m_p_midi_file = nullptr;
+        }
+        m_p_private->m_channel_instrument_pair_list.clear();
+    }
+    delete m_p_private;
+    m_p_private = nullptr;
 }
 
 /**********************************************************************************/
 
 int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 {
-	QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_p_private->m_mutex);
 	QFileInfo file_info(midi_file_name_string);
 	if(false == file_info.isFile()){
 		qDebug() << Q_FUNC_INFO << midi_file_name_string << "is not a file";
@@ -174,7 +176,7 @@ int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 
 void TuneManager::ClearOutMidiFile(void)
 {
-	QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_p_private->m_mutex);
 	m_p_private->m_wave_bytearray.clear();
 	m_p_private->m_wave_prebuffer_length = 0;
 
@@ -212,7 +214,7 @@ bool TuneManager::IsFileLoaded(void)
 
 void TuneManager::HandleGenerateWaveRequested(int const length)
 {
-	QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_p_private->m_mutex);
 	m_p_private->GenerateWave(length);
 }
 
@@ -394,7 +396,7 @@ void TuneManager::SetPlayingSpeedRatio(double playing_speed_raio)
 
 void TuneManager::SetPitchShift(int pitch_shift_in_semitones)
 {
-	QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_p_private->m_mutex);
     chiptune_set_pitch_shift_in_semitones((int8_t)pitch_shift_in_semitones);
 }
 
@@ -402,7 +404,7 @@ void TuneManager::SetPitchShift(int pitch_shift_in_semitones)
 
 int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 {
-	QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_p_private->m_mutex);
 
 	int set_index = -1;
 	QList<QMidiEvent *> const p_midi_event_list = m_p_private ->m_p_midi_file->events();
@@ -462,7 +464,7 @@ int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 
 QList<QPair<int, int>> TuneManager::GetChannelInstrumentPairList(void)
 {
-	QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_p_private->m_mutex);
 	do {
 		if(0 != m_p_private->m_channel_instrument_pair_list.size()){
 			break;
@@ -484,7 +486,7 @@ QList<QPair<int, int>> TuneManager::GetChannelInstrumentPairList(void)
 
 void TuneManager::SetChannelOutputEnabled(int index, bool is_enabled)
 {
-	QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_p_private->m_mutex);
 	if(index < 0 || index >= CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER){
 		return ;
 	}
@@ -504,7 +506,7 @@ int TuneManager::SetPitchChannelTimbre(int8_t const channel_index,
 						   int8_t const envelope_damper_on_but_note_off_sustain_curve,
 						   float const envelope_damper_on_but_note_off_sustain_duration_in_seconds)
 {
-	QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_p_private->m_mutex);
 	if(nullptr == m_p_private->m_p_midi_file){
 		return -1;
 	}
