@@ -88,7 +88,7 @@ static int mark_all_oscillators_and_links_unused(void)
 
 /**********************************************************************************/
 
-static inline int destroy_all_oscillator_pools(void) { return mark_all_oscillators_and_links_unused(); }
+static inline int release_all_oscillators_and_links(void) { return mark_all_oscillators_and_links_unused(); }
 #else
 /**********************************************************************************/
 
@@ -184,7 +184,7 @@ static int mark_all_oscillators_and_links_unused(void)
 
 /**********************************************************************************/
 
-static int destroy_all_oscillator_pools(void)
+static int release_all_oscillators_and_links(void)
 {    
     for(int j = 0; j < s_number_of_oscillator_pool; j++){
         chiptune_free(s_oscillator_pool_pointer_table[j]);
@@ -497,7 +497,7 @@ static int mark_all_events_unused(void)
 
 /**********************************************************************************/
 
-static inline int destroy_all_event_pools(void) { return mark_all_events_unused(); }
+static inline int release_all_events(void) { return mark_all_events_unused(); }
 #else
 /**********************************************************************************/
 
@@ -580,7 +580,7 @@ static int mark_all_events_unused(void)
 
 /**********************************************************************************/
 
-static int destroy_all_event_pools(void)
+static int release_all_events(void)
 {
     for(int16_t j = 0; j < s_number_of_event_pool; j++){
         chiptune_free(s_event_pool_pointer_table[j]);
@@ -952,8 +952,8 @@ void reset_all_events(void)
 
 void clean_all_events(void)
 {
-    destroy_all_oscillator_pools();
-    destroy_all_event_pools();
+    release_all_oscillators_and_links();
+    release_all_events();
 }
 
 /**********************************************************************************/
