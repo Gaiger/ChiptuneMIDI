@@ -83,3 +83,10 @@ win32{
     QMAKE_TARGET_DESCRIPTION = "ChiptuneMIDI: Convert .mid file into chiptune"
     QMAKE_TARGET_COPYRIGHT = "Copyright 2024 by Chen Gaiger"
 }
+
+win32 {
+    QMAKE_POST_LINK += xcopy /E /Y /I \"$$CHIPTUNE_QT_DIR\\icons\" \"$$OUT_PWD\\icons\" & echo Copied icons directory
+}
+unix {
+    QMAKE_POST_LINK += cp -r $$CHIPTUNE_QT_DIR/icons $$OUT_PWD/icons
+}
