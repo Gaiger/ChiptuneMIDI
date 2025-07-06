@@ -69,9 +69,19 @@ set(FORMS
     ${CHIPTUNE_QT_DIR}/ChiptuneMidiWidgetForm.ui
 )
 
+if(WIN32)
+    set(RESOURCE
+        ${CHIPTUNE_QT_DIR}/ChiptuneMIDI.rc
+    )
+endif()
+
+
 source_group("Engine" FILES ${ENGINE})
 source_group("Application" FILES ${APPILCATION})
 source_group("Forms" FILES ${FORMS})
+if(WIN32)
+    source_group("Resource" FILES ${RESOURCE})
+endif()
 
 add_executable(ChiptuneMIDI ${ENGINE} ${APPILCATION} ${FORMS})
 
@@ -82,7 +92,7 @@ target_link_libraries(ChiptuneMIDI
 )
 
 if(WIN32)
-    target_sources(ChiptuneMIDI PRIVATE ${CHIPTUNE_QT_DIR}/ChiptuneMIDI.rc)
+    target_sources(ChiptuneMIDI PRIVATE ${RESOURCE})
 endif()
 
 add_custom_command(TARGET ChiptuneMIDI POST_BUILD
