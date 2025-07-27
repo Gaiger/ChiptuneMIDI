@@ -10,7 +10,15 @@ set(CMAKE_AUTORCC ON)
 set(CHIPTUNE_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
 set(CHIPTUNE_QT_DIR "${CHIPTUNE_ROOT_DIR}/qt")
 
-find_package(Qt5 REQUIRED COMPONENTS Widgets Charts Multimedia WinExtras)
+#find_package(Qt5 REQUIRED COMPONENTS Widgets Charts Multimedia WinExtras)
+find_package(QT NAMES Qt6 Qt5 COMPONENTS Core REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Charts Multimedia REQUIRED)
+
+if (QT_VERSION_MAJOR EQUAL 5)
+    if(WIN32)
+       find_package(Qt${QT_VERSION_MAJOR} COMPONENTS WinExtras REQUIRED)
+    endif()
+endif()
 
 add_subdirectory(${CHIPTUNE_QT_DIR}/QMidi ${CMAKE_CURRENT_BINARY_DIR}/QMidi-build)
 
@@ -35,6 +43,11 @@ set(ENGINE
     ${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.h
 )
 
+if (QT_VERSION_MAJOR EQUAL 5)
+    set(CHIPTUNE_PRIVATE_CPP ${CHIPTUNE_QT_DIR}/AudioPlayerPrivateQt5.cpp)
+    set(CHIPTUNE_PRIVATE_H ${CHIPTUNE_QT_DIR}/AudioPlayerPrivateQt5.h)
+endif()
+
 set(APPILCATION
     ${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp
     ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp
@@ -44,6 +57,7 @@ set(APPILCATION
     ${CHIPTUNE_QT_DIR}/ProgressSlider.cpp
     ${CHIPTUNE_QT_DIR}/SequencerWidget.cpp
     ${CHIPTUNE_QT_DIR}/TuneManager.cpp
+    ${CHIPTUNE_PRIVATE_CPP}
     ${CHIPTUNE_QT_DIR}/AudioPlayer.cpp
     ${CHIPTUNE_QT_DIR}/WaveChartViewchartview.cpp
 
@@ -56,11 +70,13 @@ set(APPILCATION
     ${CHIPTUNE_QT_DIR}/ProgressSlider.h
     ${CHIPTUNE_QT_DIR}/SequencerWidget.h
     ${CHIPTUNE_QT_DIR}/TuneManager.h
+    ${CHIPTUNE_PRIVATE_H}
     ${CHIPTUNE_QT_DIR}/AudioPlayer.h
     ${CHIPTUNE_QT_DIR}/WaveChartView.h
 
-    ${CHIPTUNE_QT_DIR}/main.cpp    
+    ${CHIPTUNE_QT_DIR}/main.cpp
 )
+
 
 set(FORMS
     ${CHIPTUNE_QT_DIR}/ChannelListWidgetForm.ui
@@ -70,9 +86,7 @@ set(FORMS
 )
 
 if(WIN32)
-    set(RESOURCE
-        ${CHIPTUNE_QT_DIR}/ChiptuneMIDI.rc
-    )
+    set(RESOURCE ${CHIPTUNE_QT_DIR}/ChiptuneMIDI.rc)
 endif()
 
 
@@ -88,8 +102,13 @@ add_executable(ChiptuneMIDI ${ENGINE} ${APPILCATION} ${FORMS})
 target_include_directories(ChiptuneMIDI PRIVATE ${CHIPTUNE_QT_DIR}/QMidi/src)
 
 target_link_libraries(ChiptuneMIDI
-    PRIVATE Qt5::Widgets Qt5::Charts Qt5::Multimedia Qt5::WinExtras QMidi
-)
+    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts Qt${QT_VERSION_MAJOR}::Multimedia  QMidi)
+
+if (QT_VERSION_MAJOR EQUAL 5)
+    if(WIN32)
+        target_link_libraries(ChiptuneMIDI PRIVATE Qt5::WinExtras)
+    endif()
+endif()
 
 if(WIN32)
     target_sources(ChiptuneMIDI PRIVATE ${RESOURCE})

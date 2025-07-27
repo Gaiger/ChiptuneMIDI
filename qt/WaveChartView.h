@@ -2,7 +2,9 @@
 #define WAVECHARTVIEW_H
 
 #include <QChartView>
+#if QT_VERSION_CHECK(6, 0, 0) >= QT_VERSION
 using namespace QtCharts;
+#endif
 
 class WaveChartView : public QChartView
 {
