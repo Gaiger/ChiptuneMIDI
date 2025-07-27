@@ -494,10 +494,12 @@ void ChiptuneMidiWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackStat
 
 void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value)
 {
+    if(Qt::LeftButton != button){
+        return ;
+    }
 	ui->PlayProgressSlider->setValue(value);
 	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
 }
-
 
 /**********************************************************************************/
 
