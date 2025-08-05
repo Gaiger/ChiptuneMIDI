@@ -1,5 +1,5 @@
 #include <QtGlobal>
-#if QT_VERSION_CHECK(6, 0, 0) >= QT_VERSION
+#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
 
 #include <QBuffer>
 #include <QThread>

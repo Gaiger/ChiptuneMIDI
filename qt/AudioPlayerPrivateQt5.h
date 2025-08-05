@@ -2,7 +2,7 @@
 #define _AUDIOPLAYERPRIVATEQT5_H_
 
 #include <QtGlobal>
-#if QT_VERSION_CHECK(6, 0, 0) >= QT_VERSION
+#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
 
 #include <QObject>
 #include <QAudioOutput>
