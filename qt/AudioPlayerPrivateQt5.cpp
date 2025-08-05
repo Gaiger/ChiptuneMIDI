@@ -31,13 +31,18 @@ protected :
         return len;
     }
 
+    qint64 bytesAvailable() const Q_DECL_OVERRIDE
+    {
+        return m_audio_data_bytearray.size() + QIODevice::bytesAvailable();
+    }
 private:
         QByteArray m_audio_data_bytearray;
 };
 
 /**********************************************************************************/
 
-AudioPlayerPrivate::AudioPlayerPrivate(TuneManager *p_tune_manager, int fetching_wave_interval_in_milliseconds, QObject *parent)
+AudioPlayerPrivate::AudioPlayerPrivate(TuneManager *p_tune_manager, int fetching_wave_interval_in_milliseconds,
+                                       QObject *parent)
     : QObject(parent),
     m_p_tune_manager(p_tune_manager),
     m_fetching_wave_interval_in_milliseconds(fetching_wave_interval_in_milliseconds),
