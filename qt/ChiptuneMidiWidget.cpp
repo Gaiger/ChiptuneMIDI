@@ -10,9 +10,11 @@
 #include <QFile>
 #include <QLineEdit>
 
+#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
 #ifdef Q_OS_WIN
 #include <QWinTaskbarButton>
 #include <QWinTaskbarProgress>
+#endif
 #endif
 
 #include "GetInstrumentNameString.h"
@@ -580,6 +582,7 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 void ChiptuneMidiWidget::showEvent(QShowEvent *event)
 {
 	QWidget::showEvent(event);
+#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
 #ifdef Q_OS_WIN
 	QWinTaskbarButton *p_win_taskbar_button = new QWinTaskbarButton(this);
 	p_win_taskbar_button->setWindow(QWidget::windowHandle());
@@ -589,6 +592,7 @@ void ChiptuneMidiWidget::showEvent(QShowEvent *event)
 					 p_win_taskbar_progress, &QWinTaskbarProgress::setValue);
 	QObject::connect(ui->PlayProgressSlider, &QAbstractSlider::rangeChanged,
 					 p_win_taskbar_progress, &QWinTaskbarProgress::setRange);
+#endif
 #endif
 }
 
