@@ -1,3 +1,6 @@
+#include <QtGlobal>
+#if QT_VERSION_CHECK(6, 0, 0) >= QT_VERSION
+
 #include <QBuffer>
 #include <QThread>
 
@@ -334,3 +337,5 @@ AudioPlayer::PlaybackState AudioPlayerPrivate::GetState(void)
     }
     return state;
 }
+
+#endif //QT_VERSION_CHECK

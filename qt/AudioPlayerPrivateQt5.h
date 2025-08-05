@@ -1,6 +1,9 @@
 #ifndef _AUDIOPLAYERPRIVATEQT5_H_
 #define _AUDIOPLAYERPRIVATEQT5_H_
 
+#include <QtGlobal>
+#if QT_VERSION_CHECK(6, 0, 0) >= QT_VERSION
+
 #include <QObject>
 #include <QAudioOutput>
 #include "TuneManager.h"
@@ -58,4 +61,5 @@ private:
     QMutex m_mutex;
 };
 
+#endif //QT_VERSION_CHECK
 #endif
