@@ -48,6 +48,11 @@ if (QT_VERSION_MAJOR EQUAL 5)
     set(CHIPTUNE_PRIVATE_H ${CHIPTUNE_QT_DIR}/AudioPlayerPrivateQt5.h)
 endif()
 
+if (QT_VERSION_MAJOR EQUAL 6)
+    set(CHIPTUNE_PRIVATE_CPP ${CHIPTUNE_QT_DIR}/AudioPlayerPrivateQt6.cpp)
+    set(CHIPTUNE_PRIVATE_H ${CHIPTUNE_QT_DIR}/AudioPlayerPrivateQt6.h)
+endif()
+
 set(APPILCATION
     ${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp
     ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp
