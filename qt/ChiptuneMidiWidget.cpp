@@ -18,8 +18,6 @@
 #endif
 #endif
 
-#include "GetInstrumentNameString.h"
-
 #include "ui_ChiptuneMidiWidgetForm.h"
 #include "ProgressSlider.h"
 
@@ -327,7 +325,6 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		ui->PlayPositionLabel->setText(FormatTimeString(0) + " / " + m_midi_file_duration_time_string);
 		ui->PlayProgressSlider->setRange(0, m_midi_file_duration_in_milliseconds);
 		ui->PlayProgressSlider->setValue(0);
-		ui->PlayProgressSlider->SetPositionChangable(true);
 		m_p_wave_chartview->Reset();
 
 		// This will bring there is a jittering in the sequencer, but it makes the sequencer much more smooth.
@@ -376,7 +373,6 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 	ui->PlayPositionLabel->setText("00:00 / 00:00");
 	ui->PlayProgressSlider->setValue(0);
 
-	ui->PlayProgressSlider->SetPositionChangable(false);
 	ui->MessageLabel->setText("");
 
 	ui->PlayPausePushButton->setEnabled(false);
@@ -518,11 +514,14 @@ void ChiptuneMidiWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackStat
 
 void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value)
 {
-    if(Qt::LeftButton != button){
-        return ;
-    }
-	ui->PlayProgressSlider->setValue(value);
-	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
+    do
+    {
+        if(Qt::LeftButton != button){
+            break;
+        }
+        ui->PlayProgressSlider->setValue(value);
+        SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
+    }while(0);
 }
 
 /**********************************************************************************/
