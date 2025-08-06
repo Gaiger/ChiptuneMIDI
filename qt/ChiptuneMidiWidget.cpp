@@ -1,5 +1,6 @@
 #include <QDebug>
 
+#include <QThread>
 #include <QGridLayout>
 #include <QElapsedTimer>
 #include <QDateTime>
@@ -178,12 +179,14 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	QWidget::setAcceptDrops(true);
 
-	m_p_tune_manager->moveToThread(&m_tune_manager_working_thread);
-	m_tune_manager_working_thread.start(QThread::HighPriority);
-	m_p_audio_player = new AudioPlayer(m_p_tune_manager, m_audio_player_buffer_in_milliseconds/2, nullptr);
+    QThread *p_tune_manager_working_thread = new QThread(this);
+    m_p_tune_manager->moveToThread(p_tune_manager_working_thread);
+    p_tune_manager_working_thread->start(QThread::HighPriority);
 
-    m_p_audio_player->moveToThread(&m_audio_player_working_thread);
-    m_audio_player_working_thread.start(QThread::NormalPriority);
+	m_p_audio_player = new AudioPlayer(m_p_tune_manager, m_audio_player_buffer_in_milliseconds/2, nullptr);
+    QThread *p_audio_player_working_thread = new QThread(this);
+    m_p_audio_player->moveToThread(p_audio_player_working_thread);
+    p_audio_player_working_thread->start(QThread::NormalPriority);
 
 	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
 					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
@@ -208,28 +211,39 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 ChiptuneMidiWidget::~ChiptuneMidiWidget()
 {
-	m_tune_manager_working_thread.quit();
-	while( false == m_tune_manager_working_thread.isFinished()){
-		QThread::msleep(10);
-	}
-
-	if(nullptr != m_p_audio_player){
-		m_p_audio_player->Stop();
-	}
-
-    delete m_p_audio_player;
-    m_p_audio_player = nullptr;
+    do
+    {
+        if(nullptr == m_p_tune_manager){
+            break;
+        }
+        if (m_p_audio_player->thread() == QThread::currentThread()){
+            break;
+        }
+        QThread *p_tune_manager_working_thread = m_p_tune_manager->thread();
+        p_tune_manager_working_thread->quit();
+        while( false == p_tune_manager_working_thread->isFinished()){
+            QThread::msleep(10);
+        }
+    }while(0);
 
     do
     {
-        if(false == m_audio_player_working_thread.isRunning()){
+        if(nullptr == m_p_audio_player){
             break;
         }
-        m_audio_player_working_thread.quit();
-        while( false == m_audio_player_working_thread.isFinished()){
+        m_p_audio_player->Stop();
+        if (m_p_audio_player->thread() == QThread::currentThread()){
+            delete m_p_audio_player;
+            break;
+        }
+        QThread *p_audio_player_working_thread = m_p_audio_player->thread();
+        m_p_audio_player->deleteLater();
+        p_audio_player_working_thread->quit();
+        while( false == p_audio_player_working_thread->isFinished()){
             QThread::msleep(10);
         }
-    } while(0);
+    }while(0);
+    m_p_audio_player = nullptr;
 }
 
 /**********************************************************************************/
