@@ -55,7 +55,7 @@ AudioPlayerPrivate::AudioPlayerPrivate(TuneManager *p_tune_manager, int fetching
     m_connection_type(Qt::AutoConnection)
 {
     QObject::connect(&m_refill_timer, &QTimer::timeout, this, &AudioPlayerPrivate::HandleRefillTimerTimeout);
-    if( QMetaType::UnknownType == QMetaType::type("PlaybackState")){
+    if( false ==  QMetaType::fromName("PlaybackState").isValid()){
             qRegisterMetaType<TuneManager::SamplingSize>("PlaybackState");
     }
 }
@@ -105,7 +105,7 @@ void AudioPlayerPrivate::InitializeAudioResources(int const number_of_channels, 
 
     QAudioDevice info(QMediaDevices::defaultAudioOutput());
     qDebug() << info.supportedSampleFormats();
-    if (!info.isFormatSupported(format)) {
+    if (false == info.isFormatSupported(format)) {
         qWarning()<<"raw audio format not supported by backend, cannot play audio.";
     }
     qDebug() << info.description();

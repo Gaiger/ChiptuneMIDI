@@ -101,9 +101,20 @@ TuneManager::TuneManager(bool is_stereo,
 {
     m_p_private = new TuneManagerPrivate();
     QMutexLocker locker(&m_p_private->m_mutex);
-	if( QMetaType::UnknownType == QMetaType::type("SamplingSize")){
-			qRegisterMetaType<TuneManager::SamplingSize>("SamplingSize");
-	}
+
+    do
+    {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        if (false != QMetaType::fromName("PlaybackState").isValid()) {
+            break;
+        }
+#else
+        if( QMetaType::UnknownType != QMetaType::type("SamplingSize")){
+            break;
+        }
+#endif
+        qRegisterMetaType<TuneManager::SamplingSize>("SamplingSize");
+    } while(0);
 
 	m_p_private->m_sampling_rate = sampling_rate;
 	do {
