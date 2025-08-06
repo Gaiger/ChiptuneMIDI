@@ -14,8 +14,7 @@
 class AudioIODevice: public QIODevice
 {
 public :
-    AudioIODevice(void){ }
-
+    AudioIODevice(QObject *parent):QIODevice(parent){ };
 protected :
     qint64 readData(char *data, qint64 maxlen) Q_DECL_OVERRIDE
     {
@@ -51,10 +50,11 @@ AudioPlayerPrivate::AudioPlayerPrivate(TuneManager *p_tune_manager, int fetching
     m_p_tune_manager(p_tune_manager),
     m_fetching_wave_interval_in_milliseconds(fetching_wave_interval_in_milliseconds),
 
-    m_p_audio_sink(nullptr), m_p_audio_io_device(nullptr),
+    m_p_audio_sink(nullptr),
+    m_p_audio_io_device(nullptr),
+    m_p_refill_timer(nullptr),
     m_connection_type(Qt::AutoConnection)
 {
-    QObject::connect(&m_refill_timer, &QTimer::timeout, this, &AudioPlayerPrivate::HandleRefillTimerTimeout);
     if( false ==  QMetaType::fromName("PlaybackState").isValid()){
             qRegisterMetaType<TuneManager::SamplingSize>("PlaybackState");
     }
@@ -71,7 +71,12 @@ AudioPlayerPrivate::~AudioPlayerPrivate(void)
 
 void AudioPlayerPrivate::ClearOutMidiFileAudioResources(void)
 {
-    QMetaObject::invokeMethod(&m_refill_timer, "stop", Qt::QueuedConnection);
+    if(nullptr != m_p_refill_timer){
+        m_p_refill_timer->stop();
+        delete m_p_refill_timer;
+    }
+    m_p_refill_timer = nullptr;
+
     if(nullptr != m_p_audio_sink){
         m_p_audio_sink->stop();
         m_p_audio_sink->reset();
@@ -115,21 +120,22 @@ void AudioPlayerPrivate::InitializeAudioResources(int const number_of_channels, 
         delete m_p_audio_sink;
         m_p_audio_sink = nullptr;
     }
-    m_p_audio_sink = new QAudioSink(info, format);
-
+    m_p_audio_sink = new QAudioSink(info, format, this);
     QObject::connect(m_p_audio_sink, &QAudioSink::stateChanged,
                      this, &AudioPlayerPrivate::HandleAudioStateChanged);
     m_p_audio_sink->setVolume(1.00);
 
     int audio_buffer_size = 2 * format.bytesForDuration(fetching_wave_interval_in_milliseconds * 1000);
-    m_refill_timer.setInterval(fetching_wave_interval_in_milliseconds);
     m_p_audio_sink->setBufferSize(audio_buffer_size);
     qDebug() <<" m_p_audio_output->bufferSize() = " << m_p_audio_sink->bufferSize();
 
-    m_p_audio_io_device = new AudioIODevice();
+    m_p_audio_io_device = new AudioIODevice(this);
     m_p_audio_io_device->open(QIODevice::ReadWrite);
-    QMetaObject::invokeMethod(&m_refill_timer, "start", Qt::QueuedConnection,
-                              fetching_wave_interval_in_milliseconds);
+
+    m_p_refill_timer = new QTimer(this);
+    m_p_refill_timer->setInterval(fetching_wave_interval_in_milliseconds);
+    QObject::connect(m_p_refill_timer, &QTimer::timeout, this, &AudioPlayerPrivate::HandleRefillTimerTimeout);
+    m_p_refill_timer->start(fetching_wave_interval_in_milliseconds);
 #if 0
     QAudioFormat format;
     format.setChannelCount((int)number_of_channels);

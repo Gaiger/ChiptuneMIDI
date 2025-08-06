@@ -55,7 +55,7 @@ private:
 
     QAudioSink *m_p_audio_sink;
     QIODevice *m_p_audio_io_device;
-    QTimer m_refill_timer;
+    QTimer *m_p_refill_timer;
 
     Qt::ConnectionType m_connection_type;
     //QMutex m_accessing_io_device_mutex;

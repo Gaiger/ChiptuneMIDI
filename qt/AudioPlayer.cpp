@@ -1,4 +1,6 @@
 #include <QDebug>
+#include <QThread>
+#include <QEventLoop>
 
 #if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
 #include "AudioPlayerPrivateQt5.h"
@@ -16,7 +18,7 @@ AudioPlayer::AudioPlayer(TuneManager *p_tune_manager, int fetching_wave_interval
 	: QObject(parent),
     m_p_private(nullptr)
 {
-    m_p_private = new AudioPlayerPrivate(p_tune_manager, fetching_wave_interval_in_milliseconds, parent);
+    m_p_private = new AudioPlayerPrivate(p_tune_manager, fetching_wave_interval_in_milliseconds, this);
     QObject::connect(m_p_private, &AudioPlayerPrivate::StateChanged,
                      this, &AudioPlayer::StateChanged,
                      Qt::DirectConnection);
@@ -26,7 +28,17 @@ AudioPlayer::AudioPlayer(TuneManager *p_tune_manager, int fetching_wave_interval
 
 AudioPlayer::~AudioPlayer(void)
 {
-    delete m_p_private;
+    do
+    {
+        if(QThread::currentThread() == m_p_private->thread()){
+            delete m_p_private;
+            break;
+        }
+        QEventLoop destroy_event_loop;
+        QObject::connect(m_p_private, &QObject::destroyed, &destroy_event_loop, &QEventLoop::quit);
+        m_p_private->deleteLater();
+        destroy_event_loop.exec();
+    }while(0);
     m_p_private = nullptr;
 }
 
@@ -56,12 +68,4 @@ void AudioPlayer::Pause(void)
 AudioPlayer::PlaybackState AudioPlayer::GetState(void)
 {
     return m_p_private->GetState();
-}
-
-/**********************************************************************************/
-
-void AudioPlayer::moveToThread(QThread *p_target_thread)
-{
-    m_p_private->moveToThread(p_target_thread);
-    QObject::moveToThread(p_target_thread);
 }
