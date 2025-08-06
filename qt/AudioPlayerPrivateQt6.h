@@ -40,23 +40,22 @@ private slots:
     void HandlePauseRequested(void);
 
 private slots:
-    void HandleFetchWaveTimeout(void);
+    void HandleRefillTimerTimeout(void);
     void HandleAudioStateChanged(QAudio::State state);
 
-public:
+private:
     void InitializeAudioResources(int const number_of_channels, int const sampling_rate, int const sampling_size,
                                   int fetching_wave_interval_in_milliseconds);
-    void AppendWave(QByteArray wave_bytearray);
     void ClearOutMidiFileAudioResources();
-
     void OrganizeConnection(void);
+    void AppendDataToAudioIODevice(QByteArray wave_bytearray);
 private:
     TuneManager *m_p_tune_manager;
     int m_fetching_wave_interval_in_milliseconds;
 
     QAudioSink *m_p_audio_sink;
     QIODevice *m_p_audio_io_device;
-    QTimer m_fetch_wave_timer;
+    QTimer m_refill_timer;
 
     Qt::ConnectionType m_connection_type;
     //QMutex m_accessing_io_device_mutex;
