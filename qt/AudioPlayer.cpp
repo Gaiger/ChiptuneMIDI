@@ -57,3 +57,11 @@ AudioPlayer::PlaybackState AudioPlayer::GetState(void)
 {
     return m_p_private->GetState();
 }
+
+/**********************************************************************************/
+
+void AudioPlayer::moveToThread(QThread *p_target_thread)
+{
+    m_p_private->moveToThread(p_target_thread);
+    QObject::moveToThread(p_target_thread);
+}

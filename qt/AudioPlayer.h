@@ -29,10 +29,13 @@ public:
 
 	PlaybackState GetState(void);
 
+    void moveToThread(QThread *p_target_thread);
 public:
     signals:
     void StateChanged(AudioPlayer::PlaybackState state);
 
+private:
+    using QObject::moveToThread;
 private:
     AudioPlayerPrivate *m_p_private;
 

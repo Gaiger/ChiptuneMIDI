@@ -71,6 +71,7 @@ AudioPlayerPrivate::~AudioPlayerPrivate(void)
 
 void AudioPlayerPrivate::ClearOutMidiFileAudioResources(void)
 {
+    QMetaObject::invokeMethod(&m_refill_timer, "stop", Qt::QueuedConnection);
     if(nullptr != m_p_audio_sink){
         m_p_audio_sink->stop();
         m_p_audio_sink->reset();
@@ -89,7 +90,6 @@ void AudioPlayerPrivate::ClearOutMidiFileAudioResources(void)
 void AudioPlayerPrivate::InitializeAudioResources(int const number_of_channels, int const sampling_rate, int const sampling_size,
                                            int const fetching_wave_interval_in_milliseconds)
 {
-    m_refill_timer.stop();
     ClearOutMidiFileAudioResources();
     QAudioFormat format;
     format.setChannelCount((int)number_of_channels);
@@ -117,8 +117,8 @@ void AudioPlayerPrivate::InitializeAudioResources(int const number_of_channels, 
     }
     m_p_audio_sink = new QAudioSink(info, format);
 
-    // QObject::connect(m_p_audio_sink, &QAudioSink::notify, this, &AudioPlayerPrivate::HandleAudioNotify);
-    QObject::connect(m_p_audio_sink, &QAudioSink::stateChanged, this, &AudioPlayerPrivate::HandleAudioStateChanged);
+    QObject::connect(m_p_audio_sink, &QAudioSink::stateChanged,
+                     this, &AudioPlayerPrivate::HandleAudioStateChanged);
     m_p_audio_sink->setVolume(1.00);
 
     int audio_buffer_size = 2 * format.bytesForDuration(fetching_wave_interval_in_milliseconds * 1000);
@@ -128,7 +128,8 @@ void AudioPlayerPrivate::InitializeAudioResources(int const number_of_channels, 
 
     m_p_audio_io_device = new AudioIODevice();
     m_p_audio_io_device->open(QIODevice::ReadWrite);
-    m_refill_timer.start(fetching_wave_interval_in_milliseconds);
+    QMetaObject::invokeMethod(&m_refill_timer, "start", Qt::QueuedConnection,
+                              fetching_wave_interval_in_milliseconds);
 #if 0
     QAudioFormat format;
     format.setChannelCount((int)number_of_channels);
