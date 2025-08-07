@@ -6,6 +6,8 @@
 
 #include <QObject>
 #include <QAudioOutput>
+#include <QTimer>
+
 #include "TuneManager.h"
 #include "AudioPlayer.h" //PlaybackState
 
@@ -38,13 +40,13 @@ private slots:
     void HandlePauseRequested(void);
 
 private slots:
-    void HandleAudioNotify(void);
+    void HandleRefillTimerTimeout(void);
     void HandleAudioStateChanged(QAudio::State state);
 
 public:
     void InitializeAudioResources(int const number_of_channels, int const sampling_rate, int const sampling_size,
                                   int fetching_wave_interval_in_milliseconds);
-    void AppendWave(QByteArray wave_bytearray);
+    void AppendDataToAudioIODevice(QByteArray wave_bytearray);
     void ClearOutMidiFileAudioResources();
 
     void OrganizeConnection(void);
@@ -55,6 +57,7 @@ private:
 
     QAudioOutput * m_p_audio_output;
     QIODevice *m_p_audio_io_device;
+    QTimer *m_p_refill_timer;
 
     Qt::ConnectionType m_connection_type;
     //QMutex m_accessing_io_device_mutex;
