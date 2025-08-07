@@ -43,15 +43,6 @@ set(ENGINE
     ${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.h
 )
 
-if (QT_VERSION_MAJOR EQUAL 5)
-    set(CHIPTUNE_PRIVATE_CPP ${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp)
-    set(CHIPTUNE_PRIVATE_H ${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.h)
-endif()
-
-if (QT_VERSION_MAJOR EQUAL 6)
-    set(CHIPTUNE_PRIVATE_CPP ${CHIPTUNE_QT_DIR}/AudioPlayerPrivateQt6.cpp)
-    set(CHIPTUNE_PRIVATE_H ${CHIPTUNE_QT_DIR}/AudioPlayerPrivateQt6.h)
-endif()
 
 set(APPILCATION
     ${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp
@@ -62,7 +53,7 @@ set(APPILCATION
     ${CHIPTUNE_QT_DIR}/ProgressSlider.cpp
     ${CHIPTUNE_QT_DIR}/SequencerWidget.cpp
     ${CHIPTUNE_QT_DIR}/TuneManager.cpp
-    ${CHIPTUNE_PRIVATE_CPP}
+    ${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp
     ${CHIPTUNE_QT_DIR}/AudioPlayer.cpp
     ${CHIPTUNE_QT_DIR}/WaveChartViewchartview.cpp
 
@@ -75,7 +66,7 @@ set(APPILCATION
     ${CHIPTUNE_QT_DIR}/ProgressSlider.h
     ${CHIPTUNE_QT_DIR}/SequencerWidget.h
     ${CHIPTUNE_QT_DIR}/TuneManager.h
-    ${CHIPTUNE_PRIVATE_H}
+    ${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.h
     ${CHIPTUNE_QT_DIR}/AudioPlayer.h
     ${CHIPTUNE_QT_DIR}/WaveChartView.h
 

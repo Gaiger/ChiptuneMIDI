@@ -7,11 +7,97 @@
 
 #include "AudioPlayerPrivate.h"
 
-#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+
+#if QT_VERSION_CHECK(6, 0, 0) <= QT_VERSION
+#include <QAudioSink>
+#include <QMediaDevices>
+
 class AudioPlayerOutput
 {
 public:
-    AudioPlayerOutput(int const number_of_channels, int const sampling_rate, int const sampling_size)
+    AudioPlayerOutput(int const number_of_channels, int const sampling_rate, int const sampling_size,
+                      QObject *parent)
+        : m_p_audio_sink(nullptr){
+        QAudioFormat format;
+        format.setChannelCount((int)number_of_channels);
+        format.setSampleRate(sampling_rate);
+
+        do {
+            if(16 == sampling_size){
+                format.setSampleFormat(QAudioFormat::Int16);
+                break;
+            }
+            format.setSampleFormat(QAudioFormat::UInt8);
+        } while(0);
+
+        QAudioDevice info(QMediaDevices::defaultAudioOutput());
+        qDebug() << info.supportedSampleFormats();
+        if (false == info.isFormatSupported(format)) {
+            qWarning()<<"raw audio format not supported by backend, cannot play audio.";
+        }
+        qDebug() << info.description();
+        qDebug() << format;
+
+        if(nullptr != m_p_audio_sink){
+            delete m_p_audio_sink;
+            m_p_audio_sink = nullptr;
+        }
+        m_p_audio_sink = new QAudioSink(info, format, parent);
+    };
+
+    ~AudioPlayerOutput(){
+        if(nullptr != m_p_audio_sink){
+            delete m_p_audio_sink;
+        }
+        m_p_audio_sink = nullptr;
+    };
+
+    void Start(QIODevice *device){
+        m_p_audio_sink->start(device);
+    }
+    void Suspend(void){
+        m_p_audio_sink->suspend();
+    }
+    void Resume(void){
+        m_p_audio_sink->resume();
+    }
+    void Stop(void){
+        m_p_audio_sink->stop();
+    }
+    void Reset(void){
+        m_p_audio_sink->reset();
+    }
+    void SetBufferSize(qsizetype value){
+        m_p_audio_sink->setBufferSize(value);
+    }
+    qsizetype BufferSize() const{
+        return m_p_audio_sink->bufferSize();
+    }
+    void SetVolume(qreal volume){
+        m_p_audio_sink->setVolume(volume);
+    }
+    QAudio::State State() const{
+        return m_p_audio_sink->state();}
+    int	BytesFree() const{
+        return m_p_audio_sink->bytesFree();
+    }
+    QAudio::Error Error() const{
+        return m_p_audio_sink->error();
+    }
+    QAudioSink* GetAudioOutputInstance(void){return m_p_audio_sink;}
+private:
+    QAudioSink * m_p_audio_sink;
+};
+#endif
+
+#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+#include <QAudioOutput>
+
+class AudioPlayerOutput
+{
+public:
+    AudioPlayerOutput(int const number_of_channels, int const sampling_rate, int const sampling_size,
+                      QObject *parent)
         : m_p_audio_output(nullptr){
         QAudioFormat format;
         format.setChannelCount((int)number_of_channels);
@@ -41,7 +127,7 @@ public:
             delete m_p_audio_output;
             m_p_audio_output = nullptr;
         }
-        m_p_audio_output = new QAudioOutput(info, format);
+        m_p_audio_output = new QAudioOutput(info, format, parent);
     };
 
     ~AudioPlayerOutput(){
@@ -133,9 +219,19 @@ AudioPlayerPrivate::AudioPlayerPrivate(TuneManager *p_tune_manager, int fetching
     m_connection_type(Qt::AutoConnection),
     m_p_audio_player_output(nullptr)
 {
-    if( QMetaType::UnknownType == QMetaType::type("PlaybackState")){
-            qRegisterMetaType<TuneManager::SamplingSize>("PlaybackState");
-    }
+    do
+    {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        if( false !=  QMetaType::fromName("PlaybackState").isValid()){
+            break;
+        }
+#else
+        if( QMetaType::UnknownType != QMetaType::type("PlaybackState")){
+            break;
+        }
+#endif
+        qRegisterMetaType<TuneManager::SamplingSize>("PlaybackState");
+    } while(0);
 }
 
 /**********************************************************************************/
@@ -173,11 +269,16 @@ void AudioPlayerPrivate::InitializeAudioResources(int const number_of_channels, 
                                            int const fetching_wave_interval_in_milliseconds)
 {
     ClearOutMidiFileAudioResources();
-    m_p_audio_player_output = new AudioPlayerOutput(number_of_channels, sampling_rate, sampling_size);
-    //QObject::connect(m_p_audio_output, &QAudioOutput::notify, this, &AudioPlayerPrivate::HandleAudioNotify);
-    //QObject::connect(m_p_audio_output, &QAudioOutput::stateChanged, this, &AudioPlayerPrivate::HandleAudioStateChanged);
+    m_p_audio_player_output = new AudioPlayerOutput(number_of_channels, sampling_rate, sampling_size,
+                                                    this);
+#if QT_VERSION_CHECK(6, 0, 0) <= QT_VERSION
+    //QObject::connect(m_p_audio_player_output->GetAudioOutputInstance(), &QAudioSink::stateChanged,
+     //                    this, &AudioPlayerPrivate::HandleAudioStateChanged);
+#endif
+#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
     QObject::connect(m_p_audio_player_output->GetAudioOutputInstance(), &QAudioOutput::stateChanged,
                      this, &AudioPlayerPrivate::HandleAudioStateChanged);
+#endif
     m_p_audio_player_output->SetVolume(1.00);
 
     int audio_buffer_size = 2.0 * fetching_wave_interval_in_milliseconds
@@ -360,9 +461,10 @@ void AudioPlayerPrivate::HandleAudioStateChanged(QAudio::State state)
             // Error handling
         }
         break;
-
+#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
     case QAudio::InterruptedState:
         break;
+#endif
     default:
         // ... other cases as appropriate
         break;
@@ -383,9 +485,11 @@ AudioPlayer::PlaybackState AudioPlayerPrivate::GetState(void)
 
         switch(m_p_audio_player_output->State()){
         case QAudio::ActiveState:
+#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
         case QAudio::InterruptedState:
             state = AudioPlayer::PlaybackStateStatePlaying;
             break;
+#endif
         case QAudio::SuspendedState:
             state = AudioPlayer::PlaybackStateStatePaused;
             break;

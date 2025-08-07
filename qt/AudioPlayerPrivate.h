@@ -2,8 +2,9 @@
 #define _AUDIOPLAYERPRIVATE_H_
 
 #include <QObject>
-#include <QAudioOutput>
 #include <QTimer>
+#include <QIODevice>
+#include <QAudio>
 
 #include "TuneManager.h"
 #include "AudioPlayer.h" //PlaybackState
