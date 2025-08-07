@@ -44,8 +44,8 @@ set(ENGINE
 )
 
 if (QT_VERSION_MAJOR EQUAL 5)
-    set(CHIPTUNE_PRIVATE_CPP ${CHIPTUNE_QT_DIR}/AudioPlayerPrivateQt5.cpp)
-    set(CHIPTUNE_PRIVATE_H ${CHIPTUNE_QT_DIR}/AudioPlayerPrivateQt5.h)
+    set(CHIPTUNE_PRIVATE_CPP ${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp)
+    set(CHIPTUNE_PRIVATE_H ${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.h)
 endif()
 
 if (QT_VERSION_MAJOR EQUAL 6)

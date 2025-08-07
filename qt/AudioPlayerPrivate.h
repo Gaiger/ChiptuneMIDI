@@ -1,8 +1,5 @@
-#ifndef _AUDIOPLAYERPRIVATEQT5_H_
-#define _AUDIOPLAYERPRIVATEQT5_H_
-
-#include <QtGlobal>
-#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+#ifndef _AUDIOPLAYERPRIVATE_H_
+#define _AUDIOPLAYERPRIVATE_H_
 
 #include <QObject>
 #include <QAudioOutput>
@@ -10,6 +7,8 @@
 
 #include "TuneManager.h"
 #include "AudioPlayer.h" //PlaybackState
+
+class AudioPlayerOutput;
 
 class AudioPlayerPrivate : public QObject
 {
@@ -55,14 +54,14 @@ private:
     TuneManager *m_p_tune_manager;
     int m_fetching_wave_interval_in_milliseconds;
 
-    QAudioOutput * m_p_audio_output;
     QIODevice *m_p_audio_io_device;
     QTimer *m_p_refill_timer;
 
     Qt::ConnectionType m_connection_type;
-    //QMutex m_accessing_io_device_mutex;
     QMutex m_mutex;
+
+private:
+    AudioPlayerOutput *m_p_audio_player_output;
 };
 
-#endif //QT_VERSION_CHECK
-#endif
+#endif // _AUDIOPLAYERPRIVATE_H_
