@@ -445,7 +445,7 @@ AudioPlayer::PlaybackState AudioPlayerPrivate::GetState(void)
     AudioPlayer::PlaybackState state = AudioPlayer::PlaybackStateStateStopped;
     do
     {
-        if(0 == m_p_audio_sink){
+        if(nullptr == m_p_audio_sink){
             break;
         }
 
