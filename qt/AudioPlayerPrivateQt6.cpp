@@ -135,7 +135,7 @@ void AudioPlayerPrivate::InitializeAudioResources(int const number_of_channels, 
     m_p_refill_timer = new QTimer(this);
     m_p_refill_timer->setInterval(fetching_wave_interval_in_milliseconds);
     QObject::connect(m_p_refill_timer, &QTimer::timeout, this, &AudioPlayerPrivate::HandleRefillTimerTimeout);
-    m_p_refill_timer->start(fetching_wave_interval_in_milliseconds);
+    m_p_refill_timer->start();
 #if 0
     QAudioFormat format;
     format.setChannelCount((int)number_of_channels);
