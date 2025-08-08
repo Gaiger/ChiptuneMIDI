@@ -2,14 +2,7 @@
 #include <QThread>
 #include <QEventLoop>
 
-#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
-#include "AudioPlayerPrivateQt5.h"
-#endif
-
-#if QT_VERSION_CHECK(6, 0, 0) <= QT_VERSION
-#include "AudioPlayerPrivateQt6.h"
-#endif
-
+#include "AudioPlayerPrivate.h"
 #include "AudioPlayer.h"
 
 /**********************************************************************************/
