@@ -15,7 +15,9 @@
 class AudioPlayerOutput
 {
 public:
+    template<typename Receiver, typename PointerToMemberFunction>
     AudioPlayerOutput(int const number_of_channels, int const sampling_rate, int const sampling_size,
+                      Receiver *p_receiver, PointerToMemberFunction stateChanged_slot_method,
                       QObject *parent)
         : m_p_audio_sink(nullptr){
         QAudioFormat format;
@@ -43,6 +45,8 @@ public:
             m_p_audio_sink = nullptr;
         }
         m_p_audio_sink = new QAudioSink(info, format, parent);
+        QObject::connect(m_p_audio_sink, &QAudioSink::stateChanged,
+                             p_receiver, stateChanged_slot_method);
     };
 
     ~AudioPlayerOutput(){
@@ -96,7 +100,9 @@ private:
 class AudioPlayerOutput
 {
 public:
+    template<typename Receiver, typename PointerToMemberFunction>
     AudioPlayerOutput(int const number_of_channels, int const sampling_rate, int const sampling_size,
+                      Receiver *p_receiver, PointerToMemberFunction stateChanged_slot_method,
                       QObject *parent)
         : m_p_audio_output(nullptr){
         QAudioFormat format;
@@ -128,6 +134,8 @@ public:
             m_p_audio_output = nullptr;
         }
         m_p_audio_output = new QAudioOutput(info, format, parent);
+        QObject::connect(m_p_audio_output, &QAudioOutput::stateChanged,
+                         p_receiver, stateChanged_slot_method);
     };
 
     ~AudioPlayerOutput(){
@@ -270,15 +278,8 @@ void AudioPlayerPrivate::InitializeAudioResources(int const number_of_channels, 
 {
     ClearOutMidiFileAudioResources();
     m_p_audio_player_output = new AudioPlayerOutput(number_of_channels, sampling_rate, sampling_size,
+                                                    this, &AudioPlayerPrivate::HandleAudioStateChanged,
                                                     this);
-#if QT_VERSION_CHECK(6, 0, 0) <= QT_VERSION
-    //QObject::connect(m_p_audio_player_output->GetAudioOutputInstance(), &QAudioSink::stateChanged,
-     //                    this, &AudioPlayerPrivate::HandleAudioStateChanged);
-#endif
-#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
-    QObject::connect(m_p_audio_player_output->GetAudioOutputInstance(), &QAudioOutput::stateChanged,
-                     this, &AudioPlayerPrivate::HandleAudioStateChanged);
-#endif
     m_p_audio_player_output->SetVolume(1.00);
 
     int audio_buffer_size = 2.0 * fetching_wave_interval_in_milliseconds
