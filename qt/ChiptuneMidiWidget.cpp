@@ -462,16 +462,16 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 	ui->PlayPositionLabel->setText(FormatTimeString(start_time_in_milliseconds) + " / "
 							  + m_midi_file_duration_time_string);
 
-	QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, [&, start_time_in_milliseconds](){
+    QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, this, [this, start_time_in_milliseconds](){
 		m_inquiring_playback_status_timer_id = QObject::startTimer(500);
 		m_p_tune_manager->SetStartTimeInSeconds(start_time_in_milliseconds/1000.0);
 
 		if(false == IsPlayPausePushButtonPlayIcon()){
-			m_p_audio_player->Play();
+            m_p_audio_player->Play();
 
 			m_set_start_time_postpone_timer.setInterval(30);
 			QObject::disconnect(&m_set_start_time_postpone_timer, nullptr , nullptr, nullptr);
-			QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, [&](){
+            QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, this, [this](){
 				if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
 					m_p_audio_player->Play();
 				}

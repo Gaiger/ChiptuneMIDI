@@ -159,7 +159,6 @@ NoteDurationWidget::NoteDurationWidget(TuneManager *p_tune_manager, int drawn_hi
 	QSize size = QSize(parent->width() - ONE_NAME_WIDTH * 3 / 2, (m_drawn_highest_pitch - A0 + 1) * ONE_NAME_HEIGHT);
 	setFixedSize(size);
 
-	QList<QMidiEvent*> midievent_list = p_tune_manager->GetMidiFilePointer()->events();
 	for(int j = 0; j < 2; j++){
 		for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
             m_channel_rectangle_list[j][voice].append(QList<QRect>());
@@ -454,7 +453,7 @@ void NoteDurationWidget::Update(void)
 /**********************************************************************************/
 
 SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, double audio_out_latency_in_seconds,
-						 QScrollArea *p_parent_scroll_area)
+                         QScrollArea *p_parent_scroll_area)
 	: QWidget(p_parent_scroll_area),
 	  m_p_parent_scroll_area(p_parent_scroll_area)
 {
