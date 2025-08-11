@@ -1,5 +1,5 @@
-#ifndef WAVECHARTVIEW_H
-#define WAVECHARTVIEW_H
+#ifndef _WAVECHARTVIEW_H_
+#define _WAVECHARTVIEW_H_
 
 #include <QChartView>
 #if QT_VERSION_CHECK(6, 0, 0) >= QT_VERSION
@@ -32,4 +32,4 @@ private :
 	int m_sampling_size_in_bytes;
 };
 
-#endif // WAVECHARTVIEW_H
+#endif // _WAVECHARTVIEW_H_

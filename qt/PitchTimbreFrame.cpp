@@ -1,12 +1,9 @@
 #include <QDebug>
-
-#include "TuneManager.h"
-#include "GetInstrumentNameString.h"
-
-#include "ui_PitchTimbreFrameForm.h"
-
 #include <QStandardItemModel>
 
+#include "TuneManager.h"
+
+#include "ui_PitchTimbreFrameForm.h"
 #include "PitchTimbreFrame.h"
 
 /**********************************************************************************/

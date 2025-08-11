@@ -1,5 +1,5 @@
-#ifndef CHANNELNODEWIDGET_H
-#define CHANNELNODEWIDGET_H
+#ifndef _CHANNELNODEWIDGET_H_
+#define _CHANNELNODEWIDGET_H_
 
 #include <QWidget>
 
@@ -54,4 +54,4 @@ private:
 	Ui::ChannelNodeWidget *ui;
 };
 
-#endif // CHANNELNODEWIDGET_H
+#endif // _CHANNELNODEWIDGET_H_

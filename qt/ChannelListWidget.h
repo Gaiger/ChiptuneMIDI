@@ -1,5 +1,5 @@
-#ifndef CHANNELLISTWIDGET_H
-#define CHANNELLISTWIDGET_H
+#ifndef _CHANNELLISTWIDGET_H_
+#define _CHANNELLISTWIDGET_H_
 
 #include <QWidget>
 #include <QVBoxLayout>
@@ -47,4 +47,4 @@ private:
 	Ui::ChannelListWidget *ui;
 };
 
-#endif // CHANNELLISTWIDGET_H
+#endif // _CHANNELLISTWIDGET_H_

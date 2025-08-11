@@ -1,5 +1,5 @@
-#ifndef PITCHTIMBREFRAME_H
-#define PITCHTIMBREFRAME_H
+#ifndef _PITCHTIMBREFRAME_H_
+#define _PITCHTIMBREFRAME_H_
 
 namespace Ui {
 class PitchTimbreFrame;
@@ -75,4 +75,4 @@ private:
 	Ui::PitchTimbreFrame *ui;
 };
 
-#endif // PITCHTIMBREFRAME_H
+#endif // _PITCHTIMBREFRAME_H_

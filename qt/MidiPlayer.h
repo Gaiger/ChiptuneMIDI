@@ -1,7 +1,6 @@
-#ifndef MIDIPLAYERTHREAD_H
-#define MIDIPLAYERTHREAD_H
+#ifndef _MIDIPLAYERTHREAD_H_
+#define _MIDIPLAYERTHREAD_H_
 
-#include <stdio.h>
 #include <QThread>
 #include <QElapsedTimer>
 #include <QCoreApplication>
@@ -145,4 +144,4 @@ private:
 	QMidiOut* midi_out;
 };
 
-#endif // MIDIPLAYERTHREAD_H
+#endif // _MIDIPLAYERTHREAD_H_

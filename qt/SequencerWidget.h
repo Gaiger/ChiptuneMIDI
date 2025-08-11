@@ -1,5 +1,5 @@
-#ifndef SEQUENCERWIDGET_H
-#define SEQUENCERWIDGET_H
+#ifndef _SEQUENCERWIDGET_H_
+#define _SEQUENCERWIDGET_H_
 
 #include <QWidget>
 #include <QScrollArea>
@@ -27,4 +27,4 @@ private:
 	int m_vertical_scrolling_shift;
 };
 
-#endif // SEQUENCERWIDGET_H
+#endif // _SEQUENCERWIDGET_H_

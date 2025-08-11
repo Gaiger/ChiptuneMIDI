@@ -1,5 +1,5 @@
-#ifndef TUNEMANAGER_H
-#define TUNEMANAGER_H
+#ifndef _TUNEMANAGER_H_
+#define _TUNEMANAGER_H_
 
 #include <QObject>
 #include <QMutex>
@@ -96,4 +96,4 @@ private:
 	TuneManagerPrivate *m_p_private;
 };
 
-#endif // TUNEMANAGER_H
+#endif // _TUNEMANAGER_H_

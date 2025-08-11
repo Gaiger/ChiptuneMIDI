@@ -18,7 +18,6 @@
 #include "MidiPlayer.h"
 
 #include "TuneManager.h"
-#include "AudioPlayer.h"
 #include "ChiptuneMidiWidget.h"
 
 static void ListAvailableMidiDevices(void)

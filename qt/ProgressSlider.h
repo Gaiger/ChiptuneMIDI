@@ -1,5 +1,5 @@
-#ifndef PROGRESSSLIDER_H
-#define PROGRESSSLIDER_H
+#ifndef _PROGRESSSLIDER_H_
+#define _PROGRESSSLIDER_H_
 
 #include <QSlider>
 #include <QObject>
@@ -16,4 +16,4 @@ protected:
     void mousePressEvent(QMouseEvent *ev) Q_DECL_OVERRIDE;
 };
 
-#endif // PROGRESSSLIDER_H
+#endif // _PROGRESSSLIDER_H_

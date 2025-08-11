@@ -1,5 +1,5 @@
-#ifndef CHIPTUNEMIDIWIDGET_H
-#define CHIPTUNEMIDIWIDGET_H
+#ifndef _CHIPTUNEMIDIWIDGET_H_
+#define _CHIPTUNEMIDIWIDGET_H_
 #include <QTimer>
 #include <QWidget>
 #include <QToolBox>
@@ -93,4 +93,4 @@ private:
 	Ui::ChiptuneMidiWidget *ui;
 };
 
-#endif // CHIPTUNEMIDIWIDGET_H
+#endif // _CHIPTUNEMIDIWIDGET_H_
