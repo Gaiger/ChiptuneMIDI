@@ -25,6 +25,7 @@ public:
 signals:
 
 private:
+    bool eventFilter(QObject *watched, QEvent *event) Q_DECL_OVERRIDE;
 	virtual void timerEvent(QTimerEvent *event) Q_DECL_OVERRIDE;
 	virtual void showEvent(QShowEvent *event) Q_DECL_OVERRIDE;
 

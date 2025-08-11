@@ -203,6 +203,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	QWidget::setFocusPolicy(Qt::StrongFocus);
 	QWidget::setFixedSize(QWidget::size());
+    qApp->installEventFilter(this);
 }
 
 /**********************************************************************************/
@@ -552,6 +553,67 @@ void ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged(int index,
 											(uint8_t)envelope_damper_on_but_note_off_sustain_level,
 											(int8_t)envelope_damper_on_but_note_off_sustain_curve,
 											(float)envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+}
+
+/**********************************************************************************/
+
+bool ChiptuneMidiWidget::eventFilter(QObject *watched, QEvent *event)
+{
+    bool is_handled = false;
+    bool ret = false;
+    do
+    {
+        if(nullptr == QApplication::focusWidget()){
+            break;
+        }
+        if(this == watched){
+            break;
+        }
+        if(false == watched->isWidgetType()){
+            break;
+        }
+#if 0
+        QWidget *p_event_widget = (QWidget*)watched;
+        if (false == (p_event_widget == this
+                   || QWidget::isAncestorOf(p_event_widget)) ) {
+            break;
+        }
+#endif
+
+        if(true == watched->QObject::inherits("QAbstractSpinBox")){
+            break;
+        }
+
+        //QComboBoxListView has triggered, avoid QComboBoxPrivateContainer triggers once
+        if(0 == QString::compare(watched->metaObject()->className(), "QComboBoxPrivateContainer") ){
+            break;
+        }
+
+        if(QEvent::KeyPress != event->type()){
+            break;
+        }
+        QKeyEvent *p_key_event = (QKeyEvent*)event;
+        if( false == (Qt::Key_Left == p_key_event->key()
+                      || Qt::Key_Right == p_key_event->key()) ){
+            break;
+        }
+        qDebug() << QApplication::focusWidget()->metaObject()->className();
+        qDebug() << watched->metaObject()->className();
+#if 1
+        QCoreApplication::sendEvent(this, p_key_event);
+#else
+        QCoreApplication::postEvent(this, new QKeyEvent(p_key_event->type(), p_key_event->key(),
+                                                        p_key_event->modifiers(), p_key_event->text(),
+                                                        p_key_event->isAutoRepeat(), p_key_event->count()),
+                                    Qt::HighEventPriority);
+#endif
+        ret = true;
+    } while(0);
+
+    if(false == is_handled){
+        ret = QWidget::eventFilter(watched, event);
+    }
+    return ret;
 }
 
 /**********************************************************************************/
