@@ -24,7 +24,7 @@ public:
 	explicit NoteNameWidget(int drawn_highest_pitch, QWidget *parent = nullptr);
 	~NoteNameWidget(void);
 private:
-	virtual void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
+    void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
 private:
 	int m_drawn_highest_pitch;
 };
@@ -125,7 +125,7 @@ private :
 
 	void ReduceRectangles(int preparing_index);
 private:
-	virtual void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
+    void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
 private:
 	TuneManager *m_p_tune_manager;
 	int m_drawn_highest_pitch;

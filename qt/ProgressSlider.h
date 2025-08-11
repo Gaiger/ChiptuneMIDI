@@ -13,7 +13,7 @@ public:
 	signals:
 	void MousePressed(Qt::MouseButton button, int value);
 protected:
-	virtual void mousePressEvent(QMouseEvent *ev) Q_DECL_OVERRIDE;
+    void mousePressEvent(QMouseEvent *ev) Q_DECL_OVERRIDE;
 };
 
 #endif // PROGRESSSLIDER_H
