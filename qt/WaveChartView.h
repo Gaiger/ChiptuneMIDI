@@ -18,7 +18,7 @@ public:
 		SamplingSizeMax				= 255,
 	}; Q_ENUM(SamplingSize)
 
-	WaveChartView(int const number_of_channels, int const sampling_rate, int const sampling_size,
+    explicit WaveChartView(int const number_of_channels, int const sampling_rate, int const sampling_size,
 				  QWidget *parent = nullptr);
 
 	void GiveWave(QByteArray wave_bytearray);

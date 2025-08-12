@@ -15,7 +15,7 @@ class AudioPlayerPrivate : public QObject
 {
     Q_OBJECT
 public:
-    AudioPlayerPrivate(TuneManager *p_tune_manager, int fetching_wave_interval_in_milliseconds = 100,
+    explicit AudioPlayerPrivate(TuneManager *p_tune_manager, int fetching_wave_interval_in_milliseconds = 100,
                 QObject *parent = nullptr);
     ~AudioPlayerPrivate()  Q_DECL_OVERRIDE;
 
@@ -43,9 +43,8 @@ private slots:
     void HandleRefillTimerTimeout(void);
     void HandleAudioStateChanged(QAudio::State state);
 
-public:
-    void InitializeAudioResources(int const number_of_channels, int const sampling_rate, int const sampling_size,
-                                  int fetching_wave_interval_in_milliseconds);
+private:
+    void InitializeAudioResources(void);
     void AppendDataToAudioIODevice(QByteArray wave_bytearray);
     void ClearOutMidiFileAudioResources();
 

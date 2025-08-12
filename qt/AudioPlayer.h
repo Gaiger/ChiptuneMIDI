@@ -9,7 +9,7 @@ class AudioPlayer : public QObject
 {
 	Q_OBJECT
 public:
-	AudioPlayer(TuneManager *p_tune_manager, int fetching_wave_interval_in_milliseconds = 100,
+    explicit AudioPlayer(TuneManager *p_tune_manager, int fetching_wave_interval_in_milliseconds = 100,
 				QObject *parent = nullptr);
 	~AudioPlayer()  Q_DECL_OVERRIDE;
 

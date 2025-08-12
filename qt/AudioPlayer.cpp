@@ -23,7 +23,7 @@ AudioPlayer::~AudioPlayer(void)
 {
     do
     {
-        if(QThread::currentThread() == m_p_private->thread()){
+        if(QThread::currentThread() == m_p_private->QObject::thread()){
             delete m_p_private;
             break;
         }

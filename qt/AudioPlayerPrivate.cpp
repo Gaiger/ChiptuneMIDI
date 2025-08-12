@@ -273,10 +273,15 @@ void AudioPlayerPrivate::ClearOutMidiFileAudioResources(void)
 
 /**********************************************************************************/
 
-void AudioPlayerPrivate::InitializeAudioResources(int const number_of_channels, int const sampling_rate, int const sampling_size,
-                                           int const fetching_wave_interval_in_milliseconds)
+void AudioPlayerPrivate::InitializeAudioResources(void)
 {
     ClearOutMidiFileAudioResources();
+
+    int const number_of_channels = m_p_tune_manager->GetNumberOfChannels();
+    int const sampling_rate = m_p_tune_manager->GetSamplingRate();
+    int const sampling_size = m_p_tune_manager->GetSamplingSize();
+    int const fetching_wave_interval_in_milliseconds = m_fetching_wave_interval_in_milliseconds;
+
     m_p_audio_player_output = new AudioPlayerOutput(number_of_channels, sampling_rate, sampling_size,
                                                     this, &AudioPlayerPrivate::HandleAudioStateChanged,
                                                     this);
@@ -318,10 +323,9 @@ void AudioPlayerPrivate::HandlePlayRequested(void)
 
         qDebug() << Q_FUNC_INFO << "Start Play";
 
-        InitializeAudioResources(m_p_tune_manager->GetNumberOfChannels(),
-                                 m_p_tune_manager->GetSamplingRate(), m_p_tune_manager->GetSamplingSize(),
-                                 m_fetching_wave_interval_in_milliseconds);
-        AudioPlayerPrivate::AppendDataToAudioIODevice(m_p_tune_manager->FetchWave(m_p_audio_player_output->BufferSize()));
+        InitializeAudioResources();
+        AudioPlayerPrivate::AppendDataToAudioIODevice(
+                    m_p_tune_manager->FetchWave(m_p_audio_player_output->BufferSize()));
         m_p_audio_player_output->Start(m_p_audio_io_device);
     } while(0);
 }
