@@ -55,7 +55,7 @@ set(APPILCATION
     ${CHIPTUNE_QT_DIR}/TuneManager.cpp
     ${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp
     ${CHIPTUNE_QT_DIR}/AudioPlayer.cpp
-    ${CHIPTUNE_QT_DIR}/WaveChartViewchartview.cpp
+    ${CHIPTUNE_QT_DIR}/WaveChartView.cpp
 
     ${CHIPTUNE_QT_DIR}/ChannelListWidget.h
     ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.h
