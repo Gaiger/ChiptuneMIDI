@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>320</width>
+    <width>342</width>
     <height>268</height>
    </rect>
   </property>
@@ -24,7 +24,7 @@ color: rgb(208, 208, 208);
     <rect>
      <x>4</x>
      <y>4</y>
-     <width>74</width>
+     <width>88</width>
      <height>20</height>
     </rect>
    </property>
@@ -38,9 +38,9 @@ color: rgb(208, 208, 208);
   <widget class="QPushButton" name="ExpandCollapsePushButton">
    <property name="geometry">
     <rect>
-     <x>108</x>
+     <x>112</x>
      <y>4</y>
-     <width>216</width>
+     <width>224</width>
      <height>24</height>
     </rect>
    </property>
@@ -64,7 +64,7 @@ color: rgb(208, 208, 208);
   <widget class="QWidget" name="ColorWidget" native="true">
    <property name="geometry">
     <rect>
-     <x>84</x>
+     <x>92</x>
      <y>4</y>
      <width>16</width>
      <height>20</height>

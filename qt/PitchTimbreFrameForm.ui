@@ -17,6 +17,11 @@
    <string notr="true">QWidget {
 background-color: rgb(64, 64, 64); 
 color: rgb(208, 208, 208);
+}
+
+
+QComboBox:disabled {
+  background-color: rgb(96, 96, 96); 
 }</string>
   </property>
   <property name="frameShape">
@@ -31,7 +36,7 @@ color: rgb(208, 208, 208);
   <widget class="QComboBox" name="WaveFormComboBox">
    <property name="geometry">
     <rect>
-     <x>16</x>
+     <x>8</x>
      <y>8</y>
      <width>120</width>
      <height>24</height>
@@ -64,7 +69,7 @@ color: rgb(208, 208, 208);
     <rect>
      <x>148</x>
      <y>8</y>
-     <width>120</width>
+     <width>148</width>
      <height>24</height>
     </rect>
    </property>
@@ -165,9 +170,9 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="AttackLabel">
    <property name="geometry">
     <rect>
-     <x>26</x>
+     <x>8</x>
      <y>40</y>
-     <width>51</width>
+     <width>64</width>
      <height>24</height>
     </rect>
    </property>
@@ -233,9 +238,9 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="DecayLabel">
    <property name="geometry">
     <rect>
-     <x>26</x>
+     <x>8</x>
      <y>70</y>
-     <width>51</width>
+     <width>64</width>
      <height>24</height>
     </rect>
    </property>
@@ -259,9 +264,9 @@ color: rgb(208, 208, 208);
   <widget class="QSpinBox" name="SustainLevelSpinBox">
    <property name="geometry">
     <rect>
-     <x>130</x>
+     <x>132</x>
      <y>100</y>
-     <width>58</width>
+     <width>64</width>
      <height>24</height>
     </rect>
    </property>
@@ -284,9 +289,9 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="ReleaseLabel">
    <property name="geometry">
     <rect>
-     <x>26</x>
+     <x>8</x>
      <y>130</y>
-     <width>51</width>
+     <width>64</width>
      <height>24</height>
     </rect>
    </property>
@@ -365,7 +370,7 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="LevelLabel">
    <property name="geometry">
     <rect>
-     <x>86</x>
+     <x>80</x>
      <y>100</y>
      <width>41</width>
      <height>24</height>
@@ -378,9 +383,9 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="SustainLabel">
    <property name="geometry">
     <rect>
-     <x>26</x>
+     <x>8</x>
      <y>100</y>
-     <width>51</width>
+     <width>64</width>
      <height>24</height>
     </rect>
    </property>
@@ -391,11 +396,16 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="DamperOnButNoteOffSustainLabel">
    <property name="geometry">
     <rect>
-     <x>26</x>
-     <y>160</y>
-     <width>201</width>
+     <x>8</x>
+     <y>170</y>
+     <width>212</width>
      <height>24</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
    </property>
    <property name="text">
     <string>Sustain as damper on but note off</string>
@@ -404,8 +414,8 @@ color: rgb(208, 208, 208);
   <widget class="QComboBox" name="DamperOnButNoteOffSustainCurveComboBox">
    <property name="geometry">
     <rect>
-     <x>22</x>
-     <y>190</y>
+     <x>8</x>
+     <y>200</y>
      <width>128</width>
      <height>24</height>
     </rect>
@@ -435,7 +445,7 @@ color: rgb(208, 208, 208);
    <property name="geometry">
     <rect>
      <x>240</x>
-     <y>190</y>
+     <y>200</y>
      <width>58</width>
      <height>24</height>
     </rect>
@@ -456,12 +466,12 @@ color: rgb(208, 208, 208);
     <number>24</number>
    </property>
   </widget>
-  <widget class="QLabel" name="LevelLabel_2">
+  <widget class="QLabel" name="StartLevelLabel">
    <property name="geometry">
     <rect>
-     <x>154</x>
-     <y>190</y>
-     <width>72</width>
+     <x>144</x>
+     <y>200</y>
+     <width>91</width>
      <height>24</height>
     </rect>
    </property>
@@ -472,9 +482,9 @@ color: rgb(208, 208, 208);
   <widget class="QLabel" name="SecLabel">
    <property name="geometry">
     <rect>
-     <x>294</x>
-     <y>160</y>
-     <width>24</width>
+     <x>284</x>
+     <y>170</y>
+     <width>32</width>
      <height>24</height>
     </rect>
    </property>
@@ -485,8 +495,8 @@ color: rgb(208, 208, 208);
   <widget class="QDoubleSpinBox" name="DamperOnButNoteOffSustainTimeDoubleSpinBox">
    <property name="geometry">
     <rect>
-     <x>230</x>
-     <y>160</y>
+     <x>224</x>
+     <y>170</y>
      <width>54</width>
      <height>25</height>
     </rect>

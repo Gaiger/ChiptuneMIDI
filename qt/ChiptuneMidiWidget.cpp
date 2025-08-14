@@ -149,6 +149,43 @@ void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
 	p_layout->setSpacing(0);
 }
 
+#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+/**********************************************************************************/
+
+void SetFontSizeForWidgetSubtree(QWidget * const p_root_widget, int const target_point_size,
+                                 bool const is_to_set_only_if_point_size_matches_root)
+{
+    int const original_font_point_size = p_root_widget->QWidget::font().pointSize();
+
+    {
+        QFont font = p_root_widget->QWidget::font();
+        font.setPointSize(target_point_size);
+    }
+    QList<QWidget*> widget_pointer_list = p_root_widget->QObject::findChildren<QWidget*>();
+    QListIterator<QWidget*> widget_pointer_iterator(widget_pointer_list);
+    while(widget_pointer_iterator.hasNext())
+    {
+        QWidget *p_widget = widget_pointer_iterator.next();
+
+        bool is_to_set = true;
+        do
+        {
+            if(false == is_to_set_only_if_point_size_matches_root){
+                break;
+            }
+            if(p_widget->QWidget::font().pointSize() != original_font_point_size){
+                is_to_set = false;
+            }
+        } while (0);
+        if(true == is_to_set){
+            QFont font = p_widget->QWidget::font();
+            font.setPointSize(target_point_size);
+            p_widget->QWidget::setFont(font);
+        }
+    }
+}
+#endif
+
 /**********************************************************************************/
 
 ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidget *parent)
@@ -162,6 +199,9 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	ui(new Ui::ChiptuneMidiWidget)
 {
 	ui->setupUi(this);
+#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+    SetFontSizeForWidgetSubtree(this, QWidget::font().pointSize() + 2, true);
+#endif
 
 	QFont font20("Monospace");
 	font20.setStyleHint(QFont::TypeWriter);
@@ -315,6 +355,10 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 													(int8_t)envelope_damper_on_but_note_off_sustain_curve,
 													(float)envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 		}
+#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+        SetFontSizeForWidgetSubtree(p_channellist_widget,
+                                        p_channellist_widget->QWidget::font().pointSize() + 3, false);
+#endif
 
 		m_p_sequencer_widget = new SequencerWidget(m_p_tune_manager,
 											   2 * m_audio_player_buffer_in_milliseconds/1000.0,
