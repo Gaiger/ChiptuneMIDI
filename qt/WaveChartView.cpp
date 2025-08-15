@@ -7,7 +7,7 @@
 WaveChartView::WaveChartView(int const number_of_channels,
 							 int const sampling_rate, int const sampling_size, QWidget *parent)
 	: QChartView(new QChart(), parent),
-	  m_sampling_size_in_bytes(sampling_size/8)
+	  m_sample_size_in_bytes(sampling_size/8)
 {
 	QChart * p_chart = QChartView::chart();
 	p_chart->setTheme(QChart::ChartThemeDark);
@@ -25,7 +25,7 @@ WaveChartView::WaveChartView(int const number_of_channels,
 	p_chart->axes(Qt::Horizontal).at(0)->setVisible(false);
 	p_chart->addAxis( new QValueAxis(), Qt::AlignLeft);
 	do {
-		if(1 == m_sampling_size_in_bytes){
+		if(1 == m_sample_size_in_bytes){
 			p_chart->axes(Qt::Vertical).at(0)->setRange(-10, UINT8_MAX + 10);
 			break;
 		}
@@ -77,23 +77,23 @@ void WaveChartView::GiveWave(QByteArray wave_bytearray)
 	do {
 		int number_of_channels = QChartView::chart()->series().size();
 		int length = ((QXYSeries*)QChartView::chart()->series().at(0))->points().length();
-		if(number_of_channels * m_sampling_size_in_bytes * length> m_remain_wave_bytearray.size()){
+		if(number_of_channels * m_sample_size_in_bytes * length> m_remain_wave_bytearray.size()){
 			break;
 		}
 
-		while( 2 * number_of_channels * m_sampling_size_in_bytes * length < m_remain_wave_bytearray.size() )
+		while( 2 * number_of_channels * m_sample_size_in_bytes * length < m_remain_wave_bytearray.size() )
 		{
-			m_remain_wave_bytearray.remove(0, number_of_channels * m_sampling_size_in_bytes * length);
+			m_remain_wave_bytearray.remove(0, number_of_channels * m_sample_size_in_bytes * length);
 		}
 
 		do {
-			if(1 == m_sampling_size_in_bytes){
+			if(1 == m_sample_size_in_bytes){
 				ReplaceSeries<uint8_t>();
 				break;
 			}
 			ReplaceSeries<int16_t>();
 		} while(0);
-		m_remain_wave_bytearray.remove(0, number_of_channels * m_sampling_size_in_bytes  * length);
+		m_remain_wave_bytearray.remove(0, number_of_channels * m_sample_size_in_bytes  * length);
 	} while(0);
 
 }

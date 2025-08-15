@@ -29,7 +29,7 @@ private :
 
 private :
 	QByteArray m_remain_wave_bytearray;
-	int m_sampling_size_in_bytes;
+	int m_sample_size_in_bytes;
 };
 
 #endif // _WAVECHARTVIEW_H_
