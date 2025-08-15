@@ -9,8 +9,8 @@
     X(1,  "Bright Acoustic Piano") \
     X(2,  "Electric Grand Piano") \
     X(3,  "Honky-tonk Piano") \
-    X(4,  "Rhodes Piano") \
-    X(5,  "Chorused Piano") \
+    X(4,  "Electric Piano 1") \
+    X(5,  "Electric Piano 2") \
     X(6,  "Harpsichord") \
     X(7,  "Clavinet") \
     X(8,  "Celesta") \
