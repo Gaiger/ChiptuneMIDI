@@ -91,7 +91,7 @@ private:
 private slots:
 	void HandleGenerateWaveRequested(int const length);
 private:
-    void SubmitWaveGeneration(int const length, bool const is_synchronized = true);
+	void SubmitWaveGeneration(int const length, bool const is_synchronized = true);
 private:
 	TuneManagerPrivate *m_p_private;
 };

@@ -25,16 +25,16 @@ public:
 signals:
 
 private:
-    bool eventFilter(QObject *watched, QEvent *event) Q_DECL_OVERRIDE;
-    void timerEvent(QTimerEvent *event) Q_DECL_OVERRIDE;
-    void showEvent(QShowEvent *event) Q_DECL_OVERRIDE;
+	bool eventFilter(QObject *watched, QEvent *event) Q_DECL_OVERRIDE;
+	void timerEvent(QTimerEvent *event) Q_DECL_OVERRIDE;
+	void showEvent(QShowEvent *event) Q_DECL_OVERRIDE;
 
-    void dragEnterEvent(QDragEnterEvent* event) Q_DECL_OVERRIDE;
-    void dragMoveEvent(QDragMoveEvent* event) Q_DECL_OVERRIDE;
-    void dragLeaveEvent(QDragLeaveEvent* event) Q_DECL_OVERRIDE;
-    void dropEvent(QDropEvent *event) Q_DECL_OVERRIDE;
+	void dragEnterEvent(QDragEnterEvent* event) Q_DECL_OVERRIDE;
+	void dragMoveEvent(QDragMoveEvent* event) Q_DECL_OVERRIDE;
+	void dragLeaveEvent(QDragLeaveEvent* event) Q_DECL_OVERRIDE;
+	void dropEvent(QDropEvent *event) Q_DECL_OVERRIDE;
 
-    void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
+	void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 private slots:
 	void on_OpenMidiFilePushButton_released(void);
 	void on_SaveSaveFilePushButton_released(void);

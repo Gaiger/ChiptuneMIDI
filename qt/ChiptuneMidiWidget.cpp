@@ -153,36 +153,36 @@ void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
 /**********************************************************************************/
 
 void SetFontSizeForWidgetSubtree(QWidget * const p_root_widget, int const target_point_size,
-                                 bool const is_to_set_only_if_point_size_matches_root)
+								 bool const is_to_set_only_if_point_size_matches_root)
 {
-    int const original_font_point_size = p_root_widget->QWidget::font().pointSize();
+	int const original_font_point_size = p_root_widget->QWidget::font().pointSize();
 
-    {
-        QFont font = p_root_widget->QWidget::font();
-        font.setPointSize(target_point_size);
-    }
-    QList<QWidget*> widget_pointer_list = p_root_widget->QObject::findChildren<QWidget*>();
-    QListIterator<QWidget*> widget_pointer_iterator(widget_pointer_list);
-    while(widget_pointer_iterator.hasNext())
-    {
-        QWidget *p_widget = widget_pointer_iterator.next();
+	{
+		QFont font = p_root_widget->QWidget::font();
+		font.setPointSize(target_point_size);
+	}
+	QList<QWidget*> widget_pointer_list = p_root_widget->QObject::findChildren<QWidget*>();
+	QListIterator<QWidget*> widget_pointer_iterator(widget_pointer_list);
+	while(widget_pointer_iterator.hasNext())
+	{
+		QWidget *p_widget = widget_pointer_iterator.next();
 
-        bool is_to_set = true;
-        do
-        {
-            if(false == is_to_set_only_if_point_size_matches_root){
-                break;
-            }
-            if(p_widget->QWidget::font().pointSize() != original_font_point_size){
-                is_to_set = false;
-            }
-        } while (0);
-        if(true == is_to_set){
-            QFont font = p_widget->QWidget::font();
-            font.setPointSize(target_point_size);
-            p_widget->QWidget::setFont(font);
-        }
-    }
+		bool is_to_set = true;
+		do
+		{
+			if(false == is_to_set_only_if_point_size_matches_root){
+				break;
+			}
+			if(p_widget->QWidget::font().pointSize() != original_font_point_size){
+				is_to_set = false;
+			}
+		} while (0);
+		if(true == is_to_set){
+			QFont font = p_widget->QWidget::font();
+			font.setPointSize(target_point_size);
+			p_widget->QWidget::setFont(font);
+		}
+	}
 }
 #endif
 
@@ -200,7 +200,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 {
 	ui->setupUi(this);
 #if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
-    SetFontSizeForWidgetSubtree(this, QWidget::font().pointSize() + 2, true);
+	SetFontSizeForWidgetSubtree(this, QWidget::font().pointSize() + 2, true);
 #endif
 
 	QFont font20("Monospace");
@@ -217,14 +217,14 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	QWidget::setAcceptDrops(true);
 
-    QThread *p_tune_manager_working_thread = new QThread(this);
-    m_p_tune_manager->moveToThread(p_tune_manager_working_thread);
-    p_tune_manager_working_thread->start(QThread::HighPriority);
+	QThread *p_tune_manager_working_thread = new QThread(this);
+	m_p_tune_manager->moveToThread(p_tune_manager_working_thread);
+	p_tune_manager_working_thread->start(QThread::HighPriority);
 
 	m_p_audio_player = new AudioPlayer(m_p_tune_manager, m_audio_player_buffer_in_milliseconds/2, nullptr);
-    QThread *p_audio_player_working_thread = new QThread(this);
-    m_p_audio_player->moveToThread(p_audio_player_working_thread);
-    p_audio_player_working_thread->start(QThread::NormalPriority);
+	QThread *p_audio_player_working_thread = new QThread(this);
+	m_p_audio_player->moveToThread(p_audio_player_working_thread);
+	p_audio_player_working_thread->start(QThread::NormalPriority);
 
 	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
 					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
@@ -243,46 +243,46 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	QWidget::setFocusPolicy(Qt::StrongFocus);
 	QWidget::setFixedSize(QWidget::size());
-    qApp->installEventFilter(this);
+	qApp->installEventFilter(this);
 }
 
 /**********************************************************************************/
 
 ChiptuneMidiWidget::~ChiptuneMidiWidget()
 {
-    do
-    {
-        if(nullptr == m_p_tune_manager){
-            break;
-        }
-        if (m_p_audio_player->thread() == QThread::currentThread()){
-            break;
-        }
-        QThread *p_tune_manager_working_thread = m_p_tune_manager->thread();
-        p_tune_manager_working_thread->quit();
-        while( false == p_tune_manager_working_thread->isFinished()){
-            QThread::msleep(10);
-        }
-    }while(0);
+	do
+	{
+		if(nullptr == m_p_tune_manager){
+			break;
+		}
+		if (m_p_audio_player->thread() == QThread::currentThread()){
+			break;
+		}
+		QThread *p_tune_manager_working_thread = m_p_tune_manager->thread();
+		p_tune_manager_working_thread->quit();
+		while( false == p_tune_manager_working_thread->isFinished()){
+			QThread::msleep(10);
+		}
+	}while(0);
 
-    do
-    {
-        if(nullptr == m_p_audio_player){
-            break;
-        }
-        m_p_audio_player->Stop();
-        if (m_p_audio_player->thread() == QThread::currentThread()){
-            delete m_p_audio_player;
-            break;
-        }
-        QThread *p_audio_player_working_thread = m_p_audio_player->thread();
-        m_p_audio_player->deleteLater();
-        p_audio_player_working_thread->quit();
-        while( false == p_audio_player_working_thread->isFinished()){
-            QThread::msleep(10);
-        }
-    }while(0);
-    m_p_audio_player = nullptr;
+	do
+	{
+		if(nullptr == m_p_audio_player){
+			break;
+		}
+		m_p_audio_player->Stop();
+		if (m_p_audio_player->thread() == QThread::currentThread()){
+			delete m_p_audio_player;
+			break;
+		}
+		QThread *p_audio_player_working_thread = m_p_audio_player->thread();
+		m_p_audio_player->deleteLater();
+		p_audio_player_working_thread->quit();
+		while( false == p_audio_player_working_thread->isFinished()){
+			QThread::msleep(10);
+		}
+	}while(0);
+	m_p_audio_player = nullptr;
 }
 
 /**********************************************************************************/
@@ -356,8 +356,8 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 													(float)envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 		}
 #if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
-        SetFontSizeForWidgetSubtree(p_channellist_widget,
-                                        p_channellist_widget->QWidget::font().pointSize() + 3, false);
+		SetFontSizeForWidgetSubtree(p_channellist_widget,
+										p_channellist_widget->QWidget::font().pointSize() + 3, false);
 #endif
 
 		m_p_sequencer_widget = new SequencerWidget(m_p_tune_manager,
@@ -461,10 +461,10 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 void ChiptuneMidiWidget::UpdateTempoLabelText(void)
 {
 	double tempo = m_p_tune_manager->GetTempo();
-    QString tempo_string = QString::asprintf(" = %2.0f", tempo);
+	QString tempo_string = QString::asprintf(" = %2.0f", tempo);
 	do{
 		if( 0.1 < abs(tempo - (int)(tempo + 0.5))){
-            tempo_string = QString::asprintf(" = %2.1f", tempo);
+			tempo_string = QString::asprintf(" = %2.1f", tempo);
 			break;
 		}
 	} while(0);
@@ -507,16 +507,16 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 	ui->PlayPositionLabel->setText(FormatTimeString(start_time_in_milliseconds) + " / "
 							  + m_midi_file_duration_time_string);
 
-    QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, this, [this, start_time_in_milliseconds](){
+	QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, this, [this, start_time_in_milliseconds](){
 		m_inquiring_playback_status_timer_id = QObject::startTimer(500);
 		m_p_tune_manager->SetStartTimeInSeconds(start_time_in_milliseconds/1000.0);
 
 		if(false == IsPlayPausePushButtonPlayIcon()){
-            m_p_audio_player->Play();
+			m_p_audio_player->Play();
 
 			m_set_start_time_postpone_timer.setInterval(30);
 			QObject::disconnect(&m_set_start_time_postpone_timer, nullptr , nullptr, nullptr);
-            QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, this, [this](){
+			QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, this, [this](){
 				if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
 					m_p_audio_player->Play();
 				}
@@ -559,14 +559,14 @@ void ChiptuneMidiWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackStat
 
 void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value)
 {
-    do
-    {
-        if(Qt::LeftButton != button){
-            break;
-        }
-        ui->PlayProgressSlider->setValue(value);
-        SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
-    }while(0);
+	do
+	{
+		if(Qt::LeftButton != button){
+			break;
+		}
+		ui->PlayProgressSlider->setValue(value);
+		SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
+	}while(0);
 }
 
 /**********************************************************************************/
@@ -603,61 +603,61 @@ void ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged(int index,
 
 bool ChiptuneMidiWidget::eventFilter(QObject *watched, QEvent *event)
 {
-    bool is_handled = false;
-    bool ret = false;
-    do
-    {
-        if(nullptr == QApplication::focusWidget()){
-            break;
-        }
-        if(this == watched){
-            break;
-        }
-        if(false == watched->isWidgetType()){
-            break;
-        }
-#if 0
-        QWidget *p_event_widget = (QWidget*)watched;
-        if (false == (p_event_widget == this
-                   || QWidget::isAncestorOf(p_event_widget)) ) {
-            break;
-        }
-#endif
+	bool is_handled = false;
+	bool ret = false;
+	do
+	{
+		if(nullptr == QApplication::focusWidget()){
+			break;
+		}
+		if(this == watched){
+			break;
+		}
+		if(false == watched->isWidgetType()){
+			break;
+		}
+	#if 0
+		QWidget *p_event_widget = (QWidget*)watched;
+		if (false == (p_event_widget == this
+				   || QWidget::isAncestorOf(p_event_widget)) ) {
+			break;
+		}
+	#endif
 
-        if(true == watched->QObject::inherits("QAbstractSpinBox")){
-            break;
-        }
+		if(true == watched->QObject::inherits("QAbstractSpinBox")){
+			break;
+		}
 
-        //QComboBoxListView has triggered, avoid QComboBoxPrivateContainer triggers once
-        if(0 == QString::compare(watched->metaObject()->className(), "QComboBoxPrivateContainer") ){
-            break;
-        }
+		//QComboBoxListView has triggered, avoid QComboBoxPrivateContainer triggers once
+		if(0 == QString::compare(watched->metaObject()->className(), "QComboBoxPrivateContainer") ){
+			break;
+		}
 
-        if(QEvent::KeyPress != event->type()){
-            break;
-        }
-        QKeyEvent *p_key_event = (QKeyEvent*)event;
-        if( false == (Qt::Key_Left == p_key_event->key()
-                      || Qt::Key_Right == p_key_event->key()) ){
-            break;
-        }
-        qDebug() << QApplication::focusWidget()->metaObject()->className();
-        qDebug() << watched->metaObject()->className();
+		if(QEvent::KeyPress != event->type()){
+			break;
+		}
+		QKeyEvent *p_key_event = (QKeyEvent*)event;
+		if( false == (Qt::Key_Left == p_key_event->key()
+					  || Qt::Key_Right == p_key_event->key()) ){
+			break;
+		}
+		qDebug() << QApplication::focusWidget()->metaObject()->className();
+		qDebug() << watched->metaObject()->className();
 #if 1
-        QCoreApplication::sendEvent(this, p_key_event);
+		QCoreApplication::sendEvent(this, p_key_event);
 #else
-        QCoreApplication::postEvent(this, new QKeyEvent(p_key_event->type(), p_key_event->key(),
-                                                        p_key_event->modifiers(), p_key_event->text(),
-                                                        p_key_event->isAutoRepeat(), p_key_event->count()),
-                                    Qt::HighEventPriority);
+		QCoreApplication::postEvent(this, new QKeyEvent(p_key_event->type(), p_key_event->key(),
+														p_key_event->modifiers(), p_key_event->text(),
+														p_key_event->isAutoRepeat(), p_key_event->count()),
+									Qt::HighEventPriority);
 #endif
-        ret = true;
-    } while(0);
+		ret = true;
+	} while(0);
 
-    if(false == is_handled){
-        ret = QWidget::eventFilter(watched, event);
-    }
-    return ret;
+	if(false == is_handled){
+		ret = QWidget::eventFilter(watched, event);
+	}
+	return ret;
 }
 
 /**********************************************************************************/

@@ -24,7 +24,7 @@ public:
 	explicit NoteNameWidget(int drawn_highest_pitch, QWidget *parent = nullptr);
 	~NoteNameWidget(void);
 private:
-    void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
+	void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
 private:
 	int m_drawn_highest_pitch;
 };
@@ -69,10 +69,10 @@ void NoteNameWidget::paintEvent(QPaintEvent *event)
 		painter.drawRect(QRect(0, i * ONE_NAME_HEIGHT, ONE_NAME_WIDTH, ONE_NAME_HEIGHT));
 	}
 #endif
-    QFont font = painter.font();
-#define ADDITIONAL_FONT_POINT_SIZE                  (2)
-    font.setPointSize(ONE_NAME_HEIGHT/2 + ADDITIONAL_FONT_POINT_SIZE);
-    //font.setBold(true);
+	QFont font = painter.font();
+#define ADDITIONAL_FONT_POINT_SIZE				  (2)
+	font.setPointSize(ONE_NAME_HEIGHT/2 + ADDITIONAL_FONT_POINT_SIZE);
+	//font.setBold(true);
 	painter.setFont(font);
 
 	painter.drawText( QPoint(ONE_NAME_WIDTH*1/8, (QWidget::height() - ONE_NAME_HEIGHT + ONE_NAME_HEIGHT*2/3)), "A0");
@@ -96,9 +96,9 @@ void NoteNameWidget::paintEvent(QPaintEvent *event)
 	int kk = 0;
 	for(int i = 3; i < (m_drawn_highest_pitch -  A0 + 1); i++){
 		QString note_name_string = note_name_string_list.at(kk % 12);
-        QString number_string = QString::number(kk / 12 + 1);
+		QString number_string = QString::number(kk / 12 + 1);
 		note_name_string.replace("1", number_string);
-        painter.drawText( QPoint(ONE_NAME_WIDTH*1/8, (QWidget::height() - (4 + kk) * ONE_NAME_HEIGHT + ONE_NAME_HEIGHT*3/4) + ADDITIONAL_FONT_POINT_SIZE/2),
+		painter.drawText( QPoint(ONE_NAME_WIDTH*1/8, (QWidget::height() - (4 + kk) * ONE_NAME_HEIGHT + ONE_NAME_HEIGHT*3/4) + ADDITIONAL_FONT_POINT_SIZE/2),
 						  note_name_string);
 		kk += 1;
 	}
@@ -125,15 +125,15 @@ private :
 
 	void ReduceRectangles(int preparing_index);
 private:
-    void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
+	void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
 private:
 	TuneManager *m_p_tune_manager;
 	int m_drawn_highest_pitch;
 
 	double m_audio_out_latency_in_seconds;
 
-    QList<QRect> m_channel_rectangle_list[2][MIDI_MAX_CHANNEL_NUMBER];
-    int m_drawing_channel_rectangle_list_index;
+	QList<QRect> m_channel_rectangle_list[2][MIDI_MAX_CHANNEL_NUMBER];
+	int m_drawing_channel_rectangle_list_index;
 	bool m_is_channel_to_draw[MIDI_MAX_CHANNEL_NUMBER];
 
 	int m_last_sought_index;
@@ -161,14 +161,14 @@ NoteDurationWidget::NoteDurationWidget(TuneManager *p_tune_manager, int drawn_hi
 
 	for(int j = 0; j < 2; j++){
 		for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-            m_channel_rectangle_list[j][voice].append(QList<QRect>());
+			m_channel_rectangle_list[j][voice].append(QList<QRect>());
 		}
 	}
 
 	for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		m_is_channel_to_draw[voice] = true;
 	}
-    m_drawing_channel_rectangle_list_index = 0;
+	m_drawing_channel_rectangle_list_index = 0;
 	m_ignored_midi_event_ptr_list.clear();
 }
 
@@ -230,13 +230,13 @@ void NoteDurationWidget::ReduceRectangles(int preparing_channel_rectangle_list_i
 	// Reduce the rectangles from out of the widget boundary.
 	int const right_endpoint = QWidget::width() - 1;
 	for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-        QMutableListIterator<QRect> rect_list_iterator(m_channel_rectangle_list[preparing_channel_rectangle_list_index][voice]);
-        while(rect_list_iterator.hasNext()){
-            rect_list_iterator.next();
-            QRect rect = rect_list_iterator.value();
+		QMutableListIterator<QRect> rect_list_iterator(m_channel_rectangle_list[preparing_channel_rectangle_list_index][voice]);
+		while(rect_list_iterator.hasNext()){
+			rect_list_iterator.next();
+			QRect rect = rect_list_iterator.value();
 
 			if(rect.right() < 0){
-                rect_list_iterator.remove();
+				rect_list_iterator.remove();
 				continue;
 			}
 
@@ -254,7 +254,7 @@ void NoteDurationWidget::ReduceRectangles(int preparing_channel_rectangle_list_i
 			}while(0);
 
 			if(true == is_reduced){
-                rect_list_iterator.setValue(rect);
+				rect_list_iterator.setValue(rect);
 			}
 		}
 	}
@@ -265,10 +265,10 @@ void NoteDurationWidget::ReduceRectangles(int preparing_channel_rectangle_list_i
 void NoteDurationWidget::Prepare(int const tick_in_center)
 {
 	QMutexLocker locker(&m_mutex);
-    int preparing_channel_rectangle_list_index = (m_drawing_channel_rectangle_list_index + 1) % 2;
+	int preparing_channel_rectangle_list_index = (m_drawing_channel_rectangle_list_index + 1) % 2;
 
 	for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-        m_channel_rectangle_list[preparing_channel_rectangle_list_index][voice].clear();
+		m_channel_rectangle_list[preparing_channel_rectangle_list_index][voice].clear();
 	}
 
 	QList<QMidiEvent*> midievent_list = m_p_tune_manager->GetMidiFilePointer()->events();
@@ -356,7 +356,7 @@ void NoteDurationWidget::Prepare(int const tick_in_center)
 					do
 					{
 						p_draw_note->end_tick = p_event->tick();
-                        m_channel_rectangle_list[preparing_channel_rectangle_list_index][p_draw_note->voice].append(
+						m_channel_rectangle_list[preparing_channel_rectangle_list_index][p_draw_note->voice].append(
 									NoteToQRect(p_draw_note->start_tick, p_draw_note->end_tick, tick_in_center, p_draw_note->note)
 									);
 						if(sought_index > p_draw_note->note_on_midievent_index){
@@ -383,7 +383,7 @@ void NoteDurationWidget::Prepare(int const tick_in_center)
 		}while(0);
 	}
 
-    ReduceRectangles(preparing_channel_rectangle_list_index);
+	ReduceRectangles(preparing_channel_rectangle_list_index);
 
 	//qDebug() << "sought_index " << sought_index;
 	//qDebug() << "start_index_list.size() " << start_index_list.size();
@@ -391,7 +391,7 @@ void NoteDurationWidget::Prepare(int const tick_in_center)
 	if(INT32_MAX != sought_index){
 		m_last_sought_index = sought_index;
 	}
-    m_drawing_channel_rectangle_list_index = preparing_channel_rectangle_list_index;
+	m_drawing_channel_rectangle_list_index = preparing_channel_rectangle_list_index;
 }
 
 /**********************************************************************************/
@@ -416,8 +416,8 @@ void NoteDurationWidget::paintEvent(QPaintEvent *event)
 		painter.setPen(pen);
 		//painter.setPen(color);
 		painter.setBrush(color);
-        for(int i = 0; i < m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].size(); i++){
-            painter.drawRect(m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].at(i));
+		for(int i = 0; i < m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].size(); i++){
+			painter.drawRect(m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].at(i));
 		}
 	}
 
@@ -429,8 +429,8 @@ void NoteDurationWidget::paintEvent(QPaintEvent *event)
 		painter.setBrush(color);
 		painter.setPen(QColor(0xFF, 0xFF, 0xFF, 0xC0));
 
-        for(int i = 0; i < m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].size(); i++){
-            painter.drawRect(m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].at(i));
+		for(int i = 0; i < m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].size(); i++){
+			painter.drawRect(m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].at(i));
 		}
 	}
 
@@ -453,7 +453,7 @@ void NoteDurationWidget::Update(void)
 /**********************************************************************************/
 
 SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, double audio_out_latency_in_seconds,
-                         QScrollArea *p_parent_scroll_area)
+						 QScrollArea *p_parent_scroll_area)
 	: QWidget(p_parent_scroll_area),
 	  m_p_parent_scroll_area(p_parent_scroll_area)
 {

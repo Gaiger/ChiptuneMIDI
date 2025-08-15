@@ -42,31 +42,31 @@ int8_t chiptune_get_pitch_shift_in_semitones(void);
 
 enum CHIPTUNE_WAVEFORM_TYPE
 {
-    CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_50 = 0,
-    CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_25,
-    CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_125,
-    CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_75,
-    CHIPTUNE_WAVEFORM_TRIANGLE,
-    CHIPTUNE_WAVEFORM_SAW,
-    CHIPTUNE_WAVEFORM_NOISE,
+	CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_50 = 0,
+	CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_25,
+	CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_125,
+	CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_75,
+	CHIPTUNE_WAVEFORM_TRIANGLE,
+	CHIPTUNE_WAVEFORM_SAW,
+	CHIPTUNE_WAVEFORM_NOISE,
 };
 
 enum CHIPTUNE_ENVELOPE_CURVE_TYPE
 {
-    CHIPTUNE_ENVELOPE_CURVE_LINEAR = 0,
-    CHIPTUNE_ENVELOPE_CURVE_EXPONENTIAL,
-    CHIPTUNE_ENVELOPE_CURVE_GAUSSIAN,
-    CHIPTUNE_ENVELOPE_CURVE_FERMI,
+	CHIPTUNE_ENVELOPE_CURVE_LINEAR = 0,
+	CHIPTUNE_ENVELOPE_CURVE_EXPONENTIAL,
+	CHIPTUNE_ENVELOPE_CURVE_GAUSSIAN,
+	CHIPTUNE_ENVELOPE_CURVE_FERMI,
 };
 
 int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const waveform,
-                                      int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
-                                      int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
-                                      uint8_t const envelope_sustain_level,
-                                      int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
-                                      uint8_t const envelope_damper_on_but_note_off_sustain_level,
-                                      int8_t const envelope_damper_on_but_note_off_sustain_curve,
-                                      float const envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+									  int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
+									  int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
+									  uint8_t const envelope_sustain_level,
+									  int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
+									  uint8_t const envelope_damper_on_but_note_off_sustain_level,
+									  int8_t const envelope_damper_on_but_note_off_sustain_curve,
+									  float const envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 
 
 int32_t chiptune_get_amplitude_gain(void);

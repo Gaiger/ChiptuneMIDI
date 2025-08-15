@@ -22,26 +22,26 @@ CHIPTUNE_QT_DIR = $${CHIPTUNE_ROOT_DIR}/qt
 include($${CHIPTUNE_QT_DIR}/QMidi/src/QMidi.pri)
 
 SOURCES += \
-        $${CHIPTUNE_ROOT_DIR}/chiptune.c \
-        $${CHIPTUNE_ROOT_DIR}/chiptune_channel_controller_internal.c \
-        $${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.c \
-        $${CHIPTUNE_ROOT_DIR}/chiptune_midi_control_change_internal.c \
-        $${CHIPTUNE_ROOT_DIR}/chiptune_event_internal.c \
-        $${CHIPTUNE_ROOT_DIR}/chiptune_midi_effect_internal.c \
-        $${CHIPTUNE_ROOT_DIR}/chiptune_oscillator_internal.c \
-        $${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.c \
-        $${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp \
-        $${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp \
-        $${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.cpp \
-        $${CHIPTUNE_QT_DIR}/GetInstrumentNameString.cpp \
-        $${CHIPTUNE_QT_DIR}/PitchTimbreFrame.cpp \
-        $${CHIPTUNE_QT_DIR}/ProgressSlider.cpp \
-        $${CHIPTUNE_QT_DIR}/SequencerWidget.cpp \
-        $${CHIPTUNE_QT_DIR}/TuneManager.cpp \
-        $${CHIPTUNE_QT_DIR}/AudioPlayer.cpp \
-        $${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp \
-        $${CHIPTUNE_QT_DIR}/WaveChartView.cpp \
-        $${CHIPTUNE_QT_DIR}/main.cpp
+    $${CHIPTUNE_ROOT_DIR}/chiptune.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_channel_controller_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_midi_control_change_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_event_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_midi_effect_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_oscillator_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.c \
+    $${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp \
+    $${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp \
+    $${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.cpp \
+    $${CHIPTUNE_QT_DIR}/GetInstrumentNameString.cpp \
+    $${CHIPTUNE_QT_DIR}/PitchTimbreFrame.cpp \
+    $${CHIPTUNE_QT_DIR}/ProgressSlider.cpp \
+    $${CHIPTUNE_QT_DIR}/SequencerWidget.cpp \
+    $${CHIPTUNE_QT_DIR}/TuneManager.cpp \
+    $${CHIPTUNE_QT_DIR}/AudioPlayer.cpp \
+    $${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp \
+    $${CHIPTUNE_QT_DIR}/WaveChartView.cpp \
+    $${CHIPTUNE_QT_DIR}/main.cpp
 
 HEADERS += \
     $${CHIPTUNE_ROOT_DIR}/chiptune.h \

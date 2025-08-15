@@ -9,7 +9,7 @@ class AudioPlayer : public QObject
 {
 	Q_OBJECT
 public:
-    explicit AudioPlayer(TuneManager *p_tune_manager, int fetching_wave_interval_in_milliseconds = 100,
+	explicit AudioPlayer(TuneManager *p_tune_manager, int fetching_wave_interval_in_milliseconds = 100,
 				QObject *parent = nullptr);
 	~AudioPlayer()  Q_DECL_OVERRIDE;
 
@@ -30,11 +30,11 @@ public:
 	PlaybackState GetState(void);
 
 public:
-    signals:
-    void StateChanged(AudioPlayer::PlaybackState state);
+	signals:
+	void StateChanged(AudioPlayer::PlaybackState state);
 
 private:
-    AudioPlayerPrivate *m_p_private;
+	AudioPlayerPrivate *m_p_private;
 
 };
 

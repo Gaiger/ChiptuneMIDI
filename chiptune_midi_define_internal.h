@@ -76,8 +76,8 @@
 	X(BrightAcousticPiano,		1) \
 	X(ElectricGrandPiano,		2) \
 	X(HonkyTonkPiano,			3) \
-    X(ElectricPiano1,			4) \
-    X(ElectricPiano2,			5) \
+	X(ElectricPiano1,			4) \
+	X(ElectricPiano2,			5) \
 	X(Harpsichord,				6) \
 	X(Clavinet,					7) \
 	\
@@ -157,7 +157,7 @@
 	X(Flute,					73) \
 	X(Recorder,					74) \
 	X(PanFlute,					75) \
-    X(BlownBottle,				76) \
+	X(BlownBottle,				76) \
 	X(Shakuhachi,				77) \
 	X(Whistle,					78) \
 	X(Ocarina,					79) \
@@ -169,7 +169,7 @@
 	X(Lead5Charang,				84) \
 	X(Lead6Voice,				85) \
 	X(Lead7Fifths,				86) \
-    X(Lead8BassLead,			87) \
+	X(Lead8BassLead,			87) \
 	\
 	X(Pad1NewAge,				88) \
 	X(Pad2Warm,					89) \
@@ -196,7 +196,7 @@
 	X(Kalimba,					108) \
 	X(Bagpipe,					109) \
 	X(Fiddle,					110) \
-    X(Shanai,					111) \
+	X(Shanai,					111) \
 	\
 	X(TinkleBell,				112) \
 	X(Agogo,					113) \

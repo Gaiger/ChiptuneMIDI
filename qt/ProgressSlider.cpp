@@ -12,13 +12,13 @@ void ProgressSlider::mousePressEvent(QMouseEvent *ev)
 {
 	QSlider::mousePressEvent(ev);
 
-    int position;
+	int position;
 #if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
-    position = ev->x();
+	position = ev->x();
 #endif
 #if QT_VERSION_CHECK(6, 0, 0) <= QT_VERSION
-    position = ev->position().x();
+	position = ev->position().x();
 #endif
-    int value = QStyle::sliderValueFromPosition(QSlider::minimum(), QSlider::maximum(), position, QWidget::width());
+	int value = QStyle::sliderValueFromPosition(QSlider::minimum(), QSlider::maximum(), position, QWidget::width());
 	emit MousePressed(ev->button(), value);
 }

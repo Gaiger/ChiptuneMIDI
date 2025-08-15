@@ -55,19 +55,19 @@ public:
 		m_wave_bytearray += generated_bytearray;
 	}
 
-    int ResetSongResources(void)
-    {
-        m_wave_bytearray.clear();
-        m_wave_prebuffer_length = 0;
+	int ResetSongResources(void)
+	{
+		m_wave_bytearray.clear();
+		m_wave_prebuffer_length = 0;
 
-        if(nullptr == m_p_midi_file){
-            return -1;
-        }
+		if(nullptr == m_p_midi_file){
+			return -1;
+		}
 
-        m_channel_instrument_pair_list.clear();
-        chiptune_prepare_song(m_p_midi_file->resolution());
-        return 0;
-    }
+		m_channel_instrument_pair_list.clear();
+		chiptune_prepare_song(m_p_midi_file->resolution());
+		return 0;
+	}
 
 public:
 	QMidiFile *m_p_midi_file;
@@ -78,10 +78,10 @@ public:
 	int m_wave_prebuffer_length;
 	QByteArray m_wave_bytearray;
 
-    Qt::ConnectionType m_connection_type;
+	Qt::ConnectionType m_connection_type;
 	QList<QPair<int, int>> m_channel_instrument_pair_list;
 
-    QMutex m_mutex;
+	QMutex m_mutex;
 };
 
 /**********************************************************************************/
@@ -97,24 +97,24 @@ extern "C" int get_midi_message(uint32_t index, uint32_t * const p_tick, uint32_
 
 TuneManager::TuneManager(bool is_stereo,
 						 int const sampling_rate, int const sampling_size, QObject *parent)
-    : QObject(parent)
+	: QObject(parent)
 {
-    m_p_private = new TuneManagerPrivate();
-    QMutexLocker locker(&m_p_private->m_mutex);
+	m_p_private = new TuneManagerPrivate();
+	QMutexLocker locker(&m_p_private->m_mutex);
 
-    do
-    {
+	do
+	{
 #if QT_VERSION_CHECK(6, 0, 0) <= QT_VERSION
-        if (false != QMetaType::fromName("PlaybackState").isValid()) {
-            break;
-        }
+		if (false != QMetaType::fromName("PlaybackState").isValid()) {
+			break;
+		}
 #else
-        if( QMetaType::UnknownType != QMetaType::type("SamplingSize")){
-            break;
-        }
+		if( QMetaType::UnknownType != QMetaType::type("SamplingSize")){
+			break;
+		}
 #endif
-        qRegisterMetaType<TuneManager::SamplingSize>("SamplingSize");
-    } while(0);
+		qRegisterMetaType<TuneManager::SamplingSize>("SamplingSize");
+	} while(0);
 
 	m_p_private->m_sampling_rate = sampling_rate;
 	do {
@@ -138,33 +138,33 @@ TuneManager::TuneManager(bool is_stereo,
 
 	s_p_private_instance = m_p_private;
 	chiptune_set_handler_get_midi_message(get_midi_message);
-    chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
-                        (uint32_t)m_p_private->m_sampling_rate);
+	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
+						 (uint32_t)m_p_private->m_sampling_rate);
 }
 
 /**********************************************************************************/
 
 TuneManager::~TuneManager(void)
 {
-    {
-        QMutexLocker locker(&m_p_private->m_mutex);
+	{
+		QMutexLocker locker(&m_p_private->m_mutex);
 
-        chiptune_finalize();
-        if(nullptr != m_p_private->m_p_midi_file){
-            delete m_p_private->m_p_midi_file;
-            m_p_private->m_p_midi_file = nullptr;
-        }
-        m_p_private->m_channel_instrument_pair_list.clear();
-    }
-    delete m_p_private;
-    m_p_private = nullptr;
+		chiptune_finalize();
+		if(nullptr != m_p_private->m_p_midi_file){
+			delete m_p_private->m_p_midi_file;
+			m_p_private->m_p_midi_file = nullptr;
+		}
+		m_p_private->m_channel_instrument_pair_list.clear();
+	}
+	delete m_p_private;
+	m_p_private = nullptr;
 }
 
 /**********************************************************************************/
 
 int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 {
-    QMutexLocker locker(&m_p_private->m_mutex);
+	QMutexLocker locker(&m_p_private->m_mutex);
 	QFileInfo file_info(midi_file_name_string);
 	if(false == file_info.isFile()){
 		qDebug() << Q_FUNC_INFO << midi_file_name_string << "is not a file";
@@ -179,7 +179,7 @@ int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 	}
 
 	qDebug()  << "Music time length = " << GetMidiFileDurationInSeconds() << "seconds";
-    m_p_private->ResetSongResources();
+	m_p_private->ResetSongResources();
 	return 0;
 }
 
@@ -187,7 +187,7 @@ int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 
 void TuneManager::ClearOutMidiFile(void)
 {
-    QMutexLocker locker(&m_p_private->m_mutex);
+	QMutexLocker locker(&m_p_private->m_mutex);
 	m_p_private->m_wave_bytearray.clear();
 	m_p_private->m_wave_prebuffer_length = 0;
 
@@ -225,7 +225,7 @@ bool TuneManager::IsFileLoaded(void)
 
 void TuneManager::HandleGenerateWaveRequested(int const length)
 {
-    QMutexLocker locker(&m_p_private->m_mutex);
+	QMutexLocker locker(&m_p_private->m_mutex);
 	m_p_private->GenerateWave(length);
 }
 
@@ -307,15 +307,14 @@ QByteArray TuneManager::FetchWave(int const length)
 	}
 
 	if(m_p_private->m_wave_bytearray.mid(0, length).size() < length){
-            SubmitWaveGeneration(length - m_p_private->m_wave_bytearray.mid(0, length).size(),
-							 true);
+		SubmitWaveGeneration(length - m_p_private->m_wave_bytearray.mid(0, length).size(), true);
 	}
 
 	QByteArray fetched_wave_bytearray = m_p_private->m_wave_bytearray.mid(0, length);
 	m_p_private->m_wave_bytearray.remove(0, length);
 
 	if(m_p_private->m_wave_bytearray.mid(length, -1).size() < m_p_private->m_wave_prebuffer_length){
-        SubmitWaveGeneration(m_p_private->m_wave_prebuffer_length, false);
+		SubmitWaveGeneration(m_p_private->m_wave_prebuffer_length, false);
 	}
 
 	emit WaveFetched(fetched_wave_bytearray);
@@ -407,15 +406,15 @@ void TuneManager::SetPlayingSpeedRatio(double playing_speed_raio)
 
 void TuneManager::SetPitchShift(int pitch_shift_in_semitones)
 {
-    QMutexLocker locker(&m_p_private->m_mutex);
-    chiptune_set_pitch_shift_in_semitones((int8_t)pitch_shift_in_semitones);
+	QMutexLocker locker(&m_p_private->m_mutex);
+	chiptune_set_pitch_shift_in_semitones((int8_t)pitch_shift_in_semitones);
 }
 
 /**********************************************************************************/
 
 int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 {
-    QMutexLocker locker(&m_p_private->m_mutex);
+	QMutexLocker locker(&m_p_private->m_mutex);
 
 	int set_index = -1;
 	QList<QMidiEvent *> const p_midi_event_list = m_p_private ->m_p_midi_file->events();
@@ -475,7 +474,7 @@ int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 
 QList<QPair<int, int>> TuneManager::GetChannelInstrumentPairList(void)
 {
-    QMutexLocker locker(&m_p_private->m_mutex);
+	QMutexLocker locker(&m_p_private->m_mutex);
 	do {
 		if(0 != m_p_private->m_channel_instrument_pair_list.size()){
 			break;
@@ -497,7 +496,7 @@ QList<QPair<int, int>> TuneManager::GetChannelInstrumentPairList(void)
 
 void TuneManager::SetChannelOutputEnabled(int index, bool is_enabled)
 {
-    QMutexLocker locker(&m_p_private->m_mutex);
+	QMutexLocker locker(&m_p_private->m_mutex);
 	if(index < 0 || index >= CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER){
 		return ;
 	}
@@ -517,7 +516,7 @@ int TuneManager::SetPitchChannelTimbre(int8_t const channel_index,
 						   int8_t const envelope_damper_on_but_note_off_sustain_curve,
 						   float const envelope_damper_on_but_note_off_sustain_duration_in_seconds)
 {
-    QMutexLocker locker(&m_p_private->m_mutex);
+	QMutexLocker locker(&m_p_private->m_mutex);
 	if(nullptr == m_p_private->m_p_midi_file){
 		return -1;
 	}

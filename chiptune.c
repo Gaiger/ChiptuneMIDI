@@ -1210,7 +1210,7 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index)
 		reset_channel_controller_midi_control_change_parameters(voice);
 	}
 
-    reset_all_events();
+	reset_all_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	if(0 == end_midi_message_index){
 		return ;
@@ -1411,7 +1411,7 @@ static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMB
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		reset_channel_controller_midi_control_change_parameters(voice);
 	}
-    reset_all_events();
+	reset_all_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
 }
@@ -1423,38 +1423,38 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate)
 	s_is_stereo = is_stereo;
 	s_is_processing_left_channel = true;
 	UPDATE_SAMPLING_RATE(sampling_rate);
-    UPDATE_RESOLUTION(MIDI_DEFAULT_RESOLUTION);
+	UPDATE_RESOLUTION(MIDI_DEFAULT_RESOLUTION);
 	UPDATE_TEMPO(MIDI_DEFAULT_TEMPO);
 	for(int16_t i = 0; i < SINE_TABLE_LENGTH; i++){
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
 	}
-    initialize_channel_controllers();
+	initialize_channel_controllers();
 	return ;
 }
 /**********************************************************************************/
 
 void chiptune_finalize(void)
 {
-    clean_all_events();
+	clean_all_events();
 }
 
 /**********************************************************************************/
 
 void chiptune_prepare_song(uint32_t const resolution)
 {
-    UPDATE_RESOLUTION(resolution);
-    for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-        s_is_channels_output_enabled_array[voice] = true;
-    }
-    reset_all_events();
-    for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-        reset_channel_controller_all_parameters(voice);
-    }
-    get_ending_instruments(&s_ending_instrument_array[0]);
+	UPDATE_RESOLUTION(resolution);
+	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		s_is_channels_output_enabled_array[voice] = true;
+	}
+	reset_all_events();
+	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		reset_channel_controller_all_parameters(voice);
+	}
+	get_ending_instruments(&s_ending_instrument_array[0]);
 
-    RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
-    RESET_AMPLITUDE_NORMALIZATION_GAIN();
-    process_timely_midi_message_and_event();
+	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
+	RESET_AMPLITUDE_NORMALIZATION_GAIN();
+	process_timely_midi_message_and_event();
 }
 
 /**********************************************************************************/
@@ -1647,11 +1647,11 @@ int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const w
 
 void chiptune_set_pitch_shift_in_semitones(int8_t pitch_shift_in_semitones)
 {
-    set_pitch_shift_in_semitones((int16_t)pitch_shift_in_semitones);
+	set_pitch_shift_in_semitones((int16_t)pitch_shift_in_semitones);
 }
 /**********************************************************************************/
 
 int8_t chiptune_get_pitch_shift_in_semitones(void)
 {
-    return (int8_t)get_pitch_shift_in_semitones();
+	return (int8_t)get_pitch_shift_in_semitones();
 }
