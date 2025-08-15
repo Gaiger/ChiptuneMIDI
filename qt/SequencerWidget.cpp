@@ -195,7 +195,6 @@ int NoteDurationWidget::XtoTick(int x, int tick_in_center)
 	return tick;
 }
 
-
 /**********************************************************************************/
 
 void NoteDurationWidget::SetChannelToDrawEnabled(int channel_index, bool is_enabled)
@@ -482,14 +481,14 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, double audio_out_l
 		}
 	}
 	(void)lowest_pitch;
-#define UPPER_BORDER_IN_PITCH						(3)
+#define TOP_PADDING_IN_PITCH						(2)
 	int drawn_hightest_pitch = highest_pitch;
 	do{
-		if(G9 - UPPER_BORDER_IN_PITCH < drawn_hightest_pitch){
+		if(G9 - TOP_PADDING_IN_PITCH < drawn_hightest_pitch){
 			drawn_hightest_pitch = G9;
 			break;
 		}
-		drawn_hightest_pitch = highest_pitch + UPPER_BORDER_IN_PITCH;
+		drawn_hightest_pitch = highest_pitch + TOP_PADDING_IN_PITCH    ;
 	} while(0);
 
 	if((drawn_hightest_pitch - A0 + 1) * ONE_BEAT_HEIGHT < QWidget::height()){
@@ -539,7 +538,7 @@ void SequencerWidget::Update(void)
 		do {
 		// To make the scolling valid, it is necessary to set verticalScrollBar value twice.
 		// TODO : to remove the ugly walk-around
-#define SHIFT_STAGE_BIT									(30)
+#define SHIFT_STAGE_BIT								(30)
 			if((0x01 << SHIFT_STAGE_BIT) & m_vertical_scrolling_shift){
 				m_vertical_scrolling_shift = 0;
 				break;
