@@ -37,7 +37,7 @@ public:
 	int GetAmplitudeGain(void);
 	void SetAmplitudeGain(int amplitude_gain);
 
-	QByteArray FetchWave(int const length);
+	QByteArray FetchWave(int const size);
 	bool IsTuneEnding(void);
 
 	float GetMidiFileDurationInSeconds(void);
@@ -87,11 +87,11 @@ public:
 
 private:
 	signals:
-	void GenerateWaveRequested(int const length);
+	void GenerateWaveRequested(int const size);
 private slots:
-	void HandleGenerateWaveRequested(int const length);
+	void HandleGenerateWaveRequested(int const size);
 private:
-	void SubmitWaveGeneration(int const length, bool const is_synchronized = true);
+	void SubmitWaveGeneration(int const size, bool const is_synchronized = true);
 private:
 	TuneManagerPrivate *m_p_private;
 };

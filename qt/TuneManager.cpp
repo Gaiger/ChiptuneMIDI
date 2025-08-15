@@ -33,11 +33,16 @@ public:
 		return 0;
 	}
 
-	void GenerateWave(int const length)
+	void GenerateWave(int const size)
 	{
 		QByteArray generated_bytearray;
-		generated_bytearray.reserve(length);
-		for(int i = 0; i < length; i++) {
+		generated_bytearray.reserve(size);
+		int fetch_times = size;
+		if(TuneManager::SamplingSize16Bit == fetch_times){
+			fetch_times /= 2;
+		}
+
+		for(int i = 0; i < fetch_times; i++) {
 			if(true == chiptune_is_tune_ending()){
 				break;
 			}
@@ -58,7 +63,7 @@ public:
 	int ResetSongResources(void)
 	{
 		m_wave_bytearray.clear();
-		m_wave_prebuffer_length = 0;
+		m_wave_prebuffer_size = 0;
 
 		if(nullptr == m_p_midi_file){
 			return -1;
@@ -75,7 +80,7 @@ public:
 	int m_sampling_rate;
 	int m_sampling_size;
 
-	int m_wave_prebuffer_length;
+	int m_wave_prebuffer_size;
 	QByteArray m_wave_bytearray;
 
 	Qt::ConnectionType m_connection_type;
@@ -189,7 +194,7 @@ void TuneManager::ClearOutMidiFile(void)
 {
 	QMutexLocker locker(&m_p_private->m_mutex);
 	m_p_private->m_wave_bytearray.clear();
-	m_p_private->m_wave_prebuffer_length = 0;
+	m_p_private->m_wave_prebuffer_size = 0;
 
 	if(nullptr != m_p_private->m_p_midi_file){
 		delete m_p_private->m_p_midi_file;
@@ -223,15 +228,15 @@ bool TuneManager::IsFileLoaded(void)
 
 /**********************************************************************************/
 
-void TuneManager::HandleGenerateWaveRequested(int const length)
+void TuneManager::HandleGenerateWaveRequested(int const size)
 {
 	QMutexLocker locker(&m_p_private->m_mutex);
-	m_p_private->GenerateWave(length);
+	m_p_private->GenerateWave(size);
 }
 
 /**********************************************************************************/
 
-void TuneManager::SubmitWaveGeneration(int const length, bool const is_synchronized)
+void TuneManager::SubmitWaveGeneration(int const size, bool const is_synchronized)
 {
 	bool is_to_reconnect = false;
 	do{
@@ -266,7 +271,7 @@ void TuneManager::SubmitWaveGeneration(int const length, bool const is_synchroni
 						 m_p_private->m_connection_type);
 	}
 
-	emit GenerateWaveRequested(length);
+	emit GenerateWaveRequested(size);
 }
 
 /**********************************************************************************/
@@ -300,21 +305,21 @@ void TuneManager::SetAmplitudeGain(int amplitude_gain)
 
 /**********************************************************************************/
 
-QByteArray TuneManager::FetchWave(int const length)
+QByteArray TuneManager::FetchWave(int const size)
 {
-	if(length > m_p_private->m_wave_prebuffer_length){
-		m_p_private->m_wave_prebuffer_length = length;
+	if(size > m_p_private->m_wave_prebuffer_size){
+		m_p_private->m_wave_prebuffer_size = size;
 	}
 
-	if(m_p_private->m_wave_bytearray.mid(0, length).size() < length){
-		SubmitWaveGeneration(length - m_p_private->m_wave_bytearray.mid(0, length).size(), true);
+	if(m_p_private->m_wave_bytearray.mid(0, size).size() < size){
+		SubmitWaveGeneration(size - m_p_private->m_wave_bytearray.mid(0, size).size(), true);
 	}
 
-	QByteArray fetched_wave_bytearray = m_p_private->m_wave_bytearray.mid(0, length);
-	m_p_private->m_wave_bytearray.remove(0, length);
+	QByteArray fetched_wave_bytearray = m_p_private->m_wave_bytearray.mid(0, size);
+	m_p_private->m_wave_bytearray.remove(0, size);
 
-	if(m_p_private->m_wave_bytearray.mid(length, -1).size() < m_p_private->m_wave_prebuffer_length){
-		SubmitWaveGeneration(m_p_private->m_wave_prebuffer_length, false);
+	if(m_p_private->m_wave_bytearray.mid(size, -1).size() < m_p_private->m_wave_prebuffer_size){
+		SubmitWaveGeneration(m_p_private->m_wave_prebuffer_size, false);
 	}
 
 	emit WaveFetched(fetched_wave_bytearray);
@@ -466,7 +471,7 @@ int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 	chiptune_move_toward(set_index);
 
 	m_p_private->m_wave_bytearray.clear();
-	m_p_private->m_wave_prebuffer_length = 0;
+	m_p_private->m_wave_prebuffer_size = 0;
 	return 0;
 }
 
