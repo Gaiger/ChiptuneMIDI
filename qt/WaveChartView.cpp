@@ -70,7 +70,7 @@ template <typename T> void  WaveChartView::ReplaceSeries(void)
 
 /**********************************************************************************/
 
-void WaveChartView::GiveWave(QByteArray wave_bytearray)
+void WaveChartView::UpdateWave(QByteArray const &wave_bytearray)
 {
 	m_remain_wave_bytearray += wave_bytearray;
 

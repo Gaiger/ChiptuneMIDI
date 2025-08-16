@@ -322,7 +322,7 @@ QByteArray TuneManager::FetchWave(int const size)
 		SubmitWaveGeneration(m_p_private->m_wave_prebuffer_size, false);
 	}
 
-	emit WaveFetched(fetched_wave_bytearray);
+	emit WaveDelivered(fetched_wave_bytearray);
 	return fetched_wave_bytearray;
 }
 

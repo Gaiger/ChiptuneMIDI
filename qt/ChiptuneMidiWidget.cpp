@@ -226,8 +226,8 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	m_p_audio_player->moveToThread(p_audio_player_working_thread);
 	p_audio_player_working_thread->start(QThread::NormalPriority);
 
-	QObject::connect(p_tune_manager, &TuneManager::WaveFetched,
-					 this, &ChiptuneMidiWidget::HandleWaveFetched, Qt::QueuedConnection);
+	QObject::connect(p_tune_manager, &TuneManager::WaveDelivered,
+					 m_p_wave_chartview, &WaveChartView::UpdateWave, Qt::QueuedConnection);
 
 	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::MousePressed, this,
 						 &ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed);
@@ -482,13 +482,6 @@ void ChiptuneMidiWidget::UpdateTempoLabelText(void)
 		tempo_string += playing_tempo_string;
 	}while(0);
 	ui->TempoLabel->setText(UNICODE_QUARTER_NOTE_ICON + tempo_string);
-}
-
-/**********************************************************************************/
-
-void ChiptuneMidiWidget::HandleWaveFetched(const QByteArray wave_bytearray)
-{
-	m_p_wave_chartview->GiveWave(wave_bytearray);
 }
 
 /**********************************************************************************/

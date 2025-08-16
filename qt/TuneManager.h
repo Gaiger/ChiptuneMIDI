@@ -83,7 +83,7 @@ public:
 
 public:
 	signals:
-	void WaveFetched(QByteArray const wave_bytearray);
+	void WaveDelivered(QByteArray const &wave_bytearray);
 
 private:
 	signals:
