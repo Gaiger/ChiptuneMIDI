@@ -38,7 +38,7 @@ public:
 		QByteArray generated_bytearray;
 		generated_bytearray.reserve(size);
 		int fetch_times = size;
-		if(TuneManager::SamplingSize16Bit == fetch_times){
+		if(TuneManager::SamplingSize16Bit == m_sampling_size){
 			fetch_times /= 2;
 		}
 
@@ -214,8 +214,6 @@ QMidiFile * TuneManager::GetMidiFilePointer(void)
 	return m_p_private->m_p_midi_file;
 }
 
-
-
 /**********************************************************************************/
 
 bool TuneManager::IsFileLoaded(void)
@@ -311,16 +309,33 @@ QByteArray TuneManager::FetchWave(int const size)
 		m_p_private->m_wave_prebuffer_size = size;
 	}
 
-	if(m_p_private->m_wave_bytearray.mid(0, size).size() < size){
-		SubmitWaveGeneration(size - m_p_private->m_wave_bytearray.mid(0, size).size(), true);
-	}
+	do
+	{
+		int submit_size = 0;
+		{
+			QMutexLocker lock(&m_p_private->m_mutex);
+			if(m_p_private->m_wave_bytearray.mid(0, size).size() > size){
+				break;
+			}
+			submit_size = size - m_p_private->m_wave_bytearray.mid(0, size).size();
+		}
+		SubmitWaveGeneration(submit_size, true);
+	}while(0);
 
-	QByteArray fetched_wave_bytearray = m_p_private->m_wave_bytearray.mid(0, size);
-	m_p_private->m_wave_bytearray.remove(0, size);
+	QByteArray fetched_wave_bytearray;
+	do
+	{
+		{
+			QMutexLocker lock(&m_p_private->m_mutex);
+			fetched_wave_bytearray = m_p_private->m_wave_bytearray.mid(0, size);
+			m_p_private->m_wave_bytearray.remove(0, size);
 
-	if(m_p_private->m_wave_bytearray.mid(size, -1).size() < m_p_private->m_wave_prebuffer_size){
+			if(m_p_private->m_wave_bytearray.mid(size, -1).size() > m_p_private->m_wave_prebuffer_size){
+				break;
+			}
+		}
 		SubmitWaveGeneration(m_p_private->m_wave_prebuffer_size, false);
-	}
+	} while(0);
 
 	return fetched_wave_bytearray;
 }
@@ -337,18 +352,21 @@ void TuneManager::RequestWave(int const size)
 
 bool TuneManager::IsTuneEnding(void)
 {
+	bool is_ending = false;
 	do {
 		if(false == chiptune_is_tune_ending()){
 			break;
 		}
-		if(0 < m_p_private->m_wave_bytearray.size()){
-			break;
+		{
+			//QMutexLocker lock(&m_p_private->m_mutex);
+			if(0 < m_p_private->m_wave_bytearray.size()){
+				break;
+			}
 		}
-
-		return true;
+		is_ending = true;
 	} while(0);
 
-	return false;
+	return is_ending;
 }
 
 /**********************************************************************************/
