@@ -1,8 +1,6 @@
 #include <QBuffer>
 #include <QThread>
 
-#include <QIODevice>
-
 #include <QDebug>
 
 #include "AudioPlayerPrivate.h"

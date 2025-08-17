@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <QObject>
 #include <QAudio>
+#include <QIODevice>
 
 #include "AudioPlayer.h" //PlaybackState
 
