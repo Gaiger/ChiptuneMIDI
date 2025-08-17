@@ -1,9 +1,9 @@
 #include "GetInstrumentNameString.h"
 
-//https://zh.wikipedia.org/wiki/General_MIDI?utm_source=chatgpt.com
+//https://zh.wikipedia.org/wiki/General_MIDI
 //https://fmslogo.sourceforge.io/manual/midi-instrument.html
 
-//---- MIDI Instrument List (GM 0–127) ----
+//---- MIDI Instrument List (GM 0-127) ----
 #define INSTRUMENT_LIST(X) \
 	X(0,  "Acoustic Grand Piano") \
 	X(1,  "Bright Acoustic Piano") \
