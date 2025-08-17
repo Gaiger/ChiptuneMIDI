@@ -216,10 +216,13 @@ private:
 
 /**********************************************************************************/
 
-AudioPlayerPrivate::AudioPlayerPrivate(TuneManager *p_tune_manager, int fetching_wave_interval_in_milliseconds,
+AudioPlayerPrivate::AudioPlayerPrivate(int const number_of_channels, int const sampling_rate, int const sampling_size,
+									   int const fetching_wave_interval_in_milliseconds,
 									   QObject *parent)
 	: QObject(parent),
-	m_p_tune_manager(p_tune_manager),
+	m_number_of_channels(number_of_channels),
+	m_sampling_rate(sampling_rate),
+	m_sampling_size(sampling_size),
 	m_fetching_wave_interval_in_milliseconds(fetching_wave_interval_in_milliseconds),
 
 	m_p_audio_io_device(nullptr),
@@ -227,19 +230,7 @@ AudioPlayerPrivate::AudioPlayerPrivate(TuneManager *p_tune_manager, int fetching
 	m_connection_type(Qt::AutoConnection),
 	m_p_audio_player_output(nullptr)
 {
-	do
-	{
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-		if( false !=  QMetaType::fromName("PlaybackState").isValid()){
-			break;
-		}
-#else
-		if( QMetaType::UnknownType != QMetaType::type("PlaybackState")){
-			break;
-		}
-#endif
-		qRegisterMetaType<TuneManager::SamplingSize>("PlaybackState");
-	} while(0);
+
 }
 
 /**********************************************************************************/
@@ -277,9 +268,9 @@ void AudioPlayerPrivate::InitializeAudioResources(void)
 {
 	ClearOutMidiFileAudioResources();
 
-	int const number_of_channels = m_p_tune_manager->GetNumberOfChannels();
-	int const sampling_rate = m_p_tune_manager->GetSamplingRate();
-	int const sampling_size = m_p_tune_manager->GetSamplingSize();
+	int const number_of_channels = m_number_of_channels;
+	int const sampling_rate = m_sampling_rate;
+	int const sampling_size = m_sampling_size;
 	int const fetching_wave_interval_in_milliseconds = m_fetching_wave_interval_in_milliseconds;
 
 	m_p_audio_player_output = new AudioPlayerOutput(number_of_channels, sampling_rate, sampling_size,
@@ -322,8 +313,7 @@ void AudioPlayerPrivate::HandlePlayRequested(void)
 
 		qDebug() << Q_FUNC_INFO << "Start Play";
 		InitializeAudioResources();
-		AudioPlayerPrivate::AppendDataToAudioIODevice(
-					m_p_tune_manager->FetchWave(m_p_audio_player_output->BufferSize()));
+		emit DataRequested(m_p_audio_player_output->BufferSize());
 		m_p_audio_player_output->Start(m_p_audio_io_device);
 	} while(0);
 }
@@ -411,13 +401,31 @@ void AudioPlayerPrivate::Pause(void)
 
 /**********************************************************************************/
 
-void AudioPlayerPrivate::AppendDataToAudioIODevice(QByteArray audio_bytearray)
+void AudioPlayerPrivate::FeedData(const QByteArray& data)
 {
-	if(nullptr == m_p_audio_io_device){
-		return ;
-	}
-	m_p_audio_io_device->write(audio_bytearray);
-	//qDebug() <<Q_FUNC_INFO <<"QObject::thread() = " << QObject::thread();
+	//QMutexLocker locker(&m_mutex);
+	do {
+		if(nullptr == m_p_audio_player_output){
+			break;
+		}
+		int write_size_in_bytes = data.size();
+
+		do {
+			if(QAudio::StoppedState == m_p_audio_player_output->State()){
+				break;
+			}
+
+			if(QAudio::SuspendedState == m_p_audio_player_output->State()){
+				break;
+			}
+			if(m_p_audio_player_output->BytesFree() < data.size()){
+				write_size_in_bytes = m_p_audio_player_output->BytesFree();
+				qDebug() << Q_FUNC_INFO << "ERROR :: BytesFree is less then data size"<<
+							m_p_audio_player_output->BytesFree() << data.size();
+			}
+		} while(0);
+		m_p_audio_io_device->write(data.mid(0, write_size_in_bytes));
+	} while(0);
 }
 
 /**********************************************************************************/
@@ -434,9 +442,9 @@ void AudioPlayerPrivate::HandleRefillTimerTimeout(void)
 			break;
 		}
 
-		QByteArray fetched_bytearray
-				= m_p_tune_manager->FetchWave(remain_audio_buffer_size);
-		AudioPlayerPrivate::AppendDataToAudioIODevice(fetched_bytearray);
+		emit DataRequested(remain_audio_buffer_size);
+		//qDebug() << "remain_audio_buffer_size =" << remain_audio_buffer_size;
+		//qDebug() << "fetched_bytearray.size = " << fetched_bytearray.size();
 	} while(0);
 }
 

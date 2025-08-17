@@ -7,14 +7,31 @@
 
 /**********************************************************************************/
 
-AudioPlayer::AudioPlayer(TuneManager *p_tune_manager, int fetching_wave_interval_in_milliseconds, QObject *parent)
+AudioPlayer::AudioPlayer(int const number_of_channels, int const sampling_rate, int const sampling_size,
+						 int const fetching_wave_interval_in_milliseconds, QObject *parent)
 	: QObject(parent),
 	m_p_private(nullptr)
 {
-	m_p_private = new AudioPlayerPrivate(p_tune_manager, fetching_wave_interval_in_milliseconds, this);
+	do
+	{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+		if( false !=  QMetaType::fromName("PlaybackState").isValid()){
+			break;
+		}
+#else
+		if( QMetaType::UnknownType != QMetaType::type("PlaybackState")){
+			break;
+		}
+#endif
+		qRegisterMetaType<AudioPlayer::PlaybackState>("PlaybackState");
+	} while(0);
+
+	m_p_private = new AudioPlayerPrivate(number_of_channels, sampling_rate, sampling_size,
+										 fetching_wave_interval_in_milliseconds, this);
+	QObject::connect(m_p_private, &AudioPlayerPrivate::DataRequested,
+					 this, &AudioPlayer::DataRequested, Qt::DirectConnection);
 	QObject::connect(m_p_private, &AudioPlayerPrivate::StateChanged,
-					 this, &AudioPlayer::StateChanged,
-					 Qt::DirectConnection);
+					 this, &AudioPlayer::StateChanged, Qt::DirectConnection);
 }
 
 /**********************************************************************************/
@@ -32,6 +49,13 @@ AudioPlayer::~AudioPlayer(void)
 		destroy_event_loop.exec();
 	}while(0);
 	m_p_private = nullptr;
+}
+
+/**********************************************************************************/
+
+void AudioPlayer::FeedData(const QByteArray& data)
+{
+	m_p_private->FeedData(data);
 }
 
 /**********************************************************************************/

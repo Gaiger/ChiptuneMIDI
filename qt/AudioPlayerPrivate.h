@@ -1,12 +1,11 @@
 #ifndef _AUDIOPLAYERPRIVATE_H_
 #define _AUDIOPLAYERPRIVATE_H_
 
-#include <QObject>
+#include <QMutex>
 #include <QTimer>
-#include <QIODevice>
+#include <QObject>
 #include <QAudio>
 
-#include "TuneManager.h"
 #include "AudioPlayer.h" //PlaybackState
 
 class AudioPlayerOutput;
@@ -15,8 +14,9 @@ class AudioPlayerPrivate : public QObject
 {
 	Q_OBJECT
 public:
-	explicit AudioPlayerPrivate(TuneManager *p_tune_manager, int fetching_wave_interval_in_milliseconds = 100,
-				QObject *parent = nullptr);
+	explicit AudioPlayerPrivate(int const number_of_channels, int const sampling_rate, int const sampling_size,
+								int const fetching_wave_interval_in_milliseconds = 100,
+								QObject *parent = nullptr);
 	~AudioPlayerPrivate()  Q_DECL_OVERRIDE;
 
 	void Play(void);
@@ -24,8 +24,10 @@ public:
 	void Pause(void);
 
 	AudioPlayer::PlaybackState GetState(void);
+	void FeedData(const QByteArray& data);
 public:
 	signals:
+	void DataRequested(int size);
 	void StateChanged(AudioPlayer::PlaybackState state);
 
 private:
@@ -45,13 +47,13 @@ private slots:
 
 private:
 	void InitializeAudioResources(void);
-	void AppendDataToAudioIODevice(QByteArray wave_bytearray);
 	void ClearOutMidiFileAudioResources();
-
 	void OrganizeConnection(void);
 
 private:
-	TuneManager *m_p_tune_manager;
+	int m_number_of_channels;
+	int m_sampling_rate;
+	int m_sampling_size;
 	int m_fetching_wave_interval_in_milliseconds;
 
 	QIODevice *m_p_audio_io_device;

@@ -101,10 +101,10 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 	p_tune_manager->SetStartTimeInSeconds(0);
 	int data_buffer_size = p_tune_manager->GetNumberOfChannels()
 			* p_tune_manager->GetSamplingRate() * p_tune_manager->GetSamplingSize()/8;
-	QByteArray wave_data;
+	QByteArray wave_bytearray;
 	while(1)
 	{
-		wave_data += p_tune_manager->FetchWave(data_buffer_size);
+		wave_bytearray += p_tune_manager->FetchWave(data_buffer_size);
 		if(true == p_tune_manager->IsTuneEnding()){
 			break;
 		}
@@ -113,7 +113,7 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 	int header_size = 0;
 	char *p_wav_header = (char*)wav_file_header(
 				p_tune_manager->GetNumberOfChannels(), p_tune_manager->GetSamplingRate(),
-				p_tune_manager->GetSamplingSize(), wave_data.size(), &header_size);
+				p_tune_manager->GetSamplingSize(), wave_bytearray.size(), &header_size);
 
 	QFile file(filename);
 	if(false == file.open(QIODevice::ReadWrite | QIODevice::Truncate)){
@@ -121,7 +121,7 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 		return -2;
 	}
 
-	int file_size = file.write(QByteArray(p_wav_header, header_size) + wave_data);
+	int file_size = file.write(QByteArray(p_wav_header, header_size) + wave_bytearray);
 	file.close();
 
 	qDebug() << "file saved, size = " << file_size << " bytes";
@@ -130,10 +130,10 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 
 class SaveAsWavFileThread: public QThread {
 public :
-	SaveAsWavFileThread(TuneManager *p_tune_manager, QString filename):
-	m_p_tune_manager(p_tune_manager), m_filename(filename){}
+	SaveAsWavFileThread(TuneManager *p_tune_manager, QString filename)
+		: m_p_tune_manager(p_tune_manager), m_filename(filename){}
 protected:
-	void run(void) Q_DECL_OVERRIDE { SaveAsWavFile(m_p_tune_manager,m_filename); }
+	void run(void) Q_DECL_OVERRIDE { SaveAsWavFile(m_p_tune_manager, m_filename); }
 private:
 	TuneManager *m_p_tune_manager;
 	QString m_filename;
@@ -221,11 +221,19 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	m_p_tune_manager->moveToThread(p_tune_manager_working_thread);
 	p_tune_manager_working_thread->start(QThread::HighPriority);
 
-	m_p_audio_player = new AudioPlayer(m_p_tune_manager, m_audio_player_buffer_in_milliseconds/2, nullptr);
+	m_p_audio_player = new AudioPlayer(m_p_tune_manager->GetNumberOfChannels(),
+									   m_p_tune_manager->GetSamplingRate(),
+									   m_p_tune_manager->GetSamplingSize(),
+									   m_audio_player_buffer_in_milliseconds/2, nullptr);
 	QThread *p_audio_player_working_thread = new QThread(this);
 	m_p_audio_player->moveToThread(p_audio_player_working_thread);
 	p_audio_player_working_thread->start(QThread::NormalPriority);
 
+	QObject::connect(m_p_audio_player, &AudioPlayer::DataRequested,
+					 p_tune_manager, &TuneManager::RequestWave, Qt::DirectConnection);
+
+	QObject::connect(p_tune_manager, &TuneManager::WaveDelivered,
+					 m_p_audio_player, &AudioPlayer::FeedData, Qt::DirectConnection);
 	QObject::connect(p_tune_manager, &TuneManager::WaveDelivered,
 					 m_p_wave_chartview, &WaveChartView::UpdateWave, Qt::QueuedConnection);
 

@@ -80,7 +80,8 @@ public:
 							  uint8_t const envelope_damper_on_but_note_off_sustain_level = 24,
 							  int8_t const envelope_damper_on_but_note_off_sustain_curve = ENVELOPE_CURVE_LINEAR,
 							  float const envelope_damper_on_but_note_off_sustain_duration_in_seconds = 8.0);
-
+public slots:
+	void RequestWave(int const size);
 public:
 	signals:
 	void WaveDelivered(QByteArray const &wave_bytearray);
