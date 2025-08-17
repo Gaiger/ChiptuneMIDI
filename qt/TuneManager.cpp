@@ -314,10 +314,10 @@ QByteArray TuneManager::FetchWave(int const size)
 		int submit_size = 0;
 		{
 			QMutexLocker lock(&m_p_private->m_mutex);
-			if(m_p_private->m_wave_bytearray.mid(0, size).size() > size){
+			if(m_p_private->m_wave_bytearray.size() > size){
 				break;
 			}
-			submit_size = size - m_p_private->m_wave_bytearray.mid(0, size).size();
+			submit_size = size - m_p_private->m_wave_bytearray.size();
 		}
 		SubmitWaveGeneration(submit_size, true);
 	}while(0);
@@ -329,8 +329,7 @@ QByteArray TuneManager::FetchWave(int const size)
 			QMutexLocker lock(&m_p_private->m_mutex);
 			fetched_wave_bytearray = m_p_private->m_wave_bytearray.mid(0, size);
 			m_p_private->m_wave_bytearray.remove(0, size);
-
-			if(m_p_private->m_wave_bytearray.mid(size, -1).size() > m_p_private->m_wave_prebuffer_size){
+			if(m_p_private->m_wave_bytearray.size() > m_p_private->m_wave_prebuffer_size){
 				break;
 			}
 		}

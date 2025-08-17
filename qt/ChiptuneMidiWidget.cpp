@@ -369,7 +369,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 #endif
 
 		m_p_sequencer_widget = new SequencerWidget(m_p_tune_manager,
-											   2 * m_audio_player_buffer_in_milliseconds/1000.0,
+											   m_audio_player_buffer_in_milliseconds/1000.0,
 											   ui->SequencerScrollArea);
 
 		ui->AmplitudeGainSlider->setValue(UINT16_MAX - m_p_tune_manager->GetAmplitudeGain());
