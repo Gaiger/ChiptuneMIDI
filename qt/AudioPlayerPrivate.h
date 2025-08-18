@@ -52,10 +52,10 @@ private:
 	void OrganizeConnection(void);
 
 private:
-	int m_number_of_channels;
-	int m_sampling_rate;
-	int m_sampling_size;
-	int m_fetching_wave_interval_in_milliseconds;
+	int const m_number_of_channels;
+	int const m_sampling_rate;
+	int const m_sampling_size;
+	int const m_fetching_wave_interval_in_milliseconds;
 
 	QIODevice *m_p_audio_io_device;
 	QTimer *m_p_refill_timer;
