@@ -16,21 +16,26 @@ class TuneManagerPrivate
 public:
 	int GetMidiMessage(int const index, uint32_t * const p_tick, uint32_t * const p_message)
 	{
-
-		if(m_p_midi_file->events().size() <= index){
-			return -1;
-		}
-
-		QMidiEvent *p_midi_event = m_p_midi_file->events().at(index);
-		if(QMidiEvent::Meta == p_midi_event->type()){
-			if(QMidiEvent::Tempo == p_midi_event->number()){
-				chiptune_set_tempo(p_midi_event->tempo());
+		int ret = -1;
+		do
+		{
+			if(m_p_midi_file->events().size() <= index){
+				break;
 			}
-		}
 
-		*p_tick = (uint32_t)p_midi_event->tick();
-		*p_message = p_midi_event->message();
-		return 0;
+			QMidiEvent *p_midi_event = m_p_midi_file->events().at(index);
+			if(QMidiEvent::Meta == p_midi_event->type()){
+				if(QMidiEvent::Tempo == p_midi_event->number()){
+					chiptune_set_tempo(p_midi_event->tempo());
+				}
+			}
+
+			*p_tick = (uint32_t)p_midi_event->tick();
+			*p_message = p_midi_event->message();
+			ret = 0;
+		} while(0);
+
+		return ret;
 	}
 
 	void GenerateWave(int const size)
@@ -65,13 +70,18 @@ public:
 		m_wave_bytearray.clear();
 		m_wave_prebuffer_size = 0;
 
-		if(nullptr == m_p_midi_file){
-			return -1;
-		}
+		int ret = -1;
+		do
+		{
+			if(nullptr == m_p_midi_file){
+				break;
+			}
 
-		m_channel_instrument_pair_list.clear();
-		chiptune_prepare_song(m_p_midi_file->resolution());
-		return 0;
+			m_channel_instrument_pair_list.clear();
+			chiptune_prepare_song(m_p_midi_file->resolution());
+			ret = 0;
+		} while(0);
+		return ret;
 	}
 
 public:
@@ -110,7 +120,7 @@ TuneManager::TuneManager(bool is_stereo,
 	do
 	{
 #if QT_VERSION_CHECK(6, 0, 0) <= QT_VERSION
-		if (false != QMetaType::fromName("PlaybackState").isValid()) {
+		if (false != QMetaType::fromName("SamplingSize").isValid()) {
 			break;
 		}
 #else
@@ -484,19 +494,25 @@ int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 		}
 	} while(0);
 
-	if(-1 == set_index){
-		qDebug() << Q_FUNC_INFO <<"ERROR :: could not find target_start_time_in_seconds = " << target_start_time_in_seconds;
-		return -1;
-	}
-	qDebug() << Q_FUNC_INFO << "target_start_time_in_seconds = " << target_start_time_in_seconds
-			 << ", found time = " << m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick())
-			 << ", index = " << set_index
-			 << ", tick = " << p_midi_event_list.at(set_index)->tick();
-	chiptune_move_toward(set_index);
+	int ret = -1;
+	do
+	{
+		if(-1 == set_index){
+			qDebug() << Q_FUNC_INFO <<"ERROR :: could not find target_start_time_in_seconds = " << target_start_time_in_seconds;
+			break;
+		}
+		qDebug() << Q_FUNC_INFO << "target_start_time_in_seconds = " << target_start_time_in_seconds
+				 << ", found time = " << m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick())
+				 << ", index = " << set_index
+				 << ", tick = " << p_midi_event_list.at(set_index)->tick();
+		chiptune_move_toward(set_index);
 
-	m_p_private->m_wave_bytearray.clear();
-	m_p_private->m_wave_prebuffer_size = 0;
-	return 0;
+		m_p_private->m_wave_bytearray.clear();
+		m_p_private->m_wave_prebuffer_size = 0;
+		ret = 0;
+	} while(0);
+
+	return ret;
 }
 
 /**********************************************************************************/
@@ -526,11 +542,14 @@ QList<QPair<int, int>> TuneManager::GetChannelInstrumentPairList(void)
 void TuneManager::SetChannelOutputEnabled(int index, bool is_enabled)
 {
 	QMutexLocker locker(&m_p_private->m_mutex);
-	if(index < 0 || index >= CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER){
-		return ;
-	}
+	do
+	{
+		if(index < 0 || index >= CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER){
+			break;
+		}
 
-	chiptune_set_channel_output_enabled((int8_t)index, is_enabled);
+		chiptune_set_channel_output_enabled((int8_t)index, is_enabled);
+	} while(0);
 }
 
 /**********************************************************************************/
@@ -546,18 +565,23 @@ int TuneManager::SetPitchChannelTimbre(int8_t const channel_index,
 						   float const envelope_damper_on_but_note_off_sustain_duration_in_seconds)
 {
 	QMutexLocker locker(&m_p_private->m_mutex);
-	if(nullptr == m_p_private->m_p_midi_file){
-		return -1;
-	}
 
-	int ret = chiptune_set_pitch_channel_timbre(channel_index, waveform,
-									  envelope_attack_curve, envelope_attack_duration_in_seconds,
-									  envelope_decay_curve, envelope_decay_duration_in_seconds,
-									  envelope_sustain_level,
-									  envelope_release_curve, envelope_release_duration_in_seconds,
-									  envelope_damper_on_but_note_off_sustain_level,
-									  envelope_damper_on_but_note_off_sustain_curve,
-									  envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+	int ret = -1;
+	do
+	{
+		if(nullptr == m_p_private->m_p_midi_file){
+			break;
+		}
+
+		ret = chiptune_set_pitch_channel_timbre(channel_index, waveform,
+												envelope_attack_curve, envelope_attack_duration_in_seconds,
+												envelope_decay_curve, envelope_decay_duration_in_seconds,
+												envelope_sustain_level,
+												envelope_release_curve, envelope_release_duration_in_seconds,
+												envelope_damper_on_but_note_off_sustain_level,
+												envelope_damper_on_but_note_off_sustain_curve,
+												envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+	} while(0);
 	return ret;
 }
 
