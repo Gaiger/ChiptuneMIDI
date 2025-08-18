@@ -82,7 +82,7 @@ private :
 	int					m_inquiring_playback_tick_timer_id;
 	QString				m_midi_file_duration_time_string;
 
-	QTimer				m_set_start_time_postpone_timer;
+	QTimer				m_defer_start_play_timer;
 
 	int					m_audio_player_buffer_in_milliseconds;
 private:
