@@ -298,7 +298,7 @@ void AudioPlayerPrivate::HandlePlayRequested(void)
 	do {
 		if(nullptr != m_p_audio_io_device){
 			if(QAudio::ActiveState == m_p_audio_player_output->State()){
-				qDebug() << Q_FUNC_INFO << "Playing, ingore";
+				qDebug() << Q_FUNC_INFO << "Playing, ignore";
 				break;
 			}
 
@@ -495,9 +495,10 @@ AudioPlayer::PlaybackState AudioPlayerPrivate::GetState(void)
 		case QAudio::ActiveState:
 #if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
 		case QAudio::InterruptedState:
+#endif
 			state = AudioPlayer::PlaybackStateStatePlaying;
 			break;
-#endif
+
 		case QAudio::SuspendedState:
 			state = AudioPlayer::PlaybackStateStatePaused;
 			break;

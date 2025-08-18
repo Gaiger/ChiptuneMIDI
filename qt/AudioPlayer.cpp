@@ -15,15 +15,15 @@ AudioPlayer::AudioPlayer(int const number_of_channels, int const sampling_rate, 
 	do
 	{
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-		if( false !=  QMetaType::fromName("PlaybackState").isValid()){
+		if( false !=  QMetaType::fromName("AudioPlayer::PlaybackState").isValid()){
 			break;
 		}
 #else
-		if( QMetaType::UnknownType != QMetaType::type("PlaybackState")){
+		if( QMetaType::UnknownType != QMetaType::type("AudioPlayer::PlaybackState")){
 			break;
 		}
 #endif
-		qRegisterMetaType<AudioPlayer::PlaybackState>("PlaybackState");
+		qRegisterMetaType<AudioPlayer::PlaybackState>("AudioPlayer::PlaybackState");
 	} while(0);
 
 	m_p_private = new AudioPlayerPrivate(number_of_channels, sampling_rate, sampling_size,

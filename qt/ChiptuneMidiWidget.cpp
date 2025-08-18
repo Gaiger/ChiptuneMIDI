@@ -380,9 +380,6 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		ui->PlayProgressSlider->setValue(0);
 		m_p_wave_chartview->Reset();
 
-		// This will bring there is a jittering in the sequencer, but it makes the sequencer much more smooth.
-		m_p_audio_player->Play();
-
 		ui->SaveSaveFilePushButton->setEnabled(true);
 		message_string = QString::asprintf("Playing file");
 		ui->MessageLabel->setText(message_string);
@@ -513,12 +510,16 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 		m_p_tune_manager->SetStartTimeInSeconds(start_time_in_milliseconds/1000.0);
 
 		if(false == IsPlayPausePushButtonPlayIcon()){
-			m_p_audio_player->Play();
+			//qDebug() << m_p_audio_player->GetState();
+			if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
+				m_p_audio_player->Play();
+			}
 
 			m_set_start_time_postpone_timer.setInterval(30);
 			QObject::disconnect(&m_set_start_time_postpone_timer, nullptr , nullptr, nullptr);
 			QObject::connect(&m_set_start_time_postpone_timer, &QTimer::timeout, this, [this](){
 				if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
+					//qDebug() << m_p_audio_player->GetState();
 					m_p_audio_player->Play();
 				}
 			});
@@ -560,6 +561,7 @@ void ChiptuneMidiWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackStat
 
 void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value)
 {
+	qDebug() << Q_FUNC_INFO;
 	do
 	{
 		if(Qt::LeftButton != button){

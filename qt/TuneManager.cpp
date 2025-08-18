@@ -120,15 +120,15 @@ TuneManager::TuneManager(bool is_stereo,
 	do
 	{
 #if QT_VERSION_CHECK(6, 0, 0) <= QT_VERSION
-		if (false != QMetaType::fromName("SamplingSize").isValid()) {
+		if (false != QMetaType::fromName("TuneManager::SamplingSize").isValid()) {
 			break;
 		}
 #else
-		if( QMetaType::UnknownType != QMetaType::type("SamplingSize")){
+		if( QMetaType::UnknownType != QMetaType::type("TuneManager::SamplingSize")){
 			break;
 		}
 #endif
-		qRegisterMetaType<TuneManager::SamplingSize>("SamplingSize");
+		qRegisterMetaType<TuneManager::SamplingSize>("TuneManager::SamplingSize");
 	} while(0);
 
 	m_p_private->m_sampling_rate = sampling_rate;
