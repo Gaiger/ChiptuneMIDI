@@ -2,8 +2,8 @@
 
 ## Description
 <!--- Short introduction of the project. -->
-ChiptuneMIDI is a cross-platform MIDI player with a retro 8-bit sound.  
-It includes a Qt-based GUI for quick playback and testing, but the core is a lightweight C99 wave engine designed to be reused as a standalone library.
+ChiptuneMIDI is built around a portable C99 chiptune engine.  
+A Qt application is included as a reference front-end, showcasing real-time playback, instrument controls, and audio export.
 
 ## Features
 <!--- Key features. -->
