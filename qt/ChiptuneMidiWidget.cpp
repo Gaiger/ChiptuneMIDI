@@ -202,12 +202,18 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 #if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
 	SetFontSizeForWidgetSubtree(this, QWidget::font().pointSize() + 2, true);
 #endif
+	{
+		QFont font20("Monospace");
+		font20.setStyleHint(QFont::TypeWriter);
+		font20.setPixelSize(20);
+		ui->PlayPositionLabel->setFont(font20);
 
-	QFont font20("Monospace");
-	font20.setStyleHint(QFont::TypeWriter);
-	font20.setPixelSize(20);
-	ui->MessageLabel->setFont(font20);
-	ui->PlayPositionLabel->setFont(font20);
+		font20 = ui->MessageLabel->font();
+		font20.setStyleHint(QFont::SansSerif);
+		font20.setPixelSize(20);
+		ui->MessageLabel->setFont(font20);
+	}
+
 	do {
 		m_p_wave_chartview = new WaveChartView(
 					p_tune_manager->GetNumberOfChannels(),
