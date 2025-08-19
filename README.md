@@ -53,7 +53,7 @@ You can build ChiptuneMIDI in two ways:
   - Dragging the file into the window, or
   - Clicking the **Open MIDI File** button and selecting from the file explorer.
 - Playback starts automatically.
-- To export audio, click the **Export as WAV** button.
+- To export audio, click the **Save as .wav File** button.
 
 **Note:** A sample MIDI file (`qt/暗黒舞踏会8bit ver..mid`) is included for quick testing.
 
@@ -68,13 +68,13 @@ ChiptuneMIDI/
 │ └─ icons/ # Application icons
 ```
 
-## Configuration (optional)
+## Configuration
 <!--- How to configure settings, environment variables, etc. -->
 No special configuration is required.  
 Open the project in QtCreator and build with either Qt5 or Qt6 — both are supported.
 
 
-## Roadmap (optional)
+## Roadmap
 <!--- Planned future improvements. -->
 - [ ] Port the engine to microcontrollers to run as a standalone chiptune player.
 - [ ] Open to future extensions and contributions (e.g., new front-ends, extra MIDI features)
