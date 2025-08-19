@@ -4,7 +4,7 @@
 <!--- Short introduction of the project. -->
 ChiptuneMIDI is built around a portable C99 chiptune engine.  
 A Qt application is included as a reference front-end, showcasing real-time playback, instrument controls, and audio export.
-
+![ChiptuneMIDI Screenshot](screenshot.png)
 ## Features
 <!--- Key features. -->
 
