@@ -390,7 +390,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		SetPlayPausePushButtonAsPlayIcon(false);
 		ui->SaveSaveFilePushButton->setEnabled(true);
 
-		SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(0);//walk-around : it makes the sequencer more smooth
+		SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(0);
 	}while(0);
 
 	message_string += QString::asprintf(" :: <b>%s</b>", m_opened_file_info.fileName().toUtf8().data());
