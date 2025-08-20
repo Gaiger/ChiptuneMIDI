@@ -93,7 +93,8 @@ if(WIN32)
     source_group("Resource" FILES ${RESOURCE})
 endif()
 
-add_executable(ChiptuneMIDI ${ENGINE} ${APPILCATION} ${FORMS})
+add_executable(ChiptuneMIDI WIN32
+    ${ENGINE} ${APPILCATION} ${FORMS})
 
 target_include_directories(ChiptuneMIDI PRIVATE ${CHIPTUNE_QT_DIR}/QMidi/src)
 

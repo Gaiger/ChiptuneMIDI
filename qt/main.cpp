@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 {
 #if(1)
 #if defined( Q_OS_WIN )
-	if (AttachConsole(ATTACH_PARENT_PROCESS) || AllocConsole()){
+	if (AttachConsole(ATTACH_PARENT_PROCESS) /*|| AllocConsole()*/){
 		freopen("CONOUT$", "w", stdout);
 		freopen("CONOUT$", "w", stderr);
 		freopen("CONIN$", "r", stdin);
