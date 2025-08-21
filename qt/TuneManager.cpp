@@ -65,23 +65,11 @@ public:
 		m_wave_bytearray += generated_bytearray;
 	}
 
-	int ResetSongResources(void)
+	void ResetSongResources(void)
 	{
 		m_wave_bytearray.clear();
 		m_wave_prebuffer_size = 0;
-
-		int ret = -1;
-		do
-		{
-			if(nullptr == m_p_midi_file){
-				break;
-			}
-
-			m_channel_instrument_pair_list.clear();
-			chiptune_prepare_song(m_p_midi_file->resolution());
-			ret = 0;
-		} while(0);
-		return ret;
+		m_channel_instrument_pair_list.clear();
 	}
 
 public:
@@ -179,22 +167,34 @@ TuneManager::~TuneManager(void)
 int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 {
 	QMutexLocker locker(&m_p_private->m_mutex);
-	QFileInfo file_info(midi_file_name_string);
-	if(false == file_info.isFile()){
-		qDebug() << Q_FUNC_INFO << midi_file_name_string << "is not a file";
-		return -1;
-	}
-
-	m_p_private->m_p_midi_file = new QMidiFile();
-	if(false == m_p_private->m_p_midi_file->load(midi_file_name_string))
+	int ret = 0;
+	do
 	{
-		delete m_p_private->m_p_midi_file; m_p_private->m_p_midi_file = nullptr;
-		return -2;
-	}
+		QFileInfo file_info(midi_file_name_string);
+		if(false == file_info.isFile()){
+			qDebug() << Q_FUNC_INFO << midi_file_name_string << "is not a file";
+			ret = -1;
+			break;
+		}
 
-	qDebug()  << "Music time length = " << GetMidiFileDurationInSeconds() << "seconds";
-	m_p_private->ResetSongResources();
-	return 0;
+		QMidiFile *p_midi_file = new QMidiFile();
+		if(false == p_midi_file->load(midi_file_name_string))
+		{
+			delete p_midi_file; p_midi_file = nullptr;
+			ret = -2;
+			break;
+		}
+
+		if(nullptr != m_p_private->m_p_midi_file){
+			delete m_p_private->m_p_midi_file;
+		}
+		m_p_private->m_p_midi_file = p_midi_file;
+
+		qDebug()  << "Music time length = " << GetMidiFileDurationInSeconds() << "seconds";
+		m_p_private->ResetSongResources();
+		chiptune_prepare_song(m_p_private->m_p_midi_file->resolution());
+	} while(0);
+	return ret;
 }
 
 /**********************************************************************************/
