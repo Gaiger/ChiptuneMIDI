@@ -30,7 +30,7 @@ typedef struct _oscillator
 
 union{
 	struct {
-		int16_t		asscociate_oscillators[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
+		int16_t		associate_oscillators[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
 
 		uint16_t	envelope_table_index;
 		uint16_t	envelope_same_index_count;

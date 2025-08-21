@@ -335,7 +335,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				temp = INT16_MAX;
 			}
 			p_oscillator->loudness = temp;
-			memset(&p_oscillator->asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
+			memset(&p_oscillator->associate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
 
 			p_oscillator->current_phase = 0;
 			do {
@@ -417,7 +417,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				   sizeof(oscillator_t));
 			RESET_STATE_BITES(p_oscillator->state_bits);
 			SET_NOTE_OFF(p_oscillator->state_bits);
-			memset(&p_oscillator->asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
+			memset(&p_oscillator->associate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
 			p_oscillator->loudness =
 					LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->loudness,
 															   p_channel_controller->envelop_damper_on_but_note_off_sustain_level);
@@ -833,7 +833,7 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 			break;
 		}
 		uint16_t const vibrato_same_index_number = p_channel_controller->vibrato_same_index_number;
-		p_oscillator->current_phase += DELTA_VIBTRATO_PHASE(modulation_wheel, p_oscillator->max_delta_vibrato_phase,
+		p_oscillator->current_phase += DELTA_VIBRATO_PHASE(modulation_wheel, p_oscillator->max_delta_vibrato_phase,
 															p_channel_controller->p_vibrato_phase_table[
 																p_oscillator->vibrato_table_index]);
 

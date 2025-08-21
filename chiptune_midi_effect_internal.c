@@ -74,9 +74,9 @@ int find_associate_oscillator_indexes(int16_t const native_index,
 
 	oscillator_t  * const p_native_oscillator = get_event_oscillator_pointer_from_index(native_index);
 	for(int i = 0; i < ASSOCIATE_OSCILLATOR_NUMBER; i++){
-		int16_t asscociate_oscillator_index
-				= p_native_oscillator->asscociate_oscillators[find_level * ASSOCIATE_OSCILLATOR_NUMBER + i];
-		if(UNOCCUPIED_OSCILLATOR == asscociate_oscillator_index){
+		int16_t associate_oscillator_index
+				= p_native_oscillator->associate_oscillators[find_level * ASSOCIATE_OSCILLATOR_NUMBER + i];
+		if(UNOCCUPIED_OSCILLATOR == associate_oscillator_index){
 			continue;
 		}
 		if(max_oscillator_number == *p_oscillator_number){
@@ -84,17 +84,17 @@ int find_associate_oscillator_indexes(int16_t const native_index,
 			return -1;
 		}
 
-		oscillator_indexes[*p_oscillator_number] = asscociate_oscillator_index;
+		oscillator_indexes[*p_oscillator_number] = associate_oscillator_index;
 		*p_oscillator_number += 1;
 
 		if(find_level == current_level ){
 			continue;
 		}
-		asscociate_oscillator_index = p_native_oscillator->asscociate_oscillators[current_level * ASSOCIATE_OSCILLATOR_NUMBER + i];
-		if(UNOCCUPIED_OSCILLATOR == asscociate_oscillator_index){
+		associate_oscillator_index = p_native_oscillator->associate_oscillators[current_level * ASSOCIATE_OSCILLATOR_NUMBER + i];
+		if(UNOCCUPIED_OSCILLATOR == associate_oscillator_index){
 			continue;
 		}
-		find_associate_oscillator_indexes(asscociate_oscillator_index, find_level, current_level + 1,
+		find_associate_oscillator_indexes(associate_oscillator_index, find_level, current_level + 1,
 										  &oscillator_indexes[0], max_oscillator_number, p_oscillator_number);
 	}
 
@@ -149,7 +149,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 			}
 
 			for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
-				p_native_oscillator->asscociate_oscillators[REVERB_ASSOCIATE_START_INDEX + i]
+				p_native_oscillator->associate_oscillators[REVERB_ASSOCIATE_START_INDEX + i]
 						= assocatiate_oscillator_indexes[i];
 			}
 			break;
@@ -158,7 +158,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 
 	uint32_t reverb_delta_tick = obtain_reverb_delta_tick(p_channel_controller->reverb);
 	for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
-		put_event(event_type, p_native_oscillator->asscociate_oscillators[REVERB_ASSOCIATE_START_INDEX + i],
+		put_event(event_type, p_native_oscillator->associate_oscillators[REVERB_ASSOCIATE_START_INDEX + i],
 				  tick + (i + 1) * reverb_delta_tick);
 	}
 
@@ -230,9 +230,9 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 				}
 
 				for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
-					p_native_oscillator->asscociate_oscillators[CHORUS_ASSOCIATE_START_INDEX + i]
+					p_native_oscillator->associate_oscillators[CHORUS_ASSOCIATE_START_INDEX + i]
 						= assocatiate_oscillator_indexes[i];
-					put_event(event_type, p_native_oscillator->asscociate_oscillators[CHORUS_ASSOCIATE_START_INDEX + i],
+					put_event(event_type, p_native_oscillator->associate_oscillators[CHORUS_ASSOCIATE_START_INDEX + i],
 							  tick + (i + 1) * chorus_delta_tick);
 				}
 			}
