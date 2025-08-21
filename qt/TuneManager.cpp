@@ -152,9 +152,8 @@ TuneManager::TuneManager(bool is_stereo,
 	m_p_private->m_connection_type = Qt::AutoConnection;
 
 	s_p_private_instance = m_p_private;
-	chiptune_set_handler_get_midi_message(get_midi_message);
 	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
-						 (uint32_t)m_p_private->m_sampling_rate);
+						 (uint32_t)m_p_private->m_sampling_rate, get_midi_message);
 }
 
 /**********************************************************************************/

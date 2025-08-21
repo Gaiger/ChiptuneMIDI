@@ -143,16 +143,8 @@ static int16_t s_sine_table[SINE_TABLE_LENGTH]		= {0};
 
 /**********************************************************************************/
 
-static int(*s_handler_get_midi_message)(uint32_t const index, uint32_t * const p_tick, uint32_t * const p_message) = NULL;
-
+static chiptune_get_midi_message_callback_t s_handler_get_midi_message = NULL;
 static bool s_is_tune_ending = false;
-
-/**********************************************************************************/
-
-void chiptune_set_handler_get_midi_message( int(*handler_get_midi_message)(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message) )
-{
-	s_handler_get_midi_message = handler_get_midi_message;
-}
 
 /**********************************************************************************/
 
@@ -1418,10 +1410,12 @@ static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMB
 
 /**********************************************************************************/
 
-void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate)
+void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
+						 chiptune_get_midi_message_callback_t get_midi_message_callback)
 {
 	s_is_stereo = is_stereo;
 	s_is_processing_left_channel = true;
+	s_handler_get_midi_message = get_midi_message_callback;
 	UPDATE_SAMPLING_RATE(sampling_rate);
 	UPDATE_RESOLUTION(MIDI_DEFAULT_RESOLUTION);
 	UPDATE_TEMPO(MIDI_DEFAULT_TEMPO);
