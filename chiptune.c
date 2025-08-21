@@ -1461,7 +1461,7 @@ void chiptune_set_amplitude_gain(int32_t amplitude_gain) { UPDATE_AMPLITUDE_NORM
 
 /**********************************************************************************/
 
-void chiptune_move_toward(uint32_t const index)
+void chiptune_set_current_message_index(uint32_t const index)
 {
 	pass_through_midi_messages(index);
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();

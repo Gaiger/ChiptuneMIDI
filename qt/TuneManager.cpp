@@ -504,7 +504,7 @@ int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 				 << ", found time = " << m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick())
 				 << ", index = " << set_index
 				 << ", tick = " << p_midi_event_list.at(set_index)->tick();
-		chiptune_move_toward(set_index);
+		chiptune_set_current_message_index(set_index);
 
 		m_p_private->m_wave_bytearray.clear();
 		m_p_private->m_wave_prebuffer_size = 0;

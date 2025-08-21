@@ -32,7 +32,7 @@ float chiptune_get_playing_tempo(void);
 #define CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL			(-2)
 int chiptune_get_ending_instruments(int8_t instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
 
-void chiptune_move_toward(uint32_t const index);
+void chiptune_set_current_message_index(uint32_t index);
 uint32_t chiptune_get_current_tick(void);
 
 void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const is_enabled);
