@@ -1,3 +1,5 @@
+// NOLINTBEGIN(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
+
 #include <stdio.h>
 #include <string.h>
 
@@ -300,3 +302,5 @@ int process_control_change_message(uint32_t const tick, int8_t const voice, int8
 
 	return 0;
 }
+
+// NOLINTEND(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)

@@ -1,3 +1,5 @@
+// NOLINTBEGIN(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
+
 #include <string.h>
 
 #include "chiptune_common_internal.h"
@@ -181,7 +183,6 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 	}
 
 	uint32_t chorus_delta_tick = obtain_chorus_delta_tick(p_channel_controller->chorus);
-	oscillator_t  * p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_index);
 
 	do {
 		if(EVENT_ACTIVATE == event_type){
@@ -194,7 +195,7 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 					&native_oscillator_number);
 
 			for(int k = 0; k < native_oscillator_number; k++){
-				p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_indexes[k]);
+				oscillator_t *p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_indexes[k]);
 
 				int16_t const loudness = p_native_oscillator->loudness;
 				int16_t loudness_over_16 = DIVIDE_BY_16(loudness);
@@ -274,3 +275,5 @@ void update_effect_tick(void)
 	s_min_reverb_delta_tick = (float)(EACH_REVERB_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND * playing_tempo * resolution / 60.0);
 	s_min_chorus_delta_tick = (float)(EACH_CHORUS_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND * playing_tempo * resolution / 60.0);
 }
+
+// NOLINTEND(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)

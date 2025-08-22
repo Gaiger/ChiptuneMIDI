@@ -1,3 +1,5 @@
+//NOLINTBEGIN(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
+
 #include <string.h>
 #include <stdio.h>
 
@@ -1649,3 +1651,5 @@ int8_t chiptune_get_pitch_shift_in_semitones(void)
 {
 	return (int8_t)get_pitch_shift_in_semitones();
 }
+
+// NOLINTEND(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
