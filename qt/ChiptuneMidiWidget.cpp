@@ -271,11 +271,11 @@ ChiptuneMidiWidget::~ChiptuneMidiWidget()
 			break;
 		}
 		m_p_audio_player->Stop();
-		if (m_p_audio_player->thread() == QThread::currentThread()){
+		if (m_p_audio_player->QObject::thread() == QThread::currentThread()){
 			delete m_p_audio_player;
 			break;
 		}
-		m_p_audio_player->deleteLater();
+		m_p_audio_player->QObject::deleteLater();
 	}while(0);
 	m_p_audio_player = nullptr;
 }
