@@ -223,10 +223,6 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	QWidget::setAcceptDrops(true);
 
-	QThread *p_tune_manager_working_thread = new QThread(this);
-	m_p_tune_manager->moveToThread(p_tune_manager_working_thread);
-	p_tune_manager_working_thread->start(QThread::HighPriority);
-
 	m_p_audio_player = new AudioPlayer(m_p_tune_manager->GetNumberOfChannels(),
 									   m_p_tune_manager->GetSamplingRate(),
 									   m_p_tune_manager->GetSamplingSize(),
@@ -264,21 +260,6 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 ChiptuneMidiWidget::~ChiptuneMidiWidget()
 {
-	do
-	{
-		if(nullptr == m_p_tune_manager){
-			break;
-		}
-		if (m_p_audio_player->thread() == QThread::currentThread()){
-			break;
-		}
-		QThread *p_tune_manager_working_thread = m_p_tune_manager->thread();
-		p_tune_manager_working_thread->quit();
-		while( false == p_tune_manager_working_thread->isFinished()){
-			QThread::msleep(10);
-		}
-	}while(0);
-
 	do
 	{
 		if(nullptr == m_p_audio_player){

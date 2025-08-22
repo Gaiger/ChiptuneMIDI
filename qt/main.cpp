@@ -64,8 +64,16 @@ int main(int argc, char* argv[])
 	p_player->Play();
 #endif
 	TuneManager tune_manager(true, 16000, 16);
+	QThread *p_tune_manager_working_thread = new QThread();
 
 	ChiptuneMidiWidget chiptune_midi_widget(&tune_manager);
+	QObject::connect(&tune_manager, &QObject::destroyed,
+					 p_tune_manager_working_thread, &QThread::quit);
+	QObject::connect(p_tune_manager_working_thread, &QThread::finished,
+					 p_tune_manager_working_thread, &QObject::deleteLater);
+	tune_manager.moveToThread(p_tune_manager_working_thread);
+	p_tune_manager_working_thread->start(QThread::HighPriority);
+
 	chiptune_midi_widget.show();
 	chiptune_midi_widget.setFocus();
 	return a.exec();
