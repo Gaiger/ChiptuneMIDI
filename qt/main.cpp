@@ -71,8 +71,8 @@ int main(int argc, char* argv[])
 					 p_tune_manager_working_thread, &QThread::quit);
 	QObject::connect(p_tune_manager_working_thread, &QThread::finished,
 					 p_tune_manager_working_thread, &QObject::deleteLater);
-	tune_manager.moveToThread(p_tune_manager_working_thread);
-	p_tune_manager_working_thread->start(QThread::HighPriority);
+	tune_manager.QObject::moveToThread(p_tune_manager_working_thread);
+	p_tune_manager_working_thread->QThread::start(QThread::HighPriority);
 
 	chiptune_midi_widget.show();
 	chiptune_midi_widget.setFocus();

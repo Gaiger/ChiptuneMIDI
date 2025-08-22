@@ -227,17 +227,22 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 									   m_p_tune_manager->GetSamplingRate(),
 									   m_p_tune_manager->GetSamplingSize(),
 									   m_audio_player_buffer_in_milliseconds/2, nullptr);
-	QThread *p_audio_player_working_thread = new QThread(this);
-	m_p_audio_player->moveToThread(p_audio_player_working_thread);
-	p_audio_player_working_thread->start(QThread::NormalPriority);
-
-	QObject::connect(m_p_audio_player, &AudioPlayer::DataRequested,
-					 p_tune_manager, &TuneManager::RequestWave, Qt::DirectConnection);
-
 	QObject::connect(p_tune_manager, &TuneManager::WaveDelivered,
 					 m_p_audio_player, &AudioPlayer::FeedData, Qt::DirectConnection);
 	QObject::connect(p_tune_manager, &TuneManager::WaveDelivered,
 					 m_p_wave_chartview, &WaveChartView::UpdateWave, Qt::QueuedConnection);
+
+	QObject::connect(m_p_audio_player, &AudioPlayer::DataRequested,
+					 p_tune_manager, &TuneManager::RequestWave, Qt::DirectConnection);
+
+	QThread *p_audio_player_working_thread = new QThread();
+	QObject::connect(m_p_audio_player, &QObject::destroyed,
+					 p_audio_player_working_thread, &QThread::quit);
+	QObject::connect(p_audio_player_working_thread, &QThread::finished,
+					 p_audio_player_working_thread, &QThread::deleteLater);
+	m_p_audio_player->QObject::moveToThread(p_audio_player_working_thread);
+	p_audio_player_working_thread->QThread::start(QThread::NormalPriority);
+
 
 	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::MousePressed, this,
 						 &ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed);
@@ -270,12 +275,7 @@ ChiptuneMidiWidget::~ChiptuneMidiWidget()
 			delete m_p_audio_player;
 			break;
 		}
-		QThread *p_audio_player_working_thread = m_p_audio_player->thread();
 		m_p_audio_player->deleteLater();
-		p_audio_player_working_thread->quit();
-		while( false == p_audio_player_working_thread->isFinished()){
-			QThread::msleep(10);
-		}
 	}while(0);
 	m_p_audio_player = nullptr;
 }
