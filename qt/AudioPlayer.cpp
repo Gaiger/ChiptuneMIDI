@@ -1,6 +1,5 @@
 #include <QDebug>
 #include <QThread>
-#include <QEventLoop>
 
 #include "AudioPlayerPrivate.h"
 #include "AudioPlayer.h"
@@ -10,12 +9,13 @@
 AudioPlayer::AudioPlayer(int const number_of_channels, int const sampling_rate, int const sampling_size,
 						 int const fetching_wave_interval_in_milliseconds, QObject *parent)
 	: QObject(parent),
-	m_p_private(nullptr)
+	m_p_private(new AudioPlayerPrivate(number_of_channels, sampling_rate, sampling_size,
+									   fetching_wave_interval_in_milliseconds, this))
 {
 	do
 	{
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-		if( false !=  QMetaType::fromName("AudioPlayer::PlaybackState").isValid()){
+		if( false != QMetaType::fromName("AudioPlayer::PlaybackState").isValid()){
 			break;
 		}
 #else
@@ -26,8 +26,6 @@ AudioPlayer::AudioPlayer(int const number_of_channels, int const sampling_rate, 
 		qRegisterMetaType<AudioPlayer::PlaybackState>("AudioPlayer::PlaybackState");
 	} while(0);
 
-	m_p_private = new AudioPlayerPrivate(number_of_channels, sampling_rate, sampling_size,
-										 fetching_wave_interval_in_milliseconds, this);
 	QObject::connect(m_p_private, &AudioPlayerPrivate::DataRequested,
 					 this, &AudioPlayer::DataRequested, Qt::DirectConnection);
 	QObject::connect(m_p_private, &AudioPlayerPrivate::StateChanged,
@@ -38,16 +36,7 @@ AudioPlayer::AudioPlayer(int const number_of_channels, int const sampling_rate, 
 
 AudioPlayer::~AudioPlayer(void)
 {
-	do {
-		if(QThread::currentThread() == m_p_private->QObject::thread()){
-			delete m_p_private;
-			break;
-		}
-		QEventLoop destroy_event_loop;
-		QObject::connect(m_p_private, &QObject::destroyed, &destroy_event_loop, &QEventLoop::quit);
-		m_p_private->deleteLater();
-		destroy_event_loop.exec();
-	}while(0);
+	m_p_private->deleteLater();
 	m_p_private = nullptr;
 }
 
