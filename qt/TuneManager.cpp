@@ -366,7 +366,7 @@ bool TuneManager::IsTuneEnding(void)
 			break;
 		}
 		{
-			//QMutexLocker lock(&m_p_private->m_mutex);
+			QMutexLocker lock(&m_p_private->m_mutex);
 			if(0 < m_p_private->m_wave_bytearray.size()){
 				break;
 			}
