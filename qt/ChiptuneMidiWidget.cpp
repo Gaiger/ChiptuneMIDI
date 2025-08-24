@@ -223,25 +223,26 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	QWidget::setAcceptDrops(true);
 
-	QThread *p_tune_manager_working_thread = new QThread(this);
-	m_p_tune_manager->moveToThread(p_tune_manager_working_thread);
-	p_tune_manager_working_thread->start(QThread::HighPriority);
-
 	m_p_audio_player = new AudioPlayer(m_p_tune_manager->GetNumberOfChannels(),
 									   m_p_tune_manager->GetSamplingRate(),
 									   m_p_tune_manager->GetSamplingSize(),
 									   m_audio_player_buffer_in_milliseconds/2, nullptr);
-	QThread *p_audio_player_working_thread = new QThread(this);
-	m_p_audio_player->moveToThread(p_audio_player_working_thread);
-	p_audio_player_working_thread->start(QThread::NormalPriority);
-
-	QObject::connect(m_p_audio_player, &AudioPlayer::DataRequested,
-					 p_tune_manager, &TuneManager::RequestWave, Qt::DirectConnection);
-
 	QObject::connect(p_tune_manager, &TuneManager::WaveDelivered,
 					 m_p_audio_player, &AudioPlayer::FeedData, Qt::DirectConnection);
 	QObject::connect(p_tune_manager, &TuneManager::WaveDelivered,
 					 m_p_wave_chartview, &WaveChartView::UpdateWave, Qt::QueuedConnection);
+
+	QObject::connect(m_p_audio_player, &AudioPlayer::DataRequested,
+					 p_tune_manager, &TuneManager::RequestWave, Qt::DirectConnection);
+
+	QThread *p_audio_player_working_thread = new QThread();
+	QObject::connect(m_p_audio_player, &QObject::destroyed,
+					 p_audio_player_working_thread, &QThread::quit);
+	QObject::connect(p_audio_player_working_thread, &QThread::finished,
+					 p_audio_player_working_thread, &QThread::deleteLater);
+	m_p_audio_player->QObject::moveToThread(p_audio_player_working_thread);
+	p_audio_player_working_thread->QThread::start(QThread::NormalPriority);
+
 
 	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::MousePressed, this,
 						 &ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed);
@@ -266,35 +267,15 @@ ChiptuneMidiWidget::~ChiptuneMidiWidget()
 {
 	do
 	{
-		if(nullptr == m_p_tune_manager){
-			break;
-		}
-		if (m_p_audio_player->thread() == QThread::currentThread()){
-			break;
-		}
-		QThread *p_tune_manager_working_thread = m_p_tune_manager->thread();
-		p_tune_manager_working_thread->quit();
-		while( false == p_tune_manager_working_thread->isFinished()){
-			QThread::msleep(10);
-		}
-	}while(0);
-
-	do
-	{
 		if(nullptr == m_p_audio_player){
 			break;
 		}
 		m_p_audio_player->Stop();
-		if (m_p_audio_player->thread() == QThread::currentThread()){
+		if (m_p_audio_player->QObject::thread() == QThread::currentThread()){
 			delete m_p_audio_player;
 			break;
 		}
-		QThread *p_audio_player_working_thread = m_p_audio_player->thread();
-		m_p_audio_player->deleteLater();
-		p_audio_player_working_thread->quit();
-		while( false == p_audio_player_working_thread->isFinished()){
-			QThread::msleep(10);
-		}
+		m_p_audio_player->QObject::deleteLater();
 	}while(0);
 	m_p_audio_player = nullptr;
 }

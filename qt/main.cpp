@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
 	setvbuf(stdout, NULL, _IONBF, 0);
 #endif
 #endif
-	QApplication a(argc, argv);
+	QApplication app(argc, argv);
 
 #if(0)
 	ListAvailableMidiDevices();
@@ -63,10 +63,20 @@ int main(int argc, char* argv[])
 	//p_player->moveToThread(a.thread());
 	p_player->Play();
 #endif
-	TuneManager tune_manager(true, 16000, 16);
+	TuneManager *p_tune_manager = new TuneManager(true, 16000, 16);
+	QObject::connect(&app, &QCoreApplication::aboutToQuit,
+					   p_tune_manager, &QObject::deleteLater);
 
-	ChiptuneMidiWidget chiptune_midi_widget(&tune_manager);
+	QThread *p_tune_manager_working_thread = new QThread();
+	QObject::connect(p_tune_manager, &QObject::destroyed,
+					 p_tune_manager_working_thread, &QThread::quit);
+	QObject::connect(p_tune_manager_working_thread, &QThread::finished,
+					 p_tune_manager_working_thread, &QObject::deleteLater);
+	p_tune_manager->QObject::moveToThread(p_tune_manager_working_thread);
+	p_tune_manager_working_thread->QThread::start(QThread::HighPriority);
+
+	ChiptuneMidiWidget chiptune_midi_widget(p_tune_manager);
 	chiptune_midi_widget.show();
 	chiptune_midi_widget.setFocus();
-	return a.exec();
+	return app.exec();
 }

@@ -38,7 +38,6 @@ public:
 
 private:
 	AudioPlayerPrivate *m_p_private;
-
 };
 
 #endif // _AUDIOPLAYER_H_
