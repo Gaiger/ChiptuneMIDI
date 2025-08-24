@@ -189,6 +189,7 @@ public :
 protected :
 	qint64 readData(char *data, qint64 maxlen) Q_DECL_OVERRIDE
 	{
+		QMutexLocker locker(&m_mutex);
 		int read_size = maxlen;
 		if(m_audio_data_bytearray.size() < read_size){
 			read_size = m_audio_data_bytearray.size();
@@ -200,16 +201,19 @@ protected :
 
 	qint64 writeData(const char *data, qint64 len) Q_DECL_OVERRIDE
 	{
+		QMutexLocker locker(&m_mutex);
 		m_audio_data_bytearray.append(QByteArray(data, len));
 		return len;
 	}
 
 	qint64 bytesAvailable() const Q_DECL_OVERRIDE
 	{
+		QMutexLocker locker(&m_mutex);
 		return m_audio_data_bytearray.size() + QIODevice::bytesAvailable();
 	}
 private:
 	QByteArray m_audio_data_bytearray;
+	mutable QMutex m_mutex;
 };
 
 /**********************************************************************************/
@@ -395,7 +399,6 @@ void AudioPlayerPrivate::Pause(void)
 
 void AudioPlayerPrivate::FeedData(const QByteArray& data)
 {
-	//QMutexLocker locker(&m_mutex);
 	do {
 		if(nullptr == m_p_audio_player_output){
 			break;
