@@ -69,8 +69,8 @@ private:
 	void UpdateTempoLabelText(void);
 
 private:
-	bool IsPlayPausePushButtonPlayIcon(void);
-	void SetPlayPausePushButtonAsPlayIcon(bool is_play_icon);
+	bool IsPlayPauseButtonInPlayState(void);
+	void SetPlayPauseButtonInPlayState(bool is_play_state);
 
 private :
 	TuneManager *		m_p_tune_manager;
