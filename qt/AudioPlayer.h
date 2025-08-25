@@ -20,12 +20,12 @@ public:
 
 	enum PlaybackState
 	{
-		PlaybackStateStateIdle				= 0,
-		PlaybackStateStateStopped			= 1,
-		PlaybackStateStatePlaying			= 2,
-		PlaybackStateStatePaused			= 3,
+		PlaybackStateIdle				= 0,
+		PlaybackStateStopped			= 1,
+		PlaybackStatePlaying			= 2,
+		PlaybackStatePaused				= 3,
 
-		PlaybackStateStateMax				= 255,
+		PlaybackStateMax				= 255,
 	}; Q_ENUM(PlaybackState)
 
 	PlaybackState GetState(void);
