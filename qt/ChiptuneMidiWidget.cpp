@@ -491,36 +491,38 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 	QObject::disconnect(&m_defer_start_play_timer, nullptr , nullptr, nullptr);
 	ui->PlayPositionLabel->setText(FormatTimeString(start_time_in_milliseconds) + " / "
 							  + m_midi_file_duration_time_string);
-
-	std::function<void()> ensure_playing_function = [this]() {
-		if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
-			//qDebug() << m_p_audio_player->GetState();
-			m_p_audio_player->Play();
+	m_p_tune_manager->SetStartTimeInSeconds(start_time_in_milliseconds/1000.0);
+	do
+	{
+		if(true == IsPlayPausePushButtonPlayIcon()){
+			break;
 		}
-	};
 
-	std::function<void()> defer_start_play_function = [this, start_time_in_milliseconds, ensure_playing_function](){
-		m_inquiring_playback_status_timer_id = QObject::startTimer(500);
-		m_p_tune_manager->SetStartTimeInSeconds(start_time_in_milliseconds/1000.0);
-
-		if(false == IsPlayPausePushButtonPlayIcon()){
-			//qDebug() << m_p_audio_player->GetState();
+		std::function<void()> ensure_playing_function = [this]() {
 			if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
-			   m_p_audio_player->Play();
+				//qDebug() << m_p_audio_player->GetState();
+				m_p_audio_player->Play();
 			}
-		}
+		};
 
-		m_defer_start_play_timer.setInterval(30);
-		QObject::disconnect(&m_defer_start_play_timer, nullptr , nullptr, nullptr);
-		QObject::connect(&m_defer_start_play_timer, &QTimer::timeout, this, ensure_playing_function);
+		std::function<void()> defer_start_play_function = [this, ensure_playing_function](){
+			m_inquiring_playback_status_timer_id = QObject::startTimer(500);
+				//qDebug() << m_p_audio_player->GetState();
+				if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
+					m_p_audio_player->Play();
+				}
+
+				m_defer_start_play_timer.setInterval(30);
+				QObject::disconnect(&m_defer_start_play_timer, nullptr , nullptr, nullptr);
+				QObject::connect(&m_defer_start_play_timer, &QTimer::timeout, this, ensure_playing_function);
+				m_defer_start_play_timer.start();
+		};
+
+		QObject::connect(&m_defer_start_play_timer, &QTimer::timeout, this, defer_start_play_function);
+		m_defer_start_play_timer.setInterval(100);
+		m_defer_start_play_timer.setSingleShot(true);
 		m_defer_start_play_timer.start();
-	};
-
-	QObject::connect(&m_defer_start_play_timer, &QTimer::timeout, this, defer_start_play_function);
-	m_defer_start_play_timer.setInterval(100);
-	m_defer_start_play_timer.setSingleShot(true);
-	m_defer_start_play_timer.start();
-
+	} while(0);
 	UpdateTempoLabelText();
 	QWidget::activateWindow();
 	QWidget::setFocus();
@@ -763,11 +765,12 @@ void ChiptuneMidiWidget::dropEvent(QDropEvent *event)
 void ChiptuneMidiWidget::keyPressEvent(QKeyEvent *event)
 {
 	QWidget:: keyPressEvent(event);
-	if(false == m_p_tune_manager->IsFileLoaded()){
-		return ;
-	}
 
 	do {
+		if(false == m_p_tune_manager->IsFileLoaded()){
+			break;
+		}
+
 		if(false == (Qt::Key_Left == event->key() || Qt::Key_Right == event->key()) ){
 			break;
 		}
@@ -867,10 +870,15 @@ void ChiptuneMidiWidget::on_StopPushButton_released(void)
 
 bool ChiptuneMidiWidget::IsPlayPausePushButtonPlayIcon(void)
 {
-	if(ui->PlayPausePushButton->text() == QString(UNICODE_PLAY_ICON)){
-			return true;
-	}
-	return false;
+	bool is_play_icon = false;
+	do
+	{
+		if(ui->PlayPausePushButton->text() == QString(UNICODE_PAUSE_ICON)){
+				break;
+		}
+		is_play_icon = true;
+	}while(0);
+	return is_play_icon;
 }
 
 /**********************************************************************************/
