@@ -481,7 +481,7 @@ void AudioPlayerPrivate::HandleAudioStateChanged(QAudio::State state)
 
 AudioPlayer::PlaybackState AudioPlayerPrivate::GetState(void)
 {
-	AudioPlayer::PlaybackState state = AudioPlayer::PlaybackStateStateStopped;
+	AudioPlayer::PlaybackState state = AudioPlayer::PlaybackStateStopped;
 	do
 	{
 		if(nullptr == m_p_audio_player_output){
@@ -493,14 +493,14 @@ AudioPlayer::PlaybackState AudioPlayerPrivate::GetState(void)
 #if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
 		case QAudio::InterruptedState:
 #endif
-			state = AudioPlayer::PlaybackStateStatePlaying;
+			state = AudioPlayer::PlaybackStatePlaying;
 			break;
 
 		case QAudio::SuspendedState:
-			state = AudioPlayer::PlaybackStateStatePaused;
+			state = AudioPlayer::PlaybackStatePaused;
 			break;
 		case QAudio::IdleState:
-			state = AudioPlayer::PlaybackStateStateIdle;
+			state = AudioPlayer::PlaybackStateIdle;
 		default:
 			break;
 		}

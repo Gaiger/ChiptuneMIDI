@@ -497,7 +497,7 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 		}
 
 		std::function<void()> ensure_playing_function = [this]() {
-			if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
+			if(AudioPlayer::PlaybackStatePlaying != m_p_audio_player->GetState()){
 				//qDebug() << m_p_audio_player->GetState();
 				m_p_audio_player->Play();
 			}
@@ -506,7 +506,7 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 		std::function<void()> defer_start_play_function = [this, ensure_playing_function](){
 			m_inquiring_playback_status_timer_id = QObject::startTimer(500);
 				//qDebug() << m_p_audio_player->GetState();
-				if(AudioPlayer::PlaybackStateStatePlaying != m_p_audio_player->GetState()){
+				if(AudioPlayer::PlaybackStatePlaying != m_p_audio_player->GetState()){
 					m_p_audio_player->Play();
 				}
 
@@ -539,7 +539,7 @@ void ChiptuneMidiWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackStat
 {
 	do
 	{
-		if(state != AudioPlayer::PlaybackStateStateIdle){
+		if(state != AudioPlayer::PlaybackStateIdle){
 			break;
 		}
 		if(true == m_p_tune_manager->IsTuneEnding()){
@@ -548,6 +548,7 @@ void ChiptuneMidiWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackStat
 		if(false == IsPlayPauseButtonInPlayState()){
 			break;
 		}
+		qDebug() << state;
 		m_p_audio_player->Play();
 	}while(0);
 }
@@ -667,7 +668,7 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 		if(event->timerId() == m_inquiring_playback_status_timer_id){
 			if(true == m_p_tune_manager->IsTuneEnding())
 			{
-				if(AudioPlayer::PlaybackStateStateIdle == m_p_audio_player->GetState()){
+				if(AudioPlayer::PlaybackStateIdle == m_p_audio_player->GetState()){
 					m_p_tune_manager->SetStartTimeInSeconds(0);
 					ui->PlayProgressSlider->setValue(0);
 					ui->PlayPositionLabel->setText("00:00 / 00:00");
