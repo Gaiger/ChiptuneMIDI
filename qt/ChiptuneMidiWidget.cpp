@@ -187,6 +187,9 @@ void SetFontSizeForWidgetSubtree(QWidget * const p_root_widget, int const target
 #endif
 
 /**********************************************************************************/
+#define INQUIRING_PLAYBACK_TICK_INTERVAL_IN_MILLISECONDS		(35)
+#define AUDIO_PLAYER_BUFFER_IN_MILLISECONDS						\
+	(2 * (INQUIRING_PLAYBACK_TICK_INTERVAL_IN_MILLISECONDS))
 
 ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidget *parent)
 	: QWidget(parent),
@@ -194,7 +197,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 
 	m_inquiring_playback_status_timer_id(-1),
 	m_inquiring_playback_tick_timer_id(-1),
-	m_audio_player_buffer_in_milliseconds(200),
+	m_audio_player_buffer_in_milliseconds(AUDIO_PLAYER_BUFFER_IN_MILLISECONDS),
 	m_p_sequencer_widget(nullptr),
 	ui(new Ui::ChiptuneMidiWidget)
 {
@@ -226,7 +229,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	m_p_audio_player = new AudioPlayer(m_p_tune_manager->GetNumberOfChannels(),
 									   m_p_tune_manager->GetSamplingRate(),
 									   m_p_tune_manager->GetSamplingSize(),
-									   m_audio_player_buffer_in_milliseconds/2, nullptr);
+									   m_audio_player_buffer_in_milliseconds, nullptr);
 	QObject::connect(p_tune_manager, &TuneManager::WaveDelivered,
 					 m_p_audio_player, &AudioPlayer::FeedData, Qt::DirectConnection);
 	QObject::connect(m_p_audio_player, &AudioPlayer::DataRequested,
@@ -291,7 +294,6 @@ static QString FormatTimeString(qint64 timeMilliSeconds)
 }
 
 /**********************************************************************************/
-#define INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS		(35)
 
 int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 {
@@ -368,7 +370,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		message_string = QString::asprintf("Playing file");
 		ui->MessageLabel->setText(message_string);
 		m_inquiring_playback_status_timer_id = QObject::startTimer(500);
-		m_inquiring_playback_tick_timer_id = QObject::startTimer(INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS);
+		m_inquiring_playback_tick_timer_id = QObject::startTimer(INQUIRING_PLAYBACK_TICK_INTERVAL_IN_MILLISECONDS);
 
 		ui->PlayPausePushButton->setEnabled(true);
 		SetPlayPauseButtonInPlayState(true);
@@ -696,7 +698,7 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 	if(event->timerId() == m_inquiring_playback_tick_timer_id){
 		m_p_sequencer_widget->Update();
 		m_p_sequencer_widget->Prepare(
-					m_p_tune_manager->GetMidiFilePointer()->tickFromTime(INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS/1000.0f)
+					m_p_tune_manager->GetMidiFilePointer()->tickFromTime(INQUIRING_PLAYBACK_TICK_INTERVAL_IN_MILLISECONDS/1000.0f)
 					+ m_p_tune_manager->GetCurrentTick());
 	}
 }
