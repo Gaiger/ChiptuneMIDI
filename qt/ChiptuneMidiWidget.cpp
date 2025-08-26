@@ -352,7 +352,6 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		SetFontSizeForWidgetSubtree(p_channellist_widget,
 										p_channellist_widget->QWidget::font().pointSize() + 3, false);
 #endif
-
 		m_p_sequencer_widget = new SequencerWidget(m_p_tune_manager,
 											   m_audio_player_buffer_in_milliseconds/1000.0,
 											   ui->SequencerScrollArea);
@@ -375,6 +374,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		SetPlayPauseButtonInPlayState(true);
 		ui->SaveSaveFilePushButton->setEnabled(true);
 
+		m_p_audio_player->Prime();
 		SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(0);
 	}while(0);
 
@@ -548,7 +548,6 @@ void ChiptuneMidiWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackStat
 		if(false == IsPlayPauseButtonInPlayState()){
 			break;
 		}
-		qDebug() << state;
 		m_p_audio_player->Play();
 	}while(0);
 }
@@ -699,7 +698,6 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 		m_p_sequencer_widget->Prepare(
 					m_p_tune_manager->GetMidiFilePointer()->tickFromTime(INQUIRING_PLACKBACK_TICK_INTERVAL_IN_MILLISECONDS/1000.0f)
 					+ m_p_tune_manager->GetCurrentTick());
-
 	}
 }
 
