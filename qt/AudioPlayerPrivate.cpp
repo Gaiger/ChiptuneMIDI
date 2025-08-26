@@ -278,7 +278,7 @@ void AudioPlayerPrivate::SetupAudioResources(void)
 													this);
 	m_p_audio_player_output->SetVolume(1.00);
 
-	int audio_buffer_size = 2.0 * m_fetching_wave_interval_in_milliseconds
+	int audio_buffer_size = m_fetching_wave_interval_in_milliseconds
 			* m_number_of_channels * m_sampling_rate * m_sampling_size/8/1000;
 
 	m_p_audio_player_output->SetBufferSize(audio_buffer_size);
@@ -288,7 +288,7 @@ void AudioPlayerPrivate::SetupAudioResources(void)
 	m_p_audio_io_device->open(QIODevice::ReadWrite);
 
 	m_p_refill_timer = new QTimer(this);
-	m_p_refill_timer->setInterval(m_fetching_wave_interval_in_milliseconds);
+	m_p_refill_timer->setInterval(m_fetching_wave_interval_in_milliseconds/2);
 	QObject::connect(m_p_refill_timer, &QTimer::timeout, this, &AudioPlayerPrivate::HandleRefillTimerTimeout);
 	m_p_refill_timer->start();
 }
@@ -533,7 +533,6 @@ void AudioPlayerPrivate::HandleRefillTimerTimeout(void)
 
 		emit DataRequested(remain_audio_buffer_size);
 		//qDebug() << "remain_audio_buffer_size =" << remain_audio_buffer_size;
-		//qDebug() << "fetched_bytearray.size = " << fetched_bytearray.size();
 	} while(0);
 }
 
