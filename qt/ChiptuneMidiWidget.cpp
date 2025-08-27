@@ -260,6 +260,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	QWidget::setAcceptDrops(true);
 
 	qApp->installEventFilter(this);
+	StopMidiFile();
 }
 
 /**********************************************************************************/
@@ -364,6 +365,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		ui->PlayPositionLabel->setText(FormatTimeString(0) + " / " + m_midi_file_duration_time_string);
 		ui->PlayProgressSlider->setRange(0, m_midi_file_duration_in_milliseconds);
 		ui->PlayProgressSlider->setValue(0);
+		ui->PlayProgressSlider->setEnabled(true);
 		m_p_wave_chartview->Reset();
 
 		ui->SaveSaveFilePushButton->setEnabled(true);
@@ -409,6 +411,7 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 
 	ui->PlayPositionLabel->setText("00:00 / 00:00");
 	ui->PlayProgressSlider->setValue(0);
+	ui->PlayProgressSlider->setEnabled(false);
 
 	ui->MessageLabel->setText("");
 
@@ -480,11 +483,6 @@ void ChiptuneMidiWidget::UpdateTempoLabelText(void)
 
 void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds)
 {
-	if(-1 != m_inquiring_playback_state_timer_id){
-		QObject::killTimer(m_inquiring_playback_state_timer_id);
-		m_inquiring_playback_state_timer_id = -1;
-	}
-
 	if(true == m_defer_start_play_timer.isActive()){
 		m_defer_start_play_timer.stop();
 	}
@@ -506,7 +504,6 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 		};
 
 		std::function<void()> defer_start_play_function = [this, ensure_playing_function](){
-			m_inquiring_playback_state_timer_id = QObject::startTimer(500);
 				//qDebug() << m_p_audio_player->GetState();
 				if(AudioPlayer::PlaybackStatePlaying != m_p_audio_player->GetState()){
 					m_p_audio_player->Play();
@@ -666,21 +663,25 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 {
 	QWidget::timerEvent(event);
 	if(event->timerId() == m_inquiring_playback_state_timer_id){
+		UpdateTempoLabelText();
 		do
 		{
+			AudioPlayer::PlaybackState state = m_p_audio_player->GetState();
 			if(true == m_p_tune_manager->IsTuneEnding())
 			{
-				if(AudioPlayer::PlaybackStateIdle == m_p_audio_player->GetState()){
+				if(AudioPlayer::PlaybackStateIdle == state){
 					m_p_tune_manager->SetStartTimeInSeconds(0);
 					ui->PlayProgressSlider->setValue(0);
 					ui->PlayPositionLabel->setText("00:00 / 00:00");
 					SetPlayPauseButtonInPlayState(false);
 					m_p_wave_chartview->Reset();
+					break;
 				}
-				break;
 			}
 
-			UpdateTempoLabelText();
+			if(AudioPlayer::PlaybackStatePlaying != state){
+				break;
+			}
 
 			int elapsed_time_in_milliseconds =
 					(int)(m_p_tune_manager->GetCurrentElapsedTimeInSeconds() * 1000);
