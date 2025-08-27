@@ -195,7 +195,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	: QWidget(parent),
 	m_p_tune_manager(p_tune_manager),
 
-	m_inquiring_playback_status_timer_id(-1),
+	m_inquiring_playback_state_timer_id(-1),
 	m_inquiring_playback_tick_timer_id(-1),
 	m_audio_player_buffer_in_milliseconds(AUDIO_PLAYER_BUFFER_IN_MILLISECONDS),
 	m_p_sequencer_widget(nullptr),
@@ -369,7 +369,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		ui->SaveSaveFilePushButton->setEnabled(true);
 		message_string = QString::asprintf("Playing file");
 		ui->MessageLabel->setText(message_string);
-		m_inquiring_playback_status_timer_id = QObject::startTimer(500);
+		m_inquiring_playback_state_timer_id = QObject::startTimer(500);
 		m_inquiring_playback_tick_timer_id = QObject::startTimer(INQUIRING_PLAYBACK_TICK_INTERVAL_IN_MILLISECONDS);
 
 		ui->PlayPausePushButton->setEnabled(true);
@@ -397,9 +397,9 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 	m_p_audio_player->Stop();
 	m_p_tune_manager->ClearOutMidiFile();
 
-	if(-1 != m_inquiring_playback_status_timer_id){
-		QObject::killTimer(m_inquiring_playback_status_timer_id);
-		m_inquiring_playback_status_timer_id = -1;
+	if(-1 != m_inquiring_playback_state_timer_id){
+		QObject::killTimer(m_inquiring_playback_state_timer_id);
+		m_inquiring_playback_state_timer_id = -1;
 	}
 
 	if(-1 != m_inquiring_playback_tick_timer_id){
@@ -480,9 +480,9 @@ void ChiptuneMidiWidget::UpdateTempoLabelText(void)
 
 void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds)
 {
-	if(-1 != m_inquiring_playback_status_timer_id){
-		QObject::killTimer(m_inquiring_playback_status_timer_id);
-		m_inquiring_playback_status_timer_id = -1;
+	if(-1 != m_inquiring_playback_state_timer_id){
+		QObject::killTimer(m_inquiring_playback_state_timer_id);
+		m_inquiring_playback_state_timer_id = -1;
 	}
 
 	if(true == m_defer_start_play_timer.isActive()){
@@ -506,7 +506,7 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 		};
 
 		std::function<void()> defer_start_play_function = [this, ensure_playing_function](){
-			m_inquiring_playback_status_timer_id = QObject::startTimer(500);
+			m_inquiring_playback_state_timer_id = QObject::startTimer(500);
 				//qDebug() << m_p_audio_player->GetState();
 				if(AudioPlayer::PlaybackStatePlaying != m_p_audio_player->GetState()){
 					m_p_audio_player->Play();
@@ -665,8 +665,9 @@ bool ChiptuneMidiWidget::eventFilter(QObject *watched, QEvent *event)
 void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 {
 	QWidget::timerEvent(event);
-	do {
-		if(event->timerId() == m_inquiring_playback_status_timer_id){
+	if(event->timerId() == m_inquiring_playback_state_timer_id){
+		do
+		{
 			if(true == m_p_tune_manager->IsTuneEnding())
 			{
 				if(AudioPlayer::PlaybackStateIdle == m_p_audio_player->GetState()){
@@ -691,9 +692,8 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 			if(ui->AmplitudeGainSlider->value() != amplitude_gain){
 				ui->AmplitudeGainSlider->setValue(amplitude_gain);
 			}
-			break;
-		}
-	}while(0);
+		}while(0);
+	}
 
 	if(event->timerId() == m_inquiring_playback_tick_timer_id){
 		m_p_sequencer_widget->Update();
