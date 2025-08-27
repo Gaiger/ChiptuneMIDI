@@ -249,7 +249,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 					 this, &ChiptuneMidiWidget::HandleAudioPlayerStateChanged, Qt::QueuedConnection);
 
 	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
-	ui->SaveSaveFilePushButton->setToolTip(tr("Save as .wav file"));
+	ui->SaveFilePushButton->setToolTip(tr("Save as .wav file"));
 
 	ui->PitchShiftSpinBox->setToolTip(tr("Shift the pitch in the unit of semitone"));
 	QLineEdit *p_lineEdit = ui->PitchShiftSpinBox->findChild<QLineEdit *>();
@@ -368,7 +368,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		ui->PlayProgressSlider->setEnabled(true);
 		m_p_wave_chartview->Reset();
 
-		ui->SaveSaveFilePushButton->setEnabled(true);
+		ui->SaveFilePushButton->setEnabled(true);
 		message_string = QString::asprintf("Playing file");
 		ui->MessageLabel->setText(message_string);
 		m_inquiring_playback_state_timer_id = QObject::startTimer(500);
@@ -376,7 +376,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 
 		ui->PlayPausePushButton->setEnabled(true);
 		SetPlayPauseButtonInPlayState(true);
-		ui->SaveSaveFilePushButton->setEnabled(true);
+		ui->SaveFilePushButton->setEnabled(true);
 
 		m_p_audio_player->Prime();
 		SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(0);
@@ -446,7 +446,7 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 		delete ui->TimbreListWidget->layout();
 	} while(0);
 
-	ui->SaveSaveFilePushButton->setEnabled(false);
+	ui->SaveFilePushButton->setEnabled(false);
 }
 
 /**********************************************************************************/
@@ -822,7 +822,7 @@ void ChiptuneMidiWidget::on_OpenMidiFilePushButton_released(void)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_SaveSaveFilePushButton_released(void)
+void ChiptuneMidiWidget::on_SaveFilePushButton_released(void)
 {
 	m_p_audio_player->Stop();
 	int playing_value = ui->PlayProgressSlider->value();

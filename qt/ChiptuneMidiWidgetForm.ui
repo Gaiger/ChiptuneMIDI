@@ -60,7 +60,7 @@ QSlider::handle {
     border-radius: 3px;
 }</string>
   </property>
-  <widget class="QPushButton" name="SaveSaveFilePushButton">
+  <widget class="QPushButton" name="SaveFilePushButton">
    <property name="enabled">
     <bool>false</bool>
    </property>
