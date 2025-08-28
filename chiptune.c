@@ -1,3 +1,5 @@
+//NOLINTBEGIN(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
+
 #include <string.h>
 #include <stdio.h>
 
@@ -143,16 +145,8 @@ static int16_t s_sine_table[SINE_TABLE_LENGTH]		= {0};
 
 /**********************************************************************************/
 
-static int(*s_handler_get_midi_message)(uint32_t const index, uint32_t * const p_tick, uint32_t * const p_message) = NULL;
-
+static chiptune_get_midi_message_callback_t s_handler_get_midi_message = NULL;
 static bool s_is_tune_ending = false;
-
-/**********************************************************************************/
-
-void chiptune_set_handler_get_midi_message( int(*handler_get_midi_message)(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message) )
-{
-	s_handler_get_midi_message = handler_get_midi_message;
-}
 
 /**********************************************************************************/
 
@@ -335,7 +329,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				temp = INT16_MAX;
 			}
 			p_oscillator->loudness = temp;
-			memset(&p_oscillator->asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
+			memset(&p_oscillator->associate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
 
 			p_oscillator->current_phase = 0;
 			do {
@@ -417,7 +411,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				   sizeof(oscillator_t));
 			RESET_STATE_BITES(p_oscillator->state_bits);
 			SET_NOTE_OFF(p_oscillator->state_bits);
-			memset(&p_oscillator->asscociate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
+			memset(&p_oscillator->associate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
 			p_oscillator->loudness =
 					LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->loudness,
 															   p_channel_controller->envelop_damper_on_but_note_off_sustain_level);
@@ -833,7 +827,7 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 			break;
 		}
 		uint16_t const vibrato_same_index_number = p_channel_controller->vibrato_same_index_number;
-		p_oscillator->current_phase += DELTA_VIBTRATO_PHASE(modulation_wheel, p_oscillator->max_delta_vibrato_phase,
+		p_oscillator->current_phase += DELTA_VIBRATO_PHASE(modulation_wheel, p_oscillator->max_delta_vibrato_phase,
 															p_channel_controller->p_vibrato_phase_table[
 																p_oscillator->vibrato_table_index]);
 
@@ -1418,10 +1412,12 @@ static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMB
 
 /**********************************************************************************/
 
-void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate)
+void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
+						 chiptune_get_midi_message_callback_t get_midi_message_callback)
 {
 	s_is_stereo = is_stereo;
 	s_is_processing_left_channel = true;
+	s_handler_get_midi_message = get_midi_message_callback;
 	UPDATE_SAMPLING_RATE(sampling_rate);
 	UPDATE_RESOLUTION(MIDI_DEFAULT_RESOLUTION);
 	UPDATE_TEMPO(MIDI_DEFAULT_TEMPO);
@@ -1467,7 +1463,7 @@ void chiptune_set_amplitude_gain(int32_t amplitude_gain) { UPDATE_AMPLITUDE_NORM
 
 /**********************************************************************************/
 
-void chiptune_move_toward(uint32_t const index)
+void chiptune_set_current_message_index(uint32_t const index)
 {
 	pass_through_midi_messages(index);
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
@@ -1655,3 +1651,5 @@ int8_t chiptune_get_pitch_shift_in_semitones(void)
 {
 	return (int8_t)get_pitch_shift_in_semitones();
 }
+
+// NOLINTEND(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)

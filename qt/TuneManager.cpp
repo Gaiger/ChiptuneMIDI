@@ -65,23 +65,11 @@ public:
 		m_wave_bytearray += generated_bytearray;
 	}
 
-	int ResetSongResources(void)
+	void ResetSongResources(void)
 	{
 		m_wave_bytearray.clear();
 		m_wave_prebuffer_size = 0;
-
-		int ret = -1;
-		do
-		{
-			if(nullptr == m_p_midi_file){
-				break;
-			}
-
-			m_channel_instrument_pair_list.clear();
-			chiptune_prepare_song(m_p_midi_file->resolution());
-			ret = 0;
-		} while(0);
-		return ret;
+		m_channel_instrument_pair_list.clear();
 	}
 
 public:
@@ -152,9 +140,8 @@ TuneManager::TuneManager(bool is_stereo,
 	m_p_private->m_connection_type = Qt::AutoConnection;
 
 	s_p_private_instance = m_p_private;
-	chiptune_set_handler_get_midi_message(get_midi_message);
 	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
-						 (uint32_t)m_p_private->m_sampling_rate);
+						 (uint32_t)m_p_private->m_sampling_rate, get_midi_message);
 }
 
 /**********************************************************************************/
@@ -180,22 +167,34 @@ TuneManager::~TuneManager(void)
 int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 {
 	QMutexLocker locker(&m_p_private->m_mutex);
-	QFileInfo file_info(midi_file_name_string);
-	if(false == file_info.isFile()){
-		qDebug() << Q_FUNC_INFO << midi_file_name_string << "is not a file";
-		return -1;
-	}
-
-	m_p_private->m_p_midi_file = new QMidiFile();
-	if(false == m_p_private->m_p_midi_file->load(midi_file_name_string))
+	int ret = 0;
+	do
 	{
-		delete m_p_private->m_p_midi_file; m_p_private->m_p_midi_file = nullptr;
-		return -2;
-	}
+		QFileInfo file_info(midi_file_name_string);
+		if(false == file_info.isFile()){
+			qDebug() << Q_FUNC_INFO << midi_file_name_string << "is not a file";
+			ret = -1;
+			break;
+		}
 
-	qDebug()  << "Music time length = " << GetMidiFileDurationInSeconds() << "seconds";
-	m_p_private->ResetSongResources();
-	return 0;
+		QMidiFile *p_midi_file = new QMidiFile();
+		if(false == p_midi_file->load(midi_file_name_string))
+		{
+			delete p_midi_file; p_midi_file = nullptr;
+			ret = -2;
+			break;
+		}
+
+		if(nullptr != m_p_private->m_p_midi_file){
+			delete m_p_private->m_p_midi_file;
+		}
+		m_p_private->m_p_midi_file = p_midi_file;
+
+		qDebug()  << "Music time length = " << GetMidiFileDurationInSeconds() << "seconds";
+		m_p_private->ResetSongResources();
+		chiptune_prepare_song(m_p_private->m_p_midi_file->resolution());
+	} while(0);
+	return ret;
 }
 
 /**********************************************************************************/
@@ -367,7 +366,7 @@ bool TuneManager::IsTuneEnding(void)
 			break;
 		}
 		{
-			//QMutexLocker lock(&m_p_private->m_mutex);
+			QMutexLocker lock(&m_p_private->m_mutex);
 			if(0 < m_p_private->m_wave_bytearray.size()){
 				break;
 			}
@@ -505,7 +504,7 @@ int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 				 << ", found time = " << m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick())
 				 << ", index = " << set_index
 				 << ", tick = " << p_midi_event_list.at(set_index)->tick();
-		chiptune_move_toward(set_index);
+		chiptune_set_current_message_index(set_index);
 
 		m_p_private->m_wave_bytearray.clear();
 		m_p_private->m_wave_prebuffer_size = 0;

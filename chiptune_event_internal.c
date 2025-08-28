@@ -1,3 +1,5 @@
+// NOLINTBEGIN(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
+
 #include <stdio.h>
 #include  <string.h>
 
@@ -1006,3 +1008,5 @@ int adjust_event_triggering_tick_by_playing_tempo(uint32_t const tick, float con
 
 	return 0;
 }
+
+// NOLINTEND(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)

@@ -9,11 +9,12 @@ extern "C"
 {
 #endif
 
-void chiptune_set_handler_get_midi_message(
-		int(*handler_get_midi_message)(uint32_t const index, uint32_t * const p_tick, uint32_t * const p_message) );
+typedef int (*chiptune_get_midi_message_callback_t)(
+		uint32_t index, uint32_t *p_tick,uint32_t *p_message);
 
 
-void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate);
+void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
+						 chiptune_get_midi_message_callback_t get_midi_message_callback);
 void chiptune_finalize(void);
 void chiptune_prepare_song(uint32_t const resolution);
 
@@ -31,7 +32,7 @@ float chiptune_get_playing_tempo(void);
 #define CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL			(-2)
 int chiptune_get_ending_instruments(int8_t instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
 
-void chiptune_move_toward(uint32_t const index);
+void chiptune_set_current_message_index(uint32_t index);
 uint32_t chiptune_get_current_tick(void);
 
 void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const is_enabled);
