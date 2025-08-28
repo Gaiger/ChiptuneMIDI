@@ -2,8 +2,9 @@
 
 ## Description
 <!--- Short introduction of the project. -->
-ChiptuneMIDI is built around a portable C99 chiptune engine.  
-A Qt application is included as a reference front-end, showcasing real-time playback, instrument controls, and audio export.
+ChiptuneMIDI interprets MIDI files as retro chiptune (8-bit–style) sound.  
+It is built around a portable C99 chiptune engine, 
+with a Qt application as a reference front-end that showcases real-time playback, instrument controls, and audio export.  
 ![ChiptuneMIDI Screenshot](screenshot.png)
 
 ## Demo
