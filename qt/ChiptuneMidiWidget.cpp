@@ -462,7 +462,7 @@ void ChiptuneMidiWidget::UpdateTempoLabelText(void)
 		}
 	} while(0);
 
-	double playing_tempo = m_p_tune_manager->GetPlayingTempo();
+	double playing_tempo = m_p_tune_manager->GetPlayingEffectiveTempo();
 	do{
 		if(abs(playing_tempo - tempo) < 0.1){
 			break;

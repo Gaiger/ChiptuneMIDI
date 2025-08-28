@@ -1483,13 +1483,6 @@ void chiptune_set_tempo(float const tempo)
 
 /**********************************************************************************/
 
-float chiptune_get_playing_tempo(void)
-{
-	return get_playing_tempo();
-}
-
-/**********************************************************************************/
-
 float chiptune_get_tempo(void)
 {
 	return s_tempo;
@@ -1503,6 +1496,12 @@ void chiptune_set_playing_speed_ratio(float playing_speed_ratio)
 	UPDATE_PLAYING_SPEED_RATIO(playing_speed_ratio);
 	update_effect_tick();
 	update_channel_controllers_parameters_related_to_playing_tempo();
+}
+/**********************************************************************************/
+
+float chiptune_get_playing_effective_tempo(void)
+{
+	return get_playing_tempo();
 }
 
 /**********************************************************************************/

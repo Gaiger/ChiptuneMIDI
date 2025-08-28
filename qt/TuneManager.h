@@ -44,7 +44,7 @@ public:
 	float GetCurrentElapsedTimeInSeconds(void);
 	int GetCurrentTick(void);
 	double GetTempo(void);
-	double GetPlayingTempo(void);
+	double GetPlayingEffectiveTempo(void);
 	void SetPlayingSpeedRatio(double playing_speed_raio);
 	void SetPitchShift(int pitch_shift_in_semitones);
 

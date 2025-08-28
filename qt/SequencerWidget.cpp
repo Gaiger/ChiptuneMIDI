@@ -435,7 +435,7 @@ void NoteDurationWidget::paintEvent(QPaintEvent *event)
 
 	QColor color = QColor(0xE0, 0xE0, 0xE0, 0xE0);
 	painter.setPen(color);
-	int latency_x = m_audio_out_latency_in_seconds * m_p_tune_manager->GetPlayingTempo()/60.0 * ONE_BEAT_WIDTH;
+	int latency_x = m_audio_out_latency_in_seconds * m_p_tune_manager->GetPlayingEffectiveTempo()/60.0 * ONE_BEAT_WIDTH;
 	painter.drawLine(QWidget::width()/2 - latency_x, 0, QWidget::width()/2 - latency_x, QWidget::height());
 }
 
