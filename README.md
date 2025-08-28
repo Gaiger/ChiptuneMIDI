@@ -26,8 +26,7 @@ A Qt application is included as a reference front-end, showcasing real-time play
 - Play MIDI files directly with retro 8-bit sound
 - Visual note sequencer (score-like interface)
 - Export audio output as `.wav`
-- All engine features (waveforms, ADSR, etc.) are configurable via the GUI
-
+- Core engine features (waveforms, ADSR, etc.) are configurable via the GUI.
 
 
 ## Requirements / Dependencies
