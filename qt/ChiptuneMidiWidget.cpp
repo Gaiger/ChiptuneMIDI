@@ -4,11 +4,9 @@
 #include <QGridLayout>
 #include <QElapsedTimer>
 #include <QDateTime>
-#include <QTimerEvent>
-#include <QDropEvent>
 #include <QMimeData>
-#include <QFileDialog>
 #include <QFile>
+#include <QFileDialog>
 #include <QLineEdit>
 
 #if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
@@ -670,11 +668,25 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 			if(true == m_p_tune_manager->IsTuneEnding())
 			{
 				if(AudioPlayer::PlaybackStateIdle == state){
-					m_p_tune_manager->SetStartTimeInSeconds(0);
-					ui->PlayProgressSlider->setValue(0);
-					ui->PlayPositionLabel->setText("00:00 / 00:00");
+					std::function<void()> rewind_to_head_function = [this]() {
+						do
+						{
+							if(false == m_p_tune_manager->IsTuneEnding()){
+								break;
+							}
+							m_p_tune_manager->SetStartTimeInSeconds(0);
+							ui->PlayProgressSlider->setValue(0);
+							ui->PlayPositionLabel->setText("00:00 / 00:00");
+							m_p_wave_chartview->Reset();
+						}while(0);
+					};
+
+					ui->PlayProgressSlider->setValue(ui->PlayProgressSlider->maximum());
+					ui->PlayPositionLabel->setText(
+								m_midi_file_duration_time_string + " / " + m_midi_file_duration_time_string);
 					SetPlayPauseButtonInPlayState(false);
-					m_p_wave_chartview->Reset();
+
+					QTimer::singleShot(1000, this, rewind_to_head_function);
 					break;
 				}
 			}
