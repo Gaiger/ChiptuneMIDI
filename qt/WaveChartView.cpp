@@ -100,16 +100,9 @@ void WaveChartView::UpdateWave(QByteArray const &wave_bytearray)
 
 /**********************************************************************************/
 
-void WaveChartView::CleanUndrawnWave(void)
-{
-	m_remain_wave_bytearray.clear();
-}
-
-/**********************************************************************************/
-
 void WaveChartView::Reset(void)
 {
-	CleanUndrawnWave();
+	m_remain_wave_bytearray.clear();
 	QList<QPointF> points_vector;
 	QValueAxis *p_x_axis  = (QValueAxis*)QChartView::chart()->axes(Qt::Horizontal).at(0);
 	int length = p_x_axis->max() + 1;

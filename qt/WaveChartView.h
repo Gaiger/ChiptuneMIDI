@@ -24,7 +24,6 @@ public:
 public slots:
 	void UpdateWave(QByteArray const &wave_bytearray);
 private :
-	void CleanUndrawnWave(void);
 	template <typename T> void ReplaceSeries(void);
 
 private :
