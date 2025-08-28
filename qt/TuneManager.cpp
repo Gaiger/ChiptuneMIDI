@@ -436,6 +436,7 @@ double TuneManager::GetPlayingEffectiveTempo(void)
 
 void TuneManager::SetPlayingSpeedRatio(double playing_speed_raio)
 {
+	QMutexLocker locker(&m_p_private->m_mutex);
 	qDebug() << Q_FUNC_INFO << playing_speed_raio;
 	chiptune_set_playing_speed_ratio((float)playing_speed_raio);
 }
