@@ -187,16 +187,16 @@ void SetFontSizeForWidgetSubtree(QWidget * const p_root_widget, int const target
 #endif
 
 /**********************************************************************************/
-#define INQUIRING_PLAYBACK_TICK_INTERVAL_IN_MILLISECONDS		(35)
+#define PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS 		(35)
 #define AUDIO_PLAYER_BUFFER_IN_MILLISECONDS						\
-	(2 * (INQUIRING_PLAYBACK_TICK_INTERVAL_IN_MILLISECONDS))
+	(2 * (PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS ))
 
 ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidget *parent)
 	: QWidget(parent),
 	m_p_tune_manager(p_tune_manager),
 
-	m_inquiring_playback_state_timer_id(-1),
-	m_inquiring_playback_tick_timer_id(-1),
+	m_playback_state_inquiry_timer_id(-1),
+	m_playback_tick_inquiry_timer_id(-1),
 	m_audio_player_buffer_in_milliseconds(AUDIO_PLAYER_BUFFER_IN_MILLISECONDS),
 	m_p_sequencer_widget(nullptr),
 	ui(new Ui::ChiptuneMidiWidget)
@@ -371,8 +371,8 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		ui->SaveFilePushButton->setEnabled(true);
 		message_string = QString::asprintf("Playing file");
 		ui->MessageLabel->setText(message_string);
-		m_inquiring_playback_state_timer_id = QObject::startTimer(500);
-		m_inquiring_playback_tick_timer_id = QObject::startTimer(INQUIRING_PLAYBACK_TICK_INTERVAL_IN_MILLISECONDS);
+		m_playback_state_inquiry_timer_id = QObject::startTimer(500);
+		m_playback_tick_inquiry_timer_id = QObject::startTimer(PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS );
 
 		ui->PlayPausePushButton->setEnabled(true);
 		SetPlayPauseButtonInPlayState(true);
@@ -399,14 +399,14 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 	m_p_audio_player->Stop();
 	m_p_tune_manager->ClearOutMidiFile();
 
-	if(-1 != m_inquiring_playback_state_timer_id){
-		QObject::killTimer(m_inquiring_playback_state_timer_id);
-		m_inquiring_playback_state_timer_id = -1;
+	if(-1 != m_playback_state_inquiry_timer_id){
+		QObject::killTimer(m_playback_state_inquiry_timer_id);
+		m_playback_state_inquiry_timer_id = -1;
 	}
 
-	if(-1 != m_inquiring_playback_tick_timer_id){
-		QObject::killTimer(m_inquiring_playback_tick_timer_id);
-		m_inquiring_playback_tick_timer_id = -1;
+	if(-1 != m_playback_tick_inquiry_timer_id){
+		QObject::killTimer(m_playback_tick_inquiry_timer_id);
+		m_playback_tick_inquiry_timer_id = -1;
 	}
 
 	ui->PlayPositionLabel->setText("00:00 / 00:00");
@@ -662,7 +662,7 @@ bool ChiptuneMidiWidget::eventFilter(QObject *watched, QEvent *event)
 void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 {
 	QWidget::timerEvent(event);
-	if(event->timerId() == m_inquiring_playback_state_timer_id){
+	if(event->timerId() == m_playback_state_inquiry_timer_id){
 		UpdateTempoLabelText();
 		do
 		{
@@ -696,10 +696,10 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 		}while(0);
 	}
 
-	if(event->timerId() == m_inquiring_playback_tick_timer_id){
+	if(event->timerId() == m_playback_tick_inquiry_timer_id){
 		m_p_sequencer_widget->Update();
 		m_p_sequencer_widget->Prepare(
-					m_p_tune_manager->GetMidiFilePointer()->tickFromTime(INQUIRING_PLAYBACK_TICK_INTERVAL_IN_MILLISECONDS/1000.0f)
+					m_p_tune_manager->GetMidiFilePointer()->tickFromTime(PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS /1000.0f)
 					+ m_p_tune_manager->GetCurrentTick());
 	}
 }

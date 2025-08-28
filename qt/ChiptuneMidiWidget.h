@@ -78,8 +78,8 @@ private :
 
 	QFileInfo			m_opened_file_info;
 	uint32_t			m_midi_file_duration_in_milliseconds;
-	int					m_inquiring_playback_state_timer_id;
-	int					m_inquiring_playback_tick_timer_id;
+	int					m_playback_state_inquiry_timer_id;
+	int					m_playback_tick_inquiry_timer_id;
 	QString				m_midi_file_duration_time_string;
 
 	QTimer				m_defer_start_play_timer;
