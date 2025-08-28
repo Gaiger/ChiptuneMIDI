@@ -7,7 +7,7 @@ A Qt application is included as a reference front-end, showcasing real-time play
 ![ChiptuneMIDI Screenshot](screenshot.png)
 
 ## Demo
-- [梁靜茹 如果有一天 — 8-bit Chiptune cover](https://www.youtube.com/watch?v=3lz47rfHsxA)  
+- [梁靜茹 如果有一天 — ChiptuneMIDI cover](https://www.youtube.com/watch?v=3lz47rfHsxA)  
   *(Generated with ChiptuneMIDI engine — [original song](https://www.youtube.com/watch?v=K3o6SfwZq_w) by 梁靜茹)*
 
 ## Features
