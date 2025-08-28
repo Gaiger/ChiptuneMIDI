@@ -87,7 +87,7 @@ win32{
 }
 
 win32 {
-    QMAKE_POST_LINK += xcopy /E /Y /I \"$$CHIPTUNE_QT_DIR\\icons\" \"$$OUT_PWD\\icons\" & echo Copied icons directory
+    QMAKE_POST_LINK += xcopy /E /Y /I \"$$CHIPTUNE_QT_DIR/icons\" \"$$OUT_PWD/icons\" & echo Copied icons directory
 }
 unix {
     QMAKE_POST_LINK += cp -r $$CHIPTUNE_QT_DIR/icons $$OUT_PWD/icons
