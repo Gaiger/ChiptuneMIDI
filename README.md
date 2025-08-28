@@ -5,6 +5,11 @@
 ChiptuneMIDI is built around a portable C99 chiptune engine.  
 A Qt application is included as a reference front-end, showcasing real-time playback, instrument controls, and audio export.
 ![ChiptuneMIDI Screenshot](screenshot.png)
+
+## Demo
+- [梁靜茹 如果有一天 — 8-bit Chiptune cover](https://www.youtube.com/watch?v=3lz47rfHsxA)  
+  *(Generated with ChiptuneMIDI engine — [original song](https://www.youtube.com/watch?v=K3o6SfwZq_w) by 梁靜茹)*
+
 ## Features
 <!--- Key features. -->
 
@@ -13,14 +18,15 @@ A Qt application is included as a reference front-end, showcasing real-time play
 - Stereo/mono output at configurable sampling rates
 - Retro waveforms (square with multiple duty cycles, triangle, saw, noise)
 - Customizable ADSR envelopes with various curve types
-- MIDI support: 16 channels, tempo control, pitch shift, playback speed
+- Supports common MIDI effects (e.g., vibrato, reverb, chords)
+- Tempo control, pitch shift, and playback speed adjustable
 - Exports audio samples (8-bit/16-bit) for any backend
 
 ### Application (Qt GUI)
 - Play MIDI files directly with retro 8-bit sound
 - Visual note sequencer (score-like interface)
 - Export audio output as `.wav`
-- All engine features (waveforms, ADSR, MIDI effects, etc.) are configurable via the GUI
+- All engine features (waveforms, ADSR, etc.) are configurable via the GUI
 
 
 
@@ -95,7 +101,7 @@ Make sure your code passes existing builds/tests and follows the coding style:
 <!--- Type of license and conditions. -->
 This project is licensed under the MIT License — see the [LICENSE](https://rem.mit-license.org/) file for details.
 
-## Acknowledgements (optional)
+## Acknowledgements
 <!--- Credits, references, inspirations. -->
 - Uses [QMidi](https://github.com/waddlesplash/QMidi) library for MIDI file parsing  
 - Inspired by Dragon Guardian's [*暗黒舞踏会 8bit ver.*](https://www.youtube.com/watch?v=RFkPC6qlFmo) — thanks to composer [勇者アーサー](https://x.com/dragonguardiana)
