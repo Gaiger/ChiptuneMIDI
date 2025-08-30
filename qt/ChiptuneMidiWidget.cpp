@@ -311,17 +311,17 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 		}
 
 		ChannelListWidget *p_channellist_widget = new ChannelListWidget(ui->TimbreListWidget);
+		QObject::connect(p_channellist_widget, &ChannelListWidget::OutputEnabled,
+						 this, &ChiptuneMidiWidget::HandleChannelOutputEnabled);
+		QObject::connect(p_channellist_widget, &ChannelListWidget::TimbreChanged,
+						 this, &ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged);
 		FillWidget(p_channellist_widget, ui->TimbreListWidget);
+
 		int channel_number = m_p_tune_manager->GetChannelInstrumentPairList().size();
 		for(int i = 0; i < channel_number; i++){
 			int channel_index = m_p_tune_manager->GetChannelInstrumentPairList().at(i).first;
 			int instrument = m_p_tune_manager->GetChannelInstrumentPairList().at(i).second;
 			p_channellist_widget->AddChannel(channel_index, instrument);
-
-			QObject::connect(p_channellist_widget, &ChannelListWidget::OutputEnabled,
-							 this, &ChiptuneMidiWidget::HandleChannelOutputEnabled);
-			QObject::connect(p_channellist_widget, &ChannelListWidget::TimbreChanged,
-							 this, &ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged);
 
 			int waveform;
 			int envelope_attack_curve; double envelope_attack_duration_in_seconds;
