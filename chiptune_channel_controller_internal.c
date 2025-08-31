@@ -155,9 +155,9 @@ int set_pitch_channel_parameters(int8_t const index, int8_t const waveform, uint
 	p_channel_controller->envelope_sustain_level = envelope_sustain_level;
 
 	if(0 == p_channel_controller->envelope_decay_same_index_number){
-		if(INT8_MAX + 1 != p_channel_controller->envelope_sustain_level){
+		if(INT8_MAX != p_channel_controller->envelope_sustain_level){
 			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_decay_same_index_number is zero"
-										 " but envelope_sustain_level is not INT8_MAX + 1 \r\n");
+										 " but envelope_sustain_level is not INT8_MAX\r\n");
 		}
 		ret |= 0x01 << 1;
 	}

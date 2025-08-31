@@ -281,7 +281,7 @@ QSpinBox:disabled {
     <number>0</number>
    </property>
    <property name="maximum">
-    <number>128</number>
+    <number>127</number>
    </property>
    <property name="singleStep">
     <number>8</number>
@@ -461,7 +461,7 @@ QSpinBox:disabled {
     <number>1</number>
    </property>
    <property name="maximum">
-    <number>128</number>
+    <number>127</number>
    </property>
    <property name="singleStep">
     <number>8</number>

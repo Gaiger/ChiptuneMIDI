@@ -412,9 +412,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			RESET_STATE_BITES(p_oscillator->state_bits);
 			SET_NOTE_OFF(p_oscillator->state_bits);
 			memset(&p_oscillator->associate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
-			p_oscillator->loudness =
-					LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(p_oscillator->loudness,
-															   p_channel_controller->envelop_damper_on_but_note_off_sustain_level);
+			p_oscillator->loudness
+					= LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(
+						p_oscillator->loudness,
+						MAP_MIDI_VALUE_RANGE_TO_0_128(p_channel_controller->envelop_damper_on_but_note_off_sustain_level));
 			p_oscillator->amplitude = 0;
 			p_oscillator->envelope_same_index_count = 0;
 			p_oscillator->envelope_table_index = 0;
@@ -922,8 +923,9 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 				}
 			case ENVELOPE_STATE_DECAY:
 				p_oscillator->envelope_state = ENVELOPE_STATE_SUSTAIN;
-				p_oscillator->amplitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-							  p_channel_controller->envelope_sustain_level);
+				p_oscillator->amplitude
+						= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
+											MAP_MIDI_VALUE_RANGE_TO_0_128(p_channel_controller->envelope_sustain_level));
 				if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 					break;
 				}
@@ -956,8 +958,9 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 			break;
 		case ENVELOPE_STATE_DECAY: {
 			p_envelope_table = p_channel_controller->p_envelope_decay_table;
-			int16_t sustain_ampitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-														 p_channel_controller->envelope_sustain_level);
+			int16_t sustain_ampitude
+					= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
+										MAP_MIDI_VALUE_RANGE_TO_0_128(p_channel_controller->envelope_sustain_level));
 			do {
 				if(0 != p_oscillator->attack_decay_reference_amplitude){
 					delta_amplitude = p_oscillator->attack_decay_reference_amplitude - sustain_ampitude;
