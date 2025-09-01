@@ -411,6 +411,8 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 	ui->PlayProgressSlider->setValue(0);
 	ui->PlayProgressSlider->setEnabled(false);
 
+	ui->TempoLabel->setText("");
+
 	ui->MessageLabel->setText("");
 
 	ui->PlayPausePushButton->setEnabled(false);
@@ -878,7 +880,6 @@ void ChiptuneMidiWidget::on_SaveFilePushButton_released(void)
 void ChiptuneMidiWidget::on_StopPushButton_released(void)
 {
 	StopMidiFile();
-	ui->TempoLabel->setText("");
 }
 
 /**********************************************************************************/
