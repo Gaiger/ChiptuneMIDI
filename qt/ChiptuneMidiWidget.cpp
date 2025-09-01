@@ -141,10 +141,18 @@ private:
 
 void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
 {
-	QGridLayout *p_layout = new QGridLayout(p_filled_widget);
+	QGridLayout *p_layout = nullptr;
+	do
+	{
+		p_layout = (QGridLayout*)p_filled_widget->layout();
+		if(nullptr != p_layout){
+			break;
+		}
+		p_layout = new QGridLayout(p_filled_widget);
+		p_layout->setContentsMargins(0, 0, 0, 0);
+		p_layout->setSpacing(0);
+	} while(0);
 	p_layout->addWidget(p_widget, 0, 0);
-	p_layout->setContentsMargins(0, 0, 0, 0);
-	p_layout->setSpacing(0);
 }
 
 #if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
@@ -419,23 +427,12 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 	SetPlayPauseButtonInPlayState(false);
 
 	m_p_wave_chartview->Reset();
-
-	do {
-		if(nullptr == ui->TimbreListWidget->layout()){
-			break;
-		}
-		QLayoutItem *p_layoutitem = ui->TimbreListWidget->layout()->takeAt(0);
-		if(nullptr == p_layoutitem){
-			break;
-		}
-		QWidget *p_widget = p_layoutitem->widget();
-		if(nullptr == p_widget){
-			break;
-		}
-		delete p_widget;
-		delete ui->TimbreListWidget->layout();
-	} while(0);
-
+	ChannelListWidget* p_channel_list_widget
+			= ui->TimbreListWidget->findChild<ChannelListWidget*>();
+	if(nullptr != p_channel_list_widget){
+		delete ui->TimbreListWidget->findChild<ChannelListWidget*>();
+	}
+	//delete ui->TimbreListWidget->layout();
 	ui->SaveFilePushButton->setEnabled(false);
 }
 
