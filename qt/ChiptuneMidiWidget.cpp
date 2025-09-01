@@ -420,16 +420,6 @@ void ChiptuneMidiWidget::StopMidiFile(void)
 
 	m_p_wave_chartview->Reset();
 
-	do{
-		if(nullptr == ui->SequencerScrollArea->widget()){
-			break;
-		}
-
-		QWidget *p_widget = ui->SequencerScrollArea->takeWidget();
-		delete p_widget->layout();
-		delete p_widget;
-	} while(0);
-
 	do {
 		if(nullptr == ui->TimbreListWidget->layout()){
 			break;

@@ -520,6 +520,8 @@ SequencerWidget::~SequencerWidget(void)
 {
 	delete m_p_note_name_widget;
 	delete m_p_note_duration_widget;
+
+	QWidget::setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 	QWidget::resize(0, 0);
 }
 
