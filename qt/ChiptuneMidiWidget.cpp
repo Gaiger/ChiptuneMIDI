@@ -680,10 +680,6 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 				}
 			}
 
-			if(AudioPlayer::PlaybackStatePlaying != state){
-				break;
-			}
-
 			int elapsed_time_in_milliseconds =
 					(int)(m_p_tune_manager->GetCurrentElapsedTimeInSeconds() * 1000);
 			ui->PlayPositionLabel->setText(FormatTimeString(elapsed_time_in_milliseconds) + " / "

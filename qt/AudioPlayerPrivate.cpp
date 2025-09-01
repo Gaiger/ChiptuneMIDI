@@ -243,7 +243,7 @@ AudioPlayerPrivate::AudioPlayerPrivate(int const number_of_channels, int const s
 
 AudioPlayerPrivate::~AudioPlayerPrivate(void)
 {
-	AudioPlayerPrivate::Stop();
+	Stop();
 }
 
 /**********************************************************************************/
