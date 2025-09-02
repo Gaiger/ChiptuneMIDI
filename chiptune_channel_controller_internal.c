@@ -277,9 +277,9 @@ static void initialize_envelope_tables(void)
 
 	/*
 	 * gaussian
-	 *  INT8_MAX * exp(-beta * (TABLE_LENGTH -1)**2) = 1 -> beta = -ln(INT8_MAX - 1)/(1 - (TABLE_LENGTH -1)**2)
+	 *  INT8_MAX * exp(-beta * (TABLE_LENGTH -1)**2) = 1 -> beta = ln(INT8_MAX)/(TABLE_LENGTH -1)**2
 	*/
-	const float beta = -logf(INT8_MAX - 1)/(1 - powf((float)(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1), 2.0f));
+	const float beta = logf(INT8_MAX)/powf((float)(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1), 2.0f);
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
 		s_gaussian_decline_table[i] = (int8_t)(INT8_MAX * expf(-beta * i * i) + 0.5);
 	}
@@ -289,9 +289,25 @@ static void initialize_envelope_tables(void)
 
 	/*
 	 *  fermi
-	 *  A * 1/(exp( -gamma*((TABLE_LENGTH - 1) - TABLE_LENGTH/2)) + 1) = 1
+	 *  A * 1/(exp( -gamma*((TABLE_LENGTH - 1) - TABLE_LENGTH/2)) + 1) = 1  -> constraint A
+	 *  A * 1/(exp( -gamma*((0) - TABLE_LENGTH/2)) + 1) = INT8_MAX  -> -> constraint A
 	 *   -> gamma = -ln(A - 1)/((TABLE_LENGTH -1) - TABLE_LENGTH/2)
+	 *   -> A = INT8_MAX*(1 + (A - 1)**(-TABLE_LENGTH/(TABLE_LENGTH - 2)) -> SCF solving (start A = 128) → A ≈ 127.85633
 	 *   Here uses A = INT8_MAX + 1
+	 *
+	 * For TABLE_LENGTH = 64 :
+	 * SCF solving (start A = 128) → A ~ 127.85633
+	 * Here uses A = INT8_MAX + 1
+	 *
+	 *《論語．子罕》：「有鄙夫問於我，空空如也。我叩其兩端而竭焉。」  -> taking the two extremes:
+	 * As TABLE_LENGTH = 1 or 2 : degenerate, meaningless
+	 * As TABLE_LENGTH -> infinity :
+	 * A/INT8_MAX = 1 + 1/(A - 1)
+	 * -> A*(A - 1) = (A - 1 + 1)*INT8_MAX
+	 * -> A*(A - (INT8_MAX + 1)) = 0
+	 * thus A = INT8_MAX + 1
+	 *
+	 * => In practice always set A = INT8_MAX + 1
 	*/
 	const float gamma = -logf((INT8_MAX + 1) - 1)
 			/ ((CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1) - CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/2);
