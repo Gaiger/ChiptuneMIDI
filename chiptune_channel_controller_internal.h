@@ -43,7 +43,7 @@ inline uint8_t one_to_zero(uint8_t x){
 #endif
 
 #define ONE_TO_ZERO(VALUE)					\
-						(VALUE) & (0 - ((0 - ((uint32_t)(VALUE) ^ 0x01)) >> 31))
+						((VALUE) & (0 - ((0 - ((uint32_t)(VALUE) ^ 0x01)) >> 31)))
 
 #define MAP_MIDI_VALUE_RANGE_TO_0_128(VALUE)		ONE_TO_ZERO((VALUE) + 1)
 
