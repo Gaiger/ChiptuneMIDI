@@ -293,7 +293,6 @@ static void initialize_envelope_tables(void)
 	 *  A * 1/(exp( -gamma*((0) - TABLE_LENGTH/2)) + 1) = INT8_MAX  -> -> constraint A
 	 *   -> gamma = -ln(A - 1)/((TABLE_LENGTH -1) - TABLE_LENGTH/2)
 	 *   -> A = INT8_MAX*(1 + (A - 1)**(-TABLE_LENGTH/(TABLE_LENGTH - 2)) -> SCF solving (start A = 128) → A ≈ 127.85633
-	 *   Here uses A = INT8_MAX + 1
 	 *
 	 * For TABLE_LENGTH = 64 :
 	 * SCF solving (start A = 128) → A ~ 127.85633
@@ -303,7 +302,7 @@ static void initialize_envelope_tables(void)
 	 * As TABLE_LENGTH = 1 or 2 : degenerate, meaningless
 	 * As TABLE_LENGTH -> infinity :
 	 * A/INT8_MAX = 1 + 1/(A - 1)
-	 * -> A*(A - 1) = (A - 1 + 1)*INT8_MAX
+	 * -> A*(A - 1) = ((A - 1) + 1)*INT8_MAX
 	 * -> A*(A - (INT8_MAX + 1)) = 0
 	 * thus A = INT8_MAX + 1
 	 *
