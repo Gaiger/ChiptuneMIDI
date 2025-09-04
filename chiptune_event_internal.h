@@ -2,7 +2,9 @@
 #define _CHIPTUNE_EVENT_INTERNAL_H_
 
 #include <stdint.h>
-#include "chiptune_oscillator_internal.h"
+
+void reset_all_events(void);
+void clean_all_events(void);
 
 enum EventType
 {
@@ -13,9 +15,6 @@ enum EventType
 	EVENT_TYPE_MAX,
 };
 
-
-void reset_all_events(void);
-void clean_all_events(void);
 int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const triggering_tick);
 int process_events(uint32_t const tick);
 
