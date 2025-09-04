@@ -536,7 +536,7 @@ int process_events(uint32_t const tick)
 /**********************************************************************************/
 void reset_all_events(void)
 {
-	mark_all_oscillators_and_links_unused();
+	mark_all_oscillators_unused();
 	mark_all_events_unused();
 }
 
@@ -544,7 +544,7 @@ void reset_all_events(void)
 
 void clean_all_events(void)
 {
-	release_all_oscillators_and_links();
+	release_all_oscillators();
 	release_all_events();
 }
 

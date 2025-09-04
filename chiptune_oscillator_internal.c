@@ -150,7 +150,7 @@ static inline bool is_unoccupied_oscillator_available()
 
 /**********************************************************************************/
 
-int mark_all_oscillators_and_links_unused(void)
+static int mark_all_oscillators_and_links_unused(void)
 {
 	for(int16_t i = 0; i < get_occupiable_oscillator_capacity(); i++){
 		get_oscillator_address_from_index(i)->voice = UNOCCUPIED_OSCILLATOR;
@@ -166,7 +166,7 @@ int mark_all_oscillators_and_links_unused(void)
 
 /**********************************************************************************/
 
-int release_all_oscillators_and_links(void) { return mark_all_oscillators_and_links_unused(); }
+static int release_all_oscillators_and_links(void) { return mark_all_oscillators_and_links_unused(); }
 #else
 /**********************************************************************************/
 
@@ -243,7 +243,7 @@ static bool is_unoccupied_oscillator_available()
 
 /**********************************************************************************/
 
-int mark_all_oscillators_and_links_unused(void)
+static int mark_all_oscillators_and_links_unused(void)
 {
 	for(int j = 0; j < s_number_of_oscillator_pool; j++){
 		oscillator_pool_t *p_oscillator_pool = s_oscillator_pool_pointer_table[j];
@@ -262,7 +262,7 @@ int mark_all_oscillators_and_links_unused(void)
 
 /**********************************************************************************/
 
-int release_all_oscillators_and_links(void)
+static int release_all_oscillators_and_links(void)
 {
 	for(int j = 0; j < s_number_of_oscillator_pool; j++){
 		chiptune_free(s_oscillator_pool_pointer_table[j]);
@@ -494,4 +494,18 @@ oscillator_t * const get_oscillator_pointer_from_index(int16_t const index)
 	}
 
 	return get_oscillator_address_from_index(index);
+}
+
+/**********************************************************************************/
+
+int mark_all_oscillators_unused(void)
+{
+	return mark_all_oscillators_and_links_unused();
+}
+
+/**********************************************************************************/
+
+int release_all_oscillators(void)
+{
+	return release_all_oscillators_and_links();
 }

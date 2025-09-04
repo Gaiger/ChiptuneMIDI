@@ -106,15 +106,15 @@ void set_pitch_shift_in_semitones(int16_t pitch_shift_in_semitones);
 int16_t get_pitch_shift_in_semitones(void);
 int setup_envelope_state(oscillator_t *p_oscillator, uint8_t evelope_state);
 
-int discard_oscillator(int16_t const index);
-int mark_all_oscillators_and_links_unused(void);
-int release_all_oscillators_and_links(void);
-
 oscillator_t * const acquire_freed_oscillator(int16_t * const p_index);
+int discard_oscillator(int16_t const index);
+int mark_all_oscillators_unused(void);
+int release_all_oscillators(void);
 
 int16_t const get_occupied_oscillator_number(void);
 int16_t const get_occupied_oscillator_head_index();
 int16_t const get_occupied_oscillator_next_index(int16_t const index);
+
 oscillator_t * const get_oscillator_pointer_from_index(int16_t const index);
 
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_
