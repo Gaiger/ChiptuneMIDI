@@ -108,8 +108,8 @@ int setup_envelope_state(oscillator_t *p_oscillator, uint8_t evelope_state);
 
 oscillator_t * const acquire_freed_oscillator(int16_t * const p_index);
 int discard_oscillator(int16_t const index);
-int mark_all_oscillators_unused(void);
-int release_all_oscillators(void);
+int clear_all_oscillators(void);
+int destroy_all_oscillators(void);
 
 int16_t const get_occupied_oscillator_number(void);
 int16_t const get_occupied_oscillator_head_index();

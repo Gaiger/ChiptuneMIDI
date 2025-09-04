@@ -78,7 +78,7 @@ static inline bool is_unqueued_event_available()
 
 /**********************************************************************************/
 
-int mark_all_events_unused(void)
+static int mark_all_events_unused(void)
 {
 	for(int16_t i = 0; i < get_queuable_event_capacity(); i++){
 		get_event_pointer_from_index(i)->type = UNUSED_EVENT;
@@ -89,7 +89,7 @@ int mark_all_events_unused(void)
 
 /**********************************************************************************/
 
-int release_all_events(void) { return mark_all_events_unused(); }
+static int release_all_events(void) { return mark_all_events_unused(); }
 #else
 /**********************************************************************************/
 
@@ -157,7 +157,7 @@ static bool is_unqueued_event_available()
 
 /**********************************************************************************/
 
-int mark_all_events_unused(void)
+static int mark_all_events_unused(void)
 {
 	for(int16_t j = 0; j < s_number_of_event_pool; j++){
 		event_pool_t * const p_event_pool = s_event_pool_pointer_table[j];
@@ -172,7 +172,7 @@ int mark_all_events_unused(void)
 
 /**********************************************************************************/
 
-int release_all_events(void)
+static int release_all_events(void)
 {
 	for(int16_t j = 0; j < s_number_of_event_pool; j++){
 		chiptune_free(s_event_pool_pointer_table[j]);
@@ -584,5 +584,13 @@ int adjust_event_triggering_tick_by_playing_tempo(uint32_t const tick, float con
 
 	return 0;
 }
+
+/**********************************************************************************/
+
+int clear_all_events(void) { return mark_all_events_unused(); }
+
+/**********************************************************************************/
+
+int destroy_all_events(void) { return release_all_events(); }
 
 // NOLINTEND(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)

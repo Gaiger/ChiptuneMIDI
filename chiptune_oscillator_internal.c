@@ -498,14 +498,8 @@ oscillator_t * const get_oscillator_pointer_from_index(int16_t const index)
 
 /**********************************************************************************/
 
-int mark_all_oscillators_unused(void)
-{
-	return mark_all_oscillators_and_links_unused();
-}
+int clear_all_oscillators(void) { return mark_all_oscillators_and_links_unused(); }
 
 /**********************************************************************************/
 
-int release_all_oscillators(void)
-{
-	return release_all_oscillators_and_links();
-}
+int destroy_all_oscillators(void) { return release_all_oscillators_and_links(); }
