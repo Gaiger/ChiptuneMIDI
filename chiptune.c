@@ -311,7 +311,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			rest_occupied_oscillator_with_same_voice_note(tick, voice, note, velocity);
 
 			int16_t oscillator_index;
-			oscillator_t * const p_oscillator = acquire_freed_oscillator(&oscillator_index);
+			oscillator_t * const p_oscillator = acquire_oscillator(&oscillator_index);
 			if(NULL == p_oscillator){
 				return -1;
 			}
@@ -405,7 +405,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			}
 			int16_t const original_oscillator_index = oscillator_index;
 			int16_t reduced_loundness_oscillator_index;
-			oscillator_t * const p_oscillator = acquire_freed_oscillator(&reduced_loundness_oscillator_index);
+			oscillator_t * const p_oscillator = acquire_oscillator(&reduced_loundness_oscillator_index);
 			memcpy(p_oscillator, get_oscillator_pointer_from_index(original_oscillator_index),
 				   sizeof(oscillator_t));
 			RESET_STATE_BITES(p_oscillator->state_bits);

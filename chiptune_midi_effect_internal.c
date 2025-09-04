@@ -140,7 +140,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 			int16_t assocatiate_oscillator_indexes[ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
 			for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
 				int16_t oscillator_index;
-				oscillator_t * const p_oscillator = acquire_freed_oscillator(&oscillator_index);
+				oscillator_t * const p_oscillator = acquire_oscillator(&oscillator_index);
 				if(NULL == p_oscillator){
 					return -1;
 				}
@@ -209,7 +209,7 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 				int16_t assocatiate_oscillator_indexes[ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
 				for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
 					int16_t oscillator_index;
-					oscillator_t * const p_oscillator = acquire_freed_oscillator(&oscillator_index);
+					oscillator_t * const p_oscillator = acquire_oscillator(&oscillator_index);
 					if(NULL == p_oscillator){
 						return -1;
 					}

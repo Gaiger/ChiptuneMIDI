@@ -371,7 +371,7 @@ static int occupy_oscillator(int16_t const index)
 
 /**********************************************************************************/
 
-oscillator_t * const acquire_freed_oscillator(int16_t * const p_index)
+oscillator_t * const acquire_oscillator(int16_t * const p_index)
 {
 	if(false == is_unoccupied_oscillator_available()){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillators are used\r\n");
