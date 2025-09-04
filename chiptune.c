@@ -241,10 +241,10 @@ int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t 
 static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
 														  int8_t const voice, int8_t const note, int8_t const velocity)
 {
-	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+	int16_t oscillator_index = get_occupied_oscillator_head_index();
+	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 	for(int16_t i = 0; i < occupied_oscillator_number; i++){
-		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+		oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 		do {
 			if(note != p_oscillator->note){
 				break;
@@ -264,7 +264,7 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
 			put_event(EVENT_REST, oscillator_index, tick);
 			process_effects(tick, EVENT_REST, voice, note, velocity, oscillator_index);
 		} while(0);
-		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
 }
 
@@ -312,7 +312,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			rest_occupied_oscillator_with_same_voice_note(tick, voice, note, velocity);
 
 			int16_t oscillator_index;
-			oscillator_t * const p_oscillator = acquire_event_freed_oscillator(&oscillator_index);
+			oscillator_t * const p_oscillator = acquire_freed_oscillator(&oscillator_index);
 			if(NULL == p_oscillator){
 				return -1;
 			}
@@ -360,10 +360,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		} while(0);
 
 		bool is_found = false;
-		int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-		int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+		int16_t oscillator_index = get_occupied_oscillator_head_index();
+		int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 		for(int16_t i = 0; i < occupied_oscillator_number; i++){
-			oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+			oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 			do {
 				if(note != p_oscillator->note){
 					break;
@@ -388,7 +388,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			if(true == is_found){
 				break;
 			}
-			oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+			oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 		}
 
 		if(false == is_found){
@@ -406,8 +406,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			}
 			int16_t const original_oscillator_index = oscillator_index;
 			int16_t reduced_loundness_oscillator_index;
-			oscillator_t * const p_oscillator = acquire_event_freed_oscillator(&reduced_loundness_oscillator_index);
-			memcpy(p_oscillator, get_event_oscillator_pointer_from_index(original_oscillator_index),
+			oscillator_t * const p_oscillator = acquire_freed_oscillator(&reduced_loundness_oscillator_index);
+			memcpy(p_oscillator, get_oscillator_pointer_from_index(original_oscillator_index),
 				   sizeof(oscillator_t));
 			RESET_STATE_BITES(p_oscillator->state_bits);
 			SET_NOTE_OFF(p_oscillator->state_bits);
@@ -483,10 +483,10 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, int8_t con
 			break;
 		}
 
-		int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-		int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+		int16_t oscillator_index = get_occupied_oscillator_head_index();
+		int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 		for(int16_t i = 0; i < occupied_oscillator_number; i++){
-			oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+			oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 			do {
 				if(voice != p_oscillator->voice){
 					break;
@@ -516,7 +516,7 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, int8_t con
 
 				setup_envelope_state(p_oscillator, to_envelope_state);
 			} while(0);
-			oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+			oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 		}
 	} while(0);
 }
@@ -543,13 +543,13 @@ static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, 
 			= ((value - MIDI_FOURTEEN_BITS_CENTER_VALUE)/(float)MIDI_FOURTEEN_BITS_CENTER_VALUE)
 			* DIVIDE_BY_2(p_channel_controller->pitch_wheel_bend_range_in_semitones);
 
-	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+	int16_t oscillator_index = get_occupied_oscillator_head_index();
+	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 
 	CHIPTUNE_PRINTF(cMidiPitchWheel, "tick = %u, MIDI_MESSAGE_PITCH_WHEEL :: voice = %d, pitch_wheel_bend_in_semitones = %+3.2f\r\n",
 					tick, voice, p_channel_controller->pitch_wheel_bend_in_semitones);
 	for(int16_t i = 0; i < occupied_oscillator_number; i++){
-		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+		oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 		do {
 			if(voice != p_oscillator->voice){
 				break;
@@ -557,7 +557,7 @@ static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, 
 			p_oscillator->delta_phase = calculate_oscillator_delta_phase(voice, p_oscillator->note,
 																		 p_oscillator->pitch_chorus_bend_in_semitones);
 		} while(0);
-		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
 	return 0;
 }
@@ -659,10 +659,10 @@ static int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_
 static int free_note_off_but_damper_pedal_on_oscillators(const uint32_t tick)
 {
 	int ret = 0;
-	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+	int16_t oscillator_index = get_occupied_oscillator_head_index();
+	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 	for(int16_t i = 0; i < occupied_oscillator_number; i++){
-		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+		oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 		do {
 			if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 				break;
@@ -676,7 +676,7 @@ static int free_note_off_but_damper_pedal_on_oscillators(const uint32_t tick)
 			ret = 1;
 			put_event(EVENT_FREE, oscillator_index, tick);
 		} while(0);
-		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
 
 	return ret;
@@ -688,11 +688,11 @@ static int free_remaining_oscillators(const uint32_t tick)
 {
 	int ret = 0;
 	do {
-		int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+		int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 
-		int16_t oscillator_index = get_event_occupied_oscillator_head_index();
+		int16_t oscillator_index = get_occupied_oscillator_head_index();
 		for(int16_t i = 0; i < occupied_oscillator_number; i++){
-			oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+			oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 
 			do {
 				if(true == IS_FREEING(p_oscillator->state_bits)){
@@ -709,7 +709,7 @@ static int free_remaining_oscillators(const uint32_t tick)
 							oscillator_index, p_oscillator->voice, p_oscillator->note);
 				put_event(EVENT_FREE, oscillator_index, tick);
 			} while(0);
-			oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+			oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 		}
 	} while(0);
 
@@ -1163,10 +1163,10 @@ static int64_t chiptune_fetch_64bit_wave(void)
 	}
 
 	int64_t accumulated_wave_amplitude = 0;
-	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+	int16_t oscillator_index = get_occupied_oscillator_head_index();
+	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 	for(int16_t k = 0; k < occupied_oscillator_number; k++){
-		oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+		oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 		do {
 			if(false == s_is_channels_output_enabled_array[p_oscillator->voice]){
 				break;
@@ -1184,7 +1184,7 @@ static int64_t chiptune_fetch_64bit_wave(void)
 					= generate_channel_wave_amplitude(p_oscillator, mono_wave_amplitude);
 			accumulated_wave_amplitude += (int32_t)channel_wave_amplitude;
 		} while(0);
-		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
 
 	if(false == is_stereo()
@@ -1241,10 +1241,10 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index)
 		} while(0);
 
 		if(end_midi_message_index == s_midi_messge_index){
-			int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-			int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+			int16_t oscillator_index = get_occupied_oscillator_head_index();
+			int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 			for(int16_t i = 0; i < occupied_oscillator_number; i++){
-				oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+				oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 				do {
 					if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 						break;
@@ -1256,7 +1256,7 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index)
 					}
 					put_event(EVENT_DEACTIVATE, oscillator_index, CURRENT_TICK());
 				} while(0);
-				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+				oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 			}
 			is_reach_end_midi_message_index = true;
 		}
@@ -1285,15 +1285,15 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index)
 
 			s_previous_timely_tick = CURRENT_TICK();
 
-			if(max_event_occupied_oscillator_number < get_event_occupied_oscillator_number()){
-				max_event_occupied_oscillator_number = get_event_occupied_oscillator_number();
+			if(max_event_occupied_oscillator_number < get_occupied_oscillator_number()){
+				max_event_occupied_oscillator_number = get_occupied_oscillator_number();
 			}
 
-			int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-			int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+			int16_t oscillator_index = get_occupied_oscillator_head_index();
+			int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 			for(int16_t i = 0; i < occupied_oscillator_number; i++,
-				oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index)){
-				oscillator_t * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+				oscillator_index = get_occupied_oscillator_next_index(oscillator_index)){
+				oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 				if(CHANNEL_CONTROLLER_INSTRUMENT_UNUSED_CHANNEL
 						== get_channel_controller_pointer_from_index(p_oscillator->voice)->instrument){
 					get_channel_controller_pointer_from_index(p_oscillator->voice)->instrument = CHIPTUNE_INSTRUMENT_NOT_SPECIFIED;

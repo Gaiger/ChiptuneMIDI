@@ -74,7 +74,7 @@ int find_associate_oscillator_indexes(int16_t const native_index,
 		return 0;
 	}
 
-	oscillator_t  * const p_native_oscillator = get_event_oscillator_pointer_from_index(native_index);
+	oscillator_t  * const p_native_oscillator = get_oscillator_pointer_from_index(native_index);
 	for(int i = 0; i < ASSOCIATE_OSCILLATOR_NUMBER; i++){
 		int16_t associate_oscillator_index
 				= p_native_oscillator->associate_oscillators[find_level * ASSOCIATE_OSCILLATOR_NUMBER + i];
@@ -123,7 +123,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 		return 2;
 	}
 
-	oscillator_t  * const p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_index);
+	oscillator_t  * const p_native_oscillator = get_oscillator_pointer_from_index(native_oscillator_index);
 
 	do {
 		if(EVENT_ACTIVATE == event_type){
@@ -140,7 +140,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 			int16_t assocatiate_oscillator_indexes[ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
 			for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
 				int16_t oscillator_index;
-				oscillator_t * const p_oscillator = acquire_event_freed_oscillator(&oscillator_index);
+				oscillator_t * const p_oscillator = acquire_freed_oscillator(&oscillator_index);
 				if(NULL == p_oscillator){
 					return -1;
 				}
@@ -195,7 +195,7 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 					&native_oscillator_number);
 
 			for(int k = 0; k < native_oscillator_number; k++){
-				oscillator_t *p_native_oscillator = get_event_oscillator_pointer_from_index(native_oscillator_indexes[k]);
+				oscillator_t *p_native_oscillator = get_oscillator_pointer_from_index(native_oscillator_indexes[k]);
 
 				int16_t const loudness = p_native_oscillator->loudness;
 				int16_t loudness_over_16 = DIVIDE_BY_16(loudness);
@@ -209,7 +209,7 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 				int16_t assocatiate_oscillator_indexes[ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
 				for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
 					int16_t oscillator_index;
-					oscillator_t * const p_oscillator = acquire_event_freed_oscillator(&oscillator_index);
+					oscillator_t * const p_oscillator = acquire_freed_oscillator(&oscillator_index);
 					if(NULL == p_oscillator){
 						return -1;
 					}

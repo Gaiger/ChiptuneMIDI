@@ -157,10 +157,10 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 		return ;
 	}
 
-	int16_t oscillator_index = get_event_occupied_oscillator_head_index();
-	int16_t const occupied_oscillator_number = get_event_occupied_oscillator_number();
+	int16_t oscillator_index = get_occupied_oscillator_head_index();
+	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
 	for(int16_t i = 0; i < occupied_oscillator_number; i++){
-		oscillator_t const * const p_oscillator = get_event_oscillator_pointer_from_index(oscillator_index);
+		oscillator_t const * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 		do {
 			if(voice != p_oscillator->voice){
 				break;
@@ -182,7 +182,7 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 			process_effects(tick, EVENT_FREE, voice, p_oscillator->note,
 							p_oscillator->loudness * INT8_MAX/ expression_multiply_volume, oscillator_index);
 		} while(0);
-		oscillator_index = get_event_occupied_oscillator_next_index(oscillator_index);
+		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
 }
 
