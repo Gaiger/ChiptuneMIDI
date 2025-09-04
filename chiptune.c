@@ -1201,13 +1201,29 @@ static int64_t chiptune_fetch_64bit_wave(void)
 
 /**********************************************************************************/
 
+static void mark_all_oscillators_and_events_unused(void)
+{
+	mark_all_oscillators_unused();
+	mark_all_events_unused();
+}
+
+/**********************************************************************************/
+
+static void release_all_oscillators_and_events(void)
+{
+	release_all_oscillators();
+	release_all_events();
+}
+
+/**********************************************************************************/
+
 static void pass_through_midi_messages(const uint32_t end_midi_message_index)
 {
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		reset_channel_controller_midi_control_change_parameters(voice);
 	}
 
-	reset_all_events();
+	mark_all_oscillators_and_events_unused();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	if(0 == end_midi_message_index){
 		return ;
@@ -1408,7 +1424,7 @@ static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMB
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		reset_channel_controller_midi_control_change_parameters(voice);
 	}
-	reset_all_events();
+	mark_all_oscillators_and_events_unused();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
 }
@@ -1434,7 +1450,7 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
 
 void chiptune_finalize(void)
 {
-	clean_all_events();
+	release_all_oscillators_and_events();
 }
 
 /**********************************************************************************/
@@ -1445,7 +1461,7 @@ void chiptune_prepare_song(uint32_t const resolution)
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		s_is_channels_output_enabled_array[voice] = true;
 	}
-	reset_all_events();
+	mark_all_oscillators_and_events_unused();
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		reset_channel_controller_all_parameters(voice);
 	}

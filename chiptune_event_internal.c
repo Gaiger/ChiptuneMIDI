@@ -78,7 +78,7 @@ static inline bool is_unqueued_event_available()
 
 /**********************************************************************************/
 
-static int mark_all_events_unused(void)
+int mark_all_events_unused(void)
 {
 	for(int16_t i = 0; i < get_queuable_event_capacity(); i++){
 		get_event_pointer_from_index(i)->type = UNUSED_EVENT;
@@ -89,7 +89,7 @@ static int mark_all_events_unused(void)
 
 /**********************************************************************************/
 
-static inline int release_all_events(void) { return mark_all_events_unused(); }
+int release_all_events(void) { return mark_all_events_unused(); }
 #else
 /**********************************************************************************/
 
@@ -157,7 +157,7 @@ static bool is_unqueued_event_available()
 
 /**********************************************************************************/
 
-static int mark_all_events_unused(void)
+int mark_all_events_unused(void)
 {
 	for(int16_t j = 0; j < s_number_of_event_pool; j++){
 		event_pool_t * const p_event_pool = s_event_pool_pointer_table[j];
@@ -172,7 +172,7 @@ static int mark_all_events_unused(void)
 
 /**********************************************************************************/
 
-static int release_all_events(void)
+int release_all_events(void)
 {
 	for(int16_t j = 0; j < s_number_of_event_pool; j++){
 		chiptune_free(s_event_pool_pointer_table[j]);
@@ -531,21 +531,6 @@ int process_events(uint32_t const tick)
 	}
 	CHECK_QUEUED_EVENTS(tick);
 	return 0;
-}
-
-/**********************************************************************************/
-void reset_all_events(void)
-{
-	mark_all_oscillators_unused();
-	mark_all_events_unused();
-}
-
-/**********************************************************************************/
-
-void clean_all_events(void)
-{
-	release_all_oscillators();
-	release_all_events();
 }
 
 /**********************************************************************************/
