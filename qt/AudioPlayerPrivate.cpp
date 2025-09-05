@@ -6,7 +6,7 @@
 #include "AudioPlayerPrivate.h"
 
 
-#if QT_VERSION_CHECK(6, 0, 0) <= QT_VERSION
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QAudioSink>
 #include <QMediaDevices>
 
@@ -94,7 +94,7 @@ private:
 };
 #endif
 
-#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QAudioOutput>
 
 class AudioPlayerOutput
@@ -559,7 +559,7 @@ void AudioPlayerPrivate::HandleAudioStateChanged(QAudio::State state)
 			// Error handling
 		}
 		break;
-#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 	case QAudio::InterruptedState:
 		break;
 #endif
@@ -583,7 +583,7 @@ AudioPlayer::PlaybackState AudioPlayerPrivate::GetState(void)
 
 		switch(m_p_audio_player_output->State()){
 		case QAudio::ActiveState:
-#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 		case QAudio::InterruptedState:
 #endif
 			state = AudioPlayer::PlaybackStatePlaying;
