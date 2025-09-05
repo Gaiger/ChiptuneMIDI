@@ -86,9 +86,7 @@ win32{
     QMAKE_TARGET_COPYRIGHT = "Copyright 2025 by Chen Gaiger"
 }
 
-win32 {
-    QMAKE_POST_LINK += xcopy /E /Y /I \"$$CHIPTUNE_QT_DIR/icons\" \"$$OUT_PWD/icons\" & echo Copied icons directory
-}
-unix {
-    QMAKE_POST_LINK += cp -r $$CHIPTUNE_QT_DIR/icons $$OUT_PWD/icons
-}
+ICONS_SRC = $$absolute_path($$CHIPTUNE_QT_DIR/icons, $$PWD)
+ICONS_DST = $$OUT_PWD/icons
+
+QMAKE_POST_LINK += $$QMAKE_COPY_DIR $$shell_path($$ICONS_SRC) $$shell_path($$ICONS_DST) && echo Copied icons directory
