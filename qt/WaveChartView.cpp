@@ -9,6 +9,20 @@ WaveChartView::WaveChartView(int const number_of_channels,
 	: QChartView(new QChart(), parent),
 	  m_sample_size_in_bytes(sampling_size/8)
 {
+	do
+	{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+		if( false != QMetaType::fromName("WaveChartView::SamplingSize").isValid()){
+			break;
+		}
+#else
+		if( QMetaType::UnknownType != QMetaType::type("WaveChartView::SamplingSize")){
+			break;
+		}
+#endif
+		qRegisterMetaType<WaveChartView::SamplingSize>("WaveChartView::SamplingSize");
+	} while(0);
+
 	QChart * p_chart = QChartView::chart();
 	p_chart->setTheme(QChart::ChartThemeDark);
 	p_chart->legend()->hide();

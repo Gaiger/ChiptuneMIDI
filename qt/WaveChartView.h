@@ -23,9 +23,9 @@ public:
 	void Reset(void);
 public slots:
 	void UpdateWave(QByteArray const &wave_bytearray);
+
 private :
 	template <typename T> void ReplaceSeries(void);
-
 private :
 	QByteArray m_remain_wave_bytearray;
 	int m_sample_size_in_bytes;

@@ -13,6 +13,20 @@ PitchTimbreFrame::PitchTimbreFrame(int index, QWidget *parent)
 	  m_index(index),
 	  ui(new Ui::PitchTimbreFrame)
 {
+	do
+	{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+		if( false != QMetaType::fromName("PitchTimbreFrame::WaveformType").isValid()){
+			break;
+		}
+#else
+		if( QMetaType::UnknownType != QMetaType::type("PitchTimbreFrame::WaveformType")){
+			break;
+		}
+#endif
+		qRegisterMetaType<PitchTimbreFrame::WaveformType>("PitchTimbreFrame::WaveformType");
+	} while(0);
+
 	ui->setupUi(this);
 	m_previous_dutycycle = 0;// dutycycle 50
 	m_previous_sustain_level = ui->SustainLevelSpinBox->value();
