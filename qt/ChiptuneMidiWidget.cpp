@@ -194,8 +194,15 @@ void SetFontSizeForWidgetSubtree(QWidget * const p_root_widget, int const target
 
 /**********************************************************************************/
 #define PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS 		(35)
+
+#if QT_VERSION_CHECK(6, 0, 0) <= QT_VERSION
+	#define AUDIO_BUFFER_TIME_FACTOR    					(2)
+#else
+	#define AUDIO_BUFFER_TIME_FACTOR    					(6)
+#endif
+
 #define AUDIO_PLAYER_BUFFER_IN_MILLISECONDS						\
-	(2 * (PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS ))
+	(AUDIO_BUFFER_TIME_FACTOR * PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS)
 
 ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidget *parent)
 	: QWidget(parent),
