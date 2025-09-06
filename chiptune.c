@@ -893,8 +893,8 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 			break;
 		};
 
+		p_oscillator->envelope_same_index_count += 1;
 		if(envelope_same_index_number > p_oscillator->envelope_same_index_count){
-			p_oscillator->envelope_same_index_count += 1;
 			break;
 		}
 
