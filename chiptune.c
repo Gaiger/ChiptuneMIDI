@@ -893,6 +893,57 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 			break;
 		};
 
+		if(0 == p_oscillator->envelope_same_index_count &&
+				0 != envelope_same_index_number){
+			int8_t const * p_envelope_table = NULL;
+			int16_t delta_amplitude = 0;
+			int16_t shift_amplitude = 0;
+			switch(p_oscillator->envelope_state)
+			{
+			case ENVELOPE_STATE_ATTACK:
+				p_envelope_table = p_channel_controller->p_envelope_attack_table;
+				delta_amplitude = p_oscillator->loudness - p_oscillator->attack_decay_reference_amplitude;
+				shift_amplitude = p_oscillator->attack_decay_reference_amplitude;
+				break;
+			case ENVELOPE_STATE_DECAY: {
+				p_envelope_table = p_channel_controller->p_envelope_decay_table;
+				int16_t sustain_ampitude
+						= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
+											MAP_MIDI_VALUE_RANGE_TO_0_128(p_channel_controller->envelope_sustain_level));
+				do {
+					if(0 != p_oscillator->attack_decay_reference_amplitude){
+						delta_amplitude = p_oscillator->attack_decay_reference_amplitude - sustain_ampitude;
+						break;
+					}
+					delta_amplitude = p_oscillator->loudness - sustain_ampitude;
+				} while(0);
+				shift_amplitude = sustain_ampitude;
+			}	break;
+			case ENVELOPE_STATE_SUSTAIN:
+				p_envelope_table = p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table;
+				delta_amplitude = p_oscillator->loudness;
+				break;
+			default:
+			case ENVELOPE_STATE_RELEASE:
+				do{
+					if(true == IS_RESTING(p_oscillator->state_bits)){
+						p_envelope_table = p_channel_controller->p_envelope_attack_table;
+						break;
+					}
+					p_envelope_table = p_channel_controller->p_envelope_release_table;
+				}while(0);
+				delta_amplitude = p_oscillator->release_reference_amplitude;
+				break;
+			}
+
+			p_oscillator->amplitude = ENVELOPE_AMPLITUDE(delta_amplitude,
+														 p_envelope_table[p_oscillator->envelope_table_index]);
+			p_oscillator->amplitude	+= shift_amplitude;
+			if(ENVELOPE_STATE_RELEASE != p_oscillator->envelope_state){
+				p_oscillator->release_reference_amplitude = p_oscillator->amplitude;
+			}
+		}
+
 		p_oscillator->envelope_same_index_count += 1;
 		if(envelope_same_index_number > p_oscillator->envelope_same_index_count){
 			break;
@@ -917,11 +968,22 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 				p_oscillator->attack_decay_reference_amplitude = 0;
 				if(0 < p_channel_controller->envelope_decay_same_index_number){
 					p_oscillator->envelope_state = ENVELOPE_STATE_DECAY;
-					//p_oscillator->amplitude = p_oscillator->loudness;
 					break;
 				}
 			case ENVELOPE_STATE_DECAY:
 				p_oscillator->envelope_state = ENVELOPE_STATE_SUSTAIN;
+				/*
+				 * SIN: the last decay point is updated to sustain amplitude in advance.
+				 *
+				 * If we do NOT update here, sustain must keep doing
+				 *     p_oscillator->amplitude = p_oscillator->sustain_amplitude
+				 * on every sample; otherwise we need to add a field
+				 *     is_sustain_amplitude_copied_to_amplitude
+				 * which makes oscillator_t dirty.
+				 *
+				 * In contrast, updating one point in advance is acceptable for now.
+				 * (Known issue with a workaround; behavior is intentional.)
+				 */
 				p_oscillator->amplitude
 						= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
 											MAP_MIDI_VALUE_RANGE_TO_0_128(p_channel_controller->envelope_sustain_level));
@@ -944,55 +1006,6 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 		if(true == is_out_of_lookup_table_range){
 			break;
 		}
-
-		int8_t const * p_envelope_table = NULL;
-		int16_t delta_amplitude = 0;
-		int16_t shift_amplitude = 0;
-		switch(p_oscillator->envelope_state)
-		{
-		case ENVELOPE_STATE_ATTACK:
-			p_envelope_table = p_channel_controller->p_envelope_attack_table;
-			delta_amplitude = p_oscillator->loudness - p_oscillator->attack_decay_reference_amplitude;
-			shift_amplitude = p_oscillator->attack_decay_reference_amplitude;
-			break;
-		case ENVELOPE_STATE_DECAY: {
-			p_envelope_table = p_channel_controller->p_envelope_decay_table;
-			int16_t sustain_ampitude
-					= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-										MAP_MIDI_VALUE_RANGE_TO_0_128(p_channel_controller->envelope_sustain_level));
-			do {
-				if(0 != p_oscillator->attack_decay_reference_amplitude){
-					delta_amplitude = p_oscillator->attack_decay_reference_amplitude - sustain_ampitude;
-					break;
-				}
-				delta_amplitude = p_oscillator->loudness - sustain_ampitude;
-			} while(0);
-			shift_amplitude = sustain_ampitude;
-		}	break;
-		case ENVELOPE_STATE_SUSTAIN:
-			p_envelope_table = p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table;
-			delta_amplitude = p_oscillator->loudness;
-			break;
-		default:
-		case ENVELOPE_STATE_RELEASE:
-			do{
-				if(true == IS_RESTING(p_oscillator->state_bits)){
-					p_envelope_table = p_channel_controller->p_envelope_attack_table;
-					break;
-				}
-				p_envelope_table = p_channel_controller->p_envelope_release_table;
-			}while(0);
-			delta_amplitude = p_oscillator->release_reference_amplitude;
-			break;
-		}
-
-		p_oscillator->amplitude = ENVELOPE_AMPLITUDE(delta_amplitude,
-													 p_envelope_table[p_oscillator->envelope_table_index]);
-		p_oscillator->amplitude	+= shift_amplitude;
-		if(ENVELOPE_STATE_RELEASE == p_oscillator->envelope_state){
-			break;
-		}
-		p_oscillator->release_reference_amplitude = p_oscillator->amplitude;
 	} while(0);
 }
 
