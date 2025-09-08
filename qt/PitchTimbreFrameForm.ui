@@ -73,7 +73,7 @@ QSpinBox:disabled {
     <rect>
      <x>148</x>
      <y>8</y>
-     <width>148</width>
+     <width>156</width>
      <height>24</height>
     </rect>
    </property>
@@ -92,7 +92,7 @@ QSpinBox:disabled {
    </item>
    <item>
     <property name="text">
-     <string>Duty Cycle 125</string>
+     <string>Duty Cycle 12.5</string>
     </property>
    </item>
    <item>
