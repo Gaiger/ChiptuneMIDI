@@ -826,13 +826,11 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 		if(0 >= modulation_wheel){
 			break;
 		}
-		uint16_t const vibrato_same_index_number = p_channel_controller->vibrato_same_index_number;
-		p_oscillator->current_phase += DELTA_VIBRATO_PHASE(modulation_wheel, p_oscillator->max_delta_vibrato_phase,
-															p_channel_controller->p_vibrato_phase_table[
-																p_oscillator->vibrato_table_index]);
 
+		p_oscillator->current_phase += DELTA_VIBRATO_PHASE(modulation_wheel, p_oscillator->max_delta_vibrato_phase,
+										p_channel_controller->p_vibrato_phase_table[p_oscillator->vibrato_table_index]);
 		p_oscillator->vibrato_same_index_count += 1;
-		if(vibrato_same_index_number == p_oscillator->vibrato_same_index_count){
+		if(p_channel_controller->vibrato_same_index_number == p_oscillator->vibrato_same_index_count){
 			p_oscillator->vibrato_same_index_count = 0;
 			p_oscillator->vibrato_table_index = REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(
 						p_oscillator->vibrato_table_index  + 1);
@@ -1043,7 +1041,6 @@ void perform_percussion(oscillator_t * const p_oscillator)
 
 		p_oscillator->percussion_same_index_count = 0;
 		p_oscillator->percussion_table_index += 1;
-
 		if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->percussion_table_index){
 			SET_DEACTIVATED(p_oscillator->state_bits);
 			//p_oscillator->percussion_table_index = CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1;
