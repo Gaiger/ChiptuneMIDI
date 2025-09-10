@@ -978,8 +978,9 @@ static void destroy_all_oscillators_and_events(void)
 }
 
 /**********************************************************************************/
+#define TO_LAST_MESSAGE_INDEX						(-1)
 
-static void pass_through_midi_messages(const uint32_t end_midi_message_index)
+static void chase_midi_messages(const uint32_t end_midi_message_index)
 {
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		reset_channel_controller_midi_control_change_parameters(voice);
@@ -1178,7 +1179,7 @@ int8_t s_ending_instrument_array[MIDI_MAX_CHANNEL_NUMBER];
 
 static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER])
 {
-	pass_through_midi_messages(-1);
+	chase_midi_messages(TO_LAST_MESSAGE_INDEX);
 	for(int8_t voice = 0; voice < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; voice++){
 		instrument_array[voice] = get_channel_controller_pointer_from_index(voice)->instrument;
 	}
@@ -1246,7 +1247,7 @@ void chiptune_set_amplitude_gain(int32_t amplitude_gain) { UPDATE_AMPLITUDE_NORM
 
 void chiptune_set_current_message_index(uint32_t const index)
 {
-	pass_through_midi_messages(index);
+	chase_midi_messages(index);
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
 	return ;
 }
