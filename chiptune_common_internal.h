@@ -25,7 +25,12 @@
 	#define OCCUPIABLE_OSCILLATOR_CAPACITY	  (512)
 #endif
 
+#define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
+#define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
 #define DIVIDE_BY_32(VALUE)							((VALUE) >> 5)
+#define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
+
+#define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
 
 #define NULL_TICK									(UINT32_MAX)
 

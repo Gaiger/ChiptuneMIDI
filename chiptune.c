@@ -468,7 +468,6 @@ static int process_channel_pressure_message(uint32_t const tick, int8_t const vo
 
 /**********************************************************************************/
 
-#define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 
 static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, int16_t const value)
 {
@@ -506,7 +505,7 @@ struct _tick_message
 #ifndef NULL_TICK
 	#define NULL_TICK								(UINT32_MAX)
 #endif
-#define NULL_MESSAGE							(0)
+#define NULL_MESSAGE								(0)
 
 #define IS_NULL_TICK_MESSAGE(MESSAGE_TICK)			\
 								(((NULL_TICK == (MESSAGE_TICK).tick) && (NULL_MESSAGE == (MESSAGE_TICK).message) ) ? true : false)
@@ -832,7 +831,6 @@ static uint16_t obtain_noise_random(void)
 #define SINE_WAVE(PHASE)							(obtain_sine_wave(PHASE))
 
 #define INT16_MAX_PLUS_1							(INT16_MAX + 1)
-#define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
 
 int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 {
@@ -883,7 +881,6 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 }
 
 /**********************************************************************************/
-#define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
 #if(0)
 #define CHANNEL_WAVE_AMPLITUDE(MONO_WAVE_AMPLITUDE, CHANNEL_PANNING_WEIGHT) \
 													MULTIPLY_BY_2( \
