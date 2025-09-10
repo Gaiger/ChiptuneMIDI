@@ -992,7 +992,7 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index)
 	}
 
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(false);
-#ifndef _KEEP_SET_BUT_EMPTY_NOTE_CHANNELS
+#ifndef _KEEP_NOTELESS_CHANNELS
 	bool is_has_note[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
 	memset(&is_has_note[0], 0, sizeof(bool)*CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER);
 #endif
@@ -1076,7 +1076,7 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index)
 						== get_channel_controller_pointer_from_index(p_oscillator->voice)->instrument){
 					get_channel_controller_pointer_from_index(p_oscillator->voice)->instrument = CHIPTUNE_INSTRUMENT_NOT_SPECIFIED;
 				}
-#ifndef _KEEP_SET_BUT_EMPTY_NOTE_CHANNELS
+#ifndef _KEEP_NOTELESS_CHANNELS
 				is_has_note[p_oscillator->voice] = true;
 #endif
 			}
@@ -1104,7 +1104,7 @@ static void pass_through_midi_messages(const uint32_t end_midi_message_index)
 						max_event_occupied_oscillator_number);
 	}
 
-#ifndef _KEEP_SET_BUT_EMPTY_NOTE_CHANNELS
+#ifndef _KEEP_NOTELESS_CHANNELS
 	for(int8_t voice = 0; voice < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; voice++){
 		if(false == is_has_note[voice]){
 			get_channel_controller_pointer_from_index(voice)->instrument
