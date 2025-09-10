@@ -322,7 +322,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->voice = voice;
 			p_oscillator->note = note;
 
-			int16_t expression_added_pressure = p_channel_controller->expression + p_channel_controller->pressure;
+			int16_t expression_added_pressure = p_channel_controller->expression
+					+ NORMALIZE_PRESSURE(p_channel_controller->pressure);
 			int32_t temp = (velocity * expression_added_pressure * p_channel_controller->volume)/INT8_MAX;
 			if(temp > INT16_MAX){
 				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: loudness over IN16_MAX in %s\r\n", __func__);
@@ -460,12 +461,8 @@ static int process_channel_pressure_message(uint32_t const tick, int8_t const vo
 {
 	CHIPTUNE_PRINTF(cMidiChannelPressure, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %d, value = %d, and expression = %d\r\n",
 					tick, voice, value, get_channel_controller_pointer_from_index(voice)->expression);
-	/*
-	 * SIN : current dynamic pressure change has not implemented,
-	 * process_loudness_change will bring the wave not continuous
-	 */
-	//process_loudness_change(tick, voice, value, LoundnessChangePressure);
-	get_channel_controller_pointer_from_index(voice)->pressure = value;
+
+	process_loudness_change(tick, voice, value, LoundnessChangePressure);
 	return 0;
 }
 

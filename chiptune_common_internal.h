@@ -23,16 +23,19 @@
 
 #ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
 	#define OCCUPIABLE_OSCILLATOR_CAPACITY	  (512)
-#else
+#endif
+
+#define DIVIDE_BY_32(VALUE)							((VALUE) >> 5)
+
+#define NULL_TICK									(UINT32_MAX)
+
+#ifndef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
 	void* chiptune_malloc(size_t size);
 	void chiptune_free(void* ptr);
 #endif
 
-#define NULL_TICK									(UINT32_MAX)
-
 uint32_t const get_sampling_rate(void);
 uint32_t const get_resolution(void);
 float const get_playing_tempo(void);
-
 
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_

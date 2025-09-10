@@ -89,15 +89,7 @@ static void process_cc_registered_parameter(uint32_t const tick, int8_t const vo
 
 /**********************************************************************************/
 
-enum
-{
-	LoundnessChangePressure,
-	LoudnessChangeVolume,
-	LoudnessChangeExpression,
-	LoundessBreathController,
-};
-
-static void process_loudness_change(uint32_t const tick, int8_t const voice, int8_t const value,
+void process_loudness_change(uint32_t const tick, int8_t const voice, int8_t const value,
 									int loudness_change_type)
 {
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
@@ -110,13 +102,13 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, int
 			break;
 		}
 
-		original_value = p_channel_controller->expression + p_channel_controller->pressure;
+		original_value = p_channel_controller->expression + NORMALIZE_PRESSURE(p_channel_controller->pressure);
 		if(LoundnessChangePressure == loudness_change_type){
-			change_to_value = p_channel_controller->expression + value;
+			change_to_value = p_channel_controller->expression + NORMALIZE_PRESSURE(value);
 			break;
 		}
 		//LoudnessChangeExpression || LoundessBreathController
-		change_to_value = p_channel_controller->pressure + value;
+		change_to_value = NORMALIZE_PRESSURE(p_channel_controller->pressure) + value;
 	} while(0);
 
 	do {
