@@ -89,6 +89,81 @@ static void process_cc_registered_parameter(uint32_t const tick, int8_t const vo
 
 /**********************************************************************************/
 
+enum
+{
+	LoundnessChangePressure,
+	LoudnessChangeVolume,
+	LoudnessChangeExpression,
+	LoundessBreathController,
+};
+
+static void process_loudness_change(uint32_t const tick, int8_t const voice, int8_t const value,
+									int loudness_change_type)
+{
+	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	int16_t original_value;
+	int16_t change_to_value;
+	do{
+		if(LoudnessChangeVolume == loudness_change_type){
+			original_value = p_channel_controller->volume;
+			change_to_value = value;
+			break;
+		}
+
+		original_value = p_channel_controller->expression + p_channel_controller->pressure;
+		if(LoundnessChangePressure == loudness_change_type){
+			change_to_value = p_channel_controller->expression + value;
+			break;
+		}
+		//LoudnessChangeExpression || LoundessBreathController
+		change_to_value = p_channel_controller->pressure + value;
+	} while(0);
+
+	do {
+		if(value == original_value){
+			break;
+		}
+
+		int16_t oscillator_index = get_occupied_oscillator_head_index();
+		int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
+		for(int16_t i = 0; i < occupied_oscillator_number; i++){
+			oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+			do {
+				if(voice != p_oscillator->voice){
+					break;
+				}
+				if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
+					break;
+				}
+
+				if(ENVELOPE_STATE_RELEASE == p_oscillator->envelope_state){
+					break;
+				}
+
+				original_value += !original_value;
+				int32_t temp = (p_oscillator->loudness * change_to_value)/original_value;
+				if(temp > INT16_MAX){
+					CHIPTUNE_PRINTF(cDeveloping, "WARNING :: loudness over IN16_MAX in %s\r\n", __func__);
+					temp = INT16_MAX;
+				}
+				p_oscillator->loudness = (int16_t)temp;
+				p_oscillator->attack_decay_reference_amplitude = p_oscillator->amplitude;
+				uint8_t to_envelope_state = ENVELOPE_STATE_DECAY;
+				if(LoundessBreathController != loudness_change_type){
+					if(p_oscillator->amplitude < p_oscillator->loudness){
+						to_envelope_state = ENVELOPE_STATE_ATTACK;
+					}
+				}
+
+				setup_envelope_state(p_oscillator, to_envelope_state);
+			} while(0);
+			oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
+		}
+	} while(0);
+}
+
+/**********************************************************************************/
+
 static void process_breath_controller(uint32_t const tick, int8_t const voice, int8_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_BREATH_CONTROLLER(%d) :: voice = %d, value = %d\r\n",
