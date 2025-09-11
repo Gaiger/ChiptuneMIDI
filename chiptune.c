@@ -1004,9 +1004,7 @@ static void destroy_all_oscillators_and_events(void)
 
 static void chase_midi_messages(const uint32_t end_midi_message_index)
 {
-	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-		reset_channel_controller_all_parameters(voice);
-	}
+	reset_all_channel_controllers();
 
 	clear_all_oscillators_and_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
@@ -1208,9 +1206,7 @@ static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMB
 #ifndef _KEEP_NOTELESS_CHANNELS
 	s_is_chase_to_last_done = true;
 #endif
-	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-		reset_channel_controller_all_parameters(voice);
-	}
+	reset_all_channel_controllers();
 	clear_all_oscillators_and_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
@@ -1249,9 +1245,7 @@ void chiptune_prepare_song(uint32_t const resolution)
 		s_is_channels_output_enabled_array[voice] = true;
 	}
 	clear_all_oscillators_and_events();
-	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-		reset_channel_controller_all_parameters(voice);
-	}
+	reset_all_channel_controllers();
 	get_ending_instruments(&s_ending_instrument_array[0]);
 
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();

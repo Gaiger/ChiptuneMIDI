@@ -157,13 +157,14 @@ typedef struct _percussion
 } percussion_t;
 
 void initialize_channel_controllers(void);
-void update_channel_controllers_parameters_related_to_playing_tempo(void);
-channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index);
 
 void reset_channel_controller_midi_control_change_parameters(int8_t const index);
-void reset_channel_controller_all_parameters(int8_t const index);
+void reset_all_channel_controllers();
 
+channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index);
 percussion_t * const get_percussion_pointer_from_index(int8_t const index);
+
+void update_channel_controllers_parameters_related_to_playing_tempo(void);
 
 int set_pitch_channel_parameters(int8_t const channel_index, int8_t const waveform, uint16_t const dutycycle_critical_phase,
 									   int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
