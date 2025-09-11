@@ -64,7 +64,8 @@ private slots:
 											double envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 private:
 	int PlayMidiFile(QString filename_string);
-	void SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds);
+	void SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds,
+															   bool is_to_prime_audio_player = false);
 	void StopMidiFile(void);
 	void UpdateTempoLabelText(void);
 
