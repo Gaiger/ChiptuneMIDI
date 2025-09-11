@@ -32,7 +32,22 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 	m_expanded_size = QWidget::size();
 	m_collapsed_size = QSize(m_expanded_size.width(), m_expanded_size.height() - ui->PitchTimbreWidget->height());
 	QWidget::setFixedSize(m_collapsed_size);
-	QString instrument_name = GetInstrumentNameString(instrument_index);
+	QString instrument_name;
+#define CHIPTUNE_INSTRUMENT_NOT_SPECIFIED			(-1)
+#define CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL			(-2)
+	do
+	{
+		if(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED == instrument_index){
+			instrument_name = QString("Not Specified");
+			break;
+		}
+		if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL == instrument_index){
+			instrument_name = QString("Unused channel");
+			break;
+		}
+
+		instrument_name = GetInstrumentNameString(instrument_index);
+	}while(0);
 #define MIDI_PERCUSSION_INSTRUMENT_CHANNEL			(9)
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == channel_index){
 		instrument_name = QString("Percussion");

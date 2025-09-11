@@ -142,7 +142,7 @@ QString GetInstrumentNameString(int instrument_code)
 	{
 		INSTRUMENT_LIST(EXPAND_CASE)
 		default:
-			return QStringLiteral("Not Specified");
+			return QStringLiteral("Unknown");
 	}
 }
 

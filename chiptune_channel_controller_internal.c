@@ -235,7 +235,7 @@ void reset_channel_controller_all_parameters(int8_t const index)
 									  DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND);
 
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
-	p_channel_controller->instrument = CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED;
+	p_channel_controller->instrument = CHANNEL_CONTROLLER_INSTRUMENT_UNUSED_CHANNEL;
 
 	reset_channel_controller_midi_control_change_parameters(index);
 }
