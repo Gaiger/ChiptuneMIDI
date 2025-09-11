@@ -468,7 +468,6 @@ static int process_channel_pressure_message(uint32_t const tick, int8_t const vo
 
 /**********************************************************************************/
 
-
 static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, int16_t const value)
 {
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
@@ -502,6 +501,7 @@ struct _tick_message
 	uint32_t tick;
 	uint32_t message;
 };
+
 #ifndef NULL_TICK
 	#define NULL_TICK								(UINT32_MAX)
 #endif
@@ -518,53 +518,75 @@ struct _tick_message
 
 #define SEVEN_BITS_VALID(VALUE)						((0x7F) & (VALUE))
 
+int8_t s_ending_instrument_array[MIDI_MAX_CHANNEL_NUMBER];
+#ifndef _KEEP_NOTELESS_CHANNELS
+bool s_is_chase_to_last_done = false;
+#endif
+
 static int process_midi_message(struct _tick_message const tick_message)
 {
-	if(true == IS_NULL_TICK_MESSAGE(tick_message)){
-		return 1;
-	}
-
-	union {
-		uint32_t data_as_uint32_t;
-		unsigned char data_as_bytes[4];
-	} u;
-
-	const uint32_t tick = tick_message.tick;
-	u.data_as_uint32_t = tick_message.message;
-
-	uint8_t type = u.data_as_bytes[0] & 0xF0;
-	int8_t voice = u.data_as_bytes[0] & 0x0F;
-	switch(type)
+	int ret = -1;
+	do
 	{
-	case MIDI_MESSAGE_NOTE_OFF:
-	case MIDI_MESSAGE_NOTE_ON:
-		process_note_message(tick, (MIDI_MESSAGE_NOTE_OFF == type) ? false : true,
-			voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]));
-	 break;
-	case MIDI_MESSAGE_KEY_PRESSURE:
-		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_MESSAGE_KEY_PRESSURE :: note = %d, amount = %d %s\r\n",
-						tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), "(NOT IMPLEMENTED YET)");
-		break;
-	case MIDI_MESSAGE_CONTROL_CHANGE:
-		process_control_change_message(tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]));
-		break;
-	case MIDI_MESSAGE_PROGRAM_CHANGE:
-		process_program_change_message(tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]));
-		break;
-	case MIDI_MESSAGE_CHANNEL_PRESSURE:
-		process_channel_pressure_message(tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]));
-		break;
-	case MIDI_MESSAGE_PITCH_WHEEL:
+		if(true == IS_NULL_TICK_MESSAGE(tick_message)){
+			break;
+		}
+
+		union {
+			uint32_t data_as_uint32_t;
+			unsigned char data_as_bytes[4];
+		} u;
+
+		const uint32_t tick = tick_message.tick;
+		u.data_as_uint32_t = tick_message.message;
+
+		uint8_t type = u.data_as_bytes[0] & 0xF0;
+		int8_t voice = u.data_as_bytes[0] & 0x0F;
+#ifndef _KEEP_NOTELESS_CHANNELS
+		if(true == s_is_chase_to_last_done){
+			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL == s_ending_instrument_array[voice]){
+				ret = 1;
+				break;
+			}
+		}
+#endif
+		switch(type)
+		{
+		case MIDI_MESSAGE_NOTE_OFF:
+		case MIDI_MESSAGE_NOTE_ON:
+			process_note_message(tick, (MIDI_MESSAGE_NOTE_OFF == type) ? false : true,
+				voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]));
+		 break;
+		case MIDI_MESSAGE_KEY_PRESSURE:
+			CHIPTUNE_PRINTF(cMidiControlChange,
+							"tick = %u, MIDI_MESSAGE_KEY_PRESSURE :: note = %d, amount = %d %s\r\n",
+							tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), "(NOT IMPLEMENTED YET)");
+			break;
+		case MIDI_MESSAGE_CONTROL_CHANGE:
+			process_control_change_message(tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]),
+										   SEVEN_BITS_VALID(u.data_as_bytes[2]));
+			break;
+		case MIDI_MESSAGE_PROGRAM_CHANGE:
+			process_program_change_message(tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]));
+			break;
+		case MIDI_MESSAGE_CHANNEL_PRESSURE:
+			process_channel_pressure_message(tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]));
+			break;
+		case MIDI_MESSAGE_PITCH_WHEEL:
 #define COMBINE_AS_PITCH_WHEEL_14BITS(BYTE1, BYTE2)	\
-													(SEVEN_BITS_VALID(BYTE2) << 7) | SEVEN_BITS_VALID(BYTE1))
-		process_pitch_wheel_message(tick, voice, COMBINE_AS_PITCH_WHEEL_14BITS(u.data_as_bytes[1], u.data_as_bytes[2]);
-		break;
-	default:
-		//CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_MESSAGE code = %u :: voice = %d, byte 1 = %d, byte 2 = %d %s\r\n",
-		//				tick, type, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]), "(NOT IMPLEMENTED YET)");
-		break;
-	}
-	return 0;
+														(SEVEN_BITS_VALID(BYTE2) << 7) | SEVEN_BITS_VALID(BYTE1))
+			process_pitch_wheel_message(tick, voice,
+										COMBINE_AS_PITCH_WHEEL_14BITS(u.data_as_bytes[1], u.data_as_bytes[2]);
+			break;
+		default:
+			//CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_MESSAGE code = %u :: voice = %d, byte 1 = %d, byte 2 = %d %s\r\n",
+			//				tick, type, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]), "(NOT IMPLEMENTED YET)");
+			break;
+		}
+		ret = 0;
+	}while(0);
+
+	return ret;
 }
 
 /**********************************************************************************/
@@ -983,7 +1005,7 @@ static void destroy_all_oscillators_and_events(void)
 static void chase_midi_messages(const uint32_t end_midi_message_index)
 {
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-		reset_channel_controller_midi_control_change_parameters(voice);
+		reset_channel_controller_all_parameters(voice);
 	}
 
 	clear_all_oscillators_and_events();
@@ -995,7 +1017,7 @@ static void chase_midi_messages(const uint32_t end_midi_message_index)
 	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(false);
 #ifndef _KEEP_NOTELESS_CHANNELS
 	bool is_has_note[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
-	memset(&is_has_note[0], 0, sizeof(bool)*CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER);
+	memset(&is_has_note[0], false, sizeof(bool)*CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER);
 #endif
 	int16_t max_event_occupied_oscillator_number = 0;
 
@@ -1174,18 +1196,20 @@ static int32_t s_amplitude_normaliztion_gain = DEFAULT_AMPLITUDE_NORMALIZATION_G
 #define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE)/(int32_t)s_amplitude_normaliztion_gain))
 #endif
 
-
-int8_t s_ending_instrument_array[MIDI_MAX_CHANNEL_NUMBER];
-
 static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER])
 {
+#ifndef _KEEP_NOTELESS_CHANNELS
+	s_is_chase_to_last_done = false;
+#endif
 	chase_midi_messages(TO_LAST_MESSAGE_INDEX);
 	for(int8_t voice = 0; voice < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; voice++){
 		instrument_array[voice] = get_channel_controller_pointer_from_index(voice)->instrument;
 	}
-
+#ifndef _KEEP_NOTELESS_CHANNELS
+	s_is_chase_to_last_done = true;
+#endif
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-		reset_channel_controller_midi_control_change_parameters(voice);
+		reset_channel_controller_all_parameters(voice);
 	}
 	clear_all_oscillators_and_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
@@ -1232,7 +1256,6 @@ void chiptune_prepare_song(uint32_t const resolution)
 
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
-	process_timely_midi_message_and_event();
 }
 
 /**********************************************************************************/
