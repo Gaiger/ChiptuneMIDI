@@ -217,9 +217,6 @@ int set_pitch_channel_parameters(int8_t const index, int8_t const waveform, uint
 
 static void reset_channel_controller_all_parameters(int8_t const index)
 {
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == index){
-		return ;
-	}
 #define DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND	(0.02f)
 #define DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND	(0.01f)
 #define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(96)

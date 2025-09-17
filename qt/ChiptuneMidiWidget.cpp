@@ -338,6 +338,9 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			int instrument = m_p_tune_manager->GetChannelInstrumentPairList().at(i).second;
 			p_channellist_widget->AddChannel(channel_index, instrument);
 
+			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == i){
+				continue;
+			}
 			int waveform;
 			int envelope_attack_curve; double envelope_attack_duration_in_seconds;
 			int envelope_decay_curve; double envelope_decay_duration_in_seconds;
