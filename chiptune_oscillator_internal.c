@@ -1,4 +1,7 @@
+// NOLINTBEGIN(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
+#include <string.h>
 #include <math.h>
+
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
 #include "chiptune_channel_controller_internal.h"
@@ -371,6 +374,16 @@ static int occupy_oscillator(int16_t const index)
 
 /**********************************************************************************/
 
+static inline void reset_associate_oscillators(int16_t const index)
+{
+	oscillator_t * const p_oscillator = get_oscillator_address_from_index(index);
+	for(int16_t i = 0; i < MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+		p_oscillator->associate_oscillators[i] = UNOCCUPIED_OSCILLATOR;
+	}
+}
+
+/**********************************************************************************/
+
 oscillator_t * const acquire_oscillator(int16_t * const p_index)
 {
 	if(false == is_unoccupied_oscillator_available()){
@@ -379,14 +392,33 @@ oscillator_t * const acquire_oscillator(int16_t * const p_index)
 	}
 	for(int16_t i = 0; i < get_occupiable_oscillator_capacity(); i++){
 		if(UNOCCUPIED_OSCILLATOR == get_oscillator_address_from_index(i)->voice){
-			*p_index = i;
 			occupy_oscillator(i);
+			//reset_associate_oscillators(i);
+			*p_index = i;
 			return get_oscillator_address_from_index(i);
 		}
 	}
 	CHIPTUNE_PRINTF(cDeveloping, "ERROR::available oscillator is not found\r\n");
 	*p_index = UNOCCUPIED_OSCILLATOR;
 	return NULL;
+}
+
+/**********************************************************************************/
+
+oscillator_t * const replicate_oscillator(int16_t const original_index, int16_t * const p_index)
+{
+	oscillator_t * const p_oscillator = acquire_oscillator(p_index);
+	do
+	{
+		if(NULL == p_oscillator){
+			break;
+		}
+		oscillator_t  * const p_original_oscillator = get_oscillator_pointer_from_index(original_index);
+		memcpy(p_oscillator, p_original_oscillator, sizeof(oscillator_t));
+		reset_associate_oscillators(*p_index);
+	}while(0);
+
+	return p_oscillator;
 }
 
 /**********************************************************************************/
@@ -503,3 +535,5 @@ int clear_all_oscillators(void) { return mark_all_oscillators_and_links_unused()
 /**********************************************************************************/
 
 int destroy_all_oscillators(void) { return release_all_oscillators_and_links(); }
+
+// NOLINTEND(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)

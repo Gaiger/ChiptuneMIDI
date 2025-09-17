@@ -407,10 +407,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			}
 			int16_t const original_oscillator_index = oscillator_index;
 			int16_t reduced_loundness_oscillator_index;
-			oscillator_t * const p_oscillator = acquire_oscillator(&reduced_loundness_oscillator_index);
-			memcpy(p_oscillator, get_oscillator_pointer_from_index(original_oscillator_index),
-				   sizeof(oscillator_t));
+			oscillator_t * const p_oscillator = replicate_oscillator(original_oscillator_index,
+																	 &reduced_loundness_oscillator_index);
 			RESET_STATE_BITES(p_oscillator->state_bits);
+
 			SET_NOTE_OFF(p_oscillator->state_bits);
 			memset(&p_oscillator->associate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
 			p_oscillator->loudness
@@ -1005,7 +1005,6 @@ static void destroy_all_oscillators_and_events(void)
 static void chase_midi_messages(const uint32_t end_midi_message_index)
 {
 	reset_all_channel_controllers();
-
 	clear_all_oscillators_and_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	if(0 == end_midi_message_index){

@@ -1,7 +1,3 @@
-// NOLINTBEGIN(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
-
-#include <string.h>
-
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
 #include "chiptune_oscillator_internal.h"
@@ -140,11 +136,11 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 			int16_t assocatiate_oscillator_indexes[ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
 			for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
 				int16_t oscillator_index;
-				oscillator_t * const p_oscillator = acquire_oscillator(&oscillator_index);
+				oscillator_t * const p_oscillator
+						= replicate_oscillator(native_oscillator_index, &oscillator_index);
 				if(NULL == p_oscillator){
 					return -1;
 				}
-				memcpy(p_oscillator, p_native_oscillator, sizeof(oscillator_t));
 				p_oscillator->loudness = loudnesses[i + 1];
 				SET_REVERB_ASSOCIATE(p_oscillator->state_bits);
 				assocatiate_oscillator_indexes[i] = oscillator_index;
@@ -209,11 +205,11 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 				int16_t assocatiate_oscillator_indexes[ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
 				for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
 					int16_t oscillator_index;
-					oscillator_t * const p_oscillator = acquire_oscillator(&oscillator_index);
+					oscillator_t * const p_oscillator
+							= replicate_oscillator(native_oscillator_indexes[k], &oscillator_index);
 					if(NULL == p_oscillator){
 						return -1;
 					}
-					memcpy(p_oscillator, p_native_oscillator, sizeof(oscillator_t));
 					p_oscillator->loudness = loudnesses[i + 1];
 					p_oscillator->pitch_chorus_bend_in_semitones
 							= obtain_oscillator_pitch_chorus_bend_in_semitones(p_channel_controller->chorus,
@@ -276,4 +272,3 @@ void update_effect_tick(void)
 	s_min_chorus_delta_tick = (float)(EACH_CHORUS_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND * playing_tempo * resolution / 60.0);
 }
 
-// NOLINTEND(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
