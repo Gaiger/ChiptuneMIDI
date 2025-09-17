@@ -572,7 +572,10 @@ int TuneManager::SetPitchChannelTimbre(int8_t const channel_index,
 		if(nullptr == m_p_private->m_p_midi_file){
 			break;
 		}
-
+		if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == channel_index){
+			qDebug() << "WARNING :: instrumment channel is unsettable, ignore";
+			break;
+		}
 		ret = chiptune_set_pitch_channel_timbre(channel_index, waveform,
 												envelope_attack_curve, envelope_attack_duration_in_seconds,
 												envelope_decay_curve, envelope_decay_duration_in_seconds,
