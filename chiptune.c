@@ -316,7 +316,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			if(NULL == p_oscillator){
 				return -1;
 			}
-			memset(p_oscillator, 0, sizeof(oscillator_t));
 			RESET_STATE_BITES(p_oscillator->state_bits);
 			SET_NOTE_ON(p_oscillator->state_bits);
 			p_oscillator->voice = voice;
@@ -330,8 +329,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				temp = INT16_MAX;
 			}
 			p_oscillator->loudness = temp;
-			memset(&p_oscillator->associate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
-
 			p_oscillator->current_phase = 0;
 			do {
 				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
@@ -412,7 +409,6 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			RESET_STATE_BITES(p_oscillator->state_bits);
 
 			SET_NOTE_OFF(p_oscillator->state_bits);
-			memset(&p_oscillator->associate_oscillators[0], UNOCCUPIED_OSCILLATOR, MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
 			p_oscillator->loudness
 					= LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(
 						p_oscillator->loudness,
@@ -1265,7 +1261,6 @@ void chiptune_set_current_message_index(uint32_t const index)
 {
 	chase_midi_messages(index);
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
-	return ;
 }
 
 /**********************************************************************************/

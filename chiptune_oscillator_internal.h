@@ -27,10 +27,9 @@ typedef struct _oscillator
 
 	int16_t		loudness;
 	int16_t		amplitude;
-
 union{
 	struct {
-		int16_t		associate_oscillators[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
+		int16_t		*p_associate_oscillators;
 
 		uint16_t	envelope_table_index;
 		uint16_t	envelope_same_index_count;
@@ -108,6 +107,8 @@ int setup_envelope_state(oscillator_t *p_oscillator, uint8_t evelope_state);
 
 oscillator_t * const acquire_oscillator(int16_t * const p_index);
 oscillator_t * const replicate_oscillator(int16_t const original_index, int16_t * const p_index);
+int allocate_associate_oscillators_record(int16_t const index);
+
 int discard_oscillator(int16_t const index);
 int clear_all_oscillators(void);
 int destroy_all_oscillators(void);
