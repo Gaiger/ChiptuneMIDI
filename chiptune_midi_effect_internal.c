@@ -70,14 +70,13 @@ int find_associate_oscillator_indexes(int16_t const native_index,
 		return 0;
 	}
 
-	oscillator_t  * const p_native_oscillator = get_oscillator_pointer_from_index(native_index);
+	int16_t assocatiate_oscillator_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
+	load_associate_oscillator_indexes(native_index,
+									  &assocatiate_oscillator_indexes[0]);
 
-	if(NULL == p_native_oscillator->p_associate_oscillators){
-		return 0;
-	}
 	for(int i = 0; i < ASSOCIATE_OSCILLATOR_NUMBER; i++){
 		int16_t associate_oscillator_index
-				= p_native_oscillator->p_associate_oscillators[find_level * ASSOCIATE_OSCILLATOR_NUMBER + i];
+				= 	assocatiate_oscillator_indexes[find_level * ASSOCIATE_OSCILLATOR_NUMBER + i];
 		if(UNOCCUPIED_OSCILLATOR == associate_oscillator_index){
 			continue;
 		}
@@ -89,10 +88,11 @@ int find_associate_oscillator_indexes(int16_t const native_index,
 		p_oscillator_indexes[*p_oscillator_number] = associate_oscillator_index;
 		*p_oscillator_number += 1;
 
-		if(find_level == current_level ){
+		if(find_level == current_level){
 			continue;
 		}
-		associate_oscillator_index = p_native_oscillator->p_associate_oscillators[current_level * ASSOCIATE_OSCILLATOR_NUMBER + i];
+		associate_oscillator_index
+				= assocatiate_oscillator_indexes[current_level * ASSOCIATE_OSCILLATOR_NUMBER + i];
 		if(UNOCCUPIED_OSCILLATOR == associate_oscillator_index){
 			continue;
 		}
@@ -137,7 +137,10 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 			loudnesses[0] = enhanced_loudness - (loudnesses[1] + loudnesses[2] + loudnesses[3]);
 			p_native_oscillator->loudness = loudnesses[0];
 
-			int16_t assocatiate_oscillator_indexes[ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
+			int16_t assocatiate_oscillator_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
+			for(int16_t i = 0; i < MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+				assocatiate_oscillator_indexes[i] = UNOCCUPIED_OSCILLATOR;
+			}
 			for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
 				int16_t oscillator_index;
 				oscillator_t * const p_oscillator
@@ -147,26 +150,26 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 				}
 				p_oscillator->loudness = loudnesses[i + 1];
 				SET_REVERB_ASSOCIATE(p_oscillator->state_bits);
-				assocatiate_oscillator_indexes[i] = oscillator_index;
+				assocatiate_oscillator_indexes[REVERB_ASSOCIATE_START_INDEX + i] = oscillator_index;
 			}
 
-			if(NULL == p_native_oscillator->p_associate_oscillators){
-				allocate_associate_oscillators_record(native_oscillator_index);
-			}
-			for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
-				p_native_oscillator->p_associate_oscillators[REVERB_ASSOCIATE_START_INDEX + i]
-						= assocatiate_oscillator_indexes[i]; // NOLINT(clang-analyzer-core.NullDereference)
-			}
+			store_associate_oscillator_indexes(native_oscillator_index,
+											   &assocatiate_oscillator_indexes[0]);
 			break;
 		}
 	} while(0);
 
 	uint32_t reverb_delta_tick = obtain_reverb_delta_tick(p_channel_controller->reverb);
-	for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
-		put_event(event_type, p_native_oscillator->p_associate_oscillators[REVERB_ASSOCIATE_START_INDEX + i],
-				  tick + (i + 1) * reverb_delta_tick);
-	}
+	{
+		int16_t assocatiate_oscillator_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
+		load_associate_oscillator_indexes(native_oscillator_index,
+										  &assocatiate_oscillator_indexes[0]);
+		for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
+			put_event(event_type, assocatiate_oscillator_indexes[REVERB_ASSOCIATE_START_INDEX + i],
+					  tick + (i + 1) * reverb_delta_tick);
+		}
 
+	}
 	return 0;
 }
 
@@ -189,20 +192,18 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 
 	do {
 		if(EVENT_ACTIVATE == event_type){
-			int16_t native_oscillator_indexes[1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
-			int native_oscillator_number = 0;
-			native_oscillator_indexes[0] = native_oscillator_index;
-			native_oscillator_number += 1;
+			int16_t cooperative_native_oscillator_indexes[1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
+			int cooperative_native_oscillator_number = 0;
+			cooperative_native_oscillator_indexes[0] = native_oscillator_index;
+			cooperative_native_oscillator_number += 1;
 			find_associate_oscillator_indexes(native_oscillator_index, REVERB_LEVEL, TOP_LEVEL,
-											  &native_oscillator_indexes[0], 1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER,
-					&native_oscillator_number);
+											  &cooperative_native_oscillator_indexes[0],
+											  1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER,
+					&cooperative_native_oscillator_number);
 
-			for(int k = 0; k < native_oscillator_number; k++){
-				oscillator_t *p_native_oscillator = get_oscillator_pointer_from_index(native_oscillator_indexes[k]);
+			for(int k = 0; k < cooperative_native_oscillator_number; k++){
+				oscillator_t *p_native_oscillator = get_oscillator_pointer_from_index(cooperative_native_oscillator_indexes[k]);
 
-				if(NULL == p_native_oscillator->p_associate_oscillators){
-					allocate_associate_oscillators_record(native_oscillator_indexes[k]);
-				}
 				int16_t const loudness = p_native_oscillator->loudness;
 				int16_t loudness_over_16 = DIVIDE_BY_16(loudness);
 				int16_t loudnesses[4]
@@ -212,11 +213,13 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 							5 * loudness_over_16};
 				loudnesses[0] = loudness - (4 + 3 + 5) * loudness_over_16;
 				p_native_oscillator->loudness = loudnesses[0];
-				int16_t assocatiate_oscillator_indexes[ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
+				int16_t assocatiate_oscillator_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
+				load_associate_oscillator_indexes(cooperative_native_oscillator_indexes[k],
+												  &assocatiate_oscillator_indexes[0]);
 				for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
 					int16_t oscillator_index;
 					oscillator_t * const p_oscillator
-							= replicate_oscillator(native_oscillator_indexes[k], &oscillator_index);
+							= replicate_oscillator(cooperative_native_oscillator_indexes[k], &oscillator_index);
 					if(NULL == p_oscillator){
 						return -1;
 					}
@@ -233,21 +236,20 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 							= calculate_oscillator_delta_phase(voice, p_oscillator->note + vibrato_modulation_in_semitones,
 															   p_oscillator->pitch_chorus_bend_in_semitones) - p_oscillator->delta_phase;
 					SET_CHORUS_ASSOCIATE(p_oscillator->state_bits);
-					assocatiate_oscillator_indexes[i] = oscillator_index;
+					assocatiate_oscillator_indexes[CHORUS_ASSOCIATE_START_INDEX + i] = oscillator_index;
 				}
+				store_associate_oscillator_indexes(cooperative_native_oscillator_indexes[k],
+												  &assocatiate_oscillator_indexes[0]);
 
 				for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
-					p_native_oscillator->p_associate_oscillators[CHORUS_ASSOCIATE_START_INDEX + i]
-						= assocatiate_oscillator_indexes[i]; // NOLINT(clang-analyzer-core.NullDereference)
-					put_event(event_type, p_native_oscillator->p_associate_oscillators[CHORUS_ASSOCIATE_START_INDEX + i],
+					put_event(event_type, assocatiate_oscillator_indexes[CHORUS_ASSOCIATE_START_INDEX + i],
 							  tick + (i + 1) * chorus_delta_tick);
 				}
 			}
-
 			break;
 		}
 
-		int16_t oscillator_indexes[(1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER) * ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
+		int16_t oscillator_indexes[(1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER) * ASSOCIATE_REVERB_OSCILLATOR_NUMBER] = {0};
 		int oscillator_number = 0;
 		find_associate_oscillator_indexes(native_oscillator_index, CHORUS_LEVEL, TOP_LEVEL,
 										  &oscillator_indexes[0],

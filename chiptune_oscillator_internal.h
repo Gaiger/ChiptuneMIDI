@@ -29,7 +29,7 @@ typedef struct _oscillator
 	int16_t		amplitude;
 union{
 	struct {
-		int16_t		*p_associate_oscillators;
+		int16_t		*p_associate_oscillator_indexes;
 
 		uint16_t	envelope_table_index;
 		uint16_t	envelope_same_index_count;
@@ -51,7 +51,7 @@ union{
 };
 } oscillator_t;
 
-#define UNOCCUPIED_OSCILLATOR							(-1)
+#define UNOCCUPIED_OSCILLATOR						(-1)
 #define RESET_STATE_BITES(STATE_BITES)				((STATE_BITES) = 0)
 
 #define STATE_ACTIVATED_BIT							(0)
@@ -107,9 +107,8 @@ int setup_envelope_state(oscillator_t *p_oscillator, uint8_t evelope_state);
 
 oscillator_t * const acquire_oscillator(int16_t * const p_index);
 oscillator_t * const replicate_oscillator(int16_t const original_index, int16_t * const p_index);
-int allocate_associate_oscillators_record(int16_t const index);
-
 int discard_oscillator(int16_t const index);
+
 int clear_all_oscillators(void);
 int destroy_all_oscillators(void);
 
@@ -118,5 +117,10 @@ int16_t const get_occupied_oscillator_head_index();
 int16_t const get_occupied_oscillator_next_index(int16_t const index);
 
 oscillator_t * const get_oscillator_pointer_from_index(int16_t const index);
+
+int store_associate_oscillator_indexes(int16_t const index,
+									  int16_t const associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER]);
+int load_associate_oscillator_indexes(int16_t const index,
+									  int16_t associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER]);
 
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_

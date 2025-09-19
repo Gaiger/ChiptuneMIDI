@@ -157,7 +157,7 @@ static int mark_all_oscillators_and_links_unused(void)
 {
 	for(int16_t i = 0; i < get_occupiable_oscillator_capacity(); i++){
 		get_oscillator_address_from_index(i)->voice = UNOCCUPIED_OSCILLATOR;
-		get_oscillator_address_from_index(i)->p_associate_oscillators = NULL;
+		get_oscillator_address_from_index(i)->p_associate_oscillator_indexes = NULL;
 		oscillator_link_t * const p_oscillator_link = get_oscillator_link_address_from_index(i);
 		p_oscillator_link->previous = UNOCCUPIED_OSCILLATOR;
 		p_oscillator_link->next = UNOCCUPIED_OSCILLATOR;
@@ -407,7 +407,7 @@ oscillator_t * const replicate_oscillator(int16_t const original_index, int16_t 
 		}
 		oscillator_t  * const p_original_oscillator = get_oscillator_address_from_index(original_index);
 		memcpy(p_oscillator, p_original_oscillator, sizeof(oscillator_t));
-		p_oscillator->p_associate_oscillators = NULL;
+		p_oscillator->p_associate_oscillator_indexes = NULL;
 	}while(0);
 
 	return p_oscillator;
@@ -415,7 +415,7 @@ oscillator_t * const replicate_oscillator(int16_t const original_index, int16_t 
 
 /**********************************************************************************/
 
-int allocate_associate_oscillators_record(int16_t  const index)
+static int allocate_associate_oscillators_record(int16_t  const index)
 {
 	int ret = 0;
 	oscillator_t  * const p_oscillator = get_oscillator_address_from_index(index);
@@ -425,20 +425,72 @@ int allocate_associate_oscillators_record(int16_t  const index)
 			ret = -1;
 			break;
 		}
-		if(NULL != p_oscillator->p_associate_oscillators){
+		if(NULL != p_oscillator->p_associate_oscillator_indexes){
 			ret = 1;
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR::p_associate_oscillators is allocated\r\n");
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR::p_associate_oscillator_indexes is allocated\r\n");
 			break;
 		}
-		p_oscillator->p_associate_oscillators
+		p_oscillator->p_associate_oscillator_indexes
 				= chiptune_malloc(MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
 		for(int16_t i = 0; i < MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-			p_oscillator->p_associate_oscillators[i] = UNOCCUPIED_OSCILLATOR;
+			p_oscillator->p_associate_oscillator_indexes[i] = UNOCCUPIED_OSCILLATOR;
 		}
 	}while(0);
 
 	return ret;
 }
+
+int store_associate_oscillator_indexes(int16_t const index,
+									  int16_t const associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER])
+{
+	int ret = 0;
+	oscillator_t  * const p_oscillator = get_oscillator_address_from_index(index);
+	do
+	{
+		if(NULL == p_oscillator){
+			ret = -1;
+			break;
+		}
+
+		if(NULL == p_oscillator->p_associate_oscillator_indexes){
+			p_oscillator->p_associate_oscillator_indexes
+					= chiptune_malloc(MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
+		}
+		memcpy(&p_oscillator->p_associate_oscillator_indexes[0], &associate_indexes[0],
+			   MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
+	}while(0);
+
+	return ret;
+}
+
+/**********************************************************************************/
+
+int load_associate_oscillator_indexes(int16_t const index,
+									  int16_t associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER])
+{
+	int ret = 0;
+	oscillator_t  * const p_oscillator = get_oscillator_address_from_index(index);
+	do
+	{
+		if(NULL == p_oscillator){
+			ret = -1;
+			break;
+		}
+		if(NULL == p_oscillator->p_associate_oscillator_indexes){
+			//CHIPTUNE_PRINTF(cDeveloping, "ERROR::index = %d has no associate oscillator\r\n", index);
+			ret = 1;
+			for(int16_t i = 0; i < MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+				associate_indexes[i] = UNOCCUPIED_OSCILLATOR;
+			}
+			break;
+		}
+
+		memcpy(&associate_indexes[0], &p_oscillator->p_associate_oscillator_indexes[0],
+			   MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
+	}while(0);
+	return ret;
+}
+
 
 /**********************************************************************************/
 
@@ -482,11 +534,11 @@ int discard_oscillator(int16_t const index)
 
 	oscillator_t * const p_oscillator = get_oscillator_address_from_index(index);
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL != p_oscillator->voice){
-		if(NULL != p_oscillator->p_associate_oscillators){
-			chiptune_free(p_oscillator->p_associate_oscillators);
+		if(NULL != p_oscillator->p_associate_oscillator_indexes){
+			chiptune_free(p_oscillator->p_associate_oscillator_indexes);
 		}
 	}
-	p_oscillator->p_associate_oscillators = NULL;
+	p_oscillator->p_associate_oscillator_indexes = NULL;
 	p_oscillator->voice = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number -= 1;
 	CHECK_OCCUPIED_OSCILLATOR_LIST();
