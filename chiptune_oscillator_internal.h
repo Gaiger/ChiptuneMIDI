@@ -118,9 +118,19 @@ int16_t const get_occupied_oscillator_next_index(int16_t const index);
 
 oscillator_t * const get_oscillator_pointer_from_index(int16_t const index);
 
-int store_associate_oscillator_indexes(int16_t const index,
+
+enum MidiEffectType
+{
+	MidiEffectAll,
+	MidiEffectReverb,
+	MidiEffectChorus,
+};
+int store_associate_oscillator_indexes(int8_t midi_effect_type, int16_t const index,
 									  int16_t const associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER]);
-int load_associate_oscillator_indexes(int16_t const index,
+int load_associate_oscillator_indexes(int8_t midi_effect_type, int16_t const index,
 									  int16_t associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER]);
+int16_t count_all_subordinate_oscillators(int8_t midi_effect_type, int16_t root_index);
+int get_all_subordinate_oscillator_indexes(int8_t midi_effect_type, int16_t root_index,
+										   int16_t * const p_associate_indexes);
 
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_

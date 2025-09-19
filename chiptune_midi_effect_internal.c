@@ -71,7 +71,7 @@ int find_associate_oscillator_indexes(int16_t const native_index,
 	}
 
 	int16_t assocatiate_oscillator_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
-	load_associate_oscillator_indexes(native_index,
+	load_associate_oscillator_indexes(MidiEffectAll, native_index,
 									  &assocatiate_oscillator_indexes[0]);
 
 	for(int i = 0; i < ASSOCIATE_OSCILLATOR_NUMBER; i++){
@@ -153,7 +153,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 				assocatiate_oscillator_indexes[REVERB_ASSOCIATE_START_INDEX + i] = oscillator_index;
 			}
 
-			store_associate_oscillator_indexes(native_oscillator_index,
+			store_associate_oscillator_indexes(MidiEffectReverb, native_oscillator_index,
 											   &assocatiate_oscillator_indexes[0]);
 			break;
 		}
@@ -162,7 +162,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 	uint32_t reverb_delta_tick = obtain_reverb_delta_tick(p_channel_controller->reverb);
 	{
 		int16_t assocatiate_oscillator_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
-		load_associate_oscillator_indexes(native_oscillator_index,
+		load_associate_oscillator_indexes(MidiEffectReverb, native_oscillator_index,
 										  &assocatiate_oscillator_indexes[0]);
 		for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
 			put_event(event_type, assocatiate_oscillator_indexes[REVERB_ASSOCIATE_START_INDEX + i],
@@ -214,7 +214,7 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 				loudnesses[0] = loudness - (4 + 3 + 5) * loudness_over_16;
 				p_native_oscillator->loudness = loudnesses[0];
 				int16_t assocatiate_oscillator_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
-				load_associate_oscillator_indexes(cooperative_native_oscillator_indexes[k],
+				load_associate_oscillator_indexes(MidiEffectAll, cooperative_native_oscillator_indexes[k],
 												  &assocatiate_oscillator_indexes[0]);
 				for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
 					int16_t oscillator_index;
@@ -238,7 +238,7 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 					SET_CHORUS_ASSOCIATE(p_oscillator->state_bits);
 					assocatiate_oscillator_indexes[CHORUS_ASSOCIATE_START_INDEX + i] = oscillator_index;
 				}
-				store_associate_oscillator_indexes(cooperative_native_oscillator_indexes[k],
+				store_associate_oscillator_indexes(MidiEffectAll, cooperative_native_oscillator_indexes[k],
 												  &assocatiate_oscillator_indexes[0]);
 
 				for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){

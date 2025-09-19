@@ -415,85 +415,6 @@ oscillator_t * const replicate_oscillator(int16_t const original_index, int16_t 
 
 /**********************************************************************************/
 
-static int allocate_associate_oscillators_record(int16_t  const index)
-{
-	int ret = 0;
-	oscillator_t  * const p_oscillator = get_oscillator_address_from_index(index);
-	do
-	{
-		if(NULL == p_oscillator){
-			ret = -1;
-			break;
-		}
-		if(NULL != p_oscillator->p_associate_oscillator_indexes){
-			ret = 1;
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR::p_associate_oscillator_indexes is allocated\r\n");
-			break;
-		}
-		p_oscillator->p_associate_oscillator_indexes
-				= chiptune_malloc(MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
-		for(int16_t i = 0; i < MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-			p_oscillator->p_associate_oscillator_indexes[i] = UNOCCUPIED_OSCILLATOR;
-		}
-	}while(0);
-
-	return ret;
-}
-
-int store_associate_oscillator_indexes(int16_t const index,
-									  int16_t const associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER])
-{
-	int ret = 0;
-	oscillator_t  * const p_oscillator = get_oscillator_address_from_index(index);
-	do
-	{
-		if(NULL == p_oscillator){
-			ret = -1;
-			break;
-		}
-
-		if(NULL == p_oscillator->p_associate_oscillator_indexes){
-			p_oscillator->p_associate_oscillator_indexes
-					= chiptune_malloc(MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
-		}
-		memcpy(&p_oscillator->p_associate_oscillator_indexes[0], &associate_indexes[0],
-			   MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
-	}while(0);
-
-	return ret;
-}
-
-/**********************************************************************************/
-
-int load_associate_oscillator_indexes(int16_t const index,
-									  int16_t associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER])
-{
-	int ret = 0;
-	oscillator_t  * const p_oscillator = get_oscillator_address_from_index(index);
-	do
-	{
-		if(NULL == p_oscillator){
-			ret = -1;
-			break;
-		}
-		if(NULL == p_oscillator->p_associate_oscillator_indexes){
-			//CHIPTUNE_PRINTF(cDeveloping, "ERROR::index = %d has no associate oscillator\r\n", index);
-			ret = 1;
-			for(int16_t i = 0; i < MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-				associate_indexes[i] = UNOCCUPIED_OSCILLATOR;
-			}
-			break;
-		}
-
-		memcpy(&associate_indexes[0], &p_oscillator->p_associate_oscillator_indexes[0],
-			   MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
-	}while(0);
-	return ret;
-}
-
-
-/**********************************************************************************/
-
 int discard_oscillator(int16_t const index)
 {
 	oscillator_link_t * const p_this_index_oscillator_link = get_oscillator_link_address_from_index(index);
@@ -613,5 +534,79 @@ int clear_all_oscillators(void) { return mark_all_oscillators_and_links_unused()
 /**********************************************************************************/
 
 int destroy_all_oscillators(void) { return release_all_oscillators_and_links(); }
+
+/**********************************************************************************/
+
+int store_associate_oscillator_indexes(int8_t midi_effect_type, int16_t const index,
+									  int16_t const associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER])
+{
+	(void)midi_effect_type;
+	int ret = 0;
+	oscillator_t  * const p_oscillator = get_oscillator_address_from_index(index);
+	do
+	{
+		if(NULL == p_oscillator){
+			ret = -1;
+			break;
+		}
+
+		if(NULL == p_oscillator->p_associate_oscillator_indexes){
+			p_oscillator->p_associate_oscillator_indexes
+					= chiptune_malloc(MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
+		}
+		memcpy(&p_oscillator->p_associate_oscillator_indexes[0], &associate_indexes[0],
+			   MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
+	}while(0);
+
+	return ret;
+}
+
+/**********************************************************************************/
+
+int load_associate_oscillator_indexes(int8_t midi_effect_type, int16_t const index,
+									  int16_t associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER])
+{
+	(void)midi_effect_type;
+	int ret = 0;
+	oscillator_t  * const p_oscillator = get_oscillator_address_from_index(index);
+	do
+	{
+		if(NULL == p_oscillator){
+			ret = -1;
+			break;
+		}
+		if(NULL == p_oscillator->p_associate_oscillator_indexes){
+			//CHIPTUNE_PRINTF(cDeveloping, "ERROR::index = %d has no associate oscillator\r\n", index);
+			ret = 1;
+			for(int16_t i = 0; i < MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+				associate_indexes[i] = UNOCCUPIED_OSCILLATOR;
+			}
+			break;
+		}
+
+		memcpy(&associate_indexes[0], &p_oscillator->p_associate_oscillator_indexes[0],
+			   MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
+	}while(0);
+	return ret;
+}
+
+/**********************************************************************************/
+
+int16_t count_all_subordinate_oscillators(int8_t midi_effect_type, int16_t root_index)
+{
+	//TODO
+	(void)midi_effect_type; (void)root_index;
+	return -1;
+}
+
+/**********************************************************************************/
+
+int get_all_subordinate_oscillator_indexes(int8_t midi_effect_type, int16_t root_index,
+										   int16_t * const p_associate_indexes)
+{
+	//TODO
+	(void)midi_effect_type; (void)root_index; (void)p_associate_indexes;
+	return -1;
+}
 
 // NOLINTEND(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
