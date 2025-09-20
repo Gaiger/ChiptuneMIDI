@@ -18,7 +18,7 @@ public :
 	~SequencerWidget(void);
 	void Prepare(int tick_in_center);
 	void Update(void);
-	void SetChannelToDrawEnabled(int channel_index, bool is_enabled);
+	void SetChannelDrawAsEnabled(int channel_index, bool is_enabled);
 private:
 	NoteNameWidget *m_p_note_name_widget;
 	NoteDurationWidget *m_p_note_duration_widget;

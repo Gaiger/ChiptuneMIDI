@@ -572,7 +572,7 @@ void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton bu
 void ChiptuneMidiWidget::HandleChannelOutputEnabled(int index, bool is_enabled)
 {
 	m_p_tune_manager->SetChannelOutputEnabled(index, is_enabled);
-	m_p_sequencer_widget->SetChannelToDrawEnabled(index, is_enabled);
+	m_p_sequencer_widget->SetChannelDrawAsEnabled(index, is_enabled);
 }
 
 /**********************************************************************************/
