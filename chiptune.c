@@ -1000,7 +1000,9 @@ static void destroy_all_oscillators_and_events(void)
 
 static void chase_midi_messages(const uint32_t end_midi_message_index)
 {
-	reset_all_channel_controllers();
+	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		reset_channel_controller_midi_control_change_parameters(voice);
+	}
 	clear_all_oscillators_and_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	if(0 == end_midi_message_index){
