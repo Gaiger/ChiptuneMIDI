@@ -403,21 +403,24 @@ void NoteDurationWidget::DrawChannelRectangles(QPainter *p_painter, bool const i
 			continue;
 		}
 
-		do
-		{
-			QColor color = GetChannelColor(voice);
-			if(false == m_is_channel_draw_as_enabled[voice]){
-				color.setAlpha(0x30);
-				p_painter->setBrush(color);
-				p_painter->setPen(QColor(0xFF, 0xFF, 0xFF, 0xC0).lighter(50));
-				break;
-			}
-			p_painter->setBrush(color);
-			p_painter->setPen(QColor(0xFF, 0xFF, 0xFF, 0xC0));
-		}while(0);
-		for(int i = 0; i < m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].size(); i++){
-			p_painter->drawRect(m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].at(i));
+		QColor channel_color = GetChannelColor(voice);
+		QColor pen_color = QColor(0xFF, 0xFF, 0xFF, 0xC0);
+		if(false == m_is_channel_draw_as_enabled[voice]){
+			channel_color.setAlpha(0x30);
+			pen_color = pen_color.darker(150);
 		}
+		p_painter->setBrush(channel_color);
+		p_painter->setPen(pen_color);
+
+#if QT_VERSION  >= QT_VERSION_CHECK(6, 0, 0)
+		QList<QRect> &ref_rectangle_list
+				= m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice];
+		p_painter->drawRects(ref_rectangle_list.constData(), ref_rectangle_list.size());
+#else
+		for(int i = 0; i < m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].size(); i++){
+					p_painter->drawRect(m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].at(i));
+				}
+#endif
 	}
 }
 
@@ -431,6 +434,7 @@ void NoteDurationWidget::paintEvent(QPaintEvent *event)
 	QPainter painter(this);
 	DrawChannelRectangles(&painter, false);
 	DrawChannelRectangles(&painter, true);
+
 	QColor color = QColor(0xE0, 0xE0, 0xE0, 0xE0);
 	painter.setPen(color);
 	int latency_x = m_audio_out_latency_in_seconds * m_p_tune_manager->GetPlayingEffectiveTempo()/60.0 * ONE_BEAT_WIDTH;
