@@ -413,14 +413,14 @@ void NoteDurationWidget::DrawChannelRectangles(QPainter *p_painter, bool const i
 		p_painter->setPen(pen_color);
 
 #if QT_VERSION  >= QT_VERSION_CHECK(6, 0, 0)
-		QList<QRect> &ref_rectangle_list
+		const QList<QRect> &rectangles
 				= m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice];
-		p_painter->drawRects(ref_rectangle_list.constData(), ref_rectangle_list.size());
 #else
-		for(int i = 0; i < m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].size(); i++){
-					p_painter->drawRect(m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice].at(i));
-				}
+		const QList<QRect> &ref_rectangles_list =
+			m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][voice];
+		const QVector<QRect> rectangles = QVector<QRect>::fromList(ref_rectangles_list);
 #endif
+		p_painter->drawRects(rectangles.constData(), rectangles.size());
 	}
 }
 
