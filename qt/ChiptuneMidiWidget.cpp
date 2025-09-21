@@ -9,7 +9,7 @@
 #include <QFileDialog>
 #include <QLineEdit>
 
-#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #ifdef Q_OS_WIN
 #include <QWinTaskbarButton>
 #include <QWinTaskbarProgress>
@@ -155,7 +155,7 @@ void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
 	p_layout->addWidget(p_widget, 0, 0);
 }
 
-#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 /**********************************************************************************/
 
 void SetFontSizeForWidgetSubtree(QWidget * const p_root_widget, int const target_point_size,
@@ -195,7 +195,7 @@ void SetFontSizeForWidgetSubtree(QWidget * const p_root_widget, int const target
 /**********************************************************************************/
 #define PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS 		(35)
 
-#if QT_VERSION_CHECK(6, 0, 0) <= QT_VERSION
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 	#define AUDIO_BUFFER_TIME_FACTOR    					(2)
 #else
 	#define AUDIO_BUFFER_TIME_FACTOR    					(6)
@@ -215,7 +215,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	ui(new Ui::ChiptuneMidiWidget)
 {
 	ui->setupUi(this);
-#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 	SetFontSizeForWidgetSubtree(this, QWidget::font().pointSize() + 2, true);
 #endif
 	{
@@ -367,7 +367,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 													(int8_t)envelope_damper_on_but_note_off_sustain_curve,
 													(float)envelope_damper_on_but_note_off_sustain_duration_in_seconds);
 		}
-#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 		SetFontSizeForWidgetSubtree(p_channellist_widget,
 										p_channellist_widget->QWidget::font().pointSize() + 3, false);
 #endif
@@ -720,7 +720,7 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 void ChiptuneMidiWidget::showEvent(QShowEvent *event)
 {
 	QWidget::showEvent(event);
-#if QT_VERSION_CHECK(6, 0, 0) > QT_VERSION
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #ifdef Q_OS_WIN
 	QWinTaskbarButton *p_win_taskbar_button = new QWinTaskbarButton(this);
 	p_win_taskbar_button->setWindow(QWidget::windowHandle());

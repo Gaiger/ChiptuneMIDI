@@ -107,7 +107,7 @@ TuneManager::TuneManager(bool is_stereo,
 
 	do
 	{
-#if QT_VERSION_CHECK(6, 0, 0) <= QT_VERSION
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 		if (false != QMetaType::fromName("TuneManager::SamplingSize").isValid()) {
 			break;
 		}
