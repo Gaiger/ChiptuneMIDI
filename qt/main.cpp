@@ -3,7 +3,7 @@
 #endif
 
 #include <QtGlobal>
-#if defined( Q_OS_WIN )
+#ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
@@ -38,7 +38,7 @@ static void ListAvailableMidiDevices(void)
 int main(int argc, char* argv[])
 {
 #if(1)
-#if defined( Q_OS_WIN )
+#ifdef Q_OS_WIN
 	if (AttachConsole(ATTACH_PARENT_PROCESS) /*|| AllocConsole()*/){
 		freopen("CONOUT$", "w", stdout);
 		freopen("CONOUT$", "w", stderr);
@@ -46,6 +46,10 @@ int main(int argc, char* argv[])
 	}
 	setvbuf(stdout, NULL, _IONBF, 0);
 #endif
+#endif
+#ifdef Q_OS_WIN
+	_putenv("QT_SCALE_FACTOR=1");
+	_putenv("QT_AUTO_SCREEN_SCALE_FACTOR=0");
 #endif
 	QApplication app(argc, argv);
 
