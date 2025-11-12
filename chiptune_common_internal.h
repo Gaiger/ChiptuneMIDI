@@ -2,7 +2,9 @@
 #define _CHIPTUNE_COMMON_INTERNAL_H_
 
 #include <stdint.h>
-
+#ifdef _MSC_VER
+#include <malloc.h>
+#endif
 #include "chiptune_midi_define_internal.h" // IWYU pragma: export
 
 //#define _INCREMENTAL_SAMPLE_INDEX
@@ -38,6 +40,21 @@
 	void* chiptune_malloc(size_t size);
 	void chiptune_free(void* ptr);
 #endif
+
+#if defined(_MSC_VER)
+	#if defined(_DEBUG)
+	#define STACK_ARRAY(type, name, count) \
+		type name[128];
+	#else
+	#include <malloc.h>
+	#define STACK_ARRAY(type, name, count) \
+		type *name = (type*)_alloca(sizeof(type)*(count))
+#endif
+#else
+	#define STACK_ARRAY(type, name, count) \
+		type name[count]
+#endif
+
 
 uint32_t const get_sampling_rate(void);
 uint32_t const get_resolution(void);

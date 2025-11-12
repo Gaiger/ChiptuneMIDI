@@ -93,6 +93,22 @@ int setup_envelope_state(oscillator_t *p_oscillator, uint8_t evelope_state){
 
 /**********************************************************************************/
 
+typedef struct _associate_oscillator_record_t
+{
+	bool is_used;
+	uint8_t midi_effect_type;
+	int16_t indexes[SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER];
+	int16_t next;
+} associate_oscillator_record_t;
+
+#define NO_ASSOCIATE_OSCILLOR_RECORD				(-1)
+#define IS_MIDI_EFFECT_TYPE_MATCHED(TYPE_A, TYPE_B)	( ((TYPE_A) & (TYPE_B)) ? true : false)
+#define MAX_ASSOCIATE_OSCILLOR_RECORD_NUMBER		(512)
+static associate_oscillator_record_t
+	s_associate_oscillator_records[MAX_ASSOCIATE_OSCILLOR_RECORD_NUMBER];
+
+/**********************************************************************************/
+
 typedef struct _oscillator_link
 {
 	int16_t previous;
@@ -158,6 +174,8 @@ static int mark_all_oscillators_and_links_unused(void)
 	for(int16_t i = 0; i < get_occupiable_oscillator_capacity(); i++){
 		get_oscillator_address_from_index(i)->voice = UNOCCUPIED_OSCILLATOR;
 		get_oscillator_address_from_index(i)->p_associate_oscillator_indexes = NULL;
+		get_oscillator_address_from_index(i)->associate_oscillator_record_index
+				= NO_ASSOCIATE_OSCILLOR_RECORD;
 		oscillator_link_t * const p_oscillator_link = get_oscillator_link_address_from_index(i);
 		p_oscillator_link->previous = UNOCCUPIED_OSCILLATOR;
 		p_oscillator_link->next = UNOCCUPIED_OSCILLATOR;
@@ -378,7 +396,7 @@ static int occupy_oscillator(int16_t const index)
 oscillator_t * const acquire_oscillator(int16_t * const p_index)
 {
 	if(false == is_unoccupied_oscillator_available()){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR::all oscillators are used\r\n");
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all oscillators are used\r\n");
 		return NULL;
 	}
 	for(int16_t i = 0; i < get_occupiable_oscillator_capacity(); i++){
@@ -387,10 +405,11 @@ oscillator_t * const acquire_oscillator(int16_t * const p_index)
 			*p_index = i;
 			oscillator_t * const p_oscillator = get_oscillator_address_from_index(i);
 			memset(p_oscillator, 0, sizeof(oscillator_t));
+			p_oscillator->associate_oscillator_record_index = NO_ASSOCIATE_OSCILLOR_RECORD;
 			return get_oscillator_address_from_index(i);
 		}
 	}
-	CHIPTUNE_PRINTF(cDeveloping, "ERROR::available oscillator is not found\r\n");
+	CHIPTUNE_PRINTF(cDeveloping, "ERROR :: available oscillator is not found\r\n");
 	*p_index = UNOCCUPIED_OSCILLATOR;
 	return NULL;
 }
@@ -407,7 +426,7 @@ oscillator_t * const replicate_oscillator(int16_t const original_index, int16_t 
 		}
 		oscillator_t  * const p_original_oscillator = get_oscillator_address_from_index(original_index);
 		memcpy(p_oscillator, p_original_oscillator, sizeof(oscillator_t));
-		p_oscillator->p_associate_oscillator_indexes = NULL;
+		p_oscillator->associate_oscillator_record_index = NO_ASSOCIATE_OSCILLOR_RECORD;
 	}while(0);
 
 	return p_oscillator;
@@ -454,12 +473,22 @@ int discard_oscillator(int16_t const index)
 	p_this_index_oscillator_link->next = UNOCCUPIED_OSCILLATOR;
 
 	oscillator_t * const p_oscillator = get_oscillator_address_from_index(index);
+
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL != p_oscillator->voice){
-		if(NULL != p_oscillator->p_associate_oscillator_indexes){
-			chiptune_free(p_oscillator->p_associate_oscillator_indexes);
+		if(NO_ASSOCIATE_OSCILLOR_RECORD != p_oscillator->associate_oscillator_record_index){
+			associate_oscillator_record_t *p_record
+					= &s_associate_oscillator_records[p_oscillator->associate_oscillator_record_index];
+			while(1)
+			{
+				p_record->is_used = false;
+				if(NO_ASSOCIATE_OSCILLOR_RECORD == p_record->next){
+					break;
+				}
+				p_record = &s_associate_oscillator_records[p_record->next];
+			}
 		}
+		p_oscillator->associate_oscillator_record_index = NO_ASSOCIATE_OSCILLOR_RECORD;
 	}
-	p_oscillator->p_associate_oscillator_indexes = NULL;
 	p_oscillator->voice = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number -= 1;
 	CHECK_OCCUPIED_OSCILLATOR_LIST();
@@ -508,7 +537,7 @@ static inline bool is_occupied_oscillator_index_out_of_range(int16_t const index
 int16_t const get_occupied_oscillator_next_index(int16_t const index)
 {
 	if(true == is_occupied_oscillator_index_out_of_range(index)){
-		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator index = %d, out of range \r\n", index);
 		return UNOCCUPIED_OSCILLATOR;
 	}
 
@@ -520,7 +549,7 @@ int16_t const get_occupied_oscillator_next_index(int16_t const index)
 oscillator_t * const get_oscillator_pointer_from_index(int16_t const index)
 {
 	if(true == is_occupied_oscillator_index_out_of_range(index)){
-		CHIPTUNE_PRINTF(cDeveloping, "oscillator index = %d, out of range \r\n", index);
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator index = %d, out of range \r\n", index);
 		return NULL;
 	}
 
@@ -537,10 +566,9 @@ int destroy_all_oscillators(void) { return release_all_oscillators_and_links(); 
 
 /**********************************************************************************/
 
-int store_associate_oscillator_indexes(int8_t midi_effect_type, int16_t const index,
-									  int16_t const associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER])
+int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const index,
+									  int16_t const * const p_associate_indexes)
 {
-	(void)midi_effect_type;
 	int ret = 0;
 	oscillator_t  * const p_oscillator = get_oscillator_address_from_index(index);
 	do
@@ -550,63 +578,149 @@ int store_associate_oscillator_indexes(int8_t midi_effect_type, int16_t const in
 			break;
 		}
 
-		if(NULL == p_oscillator->p_associate_oscillator_indexes){
-			p_oscillator->p_associate_oscillator_indexes
-					= chiptune_malloc(MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
-		}
-		memcpy(&p_oscillator->p_associate_oscillator_indexes[0], &associate_indexes[0],
-			   MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
-	}while(0);
-
-	return ret;
-}
-
-/**********************************************************************************/
-
-int load_associate_oscillator_indexes(int8_t midi_effect_type, int16_t const index,
-									  int16_t associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER])
-{
-	(void)midi_effect_type;
-	int ret = 0;
-	oscillator_t  * const p_oscillator = get_oscillator_address_from_index(index);
-	do
-	{
-		if(NULL == p_oscillator){
-			ret = -1;
+		if(MidiEffectAll == midi_effect_type || MidiEffectNone == midi_effect_type){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: %s :: midi_effect_type could not be"
+										 " MidiEffectAll or MidiEffectNone\r\n", __func__);
+			ret = -2;
 			break;
 		}
-		if(NULL == p_oscillator->p_associate_oscillator_indexes){
-			//CHIPTUNE_PRINTF(cDeveloping, "ERROR::index = %d has no associate oscillator\r\n", index);
-			ret = 1;
-			for(int16_t i = 0; i < MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-				associate_indexes[i] = UNOCCUPIED_OSCILLATOR;
+
+		int16_t new_record_index;
+		for(new_record_index = 0; new_record_index < MAX_ASSOCIATE_OSCILLOR_RECORD_NUMBER; new_record_index++){
+			if(false == s_associate_oscillator_records[new_record_index].is_used){
+				break;
 			}
+		}
+
+		if(MAX_ASSOCIATE_OSCILLOR_RECORD_NUMBER == new_record_index){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all associate oscillator records are used\r\n");
 			break;
 		}
 
-		memcpy(&associate_indexes[0], &p_oscillator->p_associate_oscillator_indexes[0],
-			   MAX_ASSOCIATE_OSCILLATOR_NUMBER * sizeof(int16_t));
+		{
+			associate_oscillator_record_t * const p_new_record
+					= &s_associate_oscillator_records[new_record_index];
+			p_new_record->is_used = true;
+			p_new_record->midi_effect_type = midi_effect_type;
+			p_new_record->next = NO_ASSOCIATE_OSCILLOR_RECORD;
+			for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+				p_new_record->indexes[i] = p_associate_indexes[i];
+			}
+		}
+		{
+			int16_t current_record_index = p_oscillator->associate_oscillator_record_index;
+			if(NO_ASSOCIATE_OSCILLOR_RECORD == current_record_index){
+				p_oscillator->associate_oscillator_record_index = new_record_index;
+				break;
+			}
+
+			associate_oscillator_record_t * p_record;
+			while(1)
+			{
+				if(NO_ASSOCIATE_OSCILLOR_RECORD == current_record_index){
+					break;
+				}
+				p_record = &s_associate_oscillator_records[current_record_index];
+				current_record_index = p_record->next;
+			}
+			p_record->next = new_record_index;
+		}
 	}while(0);
+
 	return ret;
 }
 
 /**********************************************************************************/
 
-int16_t count_all_subordinate_oscillators(int8_t midi_effect_type, int16_t root_index)
+int16_t count_all_subordinate_oscillators(uint8_t const midi_effect_type, int16_t const root_index)
 {
-	//TODO
-	(void)midi_effect_type; (void)root_index;
-	return -1;
+	oscillator_t * const p_oscillator
+			= get_oscillator_address_from_index(root_index);
+	int16_t subordinate_number = 0;
+	do{
+		if(NO_ASSOCIATE_OSCILLOR_RECORD == p_oscillator->associate_oscillator_record_index){
+			break;
+		}
+		int16_t record_index = p_oscillator->associate_oscillator_record_index;
+
+		while(1)
+		{
+			associate_oscillator_record_t *p_record = &s_associate_oscillator_records[record_index];
+			if(false == p_record->is_used){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: associate_oscillator_records index = %d is not labeled as used\r\n",
+								record_index);
+				break;
+			}
+
+			do
+			{
+				if(true == IS_MIDI_EFFECT_TYPE_MATCHED(midi_effect_type, p_record->midi_effect_type)){
+					subordinate_number += SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER;
+					break;
+				}
+
+				for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+					subordinate_number += count_all_subordinate_oscillators(midi_effect_type, p_record->indexes[i]);
+				}
+			}while(0);
+			if(NO_ASSOCIATE_OSCILLOR_RECORD == p_record->next){
+				break;
+			}
+			record_index = p_record->next;
+		}
+	}while(0);
+
+	return subordinate_number;
 }
 
 /**********************************************************************************/
 
-int get_all_subordinate_oscillator_indexes(int8_t midi_effect_type, int16_t root_index,
+int get_all_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_index,
 										   int16_t * const p_associate_indexes)
 {
-	//TODO
-	(void)midi_effect_type; (void)root_index; (void)p_associate_indexes;
-	return -1;
+	oscillator_t * const p_oscillator
+			= get_oscillator_address_from_index(root_index);
+	int16_t subordinate_number = 0;
+	do{
+		if(NO_ASSOCIATE_OSCILLOR_RECORD == p_oscillator->associate_oscillator_record_index){
+			break;
+		}
+		int16_t record_index = p_oscillator->associate_oscillator_record_index;
+
+		while(1)
+		{
+			associate_oscillator_record_t *p_record = &s_associate_oscillator_records[record_index];
+			if(false == p_record->is_used){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: associate_oscillator_records index = %d is not labeled as used\r\n",
+								record_index);
+				break;
+			}
+
+			do
+			{
+				if(true == IS_MIDI_EFFECT_TYPE_MATCHED(midi_effect_type, p_record->midi_effect_type)){
+
+					for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+						p_associate_indexes[i + subordinate_number] = p_record->indexes[i];
+					}
+					subordinate_number += SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER;
+					break;
+				}
+
+				for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+					subordinate_number +=
+							get_all_subordinate_oscillator_indexes(midi_effect_type, p_record->indexes[i],
+																   &p_associate_indexes[subordinate_number]);
+				}
+			}while(0);
+			if(NO_ASSOCIATE_OSCILLOR_RECORD == p_record->next){
+				break;
+			}
+			record_index = p_record->next;
+		}
+	}while(0);
+
+	return subordinate_number;
 }
 
 // NOLINTEND(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)

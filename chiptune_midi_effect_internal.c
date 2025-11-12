@@ -1,40 +1,28 @@
 #include "chiptune_common_internal.h"
-#include "chiptune_printf_internal.h"
+#include "chiptune_printf_internal.h" // IWYU pragma: export
 #include "chiptune_oscillator_internal.h"
 #include "chiptune_channel_controller_internal.h"
 #include "chiptune_event_internal.h"
 
 #include "chiptune_midi_effect_internal.h"
 
-
-#define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
-#define DIVIDE_BY_32(VALUE)							((VALUE) >> 5)
-#define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
-
-#define ASSOCIATE_OSCILLATOR_NUMBER					(4 - 1)
-
-#define TOP_LEVEL									(0)
-#define REVERB_LEVEL								(0)
-#define CHORUS_LEVEL								(1)
-
-#define REVERB_ASSOCIATE_START_INDEX				(0)
-#define CHORUS_ASSOCIATE_START_INDEX				((CHORUS_LEVEL) * ASSOCIATE_OSCILLATOR_NUMBER)
+//#define ASSOCIATE_OSCILLATOR_NUMBER					(SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER)
 
 /**********************************************************************************/
-#define ASSOCIATE_REVERB_OSCILLATOR_NUMBER			(ASSOCIATE_OSCILLATOR_NUMBER)
+#define REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER		(SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER)
 #define MAX_REVERB_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND	\
-															(0.150)
+													(0.150)
 #define EACH_REVERB_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND	\
-															(MAX_REVERB_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND / \
-															(float)( ASSOCIATE_REVERB_OSCILLATOR_NUMBER *(INT8_MAX + 1)))
+													(MAX_REVERB_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND / \
+													(float)( REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER *(INT8_MAX + 1)))
 
-#define ASSOCIATE_CHORUS_OSCILLATOR_NUMBER			(ASSOCIATE_OSCILLATOR_NUMBER)
+#define CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER		(SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER)
 #define MAX_CHORUS_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND	\
-															(0.033)
+													(0.033)
 #define EACH_CHORUS_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND	\
-															(MAX_CHORUS_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND / \
-															(float)( ASSOCIATE_CHORUS_OSCILLATOR_NUMBER * (INT8_MAX + 1)) \
-															)
+													(MAX_CHORUS_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND / \
+													(float)( CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER * (INT8_MAX + 1)) \
+													)
 
 static float s_min_reverb_delta_tick =
 		(float)(EACH_REVERB_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND * MIDI_DEFAULT_TEMPO * MIDI_DEFAULT_RESOLUTION / (60.0));
@@ -61,54 +49,11 @@ static inline uint32_t obtain_reverb_delta_tick(int8_t reverb)
 
 /**********************************************************************************/
 
-int find_associate_oscillator_indexes(int16_t const native_index,
-									  uint8_t const find_level, uint8_t current_level,
-									  int16_t * const p_oscillator_indexes, int const max_oscillator_number,
-									  int * const p_oscillator_number)
-{
-	if(find_level < current_level){
-		return 0;
-	}
-
-	int16_t assocatiate_oscillator_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
-	load_associate_oscillator_indexes(MidiEffectAll, native_index,
-									  &assocatiate_oscillator_indexes[0]);
-
-	for(int i = 0; i < ASSOCIATE_OSCILLATOR_NUMBER; i++){
-		int16_t associate_oscillator_index
-				= 	assocatiate_oscillator_indexes[find_level * ASSOCIATE_OSCILLATOR_NUMBER + i];
-		if(UNOCCUPIED_OSCILLATOR == associate_oscillator_index){
-			continue;
-		}
-		if(max_oscillator_number == *p_oscillator_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator_indexes is full in %s \r\n", __func__);
-			return -1;
-		}
-
-		p_oscillator_indexes[*p_oscillator_number] = associate_oscillator_index;
-		*p_oscillator_number += 1;
-
-		if(find_level == current_level){
-			continue;
-		}
-		associate_oscillator_index
-				= assocatiate_oscillator_indexes[current_level * ASSOCIATE_OSCILLATOR_NUMBER + i];
-		if(UNOCCUPIED_OSCILLATOR == associate_oscillator_index){
-			continue;
-		}
-		find_associate_oscillator_indexes(associate_oscillator_index, find_level, current_level + 1,
-										  &p_oscillator_indexes[0], max_oscillator_number, p_oscillator_number);
-	}
-
-	return 0;
-}
-
-/**********************************************************************************/
 //#define ENHANCE_REVERB_LOUDNESS(LOUDNESS, REVERB_VALUE) \
 //								DIVIDE_BY_128((LOUDNESS) * ((INT8_MAX + 1) + ((REVERB_VALUE) + 1)/2))
 
 #define ENHANCE_REVERB_LOUDNESS(LOUDNESS, REVERB_VALUE) \
-								(LOUDNESS)
+													(LOUDNESS)
 
 static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 						  int8_t const voice, int8_t const note, int8_t const velocity,
@@ -123,52 +68,64 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 		return 2;
 	}
 
-	oscillator_t  * const p_native_oscillator = get_oscillator_pointer_from_index(native_oscillator_index);
-
 	do {
 		if(EVENT_ACTIVATE == event_type){
-			int32_t const enhanced_loudness = ENHANCE_REVERB_LOUDNESS(p_native_oscillator->loudness, p_channel_controller->reverb);
-			int16_t const enhanced_loudness_over_32 = DIVIDE_BY_32(enhanced_loudness);
-			int16_t loudnesses[1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER]
-					= { 0,
-						enhanced_loudness_over_32 * 9,
-						enhanced_loudness_over_32 * 6,
-						enhanced_loudness_over_32 * 7};
-			loudnesses[0] = enhanced_loudness - (loudnesses[1] + loudnesses[2] + loudnesses[3]);
-			p_native_oscillator->loudness = loudnesses[0];
+			int cooperative_oscillator_number = 0;
+			cooperative_oscillator_number += 1;
+			cooperative_oscillator_number += count_all_subordinate_oscillators(MidiEffectAll & (~MidiEffectReverb),
+																					 native_oscillator_index);
+			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
+			cooperative_oscillator_indexes[0] = native_oscillator_index;
+			get_all_subordinate_oscillator_indexes(MidiEffectAll & (~MidiEffectReverb),
+												   native_oscillator_index,
+												   &cooperative_oscillator_indexes[1]);
 
-			int16_t assocatiate_oscillator_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
-			for(int16_t i = 0; i < MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-				assocatiate_oscillator_indexes[i] = UNOCCUPIED_OSCILLATOR;
-			}
-			for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
-				int16_t oscillator_index;
-				oscillator_t * const p_oscillator
-						= replicate_oscillator(native_oscillator_index, &oscillator_index);
-				if(NULL == p_oscillator){
-					return -1;
+			for(int k = 0; k < cooperative_oscillator_number; k++){
+				oscillator_t  * const p_cooperative_oscillator
+						= get_oscillator_pointer_from_index(cooperative_oscillator_indexes[k]);
+
+				int32_t const enhanced_loudness = ENHANCE_REVERB_LOUDNESS(p_cooperative_oscillator->loudness,
+																		  p_channel_controller->reverb);
+				int16_t const enhanced_loudness_over_32 = DIVIDE_BY_32(enhanced_loudness);
+				int16_t loudnesses[1 + REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER]
+						= { 0,
+							enhanced_loudness_over_32 * 9,
+							enhanced_loudness_over_32 * 6,
+							enhanced_loudness_over_32 * 7};
+				loudnesses[0] = enhanced_loudness - (loudnesses[1] + loudnesses[2] + loudnesses[3]);
+				p_cooperative_oscillator->loudness = loudnesses[0];
+
+				int16_t associate_oscillator_indexes[REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER];
+				for(int16_t i = 0; i < REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+					int16_t oscillator_index;
+					oscillator_t * const p_oscillator
+							= replicate_oscillator(cooperative_oscillator_indexes[k], &oscillator_index);
+					if(NULL == p_oscillator){
+						return -1;
+					}
+					associate_oscillator_indexes[i] = oscillator_index;
+					p_oscillator->loudness = loudnesses[1 + i];
+					SET_REVERB_ASSOCIATE(p_oscillator->state_bits);
 				}
-				p_oscillator->loudness = loudnesses[i + 1];
-				SET_REVERB_ASSOCIATE(p_oscillator->state_bits);
-				assocatiate_oscillator_indexes[REVERB_ASSOCIATE_START_INDEX + i] = oscillator_index;
+				store_associate_oscillator_indexes(MidiEffectReverb, cooperative_oscillator_indexes[k],
+											   &associate_oscillator_indexes[0]);
 			}
-
-			store_associate_oscillator_indexes(MidiEffectReverb, native_oscillator_index,
-											   &assocatiate_oscillator_indexes[0]);
 			break;
 		}
 	} while(0);
 
-	uint32_t reverb_delta_tick = obtain_reverb_delta_tick(p_channel_controller->reverb);
+	uint32_t const reverb_delta_tick = obtain_reverb_delta_tick(p_channel_controller->reverb);
 	{
-		int16_t assocatiate_oscillator_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
-		load_associate_oscillator_indexes(MidiEffectReverb, native_oscillator_index,
-										  &assocatiate_oscillator_indexes[0]);
-		for(int16_t i = 0; i < ASSOCIATE_REVERB_OSCILLATOR_NUMBER; i++){
-			put_event(event_type, assocatiate_oscillator_indexes[REVERB_ASSOCIATE_START_INDEX + i],
+		int effect_subordinate_oscillator_number = 0;
+		effect_subordinate_oscillator_number = count_all_subordinate_oscillators(MidiEffectReverb,
+																				 native_oscillator_index);
+		STACK_ARRAY(int16_t, effect_subordinate_oscillator_indexes, effect_subordinate_oscillator_number);
+		get_all_subordinate_oscillator_indexes(MidiEffectReverb, native_oscillator_index,
+											   &effect_subordinate_oscillator_indexes[0]);
+		for(int16_t i = 0; i < effect_subordinate_oscillator_number; i++){
+			put_event(event_type, effect_subordinate_oscillator_indexes[i],
 					  tick + (i + 1) * reverb_delta_tick);
 		}
-
 	}
 	return 0;
 }
@@ -188,77 +145,71 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 		return 2;
 	}
 
-	uint32_t chorus_delta_tick = obtain_chorus_delta_tick(p_channel_controller->chorus);
-
 	do {
 		if(EVENT_ACTIVATE == event_type){
-			int16_t cooperative_native_oscillator_indexes[1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER];
-			int cooperative_native_oscillator_number = 0;
-			cooperative_native_oscillator_indexes[0] = native_oscillator_index;
-			cooperative_native_oscillator_number += 1;
-			find_associate_oscillator_indexes(native_oscillator_index, REVERB_LEVEL, TOP_LEVEL,
-											  &cooperative_native_oscillator_indexes[0],
-											  1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER,
-					&cooperative_native_oscillator_number);
+			int cooperative_oscillator_number = 0;
+			cooperative_oscillator_number += 1;
+			cooperative_oscillator_number += count_all_subordinate_oscillators(MidiEffectAll & (~MidiEffectChorus),
+																					 native_oscillator_index);
+			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
+			cooperative_oscillator_indexes[0] = native_oscillator_index;
+			get_all_subordinate_oscillator_indexes(MidiEffectAll & (~MidiEffectChorus),
+												   native_oscillator_index,
+												   &cooperative_oscillator_indexes[1]);
 
-			for(int k = 0; k < cooperative_native_oscillator_number; k++){
-				oscillator_t *p_native_oscillator = get_oscillator_pointer_from_index(cooperative_native_oscillator_indexes[k]);
-
-				int16_t const loudness = p_native_oscillator->loudness;
+			for(int k = 0; k < cooperative_oscillator_number; k++){
+				oscillator_t *p_cooperative_oscillator
+						= get_oscillator_pointer_from_index(cooperative_oscillator_indexes[k]);
+				int16_t const loudness = p_cooperative_oscillator->loudness;
 				int16_t loudness_over_16 = DIVIDE_BY_16(loudness);
-				int16_t loudnesses[4]
+				int16_t loudnesses[1 + CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER]
 						= { 0,
 							4 * loudness_over_16,
 							3 * loudness_over_16,
 							5 * loudness_over_16};
 				loudnesses[0] = loudness - (4 + 3 + 5) * loudness_over_16;
-				p_native_oscillator->loudness = loudnesses[0];
-				int16_t assocatiate_oscillator_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER];
-				load_associate_oscillator_indexes(MidiEffectAll, cooperative_native_oscillator_indexes[k],
-												  &assocatiate_oscillator_indexes[0]);
-				for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
+				p_cooperative_oscillator->loudness = loudnesses[0];
+
+				int16_t associate_oscillator_indexes[CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER];
+				for(int16_t i = 0; i < CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
 					int16_t oscillator_index;
 					oscillator_t * const p_oscillator
-							= replicate_oscillator(cooperative_native_oscillator_indexes[k], &oscillator_index);
+							= replicate_oscillator(cooperative_oscillator_indexes[k], &oscillator_index);
 					if(NULL == p_oscillator){
 						return -1;
 					}
 					p_oscillator->loudness = loudnesses[i + 1];
 					p_oscillator->pitch_chorus_bend_in_semitones
-							= obtain_oscillator_pitch_chorus_bend_in_semitones(p_channel_controller->chorus,
-																			  p_channel_controller->max_pitch_chorus_bend_in_semitones);
-					p_oscillator->delta_phase
-							= calculate_oscillator_delta_phase(voice, p_oscillator->note,
-															   p_oscillator->pitch_chorus_bend_in_semitones);
+							= obtain_oscillator_pitch_chorus_bend_in_semitones(
+								p_channel_controller->chorus, p_channel_controller->max_pitch_chorus_bend_in_semitones);
 
-					int8_t const vibrato_modulation_in_semitones = p_channel_controller->vibrato_modulation_in_semitones;
-					p_oscillator->max_delta_vibrato_phase
-							= calculate_oscillator_delta_phase(voice, p_oscillator->note + vibrato_modulation_in_semitones,
-															   p_oscillator->pitch_chorus_bend_in_semitones) - p_oscillator->delta_phase;
+					p_oscillator->delta_phase = calculate_oscillator_delta_phase(voice, p_oscillator->note,
+																				 p_oscillator->pitch_chorus_bend_in_semitones);
+					associate_oscillator_indexes[i] = oscillator_index;
 					SET_CHORUS_ASSOCIATE(p_oscillator->state_bits);
-					assocatiate_oscillator_indexes[CHORUS_ASSOCIATE_START_INDEX + i] = oscillator_index;
 				}
-				store_associate_oscillator_indexes(MidiEffectAll, cooperative_native_oscillator_indexes[k],
-												  &assocatiate_oscillator_indexes[0]);
-
-				for(int16_t i = 0; i < ASSOCIATE_CHORUS_OSCILLATOR_NUMBER; i++){
-					put_event(event_type, assocatiate_oscillator_indexes[CHORUS_ASSOCIATE_START_INDEX + i],
-							  tick + (i + 1) * chorus_delta_tick);
-				}
+				store_associate_oscillator_indexes(MidiEffectChorus, cooperative_oscillator_indexes[k],
+											   &associate_oscillator_indexes[0]);
 			}
 			break;
 		}
-
-		int16_t oscillator_indexes[(1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER) * ASSOCIATE_REVERB_OSCILLATOR_NUMBER] = {0};
-		int oscillator_number = 0;
-		find_associate_oscillator_indexes(native_oscillator_index, CHORUS_LEVEL, TOP_LEVEL,
-										  &oscillator_indexes[0],
-				(1 + ASSOCIATE_REVERB_OSCILLATOR_NUMBER) * ASSOCIATE_REVERB_OSCILLATOR_NUMBER,
-				&oscillator_number);
-		for(int16_t i = 0; i < oscillator_number; i++){
-			put_event(event_type, oscillator_indexes[i], tick + (i + 1) * chorus_delta_tick);
-		}
 	} while(0);
+
+	uint32_t const chorus_delta_tick = obtain_chorus_delta_tick(p_channel_controller->chorus);
+	{
+		int effect_subordinate_oscillator_number = 0;
+		effect_subordinate_oscillator_number = count_all_subordinate_oscillators(MidiEffectChorus,
+																				 native_oscillator_index);
+		STACK_ARRAY(int16_t, effect_subordinate_oscillator_indexes, effect_subordinate_oscillator_number);
+		get_all_subordinate_oscillator_indexes(MidiEffectChorus, native_oscillator_index,
+											   &effect_subordinate_oscillator_indexes[0]);
+		int jj = 0;
+		for(int16_t i = 0; i < effect_subordinate_oscillator_number; i++){
+			put_event(event_type, effect_subordinate_oscillator_indexes[i], tick + (jj + 1) * chorus_delta_tick);
+			jj += 1;
+			jj /= CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER;
+		}
+	}
 
 	return 0;
 }

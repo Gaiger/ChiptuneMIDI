@@ -12,8 +12,6 @@ enum EnvelopeState
 	ENVELOPE_STATE_MAX,
 };
 
-#define MAX_ASSOCIATE_OSCILLATOR_NUMBER				(6)
-
 typedef struct _oscillator
 {
 	uint8_t		state_bits;
@@ -29,8 +27,7 @@ typedef struct _oscillator
 	int16_t		amplitude;
 union{
 	struct {
-		int16_t		*p_associate_oscillator_indexes;
-
+		int16_t		associate_oscillator_record_index;
 		uint16_t	envelope_table_index;
 		uint16_t	envelope_same_index_count;
 		int16_t		release_reference_amplitude;
@@ -96,6 +93,9 @@ union{
 
 #define IS_NATIVE_OSCILLATOR(STATE_BITS)			((IS_REVERB_ASSOCIATE(STATE_BITS) || IS_CHORUS_ASSOCIATE(STATE_BITS)) ? false : true)
 
+#define SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER	(4 - 1)
+
+
 uint16_t const calculate_oscillator_delta_phase(int8_t const voice,
 												int16_t const note, float const pitch_chorus_bend_in_semitones);
 
@@ -121,16 +121,16 @@ oscillator_t * const get_oscillator_pointer_from_index(int16_t const index);
 
 enum MidiEffectType
 {
-	MidiEffectAll,
-	MidiEffectReverb,
-	MidiEffectChorus,
+	MidiEffectNone = 0,
+	MidiEffectReverb = (0x01 << 0),
+	MidiEffectChorus = (0x01 << 1),
+	MidiEffectAll = MidiEffectReverb | MidiEffectChorus,
 };
-int store_associate_oscillator_indexes(int8_t midi_effect_type, int16_t const index,
-									  int16_t const associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER]);
-int load_associate_oscillator_indexes(int8_t midi_effect_type, int16_t const index,
-									  int16_t associate_indexes[MAX_ASSOCIATE_OSCILLATOR_NUMBER]);
-int16_t count_all_subordinate_oscillators(int8_t midi_effect_type, int16_t root_index);
-int get_all_subordinate_oscillator_indexes(int8_t midi_effect_type, int16_t root_index,
+
+int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const index,
+									  int16_t const * const p_associate_indexes);
+int16_t count_all_subordinate_oscillators(uint8_t const midi_effect_type, int16_t const root_index);
+int get_all_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_index,
 										   int16_t * const p_associate_indexes);
 
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_
