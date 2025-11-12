@@ -116,10 +116,10 @@ typedef struct _oscillator_link
 } oscillator_link_t;
 
 #ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
-static oscillator_t s_oscillators[OCCUPIABLE_OSCILLATOR_CAPACITY];
-static oscillator_link_t s_oscillator_links[OCCUPIABLE_OSCILLATOR_CAPACITY];
+	#define OSCILLATOR_POOL_CAPACITY			(512)
 #else
-#define OSCILLATOR_POOL_CAPACITY			(64)
+	#define OSCILLATOR_POOL_CAPACITY			(64)
+#endif
 
 typedef struct _oscillator_pool
 {
@@ -127,6 +127,9 @@ typedef struct _oscillator_pool
 	oscillator_link_t oscillator_links[OSCILLATOR_POOL_CAPACITY];
 } oscillator_pool_t;
 
+#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+static oscillator_pool_t s_oscillator_pool;
+#else
 static oscillator_pool_t * s_oscillator_pool_pointer_table[(INT16_MAX+1) / OSCILLATOR_POOL_CAPACITY] = {NULL};
 static int16_t s_number_of_oscillator_pool = 0;
 #endif
@@ -140,21 +143,21 @@ int16_t s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
 
 static inline int16_t const get_occupiable_oscillator_capacity()
 {
-	return OCCUPIABLE_OSCILLATOR_CAPACITY;
+	return OSCILLATOR_POOL_CAPACITY;
 }
 
 /**********************************************************************************/
 
 static inline oscillator_link_t * const get_oscillator_link_address_from_index(int16_t const index)
 {
-	return &s_oscillator_links[index];
+	return &s_oscillator_pool.oscillator_links[index];
 }
 
 /**********************************************************************************/
 
 static inline oscillator_t * const get_oscillator_address_from_index(int16_t const index)
 {
-	return &s_oscillators[index];
+	return &s_oscillator_pool.oscillators[index];
 }
 
 /**********************************************************************************/
@@ -173,7 +176,6 @@ static int mark_all_oscillators_and_links_unused(void)
 {
 	for(int16_t i = 0; i < get_occupiable_oscillator_capacity(); i++){
 		get_oscillator_address_from_index(i)->voice = UNOCCUPIED_OSCILLATOR;
-		get_oscillator_address_from_index(i)->p_associate_oscillator_indexes = NULL;
 		get_oscillator_address_from_index(i)->associate_oscillator_record_index
 				= NO_ASSOCIATE_OSCILLOR_RECORD;
 		oscillator_link_t * const p_oscillator_link = get_oscillator_link_address_from_index(i);

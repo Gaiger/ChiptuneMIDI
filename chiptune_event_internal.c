@@ -10,15 +10,8 @@
 
 #include "chiptune_event_internal.h"
 
-
-
 /**********************************************************************************/
 /**********************************************************************************/
-
-#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
-	#define QUEUABLE_EVENT_CAPACITY					(OCCUPIABLE_OSCILLATOR_CAPACITY * 3 / 2)
-#endif
-#define NO_EVENT									(-1)
 
 enum
 {
@@ -36,18 +29,24 @@ typedef struct _event
 } event_t;
 
 #ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
-static event_t s_events[QUEUABLE_EVENT_CAPACITY];
+	#define EVENT_POOL_CAPACITY						(768)
 #else
+	#define EVENT_POOL_CAPACITY						(64)
+#endif
 
-#define EVENT_POOL_CAPACITY						 (64)
 typedef struct _event_pool
 {
 	event_t events[EVENT_POOL_CAPACITY];
 } event_pool_t;
 
+#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+static event_pool_t s_event_pool;
+#else
 static event_pool_t * s_event_pool_pointer_table[(INT16_MAX + 1)/EVENT_POOL_CAPACITY] = {NULL};
 static int16_t s_number_of_event_pool = 0;
 #endif
+
+#define NO_EVENT									(-1)
 int16_t s_queued_event_number = 0;
 int16_t s_queued_event_head_index = NO_EVENT;
 
@@ -56,14 +55,14 @@ int16_t s_queued_event_head_index = NO_EVENT;
 
 static inline int16_t const get_queuable_event_capacity()
 {
-	return QUEUABLE_EVENT_CAPACITY;
+	return EVENT_POOL_CAPACITY;
 }
 
 /**********************************************************************************/
 
 static inline event_t * const get_event_pointer_from_index(int16_t const index)
 {
-	return &s_events[index];
+	return &s_event_pool.events[index];
 }
 
 /**********************************************************************************/
