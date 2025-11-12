@@ -636,43 +636,7 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 
 int16_t count_all_subordinate_oscillators(uint8_t const midi_effect_type, int16_t const root_index)
 {
-	oscillator_t * const p_oscillator
-			= get_oscillator_address_from_index(root_index);
-	int16_t subordinate_number = 0;
-	do{
-		if(NO_ASSOCIATE_OSCILLOR_RECORD == p_oscillator->associate_oscillator_record_index){
-			break;
-		}
-		int16_t record_index = p_oscillator->associate_oscillator_record_index;
-
-		while(1)
-		{
-			associate_oscillator_record_t *p_record = &s_associate_oscillator_records[record_index];
-			if(false == p_record->is_used){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: associate_oscillator_records index = %d is not labeled as used\r\n",
-								record_index);
-				break;
-			}
-
-			do
-			{
-				if(true == IS_MIDI_EFFECT_TYPE_MATCHED(midi_effect_type, p_record->midi_effect_type)){
-					subordinate_number += SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER;
-					break;
-				}
-
-				for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-					subordinate_number += count_all_subordinate_oscillators(midi_effect_type, p_record->indexes[i]);
-				}
-			}while(0);
-			if(NO_ASSOCIATE_OSCILLOR_RECORD == p_record->next){
-				break;
-			}
-			record_index = p_record->next;
-		}
-	}while(0);
-
-	return subordinate_number;
+	return get_all_subordinate_oscillator_indexes(midi_effect_type, root_index, NULL);
 }
 
 /**********************************************************************************/
@@ -701,18 +665,21 @@ int get_all_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16
 			do
 			{
 				if(true == IS_MIDI_EFFECT_TYPE_MATCHED(midi_effect_type, p_record->midi_effect_type)){
-
-					for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-						p_associate_indexes[i + subordinate_number] = p_record->indexes[i];
+					if(NULL != p_associate_indexes){
+						for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+							p_associate_indexes[i + subordinate_number] = p_record->indexes[i];
+						}
 					}
 					subordinate_number += SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER;
 					break;
 				}
 
 				for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+					int16_t * p_moving_associate_indexes
+							= p_associate_indexes + subordinate_number * ( NULL != p_associate_indexes);
 					subordinate_number +=
 							get_all_subordinate_oscillator_indexes(midi_effect_type, p_record->indexes[i],
-																   &p_associate_indexes[subordinate_number]);
+																   p_moving_associate_indexes);
 				}
 			}while(0);
 			if(NO_ASSOCIATE_OSCILLOR_RECORD == p_record->next){
