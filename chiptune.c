@@ -193,15 +193,14 @@ int setup_pitch_oscillator(uint32_t const tick, int8_t const voice, int8_t const
 
 	p_oscillator->amplitude = 0;
 
-	p_oscillator->pitch_chorus_bend_in_semitones = 0;
+	p_oscillator->pitch_chorus_bend_in_semitones = 0.0;
 	p_oscillator->delta_phase
-			= calculate_oscillator_delta_phase(voice, p_oscillator->note,
-											   p_oscillator->pitch_chorus_bend_in_semitones);
+			= calculate_oscillator_delta_phase(voice, p_oscillator->note, 0.0);
 
 	p_oscillator->max_delta_vibrato_phase
 			= calculate_oscillator_delta_phase(voice,
-				p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitones,
-				p_oscillator->pitch_chorus_bend_in_semitones) - p_oscillator->delta_phase;
+				p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitones, 0.0)
+				- p_oscillator->delta_phase;
 
 	p_oscillator->vibrato_table_index = 0;
 	p_oscillator->vibrato_same_index_count = 0;
@@ -785,7 +784,7 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 		if(p_channel_controller->vibrato_same_index_number == p_oscillator->vibrato_same_index_count){
 			p_oscillator->vibrato_same_index_count = 0;
 			p_oscillator->vibrato_table_index = REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(
-						p_oscillator->vibrato_table_index  + 1);
+						p_oscillator->vibrato_table_index + 1);
 		}
 	} while(0);
 }
