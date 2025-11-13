@@ -128,70 +128,19 @@ typedef struct _oscillator_pool
 } oscillator_pool_t;
 
 #ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
-static oscillator_pool_t s_oscillator_pool;
+static oscillator_pool_t	s_oscillator_pool;
+
+static oscillator_pool_t *	const s_oscillator_pool_pointer_table[1] = {&s_oscillator_pool};
+static int16_t const		s_number_of_oscillator_pool = 1;
 #else
-static oscillator_pool_t * s_oscillator_pool_pointer_table[(INT16_MAX+1) / OSCILLATOR_POOL_CAPACITY] = {NULL};
-static int16_t s_number_of_oscillator_pool = 0;
+static oscillator_pool_t *	s_oscillator_pool_pointer_table[(INT16_MAX+1) / OSCILLATOR_POOL_CAPACITY] = {NULL};
+static int16_t				s_number_of_oscillator_pool = 0;
 #endif
 
 static int16_t s_occupied_oscillator_number = 0;
 int16_t s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
 int16_t s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
 
-#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
-/**********************************************************************************/
-
-static inline int16_t const get_occupiable_oscillator_capacity()
-{
-	return OSCILLATOR_POOL_CAPACITY;
-}
-
-/**********************************************************************************/
-
-static inline oscillator_link_t * const get_oscillator_link_address_from_index(int16_t const index)
-{
-	return &s_oscillator_pool.oscillator_links[index];
-}
-
-/**********************************************************************************/
-
-static inline oscillator_t * const get_oscillator_address_from_index(int16_t const index)
-{
-	return &s_oscillator_pool.oscillators[index];
-}
-
-/**********************************************************************************/
-
-static inline bool is_unoccupied_oscillator_available()
-{
-	if(get_occupiable_oscillator_capacity() == s_occupied_oscillator_number){
-		return false;
-	}
-	return true;
-}
-
-/**********************************************************************************/
-
-static int mark_all_oscillators_and_links_unused(void)
-{
-	for(int16_t i = 0; i < get_occupiable_oscillator_capacity(); i++){
-		get_oscillator_address_from_index(i)->voice = UNOCCUPIED_OSCILLATOR;
-		get_oscillator_address_from_index(i)->associate_oscillator_record_index
-				= NO_ASSOCIATE_OSCILLOR_RECORD;
-		oscillator_link_t * const p_oscillator_link = get_oscillator_link_address_from_index(i);
-		p_oscillator_link->previous = UNOCCUPIED_OSCILLATOR;
-		p_oscillator_link->next = UNOCCUPIED_OSCILLATOR;
-	}
-	s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
-	s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
-	s_occupied_oscillator_number = 0;
-	return 0;
-}
-
-/**********************************************************************************/
-
-static int release_all_oscillators_and_links(void) { return mark_all_oscillators_and_links_unused(); }
-#else
 /**********************************************************************************/
 
 static inline int16_t const get_occupiable_oscillator_capacity()
@@ -215,9 +164,15 @@ static inline oscillator_t * const get_oscillator_address_from_index(int16_t con
 				->oscillators[index % OSCILLATOR_POOL_CAPACITY];
 }
 
+#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
 /**********************************************************************************/
 
-static int append_new_oscillator_pool(void)
+static inline bool is_to_append_oscillator_pool_successfully(void){ return false;}
+
+#else
+/**********************************************************************************/
+
+static int allocate_append_oscillator_pool(void)
 {
 	int ret = 0;
 	do
@@ -244,23 +199,34 @@ static int append_new_oscillator_pool(void)
 
 /**********************************************************************************/
 
+static inline bool is_to_append_oscillator_pool_successfully(void)
+{
+	bool ret = true;
+	do
+	{
+		if(INT16_MAX == s_occupied_oscillator_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number"
+										 " reaches the CAP INT16_MAX\r\n");
+			ret = false;
+			break;
+		}
+		if(0 > allocate_append_oscillator_pool()){
+			ret = false;
+			break;
+		}
+	}while(0);
+
+	return ret;
+}
+#endif
+
+/**********************************************************************************/
+
 static bool is_unoccupied_oscillator_available()
 {
 	bool ret = true;
 	if(get_occupiable_oscillator_capacity() == s_occupied_oscillator_number){
-		do
-		{
-			if(INT16_MAX == s_occupied_oscillator_number){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number"
-											 " reaches the CAP INT16_MAX\r\n");
-				ret = false;
-				break;
-			}
-			if(0 > append_new_oscillator_pool()){
-				ret = false;
-				break;
-			}
-		}while(0);
+		ret = is_to_append_oscillator_pool_successfully();
 	}
 	return ret;
 }
@@ -288,6 +254,9 @@ static int mark_all_oscillators_and_links_unused(void)
 
 static int release_all_oscillators_and_links(void)
 {
+#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+	return mark_all_oscillators_and_links_unused();
+#else
 	for(int j = 0; j < s_number_of_oscillator_pool; j++){
 		chiptune_free(s_oscillator_pool_pointer_table[j]);
 		s_oscillator_pool_pointer_table[j] = NULL;
@@ -298,8 +267,8 @@ static int release_all_oscillators_and_links(void)
 	s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number = 0;
 	return 0;
-}
 #endif
+}
 
 #ifdef _CHECK_OCCUPIED_OSCILLATOR_LIST
 /**********************************************************************************/
@@ -397,23 +366,34 @@ static int occupy_oscillator(int16_t const index)
 
 oscillator_t * const acquire_oscillator(int16_t * const p_index)
 {
+	*p_index = UNOCCUPIED_OSCILLATOR;
 	if(false == is_unoccupied_oscillator_available()){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all oscillators are used\r\n");
 		return NULL;
 	}
-	for(int16_t i = 0; i < get_occupiable_oscillator_capacity(); i++){
+
+	int16_t i;
+	for(i = 0; i < get_occupiable_oscillator_capacity(); i++){
 		if(UNOCCUPIED_OSCILLATOR == get_oscillator_address_from_index(i)->voice){
-			occupy_oscillator(i);
-			*p_index = i;
-			oscillator_t * const p_oscillator = get_oscillator_address_from_index(i);
-			memset(p_oscillator, 0, sizeof(oscillator_t));
-			p_oscillator->associate_oscillator_record_index = NO_ASSOCIATE_OSCILLOR_RECORD;
-			return get_oscillator_address_from_index(i);
+			break;
 		}
 	}
-	CHIPTUNE_PRINTF(cDeveloping, "ERROR :: available oscillator is not found\r\n");
-	*p_index = UNOCCUPIED_OSCILLATOR;
-	return NULL;
+
+	oscillator_t * p_oscillator = NULL;
+	do
+	{
+		if(get_occupiable_oscillator_capacity() == i){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: available oscillator is not found\r\n");
+			break;
+		}
+		occupy_oscillator(i);
+		*p_index = i;
+		p_oscillator = get_oscillator_address_from_index(i);
+		memset(p_oscillator, 0, sizeof(oscillator_t));
+		p_oscillator->associate_oscillator_record_index = NO_ASSOCIATE_OSCILLOR_RECORD;
+	} while(0);
+
+	return p_oscillator;
 }
 
 /**********************************************************************************/
