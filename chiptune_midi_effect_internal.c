@@ -72,11 +72,11 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 		if(EVENT_ACTIVATE == event_type){
 			int cooperative_oscillator_number = 0;
 			cooperative_oscillator_number += 1;
-			cooperative_oscillator_number += count_all_subordinate_oscillators(MidiEffectAll & (~MidiEffectReverb),
+			cooperative_oscillator_number += count_all_subordinate_oscillators(WITHOUT_EFFECT(MidiEffectReverb),
 																					 native_oscillator_index);
 			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
 			cooperative_oscillator_indexes[0] = native_oscillator_index;
-			get_all_subordinate_oscillator_indexes(MidiEffectAll & (~MidiEffectReverb),
+			get_all_subordinate_oscillator_indexes(WITHOUT_EFFECT(MidiEffectReverb),
 												   native_oscillator_index,
 												   &cooperative_oscillator_indexes[1]);
 
@@ -149,11 +149,11 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 		if(EVENT_ACTIVATE == event_type){
 			int cooperative_oscillator_number = 0;
 			cooperative_oscillator_number += 1;
-			cooperative_oscillator_number += count_all_subordinate_oscillators(MidiEffectAll & (~MidiEffectChorus),
+			cooperative_oscillator_number += count_all_subordinate_oscillators(WITHOUT_EFFECT(MidiEffectChorus),
 																					 native_oscillator_index);
 			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
 			cooperative_oscillator_indexes[0] = native_oscillator_index;
-			get_all_subordinate_oscillator_indexes(MidiEffectAll & (~MidiEffectChorus),
+			get_all_subordinate_oscillator_indexes(WITHOUT_EFFECT(MidiEffectChorus),
 												   native_oscillator_index,
 												   &cooperative_oscillator_indexes[1]);
 

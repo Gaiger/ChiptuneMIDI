@@ -126,6 +126,7 @@ enum MidiEffectType
 	MidiEffectChorus = (0x01 << 1),
 	MidiEffectAll = MidiEffectReverb | MidiEffectChorus,
 };
+#define WITHOUT_EFFECT(MIDI_EFFECT)   (MidiEffectAll & (~(MIDI_EFFECT)))
 
 int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const index,
 									  int16_t const * const p_associate_indexes);
