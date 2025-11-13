@@ -40,56 +40,19 @@ typedef struct _event_pool
 } event_pool_t;
 
 #ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
-static event_pool_t s_event_pool;
+static event_pool_t		s_event_pool;
+
+static event_pool_t *	const s_event_pool_pointer_table[1] = {&s_event_pool};
+static int16_t const	s_number_of_event_pool = 1;
 #else
-static event_pool_t * s_event_pool_pointer_table[(INT16_MAX + 1)/EVENT_POOL_CAPACITY] = {NULL};
-static int16_t s_number_of_event_pool = 0;
+static event_pool_t *	s_event_pool_pointer_table[(INT16_MAX + 1)/EVENT_POOL_CAPACITY] = {NULL};
+static int16_t			s_number_of_event_pool = 0;
 #endif
 
 #define NO_EVENT									(-1)
 int16_t s_queued_event_number = 0;
 int16_t s_queued_event_head_index = NO_EVENT;
 
-#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
-/**********************************************************************************/
-
-static inline int16_t const get_queuable_event_capacity()
-{
-	return EVENT_POOL_CAPACITY;
-}
-
-/**********************************************************************************/
-
-static inline event_t * const get_event_pointer_from_index(int16_t const index)
-{
-	return &s_event_pool.events[index];
-}
-
-/**********************************************************************************/
-
-static inline bool is_unqueued_event_available()
-{
-	if(get_queuable_event_capacity() == s_queued_event_number){
-		return false;
-	}
-	return true;
-}
-
-/**********************************************************************************/
-
-static int mark_all_events_unused(void)
-{
-	for(int16_t i = 0; i < get_queuable_event_capacity(); i++){
-		get_event_pointer_from_index(i)->type = UNUSED_EVENT;
-	}
-	s_queued_event_number = 0;
-	return 0;
-}
-
-/**********************************************************************************/
-
-static int release_all_events(void) { return mark_all_events_unused(); }
-#else
 /**********************************************************************************/
 
 static inline int16_t const get_queuable_event_capacity()
@@ -105,9 +68,15 @@ static event_t * const get_event_pointer_from_index(int16_t const index)
 				->events[index % EVENT_POOL_CAPACITY];
 }
 
+#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
 /**********************************************************************************/
 
-static int append_new_event_pool(void)
+static inline bool is_to_append_event_pool_successfully(void){ return false; }
+
+#else
+/**********************************************************************************/
+
+static int allocate_and_append_event_pool(void)
 {
 	int ret = 0;
 	do
@@ -133,23 +102,33 @@ static int append_new_event_pool(void)
 
 /**********************************************************************************/
 
+static inline bool is_to_append_event_pool_successfully(void)
+{
+	int ret = true;
+	do
+	{
+		if(INT16_MAX == s_queued_event_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_queued_event_number"
+										 " reaches the CAP INT16_MAX\r\n");
+			ret = false;
+			break;
+		}
+		if(0 > allocate_and_append_event_pool()){
+			ret = false;
+			break;
+		}
+	}while(0);
+	return ret;
+}
+#endif
+
+/**********************************************************************************/
+
 static bool is_unqueued_event_available()
 {
 	bool ret = true;
 	if(get_queuable_event_capacity() == s_queued_event_number){
-		do
-		{
-			if(INT16_MAX == s_queued_event_number){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_queued_event_number"
-											 " reaches the CAP INT16_MAX\r\n");
-				ret = false;
-				break;
-			}
-			if(0 > append_new_event_pool()){
-				ret = false;
-				break;
-			}
-		}while(0);
+		ret = is_to_append_event_pool_successfully();
 	}
 	return ret;
 }
@@ -164,7 +143,6 @@ static int mark_all_events_unused(void)
 			p_event_pool->events[i].type = UNUSED_EVENT;
 		}
 	}
-
 	s_queued_event_number = 0;
 	return 0;
 }
@@ -173,16 +151,18 @@ static int mark_all_events_unused(void)
 
 static int release_all_events(void)
 {
+#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+	return mark_all_events_unused();
+#else
 	for(int16_t j = 0; j < s_number_of_event_pool; j++){
 		chiptune_free(s_event_pool_pointer_table[j]);
 		s_event_pool_pointer_table[j] = NULL;
 	}
 	s_number_of_event_pool = 0;
-
 	s_queued_event_number = 0;
 	return 0;
-}
 #endif
+}
 
 #ifdef _CHECK_EVENT_LIST
 /**********************************************************************************/
