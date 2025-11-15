@@ -99,7 +99,7 @@ typedef struct _oscillator_link
 	int16_t next;
 } oscillator_link_t;
 
-#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+#ifdef _USING_STATIC_RESOURCE_ALLOCATION
 	#define OSCILLATOR_POOL_CAPACITY			(512)
 #else
 	#define OSCILLATOR_POOL_CAPACITY			(64)
@@ -111,7 +111,7 @@ typedef struct _oscillator_pool
 	oscillator_link_t oscillator_links[OSCILLATOR_POOL_CAPACITY];
 } oscillator_pool_t;
 
-#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+#ifdef _USING_STATIC_RESOURCE_ALLOCATION
 static oscillator_pool_t	s_oscillator_pool;
 
 static oscillator_pool_t *	const s_oscillator_pool_pointer_table[1] = {&s_oscillator_pool};
@@ -148,7 +148,7 @@ static inline oscillator_t * const get_oscillator_address_from_index(int16_t con
 				->oscillators[index % OSCILLATOR_POOL_CAPACITY];
 }
 
-#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+#ifdef _USING_STATIC_RESOURCE_ALLOCATION
 /**********************************************************************************/
 
 static inline bool is_to_append_oscillator_pool_successfully(void){ return false;}
@@ -238,7 +238,7 @@ static int mark_all_oscillators_and_links_unused(void)
 
 static int release_all_oscillators_and_links(void)
 {
-#ifdef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+#ifdef _USING_STATIC_RESOURCE_ALLOCATION
 	return mark_all_oscillators_and_links_unused();
 #else
 	for(int j = 0; j < s_number_of_oscillator_pool; j++){
@@ -348,16 +348,16 @@ typedef struct _midi_effect_associate_link_pool
 } midi_effect_associate_link_pool_t;
 
 
-#if 1
+#ifdef _USING_STATIC_RESOURCE_ALLOCATION
 static midi_effect_associate_link_pool_t	s_associate_midi_effect_associate_link_pool;
 static midi_effect_associate_link_pool_t *	const s_midi_effect_associate_link_pool_t_pointer_table[1]
 											= {&s_associate_midi_effect_associate_link_pool};
 static int16_t const	s_number_of_associate_midi_effect_associate_link_pool = 1;
 #else
-static midi_effect_associate_link_pool_t *	const
-											s_midi_effect_associate_link_pool_t_pointer_table[(INT16_MAX + 1)/EVENT_POOL_CAPACITY]
-static int16_t			s_number_of_associate_midi_effect_associate_link = 0;
+static midi_effect_associate_link_pool_t *	s_midi_effect_associate_link_pool_t_pointer_table[(INT16_MAX + 1)/MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY];
+static int16_t			s_number_of_associate_midi_effect_associate_link_pool = 0;
 #endif
+
 int16_t s_used_midi_effect_associate_link_number = 0;
 
 /**********************************************************************************/
@@ -377,14 +377,60 @@ static midi_effect_associate_link_t * const get_midi_effect_associate_link_from_
 
 /**********************************************************************************/
 
-#if(0)
-
+#ifdef _USING_STATIC_RESOURCE_ALLOCATION
+/**********************************************************************************/
+static inline bool is_to_midi_effect_associate_link_pool_successfully(void){ return false; }
 #else
+
 /**********************************************************************************/
 
-static inline bool is_to_midi_effect_associate_link_pool_successfully(void){ return false; }
+static int allocate_and_append_midi_effect_associate_link_pool(void)
+{
+	int ret = 0;
+	do
+	{
+		midi_effect_associate_link_pool_t * const p_new_midi_effect_associate_link_pool
+			= (midi_effect_associate_link_pool_t*)chiptune_malloc(1 * sizeof(midi_effect_associate_link_pool_t));
 
+		if(NULL == p_new_midi_effect_associate_link_pool){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: allocate midi_effect_associate_link_pool_t fail\r\n");
+			ret = -1;
+			break;
+		}
+		for(int16_t i = 0; i < MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY; i++){
+			p_new_midi_effect_associate_link_pool->midi_effect_associate_links[i].is_used = false;
+		}
+
+		s_midi_effect_associate_link_pool_t_pointer_table[s_number_of_associate_midi_effect_associate_link_pool]
+				= p_new_midi_effect_associate_link_pool;
+		s_number_of_associate_midi_effect_associate_link_pool += 1;
+	}while(0);
+
+	return ret;
+}
+
+/**********************************************************************************/
+
+static inline bool is_to_midi_effect_associate_link_pool_successfully(void)
+{
+	int ret = true;
+	do
+	{
+		if(INT16_MAX == s_used_midi_effect_associate_link_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_used_midi_effect_associate_link_number"
+										 " reaches the CAP INT16_MAX\r\n");
+			ret = false;
+			break;
+		}
+		if(0 > allocate_and_append_midi_effect_associate_link_pool()){
+			ret = false;
+			break;
+		}
+	}while(0);
+	return ret;
+}
 #endif
+
 
 static bool is_midi_effect_associate_link_available()
 {
@@ -413,10 +459,15 @@ static void mark_all_midi_effect_associate_links_unused(void)
 
 static void release_all_midi_effect_associate_links(void)
 {
-#if (1)
+#ifdef _USING_STATIC_RESOURCE_ALLOCATION
 	mark_all_midi_effect_associate_links_unused();
 #else
-
+	for(int16_t j = 0; j < s_number_of_associate_midi_effect_associate_link_pool; j++){
+		chiptune_free(s_midi_effect_associate_link_pool_t_pointer_table[j]);
+		s_midi_effect_associate_link_pool_t_pointer_table[j] = NULL;
+	}
+	s_number_of_associate_midi_effect_associate_link_pool = 0;
+	s_used_midi_effect_associate_link_number = 0;
 #endif
 }
 

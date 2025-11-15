@@ -10,7 +10,7 @@
 //#define _INCREMENTAL_SAMPLE_INDEX
 //#define _AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
 //#define _KEEP_NOTELESS_CHANNELS
-//#define _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+//#define _USING_STATIC_RESOURCE_ALLOCATION
 
 #define _PRINT_DEVELOPING
 //#define _PRINT_MIDI_NOTE
@@ -33,7 +33,7 @@
 
 #define NULL_TICK									(UINT32_MAX)
 
-#ifndef _FIXED_OSCILLATOR_AND_EVENT_CAPACITY
+#ifndef _USING_STATIC_RESOURCE_ALLOCATION
 	void* chiptune_malloc(size_t size);
 	void chiptune_free(void* ptr);
 #endif
