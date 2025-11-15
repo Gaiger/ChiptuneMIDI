@@ -27,7 +27,7 @@ typedef struct _oscillator
 	int16_t		amplitude;
 union{
 	struct {
-		int16_t		associate_oscillator_record_index;
+		int16_t		midi_effect_aassociate_link_index;
 		uint16_t	envelope_table_index;
 		uint16_t	envelope_same_index_count;
 		int16_t		release_reference_amplitude;

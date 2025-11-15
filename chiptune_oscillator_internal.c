@@ -324,54 +324,55 @@ static int check_occupied_oscillator_list(void)
 
 /**********************************************************************************/
 
-typedef struct _associate_oscillator_record_t
+typedef struct _midi_effect_associate_link_t
 {
 	bool is_used;
 	uint8_t midi_effect_type;
-	int16_t indexes[SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER];
-	int16_t next;
-} associate_oscillator_record_t;
+	int16_t associate_oscillator_indexes[SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER];
+	int16_t next_link_index;
+} midi_effect_associate_link_t;
 
-#define NO_ASSOCIATE_OSCILLOR_RECORD				(-1)
+#define NO_MIDI_EFFECT_ASSOCIATE_LINK				(-1)
 #define IS_MIDI_EFFECT_TYPE_MATCHED(TYPE_A, TYPE_B)	( ((TYPE_A) & (TYPE_B)) ? true : false)
 
 #if 1
-	#define ASSOCIATE_OSCILLATOR_RECORD_POOL_CAPACITY	(256)
+	#define MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY \
+													(256)
 #else
-	#define ASSOCIATE_OSCILLATOR_RECORD_POOL_CAPACITY	(32)
+	#define MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY	(32)
 #endif
 
-typedef struct _event_pool
+typedef struct _midi_effect_associate_link_pool
 {
-	associate_oscillator_record_t associate_oscillator_records[ASSOCIATE_OSCILLATOR_RECORD_POOL_CAPACITY];
-} associate_oscillator_record_pool_t;
+	midi_effect_associate_link_t midi_effect_associate_links[MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY];
+} midi_effect_associate_link_pool_t;
 
 
 #if 1
-static associate_oscillator_record_pool_t	s_associate_oscillator_record_pool;
-static associate_oscillator_record_pool_t *	const s_associate_oscillator_record_pointer_table[1]
-											= {&s_associate_oscillator_record_pool};
-static int16_t const	s_number_of_associate_oscillator_record_pool = 1;
+static midi_effect_associate_link_pool_t	s_associate_midi_effect_associate_link_pool;
+static midi_effect_associate_link_pool_t *	const s_midi_effect_associate_link_pool_t_pointer_table[1]
+											= {&s_associate_midi_effect_associate_link_pool};
+static int16_t const	s_number_of_associate_midi_effect_associate_link_pool = 1;
 #else
-static associate_oscillator_record_pool_t *	const
-									s_associate_oscillator_record_pointer_table[(INT16_MAX + 1)/EVENT_POOL_CAPACITY]
-static int16_t			s_number_of_event_pool = 0;
+static midi_effect_associate_link_pool_t *	const
+											s_midi_effect_associate_link_pool_t_pointer_table[(INT16_MAX + 1)/EVENT_POOL_CAPACITY]
+static int16_t			s_number_of_associate_midi_effect_associate_link = 0;
 #endif
-int16_t s_used_associate_oscillator_records_number = 0;
+int16_t s_used_midi_effect_associate_link_number = 0;
 
 /**********************************************************************************/
 
-static inline int16_t const get_associate_oscillator_record_capacity()
+static inline int16_t const get_midi_effect_associate_link_capacity()
 {
-	return s_number_of_associate_oscillator_record_pool * ASSOCIATE_OSCILLATOR_RECORD_POOL_CAPACITY;
+	return s_number_of_associate_midi_effect_associate_link_pool * MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY;
 }
 
 /**********************************************************************************/
 
-static associate_oscillator_record_t * const get_associate_oscillator_record_from_index(int16_t const index)
+static midi_effect_associate_link_t * const get_midi_effect_associate_link_from_index(int16_t const index)
 {
-	return &s_associate_oscillator_record_pointer_table[index / ASSOCIATE_OSCILLATOR_RECORD_POOL_CAPACITY]
-				->associate_oscillator_records[index % ASSOCIATE_OSCILLATOR_RECORD_POOL_CAPACITY];
+	return &s_midi_effect_associate_link_pool_t_pointer_table[index / MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY]
+				->midi_effect_associate_links[index % MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY];
 }
 
 /**********************************************************************************/
@@ -381,40 +382,39 @@ static associate_oscillator_record_t * const get_associate_oscillator_record_fro
 #else
 /**********************************************************************************/
 
-static inline bool is_to_append_associate_oscillator_record_pool_successfully(void){ return false; }
+static inline bool is_to_midi_effect_associate_link_pool_successfully(void){ return false; }
 
 #endif
 
-static bool is_associate_oscillator_record_available()
+static bool is_midi_effect_associate_link_available()
 {
 	bool ret = true;
-	if(get_associate_oscillator_record_capacity() == s_used_associate_oscillator_records_number){
-		ret = is_to_append_associate_oscillator_record_pool_successfully();
+	if(get_midi_effect_associate_link_capacity() == s_used_midi_effect_associate_link_number){
+		ret = is_to_midi_effect_associate_link_pool_successfully();
 	}
 	return ret;
 }
 
 /**********************************************************************************/
 
-static void mark_all_associate_oscillator_record_unused(void)
+static void mark_all_midi_effect_associate_links_unused(void)
 {
-	for(int16_t j = 0; j < s_number_of_associate_oscillator_record_pool; j++){
-		associate_oscillator_record_pool_t * const p_associate_oscillator_record_pool
-				= s_associate_oscillator_record_pointer_table[j];
-		for(int16_t i = 0; i < ASSOCIATE_OSCILLATOR_RECORD_POOL_CAPACITY; i++){
-			p_associate_oscillator_record_pool->associate_oscillator_records[i].is_used = false;
-			//s_associate_oscillator_record[i].is_used
+	for(int16_t j = 0; j < s_number_of_associate_midi_effect_associate_link_pool; j++){
+		midi_effect_associate_link_pool_t * const p_midi_effect_associate_link_pool
+				= s_midi_effect_associate_link_pool_t_pointer_table[j];
+		for(int16_t i = 0; i < MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY; i++){
+			p_midi_effect_associate_link_pool->midi_effect_associate_links[i].is_used = false;
 		}
 	}
-	s_used_associate_oscillator_records_number = 0;
+	s_used_midi_effect_associate_link_number = 0;
 }
 
 /**********************************************************************************/
 
-static void release_all_associate_oscillator_record(void)
+static void release_all_midi_effect_associate_links(void)
 {
 #if (1)
-	mark_all_associate_oscillator_record_unused();
+	mark_all_midi_effect_associate_links_unused();
 #else
 
 #endif
@@ -471,7 +471,7 @@ oscillator_t * const acquire_oscillator(int16_t * const p_index)
 		*p_index = i;
 		p_oscillator = get_oscillator_address_from_index(i);
 		memset(p_oscillator, 0, sizeof(oscillator_t));
-		p_oscillator->associate_oscillator_record_index = NO_ASSOCIATE_OSCILLOR_RECORD;
+		p_oscillator->midi_effect_aassociate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
 	} while(0);
 
 	return p_oscillator;
@@ -489,7 +489,7 @@ oscillator_t * const replicate_oscillator(int16_t const original_index, int16_t 
 		}
 		oscillator_t  * const p_original_oscillator = get_oscillator_address_from_index(original_index);
 		memcpy(p_oscillator, p_original_oscillator, sizeof(oscillator_t));
-		p_oscillator->associate_oscillator_record_index = NO_ASSOCIATE_OSCILLOR_RECORD;
+		p_oscillator->midi_effect_aassociate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
 	}while(0);
 
 	return p_oscillator;
@@ -538,20 +538,21 @@ int discard_oscillator(int16_t const index)
 	oscillator_t * const p_oscillator = get_oscillator_address_from_index(index);
 
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL != p_oscillator->voice){
-		if(NO_ASSOCIATE_OSCILLOR_RECORD != p_oscillator->associate_oscillator_record_index){
-			associate_oscillator_record_t *p_record
-					= get_associate_oscillator_record_from_index(p_oscillator->associate_oscillator_record_index);
+		if(NO_MIDI_EFFECT_ASSOCIATE_LINK != p_oscillator->midi_effect_aassociate_link_index){
+			midi_effect_associate_link_t *p_midi_effect_associate_link
+					= get_midi_effect_associate_link_from_index(p_oscillator->midi_effect_aassociate_link_index);
 			while(1)
 			{
-				p_record->is_used = false;
-				s_used_associate_oscillator_records_number -= 1;
-				if(NO_ASSOCIATE_OSCILLOR_RECORD == p_record->next){
+				p_midi_effect_associate_link->is_used = false;
+				s_used_midi_effect_associate_link_number -= 1;
+				if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_midi_effect_associate_link->next_link_index){
 					break;
 				}
-				p_record = get_associate_oscillator_record_from_index(p_record->next);
+				p_midi_effect_associate_link
+						= get_midi_effect_associate_link_from_index(p_midi_effect_associate_link->next_link_index);
 			}
 		}
-		p_oscillator->associate_oscillator_record_index = NO_ASSOCIATE_OSCILLOR_RECORD;
+		p_oscillator->midi_effect_aassociate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
 	}
 	p_oscillator->voice = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number -= 1;
@@ -624,7 +625,7 @@ oscillator_t * const get_oscillator_pointer_from_index(int16_t const index)
 
 int clear_all_oscillators(void)
 {
-	mark_all_associate_oscillator_record_unused();
+	mark_all_midi_effect_associate_links_unused();
 	mark_all_oscillators_and_links_unused();
 	return 0;
 }
@@ -633,7 +634,7 @@ int clear_all_oscillators(void)
 
 int destroy_all_oscillators(void)
 {
-	release_all_associate_oscillator_record();
+	release_all_midi_effect_associate_links();
 	release_all_oscillators_and_links();
 	return 0;
 }
@@ -659,46 +660,47 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 			break;
 		}
 
-		if(false == is_associate_oscillator_record_available()){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all associate oscillator records are used\r\n");
+		if(false == is_midi_effect_associate_link_available()){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all midi_effect_associate_link are used\r\n");
 			break;
 		}
 
-		int16_t new_record_index;
-		for(new_record_index = 0; new_record_index < get_associate_oscillator_record_capacity(); new_record_index++){
-			if(false == get_associate_oscillator_record_from_index(new_record_index)->is_used){
+		int16_t new_link_index;
+		for(new_link_index = 0; new_link_index < get_midi_effect_associate_link_capacity(); new_link_index++){
+			if(false == get_midi_effect_associate_link_from_index(new_link_index)->is_used){
 				break;
 			}
 		}
-		s_used_associate_oscillator_records_number +=1;
+		s_used_midi_effect_associate_link_number +=1;
 
 		{
-			associate_oscillator_record_t * const p_new_record
-					= get_associate_oscillator_record_from_index(new_record_index);
-			p_new_record->is_used = true;
-			p_new_record->midi_effect_type = midi_effect_type;
-			p_new_record->next = NO_ASSOCIATE_OSCILLOR_RECORD;
+			midi_effect_associate_link_t * const p_new_link
+					= get_midi_effect_associate_link_from_index(new_link_index);
+			p_new_link->is_used = true;
+			p_new_link->midi_effect_type = midi_effect_type;
+			p_new_link->next_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
 			for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-				p_new_record->indexes[i] = p_associate_indexes[i];
+				p_new_link->associate_oscillator_indexes[i] = p_associate_indexes[i];
 			}
 		}
+
 		{
-			int16_t current_record_index = p_oscillator->associate_oscillator_record_index;
-			if(NO_ASSOCIATE_OSCILLOR_RECORD == current_record_index){
-				p_oscillator->associate_oscillator_record_index = new_record_index;
+			int16_t current_link_index = p_oscillator->midi_effect_aassociate_link_index;
+			if(NO_MIDI_EFFECT_ASSOCIATE_LINK == current_link_index){
+				p_oscillator->midi_effect_aassociate_link_index = new_link_index;
 				break;
 			}
 
-			associate_oscillator_record_t * p_record;
 			while(1)
 			{
-				if(NO_ASSOCIATE_OSCILLOR_RECORD == current_record_index){
+				midi_effect_associate_link_t * p_current_link
+						= get_midi_effect_associate_link_from_index(current_link_index);
+				if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_current_link->next_link_index){
+					get_midi_effect_associate_link_from_index(current_link_index)->next_link_index = new_link_index;
 					break;
 				}
-				p_record = get_associate_oscillator_record_from_index(current_record_index);
-				current_record_index = p_record->next;
+				current_link_index = p_current_link->next_link_index;
 			}
-			p_record->next = new_record_index;
 		}
 	}while(0);
 
@@ -721,26 +723,29 @@ int get_all_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16
 			= get_oscillator_address_from_index(root_index);
 	int16_t subordinate_number = 0;
 	do{
-		if(NO_ASSOCIATE_OSCILLOR_RECORD == p_oscillator->associate_oscillator_record_index){
+		if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_oscillator->midi_effect_aassociate_link_index){
 			break;
 		}
-		int16_t record_index = p_oscillator->associate_oscillator_record_index;
+		int16_t midi_effect_associate_link_index = p_oscillator->midi_effect_aassociate_link_index;
 
 		while(1)
 		{
-			associate_oscillator_record_t * const p_record = get_associate_oscillator_record_from_index(record_index);
-			if(false == p_record->is_used){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: associate_oscillator_records index = %d is not labeled as used\r\n",
-								record_index);
+			midi_effect_associate_link_t * const p_midi_effect_associate_link
+					= get_midi_effect_associate_link_from_index(midi_effect_associate_link_index);
+			if(false == p_midi_effect_associate_link->is_used){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: midi_effect_associate_link index = %d is not labeled as used\r\n",
+								midi_effect_associate_link_index);
 				break;
 			}
 
 			do
 			{
-				if(true == IS_MIDI_EFFECT_TYPE_MATCHED(midi_effect_type, p_record->midi_effect_type)){
+				if(true == IS_MIDI_EFFECT_TYPE_MATCHED(midi_effect_type,
+													   p_midi_effect_associate_link->midi_effect_type)){
 					if(NULL != p_associate_indexes){
 						for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-							p_associate_indexes[i + subordinate_number] = p_record->indexes[i];
+							p_associate_indexes[i + subordinate_number]
+									= p_midi_effect_associate_link->associate_oscillator_indexes[i];
 						}
 					}
 					subordinate_number += SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER;
@@ -751,14 +756,15 @@ int get_all_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16
 					int16_t * p_moving_associate_indexes
 							= p_associate_indexes + subordinate_number * ( NULL != p_associate_indexes);
 					subordinate_number +=
-							get_all_subordinate_oscillator_indexes(midi_effect_type, p_record->indexes[i],
+							get_all_subordinate_oscillator_indexes(midi_effect_type,
+																   p_midi_effect_associate_link->associate_oscillator_indexes[i],
 																   p_moving_associate_indexes);
 				}
 			}while(0);
-			if(NO_ASSOCIATE_OSCILLOR_RECORD == p_record->next){
+			if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_midi_effect_associate_link->next_link_index){
 				break;
 			}
-			record_index = p_record->next;
+			midi_effect_associate_link_index = p_midi_effect_associate_link->next_link_index;
 		}
 	}while(0);
 
