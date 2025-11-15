@@ -127,7 +127,7 @@ int16_t s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
 
 /**********************************************************************************/
 
-static inline int16_t const get_occupiable_oscillator_capacity()
+static inline int16_t const get_oscillator_capacity()
 {
 	return s_number_of_oscillator_pool * OSCILLATOR_POOL_CAPACITY;
 }
@@ -209,7 +209,7 @@ static inline bool is_to_append_oscillator_pool_successfully(void)
 static bool is_unoccupied_oscillator_available()
 {
 	bool ret = true;
-	if(get_occupiable_oscillator_capacity() == s_occupied_oscillator_number){
+	if(get_oscillator_capacity() == s_occupied_oscillator_number){
 		ret = is_to_append_oscillator_pool_successfully();
 	}
 	return ret;
@@ -504,7 +504,7 @@ oscillator_t * const acquire_oscillator(int16_t * const p_index)
 	}
 
 	int16_t i;
-	for(i = 0; i < get_occupiable_oscillator_capacity(); i++){
+	for(i = 0; i < get_oscillator_capacity(); i++){
 		if(UNOCCUPIED_OSCILLATOR == get_oscillator_address_from_index(i)->voice){
 			break;
 		}
@@ -513,7 +513,7 @@ oscillator_t * const acquire_oscillator(int16_t * const p_index)
 	oscillator_t * p_oscillator = NULL;
 	do
 	{
-		if(get_occupiable_oscillator_capacity() == i){
+		if(get_oscillator_capacity() == i){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: available oscillator is not found\r\n");
 			break;
 		}
@@ -638,7 +638,7 @@ static inline bool is_occupied_oscillator_index_out_of_range(int16_t const index
 		if(index < 0){
 			break;
 		}
-		if(index >= get_occupiable_oscillator_capacity()){
+		if(index >= get_oscillator_capacity()){
 			break;
 		}
 		is_out_of_range = false;

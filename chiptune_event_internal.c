@@ -55,7 +55,7 @@ int16_t s_queued_event_head_index = NO_EVENT;
 
 /**********************************************************************************/
 
-static inline int16_t const get_queuable_event_capacity()
+static inline int16_t const get_event_capacity()
 {
 	return s_number_of_event_pool * EVENT_POOL_CAPACITY;
 }
@@ -127,7 +127,7 @@ static inline bool is_to_append_event_pool_successfully(void)
 static bool is_unqueued_event_available()
 {
 	bool ret = true;
-	if(get_queuable_event_capacity() == s_queued_event_number){
+	if(get_event_capacity() == s_queued_event_number){
 		ret = is_to_append_event_pool_successfully();
 	}
 	return ret;
@@ -264,12 +264,12 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 
 	do {
 		int16_t current_index;
-		for(current_index = 0; current_index < get_queuable_event_capacity(); current_index++){
+		for(current_index = 0; current_index < get_event_capacity(); current_index++){
 			if(UNUSED_EVENT == get_event_pointer_from_index(current_index)->type){
 				break;
 			}
 		}
-		if(get_queuable_event_capacity() == current_index){
+		if(get_event_capacity() == current_index){
 			CHIPTUNE_PRINTF(cDeveloping, "No available event is found\r\n");
 			return -2;
 		}
