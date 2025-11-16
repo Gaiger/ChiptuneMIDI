@@ -431,7 +431,7 @@ static inline bool is_to_midi_effect_associate_link_pool_successfully(void)
 #endif
 
 
-static bool is_midi_effect_associate_link_available()
+static bool is_unused_midi_effect_associate_link_available()
 {
 	bool ret = true;
 	if(get_midi_effect_associate_link_capacity() == s_used_midi_effect_associate_link_number){
@@ -710,7 +710,7 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 			break;
 		}
 
-		if(false == is_midi_effect_associate_link_available()){
+		if(false == is_unused_midi_effect_associate_link_available()){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all midi_effect_associate_link are used\r\n");
 			break;
 		}

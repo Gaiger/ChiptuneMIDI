@@ -15,7 +15,7 @@
 
 enum
 {
-	UNUSED_EVENT =  -1,
+	EVENT_UNQUEUED =  -1,
 	EVENT_DISCARD = (EVENT_TYPE_MAX + 1),
 };
 
@@ -90,7 +90,7 @@ static int allocate_and_append_event_pool(void)
 			break;
 		}
 		for(int16_t i = 0; i < EVENT_POOL_CAPACITY; i++){
-			p_new_appending_event_pool->events[i].type = UNUSED_EVENT;
+			p_new_appending_event_pool->events[i].type = EVENT_UNQUEUED;
 		}
 
 		s_event_pool_pointer_table[s_number_of_event_pool] = p_new_appending_event_pool;
@@ -140,7 +140,7 @@ static int mark_all_events_unused(void)
 	for(int16_t j = 0; j < s_number_of_event_pool; j++){
 		event_pool_t * const p_event_pool = s_event_pool_pointer_table[j];
 		for(int16_t i = 0; i < EVENT_POOL_CAPACITY; i++){
-			p_event_pool->events[i].type = UNUSED_EVENT;
+			p_event_pool->events[i].type = EVENT_UNQUEUED;
 		}
 	}
 	s_queued_event_number = 0;
@@ -192,8 +192,8 @@ static int check_queued_events(uint32_t const tick)
 		uint32_t previous_tick = 0;
 		for(int16_t i = 0; i < s_queued_event_number; i++){
 			event_t * const p_event = get_event_pointer_from_index(index);
-			if(UNUSED_EVENT == p_event->type){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event %d is UNUSED_EVENT but on the list\r\n", index);
+			if(EVENT_UNQUEUED == p_event->type){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event %d is EVENT_UNQUEUED but on the list\r\n", index);
 				is_listing_error_occur = true;
 			}
 			if(previous_tick > p_event->triggering_tick){
@@ -265,7 +265,7 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 	do {
 		int16_t current_index;
 		for(current_index = 0; current_index < get_event_capacity(); current_index++){
-			if(UNUSED_EVENT == get_event_pointer_from_index(current_index)->type){
+			if(EVENT_UNQUEUED == get_event_pointer_from_index(current_index)->type){
 				break;
 			}
 		}
@@ -504,7 +504,7 @@ int process_events(uint32_t const tick)
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: UNKOWN event type = %d\r\n");
 			break;
 		}
-		p_head_event->type = UNUSED_EVENT;
+		p_head_event->type = EVENT_UNQUEUED;
 		s_queued_event_head_index = p_head_event->next_event_index;
 		s_queued_event_number -= 1;
 	}
