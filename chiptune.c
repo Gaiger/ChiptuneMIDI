@@ -193,7 +193,7 @@ int setup_pitch_oscillator(uint32_t const tick, int8_t const voice, int8_t const
 
 	p_oscillator->amplitude = 0;
 
-	p_oscillator->pitch_chorus_bend_in_semitones = 0.0;
+	p_oscillator->pitch_chorus_detune_in_semitones = 0.0;
 	p_oscillator->base_phase_increment
 			= calculate_oscillator_base_phase_increment(voice, p_oscillator->note, 0.0);
 
@@ -482,7 +482,7 @@ static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, 
 				break;
 			}
 			p_oscillator->base_phase_increment = calculate_oscillator_base_phase_increment(voice, p_oscillator->note,
-																		 p_oscillator->pitch_chorus_bend_in_semitones);
+																		 p_oscillator->pitch_chorus_detune_in_semitones);
 		} while(0);
 		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}

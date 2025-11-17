@@ -20,16 +20,17 @@ int16_t get_pitch_shift_in_semitones(void)
 {
 	return s_pitch_shift_in_semitones;
 }
+
 /**********************************************************************************/
 
 uint16_t const calculate_oscillator_base_phase_increment(int8_t const voice,
-												int16_t const note, float const pitch_bend_in_semitones)
+												int16_t const note, float const detune_in_semitones)
 {
 	// TO DO : too many float variable
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 
 	float corrected_note = (float)(note + s_pitch_shift_in_semitones) + p_channel_controller->tuning_in_semitones
-			+ p_channel_controller->pitch_wheel_bend_in_semitones + pitch_bend_in_semitones;
+			+ p_channel_controller->pitch_wheel_bend_in_semitones + detune_in_semitones;
 	/*
 	 * freq = 440 * 2**((note - 69)/12)
 	*/
@@ -40,39 +41,6 @@ uint16_t const calculate_oscillator_base_phase_increment(int8_t const voice,
 	*/
 	uint16_t base_phase_increment = (uint16_t)((UINT16_MAX + 1) * frequency / get_sampling_rate());
 	return base_phase_increment;
-}
-
-/**********************************************************************************/
-
-//xor-shift pesudo random https://en.wikipedia.org/wiki/Xorshift
-static uint32_t s_chorus_random_seed = 20240129;
-
-static uint16_t obtain_chorus_random(void)
-{
-	s_chorus_random_seed ^= s_chorus_random_seed << 13;
-	s_chorus_random_seed ^= s_chorus_random_seed >> 17;
-	s_chorus_random_seed ^= s_chorus_random_seed << 5;
-	return (uint16_t)(s_chorus_random_seed);
-}
-
-/**********************************************************************************/
-#define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
-#define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
-												(((DIVIDE_BY_2(UINT16_MAX) + 1) - (VALUE))/(float)(DIVIDE_BY_2(UINT16_MAX) + 1))
-
-float const obtain_oscillator_pitch_chorus_bend_in_semitones(int8_t const chorus,
-															float const max_pitch_chorus_bend_in_semitones)
-{
-	if(0 == chorus){
-		return 0.0;
-	}
-
-	uint16_t random = obtain_chorus_random();
-	float pitch_chorus_bend_in_semitones;
-	pitch_chorus_bend_in_semitones = RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) * chorus/(float)INT8_MAX;
-	pitch_chorus_bend_in_semitones *= max_pitch_chorus_bend_in_semitones;
-	//CHIPTUNE_PRINTF(cDeveloping, "pitch_chorus_bend_in_semitones = %3.2f\r\n", pitch_chorus_bend_in_semitones);
-	return pitch_chorus_bend_in_semitones;
 }
 
 /**********************************************************************************/

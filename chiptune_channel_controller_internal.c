@@ -50,7 +50,7 @@ void reset_channel_controller_midi_control_change_parameters(int8_t const index)
 	p_channel_controller->pan = MIDI_SEVEN_BITS_CENTER_VALUE;
 
 	p_channel_controller->pitch_wheel_bend_range_in_semitones = MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES;
-	p_channel_controller->pitch_wheel_bend_in_semitones = 0;
+	p_channel_controller->pitch_wheel_bend_in_semitones = 0.0f;
 
 	p_channel_controller->modulation_wheel = 0;
 	p_channel_controller->reverb = 0;
@@ -349,8 +349,6 @@ void initialize_channel_controllers(void)
 		p_channel_controller->p_vibrato_phase_table = &s_vibrato_phase_table[0];
 		p_channel_controller->vibrato_same_index_number
 			= (uint16_t)(get_sampling_rate()/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_RATE);
-#define	DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE	(0.25f)
-		p_channel_controller->max_pitch_chorus_bend_in_semitones = DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
 	}
 
 #define DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS		(0.03f)

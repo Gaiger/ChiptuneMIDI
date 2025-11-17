@@ -97,7 +97,6 @@ typedef struct _channel_controller
 
 	int8_t				reverb;
 	int8_t				chorus;
-	float				max_pitch_chorus_bend_in_semitones;
 
 	int8_t const *		p_envelope_attack_table;
 	uint16_t			envelope_attack_same_index_number;

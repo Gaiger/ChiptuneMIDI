@@ -29,6 +29,9 @@ static float s_min_reverb_delta_tick =
 static float s_min_chorus_delta_tick =
 		(float)(EACH_CHORUS_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND * MIDI_DEFAULT_TEMPO * MIDI_DEFAULT_RESOLUTION / (60.0));
 
+#define	DEFAULT_MAX_CHORUS_DETUNE_IN_SEMITONE	(0.25f)
+static float s_max_chorus_detune_in_semitones = DEFAULT_MAX_CHORUS_DETUNE_IN_SEMITONE;
+
 /**********************************************************************************/
 
 static inline uint32_t obtain_chorus_delta_tick(int8_t chorus)
@@ -45,6 +48,37 @@ static inline uint32_t obtain_reverb_delta_tick(int8_t reverb)
 	uint32_t reverb_delta_tick = (uint32_t)((reverb + 1) * s_min_reverb_delta_tick + 0.5);
 	reverb_delta_tick |= !reverb_delta_tick;
 	return reverb_delta_tick;
+}
+
+/**********************************************************************************/
+//xor-shift pesudo random https://en.wikipedia.org/wiki/Xorshift
+static uint32_t s_chorus_random_seed = 20240129;
+
+static uint16_t obtain_chorus_random(void)
+{
+	s_chorus_random_seed ^= s_chorus_random_seed << 13;
+	s_chorus_random_seed ^= s_chorus_random_seed >> 17;
+	s_chorus_random_seed ^= s_chorus_random_seed << 5;
+	return (uint16_t)(s_chorus_random_seed);
+}
+
+/**********************************************************************************/
+#define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
+	(((DIVIDE_BY_2(UINT16_MAX) + 1) - (VALUE))/(float)(DIVIDE_BY_2(UINT16_MAX) + 1))
+
+static float const obtain_chorus_detune_in_semitones(int8_t const chorus,
+											  float const max_chorus_detune_in_semitones)
+{
+	if(0 == chorus){
+		return 0.0;
+	}
+
+	uint16_t random = obtain_chorus_random();
+	float pitch_chorus_detune_semitones;
+	pitch_chorus_detune_semitones = RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) * chorus/(float)INT8_MAX;
+	pitch_chorus_detune_semitones *= max_chorus_detune_in_semitones;
+	//CHIPTUNE_PRINTF(cDeveloping, "max_chorus_detune_in_semitones = %3.2f\r\n", max_chorus_detune_in_semitones);
+	return pitch_chorus_detune_semitones;
 }
 
 /**********************************************************************************/
@@ -179,12 +213,13 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 						return -1;
 					}
 					p_oscillator->loudness = loudnesses[i + 1];
-					p_oscillator->pitch_chorus_bend_in_semitones
-							= obtain_oscillator_pitch_chorus_bend_in_semitones(
-								p_channel_controller->chorus, p_channel_controller->max_pitch_chorus_bend_in_semitones);
+					p_oscillator->pitch_chorus_detune_in_semitones
+							= obtain_chorus_detune_in_semitones(
+								p_channel_controller->chorus, s_max_chorus_detune_in_semitones);
 
-					p_oscillator->base_phase_increment = calculate_oscillator_base_phase_increment(voice, p_oscillator->note,
-																				 p_oscillator->pitch_chorus_bend_in_semitones);
+					p_oscillator->base_phase_increment
+							= calculate_oscillator_base_phase_increment(voice, p_oscillator->note,
+																		p_oscillator->pitch_chorus_detune_in_semitones);
 					associate_oscillator_indexes[i] = oscillator_index;
 					SET_CHORUS_ASSOCIATE(p_oscillator->state_bits);
 				}
