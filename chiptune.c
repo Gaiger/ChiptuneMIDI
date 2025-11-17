@@ -199,7 +199,7 @@ int setup_pitch_oscillator(uint32_t const tick, int8_t const voice, int8_t const
 
 	p_oscillator->max_vibrato_phase_increment
 			= calculate_oscillator_base_phase_increment(voice,
-				p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitones, 0.0)
+				p_oscillator->note + p_channel_controller->vibrato_depth_in_semitones, 0.0)
 				- p_oscillator->base_phase_increment;
 
 	p_oscillator->vibrato_table_index = 0;

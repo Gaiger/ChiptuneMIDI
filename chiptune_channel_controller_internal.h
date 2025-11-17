@@ -91,7 +91,7 @@ typedef struct _channel_controller
 	float				pitch_wheel_bend_in_semitones;
 
 	int8_t				modulation_wheel;
-	int8_t				vibrato_modulation_in_semitones;
+	int8_t				vibrato_depth_in_semitones;
 	int8_t const *		p_vibrato_phase_table;
 	uint16_t			vibrato_same_index_number;
 
