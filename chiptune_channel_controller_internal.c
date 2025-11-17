@@ -406,7 +406,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 	waveform_duration_time_in_second[2] = total_druation_time_in_second
 			- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 
-	p_percussion->p_modulation_envelope_table = s_linear_decline_table;
+	p_percussion->p_phase_sweep_table = s_linear_decline_table;
 	p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
 	p_percussion->is_implemented = false;
 
@@ -660,9 +660,9 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 
 	float remain_druation_time_in_second = total_druation_time_in_second;
 	uint32_t const sampling_rate = get_sampling_rate();
-	p_percussion->delta_phase = (uint16_t)((UINT16_MAX + 1) * start_frequency / get_sampling_rate());
-	p_percussion->max_delta_modulation_phase =
-			(uint16_t)((UINT16_MAX + 1) * end_frequency / get_sampling_rate()) - p_percussion->delta_phase;
+	p_percussion->base_phase_increment = (uint16_t)((UINT16_MAX + 1) * start_frequency / get_sampling_rate());
+	p_percussion->max_phase_sweep_delta        =
+			(uint16_t)((UINT16_MAX + 1) * end_frequency / get_sampling_rate()) - p_percussion->base_phase_increment;
 
 	p_percussion->waveform_duration_sample_number[0]
 			= (uint32_t)(waveform_duration_time_in_second[0] * sampling_rate + 0.5f);

@@ -20,7 +20,7 @@ typedef struct _oscillator
 	int8_t		voice;
 
 	int8_t		note;
-	uint16_t	delta_phase;
+	uint16_t	base_phase_increment;
 	uint16_t	current_phase;
 
 	int16_t		loudness;
@@ -33,7 +33,7 @@ union{
 		int16_t		release_reference_amplitude;
 		int16_t		attack_decay_reference_amplitude;
 
-		uint16_t	max_delta_vibrato_phase;
+		uint16_t	max_vibrato_phase_increment;
 		uint16_t	vibrato_table_index;
 		uint16_t	vibrato_same_index_count;
 
@@ -96,7 +96,7 @@ union{
 #define SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER	(4 - 1)
 
 
-uint16_t const calculate_oscillator_delta_phase(int8_t const voice,
+uint16_t const calculate_oscillator_base_phase_increment(int8_t const voice,
 												int16_t const note, float const pitch_chorus_bend_in_semitones);
 
 float const obtain_oscillator_pitch_chorus_bend_in_semitones(int8_t const chorus,

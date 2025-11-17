@@ -183,7 +183,7 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 							= obtain_oscillator_pitch_chorus_bend_in_semitones(
 								p_channel_controller->chorus, p_channel_controller->max_pitch_chorus_bend_in_semitones);
 
-					p_oscillator->delta_phase = calculate_oscillator_delta_phase(voice, p_oscillator->note,
+					p_oscillator->base_phase_increment = calculate_oscillator_base_phase_increment(voice, p_oscillator->note,
 																				 p_oscillator->pitch_chorus_bend_in_semitones);
 					associate_oscillator_indexes[i] = oscillator_index;
 					SET_CHORUS_ASSOCIATE(p_oscillator->state_bits);

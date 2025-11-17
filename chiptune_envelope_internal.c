@@ -4,7 +4,7 @@
 
 #include "chiptune_envelope_internal.h"
 
-void advance_pitch_amplitude(oscillator_t * const p_oscillator)
+void advance_melodic_amplitude(oscillator_t * const p_oscillator)
 {
 	do {
 		if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice){
@@ -66,7 +66,7 @@ void advance_pitch_amplitude(oscillator_t * const p_oscillator)
 				p_envelope_table = p_channel_controller->p_envelope_decay_table;
 				int16_t sustain_ampitude
 						= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-											MAP_MIDI_VALUE_RANGE_TO_0_128(p_channel_controller->envelope_sustain_level));
+											MIDI_VALUE_TO_LEVEL_0_128(p_channel_controller->envelope_sustain_level));
 				do {
 					if(0 != p_oscillator->attack_decay_reference_amplitude){
 						delta_amplitude = p_oscillator->attack_decay_reference_amplitude - sustain_ampitude;
@@ -93,7 +93,7 @@ void advance_pitch_amplitude(oscillator_t * const p_oscillator)
 				break;
 			}
 
-			p_oscillator->amplitude = ENVELOPE_AMPLITUDE(delta_amplitude,
+			p_oscillator->amplitude = MELODIC_ENVELOPE_DELTA_AMPLITUDE(delta_amplitude,
 														 p_envelope_table[p_oscillator->envelope_table_index]);
 			p_oscillator->amplitude	+= shift_amplitude;
 			if(ENVELOPE_STATE_RELEASE != p_oscillator->envelope_state){
@@ -143,7 +143,7 @@ void advance_pitch_amplitude(oscillator_t * const p_oscillator)
 				 */
 				p_oscillator->amplitude
 						= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-											MAP_MIDI_VALUE_RANGE_TO_0_128(p_channel_controller->envelope_sustain_level));
+											MIDI_VALUE_TO_LEVEL_0_128(p_channel_controller->envelope_sustain_level));
 				if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 					break;
 				}
@@ -186,8 +186,8 @@ void advance_percussion_waveform_and_amplitude(oscillator_t * const p_oscillator
 			}
 		}
 		p_oscillator->percussion_duration_sample_count += 1;
-		p_oscillator->current_phase += PERCUSSION_ENVELOPE(p_percussion->max_delta_modulation_phase,
-											p_percussion->p_modulation_envelope_table[p_oscillator->percussion_table_index]);
+		p_oscillator->current_phase += PERCUSSION_PHASE_SWEEP_DELTA(p_percussion->max_phase_sweep_delta,
+											p_percussion->p_phase_sweep_table[p_oscillator->percussion_table_index]);
 		if(p_percussion->envelope_same_index_number > p_oscillator->percussion_same_index_count){
 			p_oscillator->percussion_same_index_count += 1;
 			break;

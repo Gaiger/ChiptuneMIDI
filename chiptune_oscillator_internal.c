@@ -22,7 +22,7 @@ int16_t get_pitch_shift_in_semitones(void)
 }
 /**********************************************************************************/
 
-uint16_t const calculate_oscillator_delta_phase(int8_t const voice,
+uint16_t const calculate_oscillator_base_phase_increment(int8_t const voice,
 												int16_t const note, float const pitch_bend_in_semitones)
 {
 	// TO DO : too many float variable
@@ -36,10 +36,10 @@ uint16_t const calculate_oscillator_delta_phase(int8_t const voice,
 	float frequency = 440.0f * powf(2.0f, (corrected_note - 69.0f)/12.0f);
 	frequency = roundf(frequency * 100.0f + 0.5f)/100.0f;
 	/*
-	 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX + 1)/phase
+	 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX + 1)/delta_phase
 	*/
-	uint16_t delta_phase = (uint16_t)((UINT16_MAX + 1) * frequency / get_sampling_rate());
-	return delta_phase;
+	uint16_t base_phase_increment = (uint16_t)((UINT16_MAX + 1) * frequency / get_sampling_rate());
+	return base_phase_increment;
 }
 
 /**********************************************************************************/
