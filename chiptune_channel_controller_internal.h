@@ -11,46 +11,17 @@
 
 #define CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH		(64)
 
-#define NORMALIZE_VIBRTO_DELTA_PHASE(VALUE)			DIVIDE_BY_128(DIVIDE_BY_128(((int32_t)(VALUE))))
+#define NORMALIZE_VIBRATO_PHASE_INCREMENT(VALUE)			DIVIDE_BY_128(DIVIDE_BY_128(((int32_t)(VALUE))))
 
-#define REGULATE_MODULATION_WHEEL(VALUE)			((VALUE) + 1)
+#define VIBRATO_PHASE_INCREMENT(MODULATION_WHEEL, MAX_VIBRATO_PHASE_INCREMENT, VIBRATO_TABLE_VALUE) \
+	NORMALIZE_VIBRATO_PHASE_INCREMENT( \
+		((MAX_VIBRATO_PHASE_INCREMENT) * MIDI_VALUE_TO_LEVEL_0_128(MODULATION_WHEEL)) * (VIBRATO_TABLE_VALUE) \
+	)
 
-#define DELTA_VIBRATO_PHASE(MODULATION_WHEEL, MAX_DELTA_VIBRATO_PHASE, VIBRATO_TABLE_VALUE) \
-						NORMALIZE_VIBRTO_DELTA_PHASE( \
-							((MAX_DELTA_VIBRATO_PHASE) * REGULATE_MODULATION_WHEEL(MODULATION_WHEEL)) * (VIBRATO_TABLE_VALUE) \
-						)
 
-#define REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(INDEX)		\
-															((INDEX) & (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1))
+#define REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(INDEX) \
+	((INDEX) & (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1))
 
-// Reference implementations (for clarity)
-#if 0
-inline uint8_t one_to_zero(uint8_t x){
-	uint8_t u = x ^ 0x01;
-	uint8_t mask = 0 - ((uint8_t)(u | (0 - u)) >> 7);
-	return x & mask;
-}
-#endif
-
-// Optimized version (matches the macro below)
-#if 0
-inline uint8_t one_to_zero(uint8_t x){
-	uint32_t u = (uint32_t)x ^ 0x01;
-	uint32_t mask = 0 - ((0 - u) >> 31);
-	return x & mask;
-}
-#endif
-
-#define ONE_TO_ZERO(VALUE)					\
-						((VALUE) & (0 - ((0 - ((uint32_t)(VALUE) ^ 0x01)) >> 31)))
-
-#define MAP_MIDI_VALUE_RANGE_TO_0_128(VALUE)		ONE_TO_ZERO((VALUE) + 1)
-
-#define SUSTAIN_AMPLITUDE(LOUNDNESS, SUSTAIN_LEVEL)	\
-						((int16_t)DIVIDE_BY_128((int32_t)(LOUNDNESS) * (SUSTAIN_LEVEL)))
-
-#define ENVELOPE_AMPLITUDE(AMPLITUDE, TABLE_VALUE)	\
-						(DIVIDE_BY_128((AMPLITUDE) * (int32_t)(TABLE_VALUE)))
 
 #define LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(NOTE_ON_LOUNDNESS, DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL) \
 						(\
@@ -58,8 +29,20 @@ inline uint8_t one_to_zero(uint8_t x){
 							* (DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL))\
 						)
 
-#define PERCUSSION_ENVELOPE(XX, TABLE_VALUE)	\
-						((uint16_t)DIVIDE_BY_128(((uint32_t)(XX))*(TABLE_VALUE)))
+#define CHANNEL_CONTROLLER_SCALE_BY_LEVEL(VALUE, LEVEL)	\
+	MULTIPLY_THEN_DIVIDE_BY_128((VALUE), (LEVEL))
+
+#define SUSTAIN_AMPLITUDE(LOUNDNESS, SUSTAIN_LEVEL)	\
+	CHANNEL_CONTROLLER_SCALE_BY_LEVEL((LOUNDNESS), (SUSTAIN_LEVEL))
+
+#define MELODIC_ENVELOPE_DELTA_AMPLITUDE(AMPLITUDE, TABLE_VALUE)	\
+	CHANNEL_CONTROLLER_SCALE_BY_LEVEL((AMPLITUDE), (TABLE_VALUE))
+
+#define PERCUSSION_PHASE_SWEEP_DELTA(MAX_PHASE_SWEEP_DELTA, SWEEP_TABLE_VALUE) \
+	CHANNEL_CONTROLLER_SCALE_BY_LEVEL((MAX_PHASE_SWEEP_DELTA), (SWEEP_TABLE_VALUE))
+
+#define PERCUSSION_ENVELOPE(LOUDNESS, ENVELOPE_TABLE_VALUE)	\
+	CHANNEL_CONTROLLER_SCALE_BY_LEVEL((LOUDNESS), (ENVELOPE_TABLE_VALUE))
 
 enum
 {
@@ -108,13 +91,12 @@ typedef struct _channel_controller
 	float				pitch_wheel_bend_in_semitones;
 
 	int8_t				modulation_wheel;
-	int8_t				vibrato_modulation_in_semitones;
+	int8_t				vibrato_depth_in_semitones;
 	int8_t const *		p_vibrato_phase_table;
 	uint16_t			vibrato_same_index_number;
 
 	int8_t				reverb;
 	int8_t				chorus;
-	float				max_pitch_chorus_bend_in_semitones;
 
 	int8_t const *		p_envelope_attack_table;
 	uint16_t			envelope_attack_same_index_number;
@@ -147,9 +129,9 @@ typedef struct _percussion
 {
 	int8_t				waveform[MAX_WAVEFORM_CHANGE_NUMBER];
 	uint32_t			waveform_duration_sample_number[MAX_WAVEFORM_CHANGE_NUMBER];
-	uint16_t			delta_phase;
-	int16_t				max_delta_modulation_phase;
-	int8_t const *		p_modulation_envelope_table;
+	uint16_t			base_phase_increment;
+	int16_t				max_phase_sweep_delta;
+	int8_t const *		p_phase_sweep_table;
 	int8_t const *		p_amplitude_envelope_table;
 	uint16_t			envelope_same_index_number;
 

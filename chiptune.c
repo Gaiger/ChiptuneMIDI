@@ -81,7 +81,7 @@ static chiptune_float s_tick_to_sample_index_ratio = \
 
 #define CURRENT_TICK()								( (uint32_t)(s_current_sample_index/(s_tick_to_sample_index_ratio) + 0.5))
 
-#define INCREMENT_CURRENT_TICK_BY_ONE_SAMPLE()			\
+#define ADVANCE_CURRENT_TICK()			\
 													do { \
 														s_current_sample_index += 1; \
 													} while(0)
@@ -130,7 +130,7 @@ static chiptune_float s_delta_tick_per_sample = (MIDI_DEFAULT_RESOLUTION / ( (ch
 
 #define CURRENT_TICK()								((uint32_t)(s_current_tick + 0.5))
 
-#define INCREMENT_CURRENT_TICK_BY_ONE_SAMPLE()			\
+#define ADVANCE_CURRENT_TICK()			\
 													do { \
 														s_current_tick += s_delta_tick_per_sample; \
 													} while(0)
@@ -182,26 +182,17 @@ static inline void swap_processing_channel() { s_is_processing_left_channel = !s
 
 /**********************************************************************************/
 
-int setup_pitch_oscillator(uint32_t const tick, int8_t const voice, int8_t const note, int8_t const velocity,
-									oscillator_t * const p_oscillator)
+int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
+									  int8_t const note, int8_t const velocity, oscillator_t * const p_oscillator)
 {
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 		return 1;
 	}
-	(void)tick;
-	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	(void)tick; (void)voice; (void)note; (void)velocity;
 
+	update_oscillator_phase_increment(p_oscillator);
 	p_oscillator->amplitude = 0;
-
-	p_oscillator->pitch_chorus_bend_in_semitones = 0.0;
-	p_oscillator->delta_phase
-			= calculate_oscillator_delta_phase(voice, p_oscillator->note, 0.0);
-
-	p_oscillator->max_delta_vibrato_phase
-			= calculate_oscillator_delta_phase(voice,
-				p_oscillator->note + p_channel_controller->vibrato_modulation_in_semitones, 0.0)
-				- p_oscillator->delta_phase;
-
+	p_oscillator->pitch_chorus_detune_in_semitones = 0.0;
 	p_oscillator->vibrato_table_index = 0;
 	p_oscillator->vibrato_same_index_count = 0;
 
@@ -214,31 +205,30 @@ int setup_pitch_oscillator(uint32_t const tick, int8_t const voice, int8_t const
 
 /**********************************************************************************/
 
-int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t const note, int8_t const velocity,
-									oscillator_t * const p_oscillator)
+int finalize_percussion_oscillator_setup(uint32_t const tick, int8_t const voice,
+								int8_t const note, int8_t const velocity, oscillator_t * const p_oscillator)
 {
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL != voice){
 		return 1;
 	}
-	(void)tick;
-
-	percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
-	p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
-					p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_table_index]);
+	(void)tick; (void)voice; (void)note; (void)velocity;
 
 	p_oscillator->percussion_waveform_index = 0;
 	p_oscillator->percussion_duration_sample_count = 0;
 	p_oscillator->percussion_same_index_count = 0;
 	p_oscillator->percussion_table_index = 0;
-	p_oscillator->delta_phase = p_percussion->delta_phase;
 
+	percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
+	p_oscillator->base_phase_increment = p_percussion->base_phase_increment;
+	p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
+					p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_table_index]);
 	return 0;
 }
 
 /**********************************************************************************/
 
-static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
-														  int8_t const voice, int8_t const note, int8_t const velocity)
+static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick, int8_t const voice,
+														  int8_t const note, int8_t const velocity)
 {
 	int16_t oscillator_index = get_occupied_oscillator_head_index();
 	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
@@ -331,11 +321,11 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->current_phase = 0;
 			do {
 				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
-					setup_percussion_oscillator(tick, voice, note, velocity, p_oscillator);
+					finalize_percussion_oscillator_setup(tick, voice, note, velocity, p_oscillator);
 					break;
 				}
 
-				setup_pitch_oscillator(tick, voice, note, velocity, p_oscillator);
+				finalize_melodic_oscillator_setup(tick, voice, note, velocity, p_oscillator);
 			} while(0);
 
 			put_event(EVENT_ACTIVATE, oscillator_index, tick);
@@ -411,7 +401,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->loudness
 					= LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(
 						p_oscillator->loudness,
-						MAP_MIDI_VALUE_RANGE_TO_0_128(p_channel_controller->envelop_damper_on_but_note_off_sustain_level));
+						MIDI_VALUE_TO_LEVEL_0_128(p_channel_controller->envelop_damper_on_but_note_off_sustain_level));
 			p_oscillator->amplitude = 0;
 			p_oscillator->envelope_same_index_count = 0;
 			p_oscillator->envelope_table_index = 0;
@@ -481,8 +471,7 @@ static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, 
 			if(voice != p_oscillator->voice){
 				break;
 			}
-			p_oscillator->delta_phase = calculate_oscillator_delta_phase(voice, p_oscillator->note,
-																		 p_oscillator->pitch_chorus_bend_in_semitones);
+			update_oscillator_phase_increment(p_oscillator);
 		} while(0);
 		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
@@ -778,7 +767,7 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 			break;
 		}
 
-		p_oscillator->current_phase += DELTA_VIBRATO_PHASE(modulation_wheel, p_oscillator->max_delta_vibrato_phase,
+		p_oscillator->current_phase += VIBRATO_PHASE_INCREMENT(modulation_wheel, p_oscillator->max_vibrato_phase_increment,
 										p_channel_controller->p_vibrato_phase_table[p_oscillator->vibrato_table_index]);
 		p_oscillator->vibrato_same_index_count += 1;
 		if(p_channel_controller->vibrato_same_index_number == p_oscillator->vibrato_same_index_count){
@@ -791,7 +780,7 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 
 /**********************************************************************************/
 
-void perform_pitch_envelope(oscillator_t * const p_oscillator)
+void perform_melodic_envelope(oscillator_t * const p_oscillator)
 {
 	do {
 		if(true == is_stereo()
@@ -802,7 +791,7 @@ void perform_pitch_envelope(oscillator_t * const p_oscillator)
 			break;
 		}
 
-		advance_pitch_amplitude(p_oscillator);
+		advance_melodic_amplitude(p_oscillator);
 	} while(0);
 }
 
@@ -838,9 +827,15 @@ static uint16_t s_noise_random_seed = 1;
 static uint16_t obtain_noise_random(void)
 {
 	uint8_t feedback;
+	/*hardware chiptune project version :*/
 	feedback=((s_noise_random_seed>>13)&1)^((s_noise_random_seed>>14)&1);
 	s_noise_random_seed = (s_noise_random_seed<<1)+feedback;
 	s_noise_random_seed &= 0x7fff;
+	/*
+	 * NES version :
+	 * feedback = ((s_noise_random_seed >> 0) & 1) ^ ((s_noise_random_seed >> 1) & 1);
+	 * s_noise_random_seed  = (s_noise_random_seed >> 1) + (feedback << 14) ;
+	 */
 	return s_noise_random_seed;
 }
 
@@ -891,7 +886,7 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 
 	if(false == is_stereo()
 			|| false == is_processing_left_channel()){
-		p_oscillator->current_phase += p_oscillator->delta_phase;
+		p_oscillator->current_phase += p_oscillator->base_phase_increment;
 	}
 
 	return wave * p_oscillator->amplitude;
@@ -955,7 +950,7 @@ static int64_t chiptune_fetch_64bit_wave(void)
 			}
 
 			perform_vibrato(p_oscillator);
-			perform_pitch_envelope(p_oscillator);
+			perform_melodic_envelope(p_oscillator);
 			perform_percussion(p_oscillator);
 
 			int32_t mono_wave_amplitude = generate_mono_wave_amplitude(p_oscillator);
@@ -968,7 +963,7 @@ static int64_t chiptune_fetch_64bit_wave(void)
 
 	if(false == is_stereo()
 			|| false == is_processing_left_channel()){
-		INCREMENT_CURRENT_TICK_BY_ONE_SAMPLE();
+		ADVANCE_CURRENT_TICK();
 	}
 
 	if(true == is_stereo()){

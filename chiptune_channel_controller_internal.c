@@ -10,7 +10,7 @@
 
 static channel_controller_t s_channel_controllers[MIDI_MAX_CHANNEL_NUMBER];
 
-static int8_t s_vibrato_phase_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
+static int8_t s_vibrato_lookup_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
 
 static int8_t s_linear_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
 static int8_t s_linear_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
@@ -50,7 +50,7 @@ void reset_channel_controller_midi_control_change_parameters(int8_t const index)
 	p_channel_controller->pan = MIDI_SEVEN_BITS_CENTER_VALUE;
 
 	p_channel_controller->pitch_wheel_bend_range_in_semitones = MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES;
-	p_channel_controller->pitch_wheel_bend_in_semitones = 0;
+	p_channel_controller->pitch_wheel_bend_in_semitones = 0.0f;
 
 	p_channel_controller->modulation_wheel = 0;
 	p_channel_controller->reverb = 0;
@@ -337,20 +337,19 @@ void reset_percussion_all_parameters_from_index(int8_t const index);
 void initialize_channel_controllers(void)
 {
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
-		s_vibrato_phase_table[i] = (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
+		s_vibrato_lookup_table[i]
+				= (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
 	}
 	initialize_envelope_tables();
 
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		channel_controller_t * const p_channel_controller = &s_channel_controllers[voice];
-#define	DEFAULT_VIBRATO_MODULATION_IN_SEMITINE		(1)
-#define DEFAULT_VIBRATO_RATE						(4)
-		p_channel_controller->vibrato_modulation_in_semitones = DEFAULT_VIBRATO_MODULATION_IN_SEMITINE;
-		p_channel_controller->p_vibrato_phase_table = &s_vibrato_phase_table[0];
+#define DEFAULT_VIBRATO_DEPTH_IN_SEMITONES			(1)
+#define DEFAULT_VIBRATO_RATE_IN_HZ					(4)
+		p_channel_controller->vibrato_depth_in_semitones = DEFAULT_VIBRATO_DEPTH_IN_SEMITONES;
+		p_channel_controller->p_vibrato_phase_table = &s_vibrato_lookup_table[0];
 		p_channel_controller->vibrato_same_index_number
-			= (uint16_t)(get_sampling_rate()/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_RATE);
-#define	DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE	(0.25f)
-		p_channel_controller->max_pitch_chorus_bend_in_semitones = DEFAULT_MAX_CHORUS_PITCH_BEND_IN_SEMITONE;
+			= (uint16_t)(get_sampling_rate()/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_RATE_IN_HZ);
 	}
 
 #define DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS		(0.03f)
@@ -406,7 +405,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 	waveform_duration_time_in_second[2] = total_druation_time_in_second
 			- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 
-	p_percussion->p_modulation_envelope_table = s_linear_decline_table;
+	p_percussion->p_phase_sweep_table = s_linear_decline_table;
 	p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
 	p_percussion->is_implemented = false;
 
@@ -660,9 +659,9 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 
 	float remain_druation_time_in_second = total_druation_time_in_second;
 	uint32_t const sampling_rate = get_sampling_rate();
-	p_percussion->delta_phase = (uint16_t)((UINT16_MAX + 1) * start_frequency / get_sampling_rate());
-	p_percussion->max_delta_modulation_phase =
-			(uint16_t)((UINT16_MAX + 1) * end_frequency / get_sampling_rate()) - p_percussion->delta_phase;
+	p_percussion->base_phase_increment = (uint16_t)((UINT16_MAX + 1) * start_frequency / get_sampling_rate());
+	p_percussion->max_phase_sweep_delta        =
+			(uint16_t)((UINT16_MAX + 1) * end_frequency / get_sampling_rate()) - p_percussion->base_phase_increment;
 
 	p_percussion->waveform_duration_sample_number[0]
 			= (uint32_t)(waveform_duration_time_in_second[0] * sampling_rate + 0.5f);

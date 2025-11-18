@@ -31,6 +31,28 @@
 
 #define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
 
+#define MULTIPLY_THEN_DIVIDE_BY_128(A, B) 			((int16_t)DIVIDE_BY_128((int32_t)(A) * (int32_t)(B)))
+
+// Reference implementations (for clarity)
+#if 0
+inline uint8_t one_to_zero(uint8_t x){
+	uint8_t u = x ^ 0x01;
+	uint8_t mask = 0 - ((uint8_t)(u | (0 - u)) >> 7);
+	return x & mask;
+}
+#endif
+
+// Optimized version (matches the macro below)
+#if 0
+inline uint8_t one_to_zero(uint8_t x){
+	uint32_t u = (uint32_t)x ^ 0x01;
+	uint32_t mask = 0 - ((0 - u) >> 31);
+	return x & mask;
+}
+#endif
+#define ONE_TO_ZERO(VALUE)							((VALUE) & (0 - ((0 - ((uint32_t)(VALUE) ^ 0x01)) >> 31)))
+#define MIDI_VALUE_TO_LEVEL_0_128(VALUE)			ONE_TO_ZERO((VALUE) + 1)
+
 #define NULL_TICK									(UINT32_MAX)
 
 #ifndef _USING_STATIC_RESOURCE_ALLOCATION
@@ -56,5 +78,7 @@
 uint32_t const get_sampling_rate(void);
 uint32_t const get_resolution(void);
 float const get_playing_tempo(void);
+
+uint16_t const calculate_phase_increment_from_pitch(float const pitch_in_semitones);
 
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_

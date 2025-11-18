@@ -20,24 +20,25 @@ typedef struct _oscillator
 	int8_t		voice;
 
 	int8_t		note;
-	uint16_t	delta_phase;
+	uint16_t	base_phase_increment;
 	uint16_t	current_phase;
 
 	int16_t		loudness;
 	int16_t		amplitude;
 union{
 	struct {
-		int16_t		midi_effect_aassociate_link_index;
 		uint16_t	envelope_table_index;
 		uint16_t	envelope_same_index_count;
 		int16_t		release_reference_amplitude;
 		int16_t		attack_decay_reference_amplitude;
 
-		uint16_t	max_delta_vibrato_phase;
+		uint16_t	max_vibrato_phase_increment;
 		uint16_t	vibrato_table_index;
 		uint16_t	vibrato_same_index_count;
 
-		float		pitch_chorus_bend_in_semitones;
+		float		pitch_chorus_detune_in_semitones;
+
+		int16_t		midi_effect_aassociate_link_index;//internal
 	};
 	struct {
 		int8_t		percussion_waveform_index;
@@ -96,13 +97,11 @@ union{
 #define SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER	(4 - 1)
 
 
-uint16_t const calculate_oscillator_delta_phase(int8_t const voice,
-												int16_t const note, float const pitch_chorus_bend_in_semitones);
-
-float const obtain_oscillator_pitch_chorus_bend_in_semitones(int8_t const chorus,
-															float const max_pitch_chorus_bend_in_semitones);
 void set_pitch_shift_in_semitones(int16_t pitch_shift_in_semitones);
 int16_t get_pitch_shift_in_semitones(void);
+
+int const update_oscillator_phase_increment(oscillator_t * const p_oscillator);
+
 int setup_envelope_state(oscillator_t *p_oscillator, uint8_t evelope_state);
 
 oscillator_t * const acquire_oscillator(int16_t * const p_index);
