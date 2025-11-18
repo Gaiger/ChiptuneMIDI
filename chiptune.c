@@ -182,13 +182,13 @@ static inline void swap_processing_channel() { s_is_processing_left_channel = !s
 
 /**********************************************************************************/
 
-int setup_melodic_oscillator(uint32_t const tick, int8_t const voice, int8_t const note, int8_t const velocity,
-									oscillator_t * const p_oscillator)
+int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
+									  int8_t const note, int8_t const velocity, oscillator_t * const p_oscillator)
 {
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 		return 1;
 	}
-	(void)tick;
+	(void)tick; (void)voice; (void)note; (void)velocity;
 
 	update_oscillator_phase_increment(p_oscillator);
 	p_oscillator->amplitude = 0;
@@ -205,13 +205,13 @@ int setup_melodic_oscillator(uint32_t const tick, int8_t const voice, int8_t con
 
 /**********************************************************************************/
 
-int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t const note, int8_t const velocity,
-									oscillator_t * const p_oscillator)
+int finalize_percussion_oscillator_setup(uint32_t const tick, int8_t const voice,
+								int8_t const note, int8_t const velocity, oscillator_t * const p_oscillator)
 {
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL != voice){
 		return 1;
 	}
-	(void)tick;
+	(void)tick; (void)voice; (void)note; (void)velocity;
 
 	p_oscillator->percussion_waveform_index = 0;
 	p_oscillator->percussion_duration_sample_count = 0;
@@ -227,8 +227,8 @@ int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t 
 
 /**********************************************************************************/
 
-static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick,
-														  int8_t const voice, int8_t const note, int8_t const velocity)
+static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick, int8_t const voice,
+														  int8_t const note, int8_t const velocity)
 {
 	int16_t oscillator_index = get_occupied_oscillator_head_index();
 	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
@@ -321,11 +321,11 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->current_phase = 0;
 			do {
 				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
-					setup_percussion_oscillator(tick, voice, note, velocity, p_oscillator);
+					finalize_percussion_oscillator_setup(tick, voice, note, velocity, p_oscillator);
 					break;
 				}
 
-				setup_melodic_oscillator(tick, voice, note, velocity, p_oscillator);
+				finalize_melodic_oscillator_setup(tick, voice, note, velocity, p_oscillator);
 			} while(0);
 
 			put_event(EVENT_ACTIVATE, oscillator_index, tick);
