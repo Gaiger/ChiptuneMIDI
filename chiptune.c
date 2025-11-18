@@ -182,26 +182,17 @@ static inline void swap_processing_channel() { s_is_processing_left_channel = !s
 
 /**********************************************************************************/
 
-int setup_pitch_oscillator(uint32_t const tick, int8_t const voice, int8_t const note, int8_t const velocity,
+int setup_melodic_oscillator(uint32_t const tick, int8_t const voice, int8_t const note, int8_t const velocity,
 									oscillator_t * const p_oscillator)
 {
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 		return 1;
 	}
 	(void)tick;
-	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 
+	update_oscillator_phase_increment(p_oscillator);
 	p_oscillator->amplitude = 0;
-
 	p_oscillator->pitch_chorus_detune_in_semitones = 0.0;
-	p_oscillator->base_phase_increment
-			= calculate_oscillator_base_phase_increment(voice, p_oscillator->note, 0.0);
-
-	p_oscillator->max_vibrato_phase_increment
-			= calculate_oscillator_base_phase_increment(voice,
-				p_oscillator->note + p_channel_controller->vibrato_depth_in_semitones, 0.0)
-				- p_oscillator->base_phase_increment;
-
 	p_oscillator->vibrato_table_index = 0;
 	p_oscillator->vibrato_same_index_count = 0;
 
@@ -222,16 +213,15 @@ int setup_percussion_oscillator(uint32_t const tick, int8_t const voice, int8_t 
 	}
 	(void)tick;
 
-	percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
-	p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
-					p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_table_index]);
-
 	p_oscillator->percussion_waveform_index = 0;
 	p_oscillator->percussion_duration_sample_count = 0;
 	p_oscillator->percussion_same_index_count = 0;
 	p_oscillator->percussion_table_index = 0;
-	p_oscillator->base_phase_increment = p_percussion->base_phase_increment;
 
+	percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
+	p_oscillator->base_phase_increment = p_percussion->base_phase_increment;
+	p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
+					p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_table_index]);
 	return 0;
 }
 
@@ -335,7 +325,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					break;
 				}
 
-				setup_pitch_oscillator(tick, voice, note, velocity, p_oscillator);
+				setup_melodic_oscillator(tick, voice, note, velocity, p_oscillator);
 			} while(0);
 
 			put_event(EVENT_ACTIVATE, oscillator_index, tick);
@@ -481,8 +471,7 @@ static int process_pitch_wheel_message(uint32_t const tick, int8_t const voice, 
 			if(voice != p_oscillator->voice){
 				break;
 			}
-			p_oscillator->base_phase_increment = calculate_oscillator_base_phase_increment(voice, p_oscillator->note,
-																		 p_oscillator->pitch_chorus_detune_in_semitones);
+			update_oscillator_phase_increment(p_oscillator);
 		} while(0);
 		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}

@@ -79,4 +79,6 @@ uint32_t const get_sampling_rate(void);
 uint32_t const get_resolution(void);
 float const get_playing_tempo(void);
 
+uint16_t const calculate_phase_increment_from_pitch(float const pitch_in_semitones);
+
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_

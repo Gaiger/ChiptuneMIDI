@@ -23,24 +23,22 @@ int16_t get_pitch_shift_in_semitones(void)
 
 /**********************************************************************************/
 
-uint16_t const calculate_oscillator_base_phase_increment(int8_t const voice,
-												int16_t const note, float const detune_in_semitones)
+int const update_oscillator_phase_increment(oscillator_t * const p_oscillator)
 {
-	// TO DO : too many float variable
-	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	channel_controller_t const * const p_channel_controller
+			= get_channel_controller_pointer_from_index(p_oscillator->voice);
 
-	float corrected_note = (float)(note + s_pitch_shift_in_semitones) + p_channel_controller->tuning_in_semitones
-			+ p_channel_controller->pitch_wheel_bend_in_semitones + detune_in_semitones;
-	/*
-	 * freq = 440 * 2**((note - 69)/12)
-	*/
-	float frequency = 440.0f * powf(2.0f, (corrected_note - 69.0f)/12.0f);
-	frequency = roundf(frequency * 100.0f + 0.5f)/100.0f;
-	/*
-	 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX + 1)/delta_phase
-	*/
-	uint16_t base_phase_increment = (uint16_t)((UINT16_MAX + 1) * frequency / get_sampling_rate());
-	return base_phase_increment;
+	float corrected_pitch = (float)(p_oscillator->note)
+			+ s_pitch_shift_in_semitones
+			+ p_channel_controller->tuning_in_semitones
+			+ p_channel_controller->pitch_wheel_bend_in_semitones
+			+ p_oscillator->pitch_chorus_detune_in_semitones;
+	p_oscillator->base_phase_increment =  calculate_phase_increment_from_pitch(corrected_pitch);
+
+	corrected_pitch += p_channel_controller->vibrato_depth_in_semitones;
+	p_oscillator->max_vibrato_phase_increment =
+			calculate_phase_increment_from_pitch(corrected_pitch) - p_oscillator->base_phase_increment;
+	return 0;
 }
 
 /**********************************************************************************/

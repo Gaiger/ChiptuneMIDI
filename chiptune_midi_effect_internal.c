@@ -217,9 +217,8 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 							= obtain_chorus_detune_in_semitones(
 								p_channel_controller->chorus, s_max_chorus_detune_in_semitones);
 
-					p_oscillator->base_phase_increment
-							= calculate_oscillator_base_phase_increment(voice, p_oscillator->note,
-																		p_oscillator->pitch_chorus_detune_in_semitones);
+					p_oscillator->base_phase_increment = calculate_phase_increment_from_pitch(
+								(float)p_oscillator->note + p_oscillator->pitch_chorus_detune_in_semitones);
 					associate_oscillator_indexes[i] = oscillator_index;
 					SET_CHORUS_ASSOCIATE(p_oscillator->state_bits);
 				}

@@ -100,8 +100,8 @@ union{
 void set_pitch_shift_in_semitones(int16_t pitch_shift_in_semitones);
 int16_t get_pitch_shift_in_semitones(void);
 
-uint16_t const calculate_oscillator_base_phase_increment(int8_t const voice,
-												int16_t const note, float const detune_in_semitones);
+int const update_oscillator_phase_increment(oscillator_t * const p_oscillator);
+
 int setup_envelope_state(oscillator_t *p_oscillator, uint8_t evelope_state);
 
 oscillator_t * const acquire_oscillator(int16_t * const p_index);
