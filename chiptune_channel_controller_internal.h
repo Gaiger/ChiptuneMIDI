@@ -15,8 +15,7 @@
 
 #define VIBRATO_PHASE_INCREMENT(MODULATION_WHEEL, MAX_VIBRATO_PHASE_INCREMENT, VIBRATO_TABLE_VALUE) \
 	NORMALIZE_VIBRATO_PHASE_INCREMENT( \
-		((MAX_VIBRATO_PHASE_INCREMENT) * MIDI_VALUE_TO_LEVEL_0_128(MODULATION_WHEEL)) * (VIBRATO_TABLE_VALUE) \
-	)
+		(MAX_VIBRATO_PHASE_INCREMENT) * ((MODULATION_WHEEL) * (VIBRATO_TABLE_VALUE)) )
 
 
 #define REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(INDEX) \
@@ -71,55 +70,56 @@ enum
 	ENVELOPE_CURVE_FERMI,
 };
 
+
 typedef struct _channel_controller
 {
-	int8_t				instrument;
-	int8_t				coarse_tuning_value;
-	int16_t				fine_tuning_value;
-	float				tuning_in_semitones;
+	midi_value_t				instrument;
+	midi_value_t				coarse_tuning_value;
+	int16_t						fine_tuning_value;
+	float						tuning_in_semitones;
 
-	int8_t				volume;
-	int8_t				pressure;
-	int8_t				expression;
-	int8_t				pan;
+	normalized_midi_level_t		volume;
+	normalized_midi_level_t		pressure;
+	normalized_midi_level_t		expression;
+	midi_value_t				pan;
 
-	int8_t				waveform;
-	uint8_t				: 8;
-	uint16_t			duty_cycle_critical_phase;
+	int8_t						waveform;
+	uint8_t						: 8;
+	uint16_t					duty_cycle_critical_phase;
 
-	int8_t				pitch_wheel_bend_range_in_semitones;
-	float				pitch_wheel_bend_in_semitones;
+	midi_value_t				pitch_wheel_bend_range_in_semitones;
+	float						pitch_wheel_bend_in_semitones;
 
-	int8_t				modulation_wheel;
-	int8_t				vibrato_depth_in_semitones;
-	int8_t const *		p_vibrato_phase_table;
-	uint16_t			vibrato_same_index_number;
+	normalized_midi_level_t		modulation_wheel;
+	int8_t						vibrato_depth_in_semitones;
+	int8_t const *				p_vibrato_phase_table;
+	uint16_t					vibrato_same_index_number;
 
-	int8_t				reverb;
-	int8_t				chorus;
+	normalized_midi_level_t		reverb;
+	normalized_midi_level_t		chorus;
 
-	int8_t const *		p_envelope_attack_table;
-	uint16_t			envelope_attack_same_index_number;
+	int8_t const *				p_envelope_attack_table;
+	uint16_t					envelope_attack_same_index_number;
 
-	int8_t const *		p_envelope_decay_table;
-	uint16_t			envelope_decay_same_index_number;
+	int8_t const *				p_envelope_decay_table;
+	uint16_t					envelope_decay_same_index_number;
 
-	uint8_t				envelope_sustain_level;
+	normalized_midi_level_t		envelope_sustain_level;
 
-	float				envelope_release_duration_in_seconds;
-	int8_t const *		p_envelope_release_table;
-	uint16_t			envelope_release_same_index_number;
-	uint16_t			envelope_release_tick_number;
+	float						envelope_release_duration_in_seconds;
+	int8_t const *				p_envelope_release_table;
+	uint16_t					envelope_release_same_index_number;
+	uint16_t					envelope_release_tick_number;
 
-	bool				is_damper_pedal_on;
+	bool						is_damper_pedal_on;
 
-	uint8_t				envelop_damper_on_but_note_off_sustain_level;
-	float				envelope_damper_on_but_note_off_sustain_duration_in_seconds;
-	int8_t const *		p_envelope_damper_on_but_note_off_sustain_table;
-	uint16_t			envelope_damper_on_but_note_off_sustain_same_index_number;
+	normalized_midi_level_t 	envelop_damper_on_but_note_off_sustain_level;
+	float						envelope_damper_on_but_note_off_sustain_duration_in_seconds;
+	int8_t const *				p_envelope_damper_on_but_note_off_sustain_table;
+	uint16_t					envelope_damper_on_but_note_off_sustain_same_index_number;
 
-	uint16_t			registered_parameter_number;
-	uint16_t			registered_parameter_value;
+	uint16_t					registered_parameter_number;
+	uint16_t					registered_parameter_value;
 } channel_controller_t;
 
 

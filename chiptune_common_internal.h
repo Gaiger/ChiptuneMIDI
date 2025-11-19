@@ -30,6 +30,7 @@
 #define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
 
 #define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
+#define MULTIPLY_BY_128(VALUE)						((VALUE) << 7)
 
 #define MULTIPLY_THEN_DIVIDE_BY_128(A, B) 			((int16_t)DIVIDE_BY_128((int32_t)(A) * (int32_t)(B)))
 
@@ -51,9 +52,13 @@ inline uint8_t one_to_zero(uint8_t x){
 }
 #endif
 #define ONE_TO_ZERO(VALUE)							((VALUE) & (0 - ((0 - ((uint32_t)(VALUE) ^ 0x01)) >> 31)))
-#define MIDI_VALUE_TO_LEVEL_0_128(VALUE)			ONE_TO_ZERO((VALUE) + 1)
+#define NORMALIZE_MIDI_LEVEL(VALUE)					ONE_TO_ZERO((VALUE) + 1)
 
 #define NULL_TICK									(UINT32_MAX)
+
+typedef int8_t		midi_value_t;
+typedef uint8_t		normalized_midi_level_t;
+
 
 #ifndef _USING_STATIC_RESOURCE_ALLOCATION
 	void* chiptune_malloc(size_t size);

@@ -14,11 +14,12 @@
 #include "chiptune_midi_control_change_internal.h"
 
 
-static inline void process_modulation_wheel(uint32_t const tick, int8_t const voice, int8_t const value)
+static inline void process_modulation_wheel(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_MODULATION_WHEEL(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_MODULATION_WHEEL, voice, value);
-	get_channel_controller_pointer_from_index(voice)->modulation_wheel = value;
+	get_channel_controller_pointer_from_index(voice)->modulation_wheel
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
 }
 
 /**********************************************************************************/
@@ -31,7 +32,8 @@ static void process_cc_registered_parameter(uint32_t const tick, int8_t const vo
 	switch(p_channel_controller->registered_parameter_number)
 	{
 	case MIDI_CC_RPN_PITCH_BEND_SENSITIVY:
-		p_channel_controller->pitch_wheel_bend_range_in_semitones = SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value >> 8);
+		p_channel_controller->pitch_wheel_bend_range_in_semitones
+				= (midi_value_t)SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value >> 8);
 		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %d, MIDI_CC_RPN_PITCH_BEND_SENSITIVY(%d) :: voice = %d, pitch_wheel_bend_range_in_semitones = %d\r\n",
 						tick, MIDI_CC_RPN_PITCH_BEND_SENSITIVY,
 						voice, p_channel_controller->pitch_wheel_bend_range_in_semitones);
@@ -42,7 +44,8 @@ static void process_cc_registered_parameter(uint32_t const tick, int8_t const vo
 		}
 		break;
 	case MIDI_CC_RPN_CHANNEL_FINE_TUNING: {
-			short fourteen_bits_value = (SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value >> 8) << 7)
+			short fourteen_bits_value
+					= (SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value >> 8) << 7)
 					+ SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value & 0xFF);
 			p_channel_controller->fine_tuning_value = fourteen_bits_value;
 			CHIPTUNE_PRINTF(cMidiControlChange, "tick = %d, MIDI_CC_RPN_CHANNEL_FINE_TUNING(%d) :: voice = %d, fine tuning in semitones = %+3.2f\r\n",
@@ -53,7 +56,8 @@ static void process_cc_registered_parameter(uint32_t const tick, int8_t const vo
 					+ (p_channel_controller->fine_tuning_value - MIDI_FOURTEEN_BITS_CENTER_VALUE)/(float)MIDI_FOURTEEN_BITS_CENTER_VALUE;
 		} break;
 	case MIDI_CC_RPN_CHANNEL_COARSE_TUNING:
-		p_channel_controller->coarse_tuning_value = SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value >> 8);
+		p_channel_controller->coarse_tuning_value
+				= (midi_value_t)SEVEN_BITS_VALID(p_channel_controller->registered_parameter_value >> 8);
 		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %d, MIDI_CC_RPN_CHANNEL_COARSE_TUNING(%d) :: voice = %d, tuning in semitones = %+d\r\n",
 						tick, MIDI_CC_RPN_CHANNEL_COARSE_TUNING, voice, p_channel_controller->coarse_tuning_value - MIDI_SEVEN_BITS_CENTER_VALUE);
 		p_channel_controller->tuning_in_semitones
@@ -89,30 +93,32 @@ static void process_cc_registered_parameter(uint32_t const tick, int8_t const vo
 
 /**********************************************************************************/
 
-void process_loudness_change(uint32_t const tick, int8_t const voice, int8_t const value,
-									int loudness_change_type)
+void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value_t const value,
+									int8_t loudness_change_type)
 {
+	normalized_midi_level_t const normalized_value
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	int16_t original_value;
 	int16_t change_to_value;
 	do{
 		if(LoudnessChangeVolume == loudness_change_type){
 			original_value = p_channel_controller->volume;
-			change_to_value = value;
+			change_to_value = normalized_value;
 			break;
 		}
 
-		original_value = p_channel_controller->expression + NORMALIZE_PRESSURE(p_channel_controller->pressure);
+		original_value = p_channel_controller->expression + EFFECTIVE_PRESSURE_LEVEL(p_channel_controller->pressure);
 		if(LoundnessChangePressure == loudness_change_type){
-			change_to_value = p_channel_controller->expression + NORMALIZE_PRESSURE(value);
+			change_to_value = p_channel_controller->expression + EFFECTIVE_PRESSURE_LEVEL(normalized_value);
 			break;
 		}
 		//LoudnessChangeExpression || LoundessBreathController
-		change_to_value = NORMALIZE_PRESSURE(p_channel_controller->pressure) + value;
+		change_to_value = EFFECTIVE_PRESSURE_LEVEL(p_channel_controller->pressure) + normalized_value;
 	} while(0);
 
 	do {
-		if(value == original_value){
+		if(normalized_value == original_value){
 			break;
 		}
 
@@ -156,7 +162,7 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, int8_t con
 
 /**********************************************************************************/
 
-static void process_breath_controller(uint32_t const tick, int8_t const voice, int8_t const value)
+static void process_breath_controller(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_BREATH_CONTROLLER(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_BREATH_CONTROLLER, voice, value);
@@ -165,18 +171,18 @@ static void process_breath_controller(uint32_t const tick, int8_t const voice, i
 
 /**********************************************************************************/
 
-static void process_cc_volume(uint32_t const tick, int8_t const voice, int8_t const value)
+static void process_cc_volume(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_VOLUME(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_VOLUME, voice, value);
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	process_loudness_change(tick, voice, value, LoudnessChangeVolume);
-	p_channel_controller->volume = value;
+	p_channel_controller->volume = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
 }
 
 /**********************************************************************************/
 
-static void process_cc_pan(uint32_t const tick, int8_t const voice, int8_t const value)
+static void process_cc_pan(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 #define PAN_BAR_SCALE_NUMBER						(16)
 #define PAN_BAR_DELTA_TICK							((INT8_MAX + 1)/PAN_BAR_SCALE_NUMBER)
@@ -201,18 +207,18 @@ static void process_cc_pan(uint32_t const tick, int8_t const voice, int8_t const
 
 /**********************************************************************************/
 
-static void process_cc_expression(uint32_t const tick, int8_t const voice, int8_t const value)
+static void process_cc_expression(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EXPRESSION(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_EXPRESSION, voice, value);
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	process_loudness_change(tick, voice, value, LoudnessChangeExpression);
-	p_channel_controller->expression = value;
+	p_channel_controller->expression = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
 }
 
 /**********************************************************************************/
 
-static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uint8_t const value)
+static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	bool is_damper_pedal_on = (value < MIDI_SEVEN_BITS_CENTER_VALUE) ? false : true;
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_DAMPER_PEDAL(%d) :: voice = %d, %s\r\n",
@@ -247,7 +253,7 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 			int32_t expression_multiply_volume = p_channel_controller->expression * p_channel_controller->volume;
 			expression_multiply_volume += !expression_multiply_volume;
 			process_effects(tick, EVENT_FREE, voice, p_oscillator->note,
-							p_oscillator->loudness * INT8_MAX/ expression_multiply_volume, oscillator_index);
+							MULTIPLY_BY_128(p_oscillator->loudness)/ expression_multiply_volume, oscillator_index);
 		} while(0);
 		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
@@ -255,25 +261,27 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, uin
 
 /**********************************************************************************/
 
-static void process_cc_reverb_effect(uint32_t const tick, int8_t const voice, int8_t const value)
+static void process_cc_reverb_effect(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_REVERB_DEPTH(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_REVERB_DEPTH, voice, value);
-	get_channel_controller_pointer_from_index(voice)->reverb = value;
+	get_channel_controller_pointer_from_index(voice)->reverb
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
 }
 
 /**********************************************************************************/
 
-static void process_cc_chorus_effect(uint32_t const tick, int8_t const voice, int8_t const value)
+static void process_cc_chorus_effect(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_CHORUS_EFFECT(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_CHORUS_EFFECT, voice, value);
-	get_channel_controller_pointer_from_index(voice)->chorus = value;
+	get_channel_controller_pointer_from_index(voice)->chorus
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
 }
 
 /**********************************************************************************/
 
-static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const voice, int8_t const value)
+static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	(void)value;
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_RESET_ALL_CONTROLLERS(%d) :: voices = %d\r\n",
@@ -283,7 +291,8 @@ static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const v
 
 /**********************************************************************************/
 
-int process_control_change_message(uint32_t const tick, int8_t const voice, int8_t const number, int8_t const value)
+int process_control_change_message(uint32_t const tick, int8_t const voice,
+								   midi_value_t const number, midi_value_t const value)
 {
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	switch(number)

@@ -66,7 +66,7 @@ void advance_melodic_amplitude(oscillator_t * const p_oscillator)
 				p_envelope_table = p_channel_controller->p_envelope_decay_table;
 				int16_t sustain_ampitude
 						= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-											MIDI_VALUE_TO_LEVEL_0_128(p_channel_controller->envelope_sustain_level));
+											p_channel_controller->envelope_sustain_level);
 				do {
 					if(0 != p_oscillator->attack_decay_reference_amplitude){
 						delta_amplitude = p_oscillator->attack_decay_reference_amplitude - sustain_ampitude;
@@ -141,9 +141,8 @@ void advance_melodic_amplitude(oscillator_t * const p_oscillator)
 				 * In contrast, updating one point in advance is acceptable for now.
 				 * (Known issue with a workaround; behavior is intentional.)
 				 */
-				p_oscillator->amplitude
-						= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-											MIDI_VALUE_TO_LEVEL_0_128(p_channel_controller->envelope_sustain_level));
+				p_oscillator->amplitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
+															p_channel_controller->envelope_sustain_level);
 				if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 					break;
 				}

@@ -38,23 +38,24 @@ channel_controller_t * const get_channel_controller_pointer_from_index(int8_t co
 void reset_channel_controller_midi_control_change_parameters(int8_t const index)
 {
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
-	p_channel_controller->coarse_tuning_value = MIDI_SEVEN_BITS_CENTER_VALUE;
+	p_channel_controller->coarse_tuning_value = (midi_value_t)MIDI_SEVEN_BITS_CENTER_VALUE;
 	p_channel_controller->fine_tuning_value = MIDI_FOURTEEN_BITS_CENTER_VALUE;
 	p_channel_controller->tuning_in_semitones
 			= (float)(p_channel_controller->coarse_tuning_value - MIDI_SEVEN_BITS_CENTER_VALUE)
 			+ (p_channel_controller->fine_tuning_value - MIDI_FOURTEEN_BITS_CENTER_VALUE)/(float)MIDI_FOURTEEN_BITS_CENTER_VALUE;
 
-	p_channel_controller->volume = MIDI_SEVEN_BITS_CENTER_VALUE;
-	p_channel_controller->pressure = 0;
-	p_channel_controller->expression = INT8_MAX;
-	p_channel_controller->pan = MIDI_SEVEN_BITS_CENTER_VALUE;
+	p_channel_controller->volume = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(MIDI_SEVEN_BITS_CENTER_VALUE);
+	p_channel_controller->pressure = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
+	p_channel_controller->expression = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(INT8_MAX);
+	p_channel_controller->pan = (midi_value_t)MIDI_SEVEN_BITS_CENTER_VALUE;
 
-	p_channel_controller->pitch_wheel_bend_range_in_semitones = MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES;
+	p_channel_controller->pitch_wheel_bend_range_in_semitones
+			= (midi_value_t)MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES;
 	p_channel_controller->pitch_wheel_bend_in_semitones = 0.0f;
 
-	p_channel_controller->modulation_wheel = 0;
-	p_channel_controller->reverb = 0;
-	p_channel_controller->chorus = 0;
+	p_channel_controller->modulation_wheel = NORMALIZE_MIDI_LEVEL(0);
+	p_channel_controller->reverb = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
+	p_channel_controller->chorus = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
 	p_channel_controller->is_damper_pedal_on = false;
 }
 
@@ -152,7 +153,8 @@ int set_pitch_channel_parameters(int8_t const index, int8_t const waveform, uint
 		= (uint16_t)((sampling_rate * envelope_decay_duration_in_seconds)
 					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
-	p_channel_controller->envelope_sustain_level = envelope_sustain_level;
+	p_channel_controller->envelope_sustain_level
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(envelope_sustain_level);
 
 	if(0 == p_channel_controller->envelope_decay_same_index_number){
 		if(INT8_MAX != p_channel_controller->envelope_sustain_level){
@@ -175,7 +177,8 @@ int set_pitch_channel_parameters(int8_t const index, int8_t const waveform, uint
 
 	pp_phase_table = &p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table;
 	set_decline_curve(pp_phase_table, envelope_damper_on_but_note_off_sustain_curve);
-	p_channel_controller->envelop_damper_on_but_note_off_sustain_level = envelope_damper_on_but_note_off_sustain_level;
+	p_channel_controller->envelop_damper_on_but_note_off_sustain_level
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(envelope_damper_on_but_note_off_sustain_level);
 	p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_seconds
 			= envelope_damper_on_but_note_off_sustain_duration_in_seconds;
 	do {

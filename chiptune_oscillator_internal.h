@@ -2,6 +2,7 @@
 #define _CHIPTUNE_OSCILLATOR_INTERNAL_H_
 
 #include <stdint.h>
+#include "chiptune_common_internal.h"
 
 enum EnvelopeState
 {
@@ -14,17 +15,17 @@ enum EnvelopeState
 
 typedef struct _oscillator
 {
-	uint8_t		state_bits;
-	uint8_t		envelope_state;
+	uint8_t			state_bits;
+	uint8_t			envelope_state;
 
-	int8_t		voice;
+	int8_t			voice;
+	midi_value_t	note;
 
-	int8_t		note;
-	uint16_t	base_phase_increment;
-	uint16_t	current_phase;
+	uint16_t		base_phase_increment;
+	uint16_t		current_phase;
 
-	int16_t		loudness;
-	int16_t		amplitude;
+	int16_t			loudness;
+	int16_t			amplitude;
 union{
 	struct {
 		uint16_t	envelope_table_index;

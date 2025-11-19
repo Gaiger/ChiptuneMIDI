@@ -183,12 +183,13 @@ static inline void swap_processing_channel() { s_is_processing_left_channel = !s
 /**********************************************************************************/
 
 int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
-									  int8_t const note, int8_t const velocity, oscillator_t * const p_oscillator)
+									  midi_value_t const note, normalized_midi_level_t const normalized_velocity,
+									  oscillator_t * const p_oscillator)
 {
+	(void)tick; (void)voice; (void)note; (void)normalized_velocity;
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 		return 1;
 	}
-	(void)tick; (void)voice; (void)note; (void)velocity;
 
 	update_oscillator_phase_increment(p_oscillator);
 	p_oscillator->amplitude = 0;
@@ -206,12 +207,13 @@ int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
 /**********************************************************************************/
 
 int finalize_percussion_oscillator_setup(uint32_t const tick, int8_t const voice,
-								int8_t const note, int8_t const velocity, oscillator_t * const p_oscillator)
+										 midi_value_t const note, normalized_midi_level_t const normalized_velocity,
+										 oscillator_t * const p_oscillator)
 {
+	(void)tick; (void)voice; (void)note; (void)normalized_velocity;
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL != voice){
 		return 1;
 	}
-	(void)tick; (void)voice; (void)note; (void)velocity;
 
 	p_oscillator->percussion_waveform_index = 0;
 	p_oscillator->percussion_duration_sample_count = 0;
@@ -228,7 +230,8 @@ int finalize_percussion_oscillator_setup(uint32_t const tick, int8_t const voice
 /**********************************************************************************/
 
 static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick, int8_t const voice,
-														  int8_t const note, int8_t const velocity)
+														  midi_value_t const note,
+														  normalized_midi_level_t const normalized_velocity)
 {
 	int16_t oscillator_index = get_occupied_oscillator_head_index();
 	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
@@ -251,7 +254,7 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick, i
 				break;
 			}
 			put_event(EVENT_REST, oscillator_index, tick);
-			process_effects(tick, EVENT_REST, voice, note, velocity, oscillator_index);
+			process_effects(tick, EVENT_REST, voice, note, normalized_velocity, oscillator_index);
 		} while(0);
 		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
@@ -260,7 +263,7 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick, i
 /**********************************************************************************/
 
 static int process_note_message(uint32_t const tick, bool const is_note_on,
-						 int8_t const voice, int8_t const note, int8_t const velocity)
+						 int8_t const voice, midi_value_t const note, midi_value_t const velocity)
 {
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
@@ -271,6 +274,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			return 1;
 		}
 	}
+	normalized_midi_level_t normalized_velocity
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(velocity);
 
 	do {
 		if(true == is_note_on){
@@ -298,7 +303,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 								tick, "MIDI_MESSAGE_NOTE_ON",
 								voice, note, velocity, &pitch_wheel_bend_string[0]);
 			} while(0);
-			rest_occupied_oscillator_with_same_voice_note(tick, voice, note, velocity);
+			rest_occupied_oscillator_with_same_voice_note(tick, voice, note, normalized_velocity);
 
 			int16_t oscillator_index;
 			oscillator_t * const p_oscillator = acquire_oscillator(&oscillator_index);
@@ -311,8 +316,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->note = note;
 
 			int16_t expression_added_pressure = p_channel_controller->expression
-					+ NORMALIZE_PRESSURE(p_channel_controller->pressure);
-			int32_t temp = (velocity * expression_added_pressure * p_channel_controller->volume)/INT8_MAX;
+					+ EFFECTIVE_PRESSURE_LEVEL(p_channel_controller->pressure);
+			int32_t temp = DIVIDE_BY_128((int32_t)normalized_velocity
+										 * expression_added_pressure * p_channel_controller->volume);
+
 			if(temp > INT16_MAX){
 				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: loudness over IN16_MAX in %s\r\n", __func__);
 				temp = INT16_MAX;
@@ -321,15 +328,15 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->current_phase = 0;
 			do {
 				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
-					finalize_percussion_oscillator_setup(tick, voice, note, velocity, p_oscillator);
+					finalize_percussion_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
 					break;
 				}
 
-				finalize_melodic_oscillator_setup(tick, voice, note, velocity, p_oscillator);
+				finalize_melodic_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
 			} while(0);
 
 			put_event(EVENT_ACTIVATE, oscillator_index, tick);
-			process_effects(tick, EVENT_ACTIVATE, voice, note, velocity, oscillator_index);
+			process_effects(tick, EVENT_ACTIVATE, voice, note, normalized_velocity, oscillator_index);
 			break;
 		}
 
@@ -369,7 +376,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					break;
 				}
 				put_event(EVENT_FREE, oscillator_index, tick);
-				process_effects(tick, EVENT_FREE, voice, note, velocity, oscillator_index);
+				process_effects(tick, EVENT_FREE, voice, note, normalized_velocity, oscillator_index);
 				is_found = true;
 			} while(0);
 			if(true == is_found){
@@ -401,13 +408,14 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->loudness
 					= LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(
 						p_oscillator->loudness,
-						MIDI_VALUE_TO_LEVEL_0_128(p_channel_controller->envelop_damper_on_but_note_off_sustain_level));
+						p_channel_controller->envelop_damper_on_but_note_off_sustain_level);
 			p_oscillator->amplitude = 0;
 			p_oscillator->envelope_same_index_count = 0;
 			p_oscillator->envelope_table_index = 0;
 			p_oscillator->release_reference_amplitude = 0;
 			put_event(EVENT_ACTIVATE, reduced_loundness_oscillator_index, tick);
-			process_effects(tick, EVENT_ACTIVATE, voice, note, velocity, reduced_loundness_oscillator_index);
+			process_effects(tick, EVENT_ACTIVATE, voice, note, normalized_velocity,
+							reduced_loundness_oscillator_index);
 		} while(0);
 
 	} while(0);
@@ -417,7 +425,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 
 /**********************************************************************************/
 
-static int process_program_change_message(uint32_t const tick, int8_t const voice, int8_t const number)
+static int process_program_change_message(uint32_t const tick, int8_t const voice, midi_value_t const number)
 {
 	do {
 		if(CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED != get_channel_controller_pointer_from_index(voice)->instrument
@@ -442,7 +450,7 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 
 /**********************************************************************************/
 
-static int process_channel_pressure_message(uint32_t const tick, int8_t const voice, int8_t const value)
+static int process_channel_pressure_message(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiChannelPressure, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %d, value = %d, and expression = %d\r\n",
 					tick, voice, value, get_channel_controller_pointer_from_index(voice)->expression);
@@ -539,7 +547,8 @@ static int process_midi_message(struct _tick_message const tick_message)
 		case MIDI_MESSAGE_NOTE_OFF:
 		case MIDI_MESSAGE_NOTE_ON:
 			process_note_message(tick, (MIDI_MESSAGE_NOTE_OFF == type) ? false : true,
-				voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), SEVEN_BITS_VALID(u.data_as_bytes[2]));
+				voice, (midi_value_t)SEVEN_BITS_VALID(u.data_as_bytes[1]),
+								 (midi_value_t)SEVEN_BITS_VALID(u.data_as_bytes[2]));
 		 break;
 		case MIDI_MESSAGE_KEY_PRESSURE:
 			CHIPTUNE_PRINTF(cMidiControlChange,
@@ -547,20 +556,20 @@ static int process_midi_message(struct _tick_message const tick_message)
 							tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]), "(NOT IMPLEMENTED YET)");
 			break;
 		case MIDI_MESSAGE_CONTROL_CHANGE:
-			process_control_change_message(tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]),
-										   SEVEN_BITS_VALID(u.data_as_bytes[2]));
+			process_control_change_message(tick, voice, (midi_value_t)SEVEN_BITS_VALID(u.data_as_bytes[1]),
+										   (midi_value_t)SEVEN_BITS_VALID(u.data_as_bytes[2]));
 			break;
 		case MIDI_MESSAGE_PROGRAM_CHANGE:
-			process_program_change_message(tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]));
+			process_program_change_message(tick, voice, (midi_value_t)SEVEN_BITS_VALID(u.data_as_bytes[1]));
 			break;
 		case MIDI_MESSAGE_CHANNEL_PRESSURE:
-			process_channel_pressure_message(tick, voice, SEVEN_BITS_VALID(u.data_as_bytes[1]));
+			process_channel_pressure_message(tick, voice, (midi_value_t)SEVEN_BITS_VALID(u.data_as_bytes[1]));
 			break;
 		case MIDI_MESSAGE_PITCH_WHEEL:
 #define COMBINE_AS_PITCH_WHEEL_14BITS(BYTE1, BYTE2)	\
-														(SEVEN_BITS_VALID(BYTE2) << 7) | SEVEN_BITS_VALID(BYTE1))
+	(SEVEN_BITS_VALID(BYTE2) << 7) | SEVEN_BITS_VALID(BYTE1))
 			process_pitch_wheel_message(tick, voice,
-										COMBINE_AS_PITCH_WHEEL_14BITS(u.data_as_bytes[1], u.data_as_bytes[2]);
+										(int16_t)COMBINE_AS_PITCH_WHEEL_14BITS(u.data_as_bytes[1], u.data_as_bytes[2]);
 			break;
 		default:
 			//CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_MESSAGE code = %u :: voice = %d, byte 1 = %d, byte 2 = %d %s\r\n",
@@ -746,7 +755,6 @@ static int process_timely_midi_message_and_event(void)
 	return ret;
 }
 
-
 /**********************************************************************************/
 
 void perform_vibrato(oscillator_t * const p_oscillator)
@@ -762,12 +770,13 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 		}
 
 		channel_controller_t *p_channel_controller = get_channel_controller_pointer_from_index(p_oscillator->voice);
-		int8_t const modulation_wheel = p_channel_controller->modulation_wheel;
+		normalized_midi_level_t const modulation_wheel = p_channel_controller->modulation_wheel;
 		if(0 >= modulation_wheel){
 			break;
 		}
 
-		p_oscillator->current_phase += VIBRATO_PHASE_INCREMENT(modulation_wheel, p_oscillator->max_vibrato_phase_increment,
+		p_oscillator->current_phase +=
+				VIBRATO_PHASE_INCREMENT(modulation_wheel, p_oscillator->max_vibrato_phase_increment,
 										p_channel_controller->p_vibrato_phase_table[p_oscillator->vibrato_table_index]);
 		p_oscillator->vibrato_same_index_count += 1;
 		if(p_channel_controller->vibrato_same_index_number == p_oscillator->vibrato_same_index_count){
