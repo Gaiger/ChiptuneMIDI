@@ -13,16 +13,15 @@
 #define MAX_REVERB_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND	\
 													(0.150)
 #define EACH_REVERB_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND	\
-													(MAX_REVERB_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND / \
-													(float)( REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER *(INT8_MAX + 1)))
+	(MAX_REVERB_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND / \
+	(float)( REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER *(INT8_MAX_PLUS_1)) )
 
 #define CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER		(SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER)
 #define MAX_CHORUS_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND	\
 													(0.033)
 #define EACH_CHORUS_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND	\
-													(MAX_CHORUS_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND / \
-													(float)( CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER * (INT8_MAX + 1)) \
-													)
+	(MAX_CHORUS_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND / \
+	(float)( CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER * (INT8_MAX_PLUS_1)) )
 
 static float s_min_reverb_delta_tick =
 		(float)(EACH_REVERB_OSCILLATER_MIN_TIME_INTERVAL_IN_SECOND * MIDI_DEFAULT_TEMPO * MIDI_DEFAULT_RESOLUTION / (60.0));
@@ -34,7 +33,7 @@ static float s_max_chorus_detune_in_semitones = DEFAULT_MAX_CHORUS_DETUNE_IN_SEM
 
 /**********************************************************************************/
 
-static inline uint32_t obtain_chorus_delta_tick(normalized_midi_level_t chorus)
+static inline uint32_t calculate_chorus_delta_tick(normalized_midi_level_t chorus)
 {
 	uint32_t chorus_delta_tick = (uint32_t)(chorus * s_min_chorus_delta_tick + 0.5);
 	chorus_delta_tick |= !chorus_delta_tick;
@@ -43,7 +42,7 @@ static inline uint32_t obtain_chorus_delta_tick(normalized_midi_level_t chorus)
 
 /**********************************************************************************/
 
-static inline uint32_t obtain_reverb_delta_tick(normalized_midi_level_t reverb)
+static inline uint32_t calculate_reverb_delta_tick(normalized_midi_level_t reverb)
 {
 	uint32_t reverb_delta_tick = (uint32_t)(reverb * s_min_reverb_delta_tick + 0.5);
 	reverb_delta_tick |= !reverb_delta_tick;
@@ -54,7 +53,7 @@ static inline uint32_t obtain_reverb_delta_tick(normalized_midi_level_t reverb)
 //xor-shift pesudo random https://en.wikipedia.org/wiki/Xorshift
 static uint32_t s_chorus_random_seed = 20240129;
 
-static uint16_t obtain_chorus_random(void)
+static uint16_t generate_chorus_random(void)
 {
 	s_chorus_random_seed ^= s_chorus_random_seed << 13;
 	s_chorus_random_seed ^= s_chorus_random_seed >> 17;
@@ -66,16 +65,17 @@ static uint16_t obtain_chorus_random(void)
 #define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
 	(((DIVIDE_BY_2(UINT16_MAX) + 1) - (VALUE))/(float)(DIVIDE_BY_2(UINT16_MAX) + 1))
 
-static float const obtain_chorus_detune_in_semitones(normalized_midi_level_t const chorus,
+static float const calculate_chorus_detune_in_semitones(normalized_midi_level_t const chorus,
 											  float const max_chorus_detune_in_semitones)
 {
 	if(0 == chorus){
 		return 0.0;
 	}
 
-	uint16_t random = obtain_chorus_random();
+	uint16_t random = generate_chorus_random();
 	float chorus_detune_semitones;
-	chorus_detune_semitones = RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) * (float)chorus/(float)(INT8_MAX + 1);
+	chorus_detune_semitones
+			= RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) * (float)chorus/(float)(INT8_MAX_PLUS_1);
 	chorus_detune_semitones *= max_chorus_detune_in_semitones;
 	//CHIPTUNE_PRINTF(cDeveloping, "chorus_detune_semitones = %3.2f\r\n", chorus_detune_semitones);
 	return chorus_detune_semitones;
@@ -91,10 +91,10 @@ static float const obtain_chorus_detune_in_semitones(normalized_midi_level_t con
 
 static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 								 int8_t const voice, midi_value_t const note,
-								 normalized_midi_level_t const normalized_velocity,
+								 normalized_midi_level_t const velocity,
 								 int16_t const native_oscillator_index)
 {
-	(void)normalized_velocity;
+	(void)velocity;
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 		return 1;
 	}
@@ -149,7 +149,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 		}
 	} while(0);
 
-	uint32_t const reverb_delta_tick = obtain_reverb_delta_tick(p_channel_controller->reverb);
+	uint32_t const reverb_delta_tick = calculate_reverb_delta_tick(p_channel_controller->reverb);
 	{
 		int effect_subordinate_oscillator_number = 0;
 		effect_subordinate_oscillator_number = count_all_subordinate_oscillators(MidiEffectReverb,
@@ -169,10 +169,10 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 
 static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 								 int8_t const voice, midi_value_t const note,
-								 normalized_midi_level_t const normalized_velocity,
+								 normalized_midi_level_t const velocity,
 								 int16_t const native_oscillator_index)
 {
-	(void)normalized_velocity;
+	(void)velocity;
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 		return 1;
 	}
@@ -216,7 +216,7 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 					}
 					p_oscillator->loudness = loudnesses[i + 1];
 					p_oscillator->pitch_chorus_detune_in_semitones
-							= obtain_chorus_detune_in_semitones(
+							= calculate_chorus_detune_in_semitones(
 								p_channel_controller->chorus, s_max_chorus_detune_in_semitones);
 
 					p_oscillator->base_phase_increment = calculate_phase_increment_from_pitch(
@@ -231,7 +231,7 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 		}
 	} while(0);
 
-	uint32_t const chorus_delta_tick = obtain_chorus_delta_tick(p_channel_controller->chorus);
+	uint32_t const chorus_delta_tick = calculate_chorus_delta_tick(p_channel_controller->chorus);
 	{
 		int effect_subordinate_oscillator_number = 0;
 		effect_subordinate_oscillator_number = count_all_subordinate_oscillators(MidiEffectChorus,
@@ -253,10 +253,10 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 /**********************************************************************************/
 
 int process_effects(uint32_t const tick, int8_t const event_type, int8_t const voice, midi_value_t const note,
-					normalized_midi_level_t const normalized_velocity, int16_t const native_oscillator_index)
+					normalized_midi_level_t const velocity, int16_t const native_oscillator_index)
 {
-	process_reverb_effect(tick, event_type, voice, note, normalized_velocity, native_oscillator_index);
-	process_chorus_effect(tick, event_type, voice, note, normalized_velocity, native_oscillator_index);
+	process_reverb_effect(tick, event_type, voice, note, velocity, native_oscillator_index);
+	process_chorus_effect(tick, event_type, voice, note, velocity, native_oscillator_index);
 	return 0;
 }
 

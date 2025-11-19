@@ -183,10 +183,10 @@ static inline void swap_processing_channel() { s_is_processing_left_channel = !s
 /**********************************************************************************/
 
 int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
-									  midi_value_t const note, normalized_midi_level_t const normalized_velocity,
+									  midi_value_t const note, normalized_midi_level_t const velocity,
 									  oscillator_t * const p_oscillator)
 {
-	(void)tick; (void)voice; (void)note; (void)normalized_velocity;
+	(void)tick; (void)voice; (void)note; (void)velocity;
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
 		return 1;
 	}
@@ -207,10 +207,10 @@ int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
 /**********************************************************************************/
 
 int finalize_percussion_oscillator_setup(uint32_t const tick, int8_t const voice,
-										 midi_value_t const note, normalized_midi_level_t const normalized_velocity,
+										 midi_value_t const note, normalized_midi_level_t const velocity,
 										 oscillator_t * const p_oscillator)
 {
-	(void)tick; (void)voice; (void)note; (void)normalized_velocity;
+	(void)tick; (void)voice; (void)note; (void)velocity;
 	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL != voice){
 		return 1;
 	}
@@ -231,7 +231,7 @@ int finalize_percussion_oscillator_setup(uint32_t const tick, int8_t const voice
 
 static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick, int8_t const voice,
 														  midi_value_t const note,
-														  normalized_midi_level_t const normalized_velocity)
+														  normalized_midi_level_t const velocity)
 {
 	int16_t oscillator_index = get_occupied_oscillator_head_index();
 	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
@@ -254,7 +254,7 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick, i
 				break;
 			}
 			put_event(EVENT_REST, oscillator_index, tick);
-			process_effects(tick, EVENT_REST, voice, note, normalized_velocity, oscillator_index);
+			process_effects(tick, EVENT_REST, voice, note, velocity, oscillator_index);
 		} while(0);
 		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
@@ -833,7 +833,7 @@ static inline int16_t obtain_sine_wave(uint16_t phase)
 
 static uint16_t s_noise_random_seed = 1;
 
-static uint16_t obtain_noise_random(void)
+static uint16_t generate_noise_random(void)
 {
 	uint8_t feedback;
 	/*hardware chiptune project version :*/
@@ -886,7 +886,7 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 		wave = SINE_WAVE(p_oscillator->current_phase);
 		break;
 	case WAVEFORM_NOISE:
-		wave = (int16_t)obtain_noise_random();
+		wave = (int16_t)generate_noise_random();
 		break;
 	default:
 		wave = 0;
@@ -1341,7 +1341,6 @@ int16_t chiptune_fetch_16bit_wave(void)
 }
 
 /**********************************************************************************/
-#define INT8_MAX_PLUS_1								(INT8_MAX + 1)
 #define REDUCE_INT16_PRECISION_TO_INT8(VALUE)		((VALUE) >> 8)
 
 uint8_t chiptune_fetch_8bit_wave(void)
