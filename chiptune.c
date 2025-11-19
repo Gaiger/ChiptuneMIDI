@@ -926,7 +926,7 @@ int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
 		channel_controller_t const * const p_channel_controller
 				= get_channel_controller_pointer_from_index(p_oscillator->voice);
 		int8_t channel_panning_weight = p_channel_controller->pan;
-		channel_panning_weight += !channel_panning_weight;//if zero, as 1
+		channel_panning_weight = ZERO_AS_ONE(channel_panning_weight);
 		if(true == is_processing_left_channel()){
 			channel_panning_weight = 2 * MIDI_SEVEN_BITS_CENTER_VALUE - channel_panning_weight;
 		}

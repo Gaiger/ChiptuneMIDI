@@ -53,6 +53,8 @@ inline uint8_t one_to_zero(uint8_t x){
 }
 #endif
 #define ONE_TO_ZERO(VALUE)							((VALUE) & (0 - ((0 - ((uint32_t)(VALUE) ^ 0x01)) >> 31)))
+#define ZERO_AS_ONE(VALUE)							((VALUE) + !((VALUE)))
+
 #define NORMALIZE_MIDI_LEVEL(VALUE)					ONE_TO_ZERO((VALUE) + 1)
 
 #define NULL_TICK									(UINT32_MAX)
