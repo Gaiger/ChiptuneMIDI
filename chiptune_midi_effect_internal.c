@@ -62,8 +62,9 @@ static uint16_t generate_chorus_random(void)
 }
 
 /**********************************************************************************/
-#define RAMDON_RANGE_TO_PLUS_MINUS_ONE(VALUE)	\
-	(((DIVIDE_BY_2(UINT16_MAX) + 1) - (VALUE))/(float)(DIVIDE_BY_2(UINT16_MAX) + 1))
+#define RANDOM_RANGE_TO_PLUS_MINUS_ONE(VALUE) \
+	( ((int32_t)DIVIDE_BY_2(UINT16_MAX + 1) - (int32_t)(VALUE)) \
+	 / (float)DIVIDE_BY_2(UINT16_MAX + 1) )
 
 static float const calculate_chorus_detune_in_semitones(normalized_midi_level_t const chorus,
 											  float const max_chorus_detune_in_semitones)
@@ -72,10 +73,8 @@ static float const calculate_chorus_detune_in_semitones(normalized_midi_level_t 
 		return 0.0;
 	}
 
-	uint16_t random = generate_chorus_random();
-	float chorus_detune_semitones;
-	chorus_detune_semitones
-			= RAMDON_RANGE_TO_PLUS_MINUS_ONE(random) * (float)chorus/(float)(INT8_MAX_PLUS_1);
+	float chorus_detune_semitones
+			= RANDOM_RANGE_TO_PLUS_MINUS_ONE(generate_chorus_random()) * (float)chorus/(float)(INT8_MAX_PLUS_1);
 	chorus_detune_semitones *= max_chorus_detune_in_semitones;
 	//CHIPTUNE_PRINTF(cDeveloping, "chorus_detune_semitones = %3.2f\r\n", chorus_detune_semitones);
 	return chorus_detune_semitones;
