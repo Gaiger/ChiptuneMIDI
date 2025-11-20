@@ -36,7 +36,7 @@ static float s_max_chorus_detune_in_semitones = DEFAULT_MAX_CHORUS_DETUNE_IN_SEM
 static inline uint32_t calculate_chorus_delta_tick(normalized_midi_level_t chorus)
 {
 	uint32_t chorus_delta_tick = (uint32_t)(chorus * s_min_chorus_delta_tick + 0.5);
-	chorus_delta_tick |= !chorus_delta_tick;
+	chorus_delta_tick = ZERO_AS_ONE(chorus_delta_tick);
 	return chorus_delta_tick;
 }
 
@@ -45,7 +45,7 @@ static inline uint32_t calculate_chorus_delta_tick(normalized_midi_level_t choru
 static inline uint32_t calculate_reverb_delta_tick(normalized_midi_level_t reverb)
 {
 	uint32_t reverb_delta_tick = (uint32_t)(reverb * s_min_reverb_delta_tick + 0.5);
-	reverb_delta_tick |= !reverb_delta_tick;
+	reverb_delta_tick = ZERO_AS_ONE(reverb_delta_tick);
 	return reverb_delta_tick;
 }
 
@@ -82,11 +82,31 @@ static float const calculate_chorus_detune_in_semitones(normalized_midi_level_t 
 
 /**********************************************************************************/
 
-//#define ENHANCE_REVERB_LOUDNESS(LOUDNESS, REVERB_VALUE) \
-//								DIVIDE_BY_128((LOUDNESS) * ((INT8_MAX + 1) + ((REVERB_VALUE) + 1)/2))
+//#define ENHANCE_REVERB_LOUDNESS(LOUDNESS, REVERB_VALUE)	\
+//	(LOUDNESS)
 
 #define ENHANCE_REVERB_LOUDNESS(LOUDNESS, REVERB_VALUE) \
-													(LOUDNESS)
+	( (int32_t)(LOUDNESS) + \
+		DIVIDE_BY_8( \
+				DIVIDE_BY_128( (int32_t)(LOUDNESS) * (int32_t)(REVERB_VALUE) ) \
+		) \
+	)
+
+enum ReverbEffectProfile
+{
+	ReverbEffectProfileAudioRoom = 0,
+	ReverbEffectProfileBathroom,
+	ReverbEffectProfileCave,
+	ReverbEffectProfileMax
+};
+
+static int16_t const s_reverb_loudness_proportional_coefficients \
+	[ReverbEffectProfileMax][1 + REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER] =
+{
+	{ 10, 8, 6, 4}, // ReverbEffectProfileAudioRoom
+	{ 10, 7, 9, 4}, // ReverbEffectProfileBathroom
+	{ 10, 9, 6, 7}, // ReverbEffectProfileCave
+};
 
 static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 								 int8_t const voice, midi_value_t const note,
@@ -114,6 +134,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 												   native_oscillator_index,
 												   &cooperative_oscillator_indexes[1]);
 
+			enum ReverbEffectProfile const reverb_effect_profile = ReverbEffectProfileAudioRoom;
 			for(int k = 0; k < cooperative_oscillator_number; k++){
 				oscillator_t  * const p_cooperative_oscillator
 						= get_oscillator_pointer_from_index(cooperative_oscillator_indexes[k]);
@@ -123,9 +144,13 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 				int16_t const enhanced_loudness_over_32 = DIVIDE_BY_32(enhanced_loudness);
 				int16_t loudnesses[1 + REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER]
 						= { 0,
-							enhanced_loudness_over_32 * 9,
-							enhanced_loudness_over_32 * 6,
-							enhanced_loudness_over_32 * 7};
+							enhanced_loudness_over_32
+								* s_reverb_loudness_proportional_coefficients[reverb_effect_profile][1],
+							enhanced_loudness_over_32
+								* s_reverb_loudness_proportional_coefficients[reverb_effect_profile][2],
+							enhanced_loudness_over_32
+								* s_reverb_loudness_proportional_coefficients[reverb_effect_profile][3]
+						  };
 				loudnesses[0] = enhanced_loudness - (loudnesses[1] + loudnesses[2] + loudnesses[3]);
 				p_cooperative_oscillator->loudness = loudnesses[0];
 
@@ -148,6 +173,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 		}
 	} while(0);
 
+	//uint32_t const reverb_delta_tick = calculate_reverb_delta_tick(128);
 	uint32_t const reverb_delta_tick = calculate_reverb_delta_tick(p_channel_controller->reverb);
 	{
 		int effect_subordinate_oscillator_number = 0;

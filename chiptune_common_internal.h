@@ -26,6 +26,8 @@
 #define INT8_MAX_PLUS_1								(INT8_MAX + 1)
 
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
+#define DIVIDE_BY_4(VALUE)							((VALUE) >> 2)
+#define DIVIDE_BY_8(VALUE)							((VALUE) >> 3)
 #define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
 #define DIVIDE_BY_32(VALUE)							((VALUE) >> 5)
 #define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
