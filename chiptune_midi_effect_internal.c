@@ -173,7 +173,6 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 		}
 	} while(0);
 
-	//uint32_t const reverb_delta_tick = calculate_reverb_delta_tick(128);
 	uint32_t const reverb_delta_tick = calculate_reverb_delta_tick(p_channel_controller->reverb);
 	{
 		int effect_subordinate_oscillator_number = 0;
@@ -182,15 +181,32 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 		STACK_ARRAY(int16_t, effect_subordinate_oscillator_indexes, effect_subordinate_oscillator_number);
 		get_all_subordinate_oscillator_indexes(MidiEffectReverb, native_oscillator_index,
 											   &effect_subordinate_oscillator_indexes[0]);
+		int jj = 0;
 		for(int16_t i = 0; i < effect_subordinate_oscillator_number; i++){
 			put_event(event_type, effect_subordinate_oscillator_indexes[i],
-					  tick + (i + 1) * reverb_delta_tick);
+					  tick + (jj + 1) * reverb_delta_tick);
+			jj += 1;
+			jj /= REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER;
 		}
 	}
 	return 0;
 }
 
 /**********************************************************************************/
+
+enum ChorusEffectProfile
+{
+	ChorusEffectProfileLeadDominant = 0,
+	ChorusEffectProfileEvenEnsemble,
+	ChorusEffectProfileMax
+};
+
+static int16_t const s_chorus_loudness_proportional_coefficients \
+	[ChorusEffectProfileMax][1 + CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER] =
+{
+	{ 11, 6, 7, 8}, // ChorusEffectProfileLeadDominant
+	{ 8, 9, 7, 8}, // ChorusEffectProfileEvenEnsemble
+};
 
 static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 								 int8_t const voice, midi_value_t const note,
@@ -218,17 +234,22 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 												   native_oscillator_index,
 												   &cooperative_oscillator_indexes[1]);
 
+			enum ChorusEffectProfile const chorus_effect_profile = ChorusEffectProfileLeadDominant;
 			for(int k = 0; k < cooperative_oscillator_number; k++){
 				oscillator_t *p_cooperative_oscillator
 						= get_oscillator_pointer_from_index(cooperative_oscillator_indexes[k]);
 				int16_t const loudness = p_cooperative_oscillator->loudness;
-				int16_t loudness_over_16 = DIVIDE_BY_16(loudness);
+				int16_t loudness_over_32 = DIVIDE_BY_32(loudness);
 				int16_t loudnesses[1 + CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER]
 						= { 0,
-							4 * loudness_over_16,
-							3 * loudness_over_16,
-							5 * loudness_over_16};
-				loudnesses[0] = loudness - (4 + 3 + 5) * loudness_over_16;
+							loudness_over_32
+								* s_chorus_loudness_proportional_coefficients[chorus_effect_profile][1],
+							loudness_over_32
+								* s_chorus_loudness_proportional_coefficients[chorus_effect_profile][2],
+							loudness_over_32
+								* s_chorus_loudness_proportional_coefficients[chorus_effect_profile][3]
+						  };
+				loudnesses[0] = loudness -  (loudnesses[1] + loudnesses[2] + loudnesses[3]);;
 				p_cooperative_oscillator->loudness = loudnesses[0];
 
 				int16_t associate_oscillator_indexes[CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER];
