@@ -197,10 +197,11 @@ int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
 	p_oscillator->vibrato_table_index = 0;
 	p_oscillator->vibrato_same_index_count = 0;
 
+	p_oscillator->envelope_state = 0;
 	p_oscillator->envelope_same_index_count = 0;
 	p_oscillator->envelope_table_index = 0;
 	p_oscillator->release_reference_amplitude = 0;
-
+	p_oscillator->attack_decay_reference_amplitude = 0;
 	return 0;
 }
 
@@ -409,10 +410,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					= LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(
 						p_oscillator->loudness,
 						p_channel_controller->envelop_damper_on_but_note_off_sustain_level);
-			p_oscillator->amplitude = 0;
-			p_oscillator->envelope_same_index_count = 0;
-			p_oscillator->envelope_table_index = 0;
-			p_oscillator->release_reference_amplitude = 0;
+
+			finalize_melodic_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
 			put_event(EVENT_ACTIVATE, reduced_loundness_oscillator_index, tick);
 			process_effects(tick, EVENT_ACTIVATE, voice, note, normalized_velocity,
 							reduced_loundness_oscillator_index);
@@ -456,6 +455,7 @@ static int process_channel_pressure_message(uint32_t const tick, int8_t const vo
 					tick, voice, value, get_channel_controller_pointer_from_index(voice)->expression);
 
 	process_loudness_change(tick, voice, value, LoundnessChangePressure);
+	get_channel_controller_pointer_from_index(voice)->pressure = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
 	return 0;
 }
 

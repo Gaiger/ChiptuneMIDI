@@ -12,7 +12,7 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 
 enum
 {
-	LoundnessChangePressure,
+	LoundnessChangePressure = 0,
 	LoudnessChangeVolume,
 	LoudnessChangeExpression,
 	LoundessBreathController,
