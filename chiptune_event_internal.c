@@ -16,7 +16,7 @@
 enum
 {
 	EVENT_UNQUEUED =  -1,
-	EVENT_DISCARD = (EVENT_TYPE_MAX + 1),
+	EVENT_DISCARD = (EventTypeMax + 1),
 };
 
 typedef struct _event
@@ -312,10 +312,10 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 	oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 	switch(type)
 	{
-	case EVENT_FREE:
+	case EventTypeFree:
 		SET_PREPARE_TO_FREE(p_oscillator->state_bits);
 		break;
-	case EVENT_REST:
+	case EventTypeRest:
 		SET_PREPARE_TO_REST(p_oscillator->state_bits);
 		break;
 	default:
@@ -419,7 +419,7 @@ int process_events(uint32_t const tick)
 		int8_t const event_type = p_head_event->type;
 		switch(event_type)
 		{
-		case EVENT_ACTIVATE:
+		case EventTypeActivate :
 			CHIPTUNE_PRINTF(cEventTriggering,
 							"tick = %u, ACTIVATE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
 							tick, p_head_event->oscillator_index,
@@ -434,7 +434,7 @@ int process_events(uint32_t const tick)
 			setup_envelope_state(p_oscillator, ENVELOPE_STATE_ATTACK);
 			break;
 
-		case EVENT_FREE:
+		case EventTypeFree:
 			CHIPTUNE_PRINTF(cEventTriggering,
 							"tick = %u, FREE oscillator = %d, voice = %d, note = %d, amplitude = %2.1f%% of loudness %s\r\n",
 							tick, p_head_event->oscillator_index,
@@ -461,7 +461,7 @@ int process_events(uint32_t const tick)
 			} while(0);
 			break;
 
-		case EVENT_REST:
+		case EventTypeRest:
 			CHIPTUNE_PRINTF(cEventTriggering,
 							"tick = %u, REST oscillator = %d, voice = %d, note = %d, amplitude = %2.1f%% of loudness %s\r\n",
 							tick, p_head_event->oscillator_index,
@@ -483,7 +483,7 @@ int process_events(uint32_t const tick)
 			SET_RESTING(p_oscillator->state_bits);
 			setup_envelope_state(p_oscillator, ENVELOPE_STATE_RELEASE);
 			break;
-		case EVENT_DEACTIVATE:
+		case EventTypeDeactivate:
 			CHIPTUNE_PRINTF(cEventTriggering,
 							"tick = %u, DEACTIVATE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
 							tick, p_head_event->oscillator_index,

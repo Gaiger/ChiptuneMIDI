@@ -123,7 +123,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 	}
 
 	do {
-		if(EVENT_ACTIVATE == event_type){
+		if(EventTypeActivate  == event_type){
 			int cooperative_oscillator_number = 0;
 			cooperative_oscillator_number += 1;
 			cooperative_oscillator_number += count_all_subordinate_oscillators(WITHOUT_EFFECT(MidiEffectReverb),
@@ -223,7 +223,7 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 	}
 
 	do {
-		if(EVENT_ACTIVATE == event_type){
+		if(EventTypeActivate  == event_type){
 			int cooperative_oscillator_number = 0;
 			cooperative_oscillator_number += 1;
 			cooperative_oscillator_number += count_all_subordinate_oscillators(WITHOUT_EFFECT(MidiEffectChorus),

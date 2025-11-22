@@ -5,11 +5,12 @@
 
 enum EventType
 {
-	EVENT_ACTIVATE = 1,
-	EVENT_FREE,
-	EVENT_REST,
-	EVENT_DEACTIVATE,
-	EVENT_TYPE_MAX,
+	EventTypeNone = 0,
+	EventTypeActivate  = 1,
+	EventTypeFree,
+	EventTypeRest,
+	EventTypeDeactivate,
+	EventTypeMax,
 };
 
 int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const triggering_tick);

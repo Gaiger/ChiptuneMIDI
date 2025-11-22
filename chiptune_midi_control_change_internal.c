@@ -247,12 +247,12 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, mid
 				break;
 			}
 
-			put_event(EVENT_FREE, oscillator_index, tick);
+			put_event(EventTypeFree, oscillator_index, tick);
 			int16_t expression_added_pressure = p_channel_controller->expression
 					+ EFFECTIVE_PRESSURE_LEVEL(p_channel_controller->pressure);
 
 			int32_t expression_added_pressure_multiply_volume = expression_added_pressure * p_channel_controller->volume;
-			process_effects(tick, EVENT_FREE, voice, p_oscillator->note,
+			process_effects(tick, EventTypeFree, voice, p_oscillator->note,
 							MULTIPLY_BY_128(p_oscillator->loudness) / ZERO_AS_ONE(expression_added_pressure_multiply_volume),
 							oscillator_index);
 		} while(0);

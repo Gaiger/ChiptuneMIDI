@@ -254,8 +254,8 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick, i
 			if(true == IS_RESTING_OR_PREPARE_TO_REST(p_oscillator->state_bits)){
 				break;
 			}
-			put_event(EVENT_REST, oscillator_index, tick);
-			process_effects(tick, EVENT_REST, voice, note, velocity, oscillator_index);
+			put_event(EventTypeRest, oscillator_index, tick);
+			process_effects(tick, EventTypeRest, voice, note, velocity, oscillator_index);
 		} while(0);
 		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
@@ -336,8 +336,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				finalize_melodic_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
 			} while(0);
 
-			put_event(EVENT_ACTIVATE, oscillator_index, tick);
-			process_effects(tick, EVENT_ACTIVATE, voice, note, normalized_velocity, oscillator_index);
+			put_event(EventTypeActivate , oscillator_index, tick);
+			process_effects(tick, EventTypeActivate , voice, note, normalized_velocity, oscillator_index);
 			break;
 		}
 
@@ -376,8 +376,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
 					break;
 				}
-				put_event(EVENT_FREE, oscillator_index, tick);
-				process_effects(tick, EVENT_FREE, voice, note, normalized_velocity, oscillator_index);
+				put_event(EventTypeFree, oscillator_index, tick);
+				process_effects(tick, EventTypeFree, voice, note, normalized_velocity, oscillator_index);
 				is_found = true;
 			} while(0);
 			if(true == is_found){
@@ -412,8 +412,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						p_channel_controller->envelop_damper_on_but_note_off_sustain_level);
 
 			finalize_melodic_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
-			put_event(EVENT_ACTIVATE, reduced_loundness_oscillator_index, tick);
-			process_effects(tick, EVENT_ACTIVATE, voice, note, normalized_velocity,
+			put_event(EventTypeActivate , reduced_loundness_oscillator_index, tick);
+			process_effects(tick, EventTypeActivate , voice, note, normalized_velocity,
 							reduced_loundness_oscillator_index);
 		} while(0);
 
@@ -622,7 +622,7 @@ static int free_note_off_but_damper_pedal_on_oscillators(const uint32_t tick)
 			}
 
 			ret = 1;
-			put_event(EVENT_FREE, oscillator_index, tick);
+			put_event(EventTypeFree, oscillator_index, tick);
 		} while(0);
 		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
@@ -655,7 +655,7 @@ static int free_remaining_oscillators(const uint32_t tick)
 				ret = 1;
 				CHIPTUNE_PRINTF(cDeveloping, "oscillator = %d, voice = %d, note = %d is not freed but tune is ending\r\n",
 							oscillator_index, p_oscillator->voice, p_oscillator->note);
-				put_event(EVENT_FREE, oscillator_index, tick);
+				put_event(EventTypeFree, oscillator_index, tick);
 			} while(0);
 			oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 		}
@@ -1053,7 +1053,7 @@ static void chase_midi_messages(const uint32_t end_midi_message_index)
 					if(false == p_channel_controller->is_damper_pedal_on){
 						break;
 					}
-					put_event(EVENT_DEACTIVATE, oscillator_index, CURRENT_TICK());
+					put_event(EventTypeDeactivate, oscillator_index, CURRENT_TICK());
 				} while(0);
 				oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 			}
