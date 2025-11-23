@@ -197,7 +197,7 @@ int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
 	p_oscillator->vibrato_table_index = 0;
 	p_oscillator->vibrato_same_index_count = 0;
 
-	p_oscillator->envelope_state = 0;
+	p_oscillator->envelope_state = EnvelopeStateAttack;
 	p_oscillator->envelope_same_index_count = 0;
 	p_oscillator->envelope_table_index = 0;
 	p_oscillator->release_reference_amplitude = 0;

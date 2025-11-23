@@ -6,11 +6,11 @@
 
 enum EnvelopeState
 {
-	ENVELOPE_STATE_ATTACK,
-	ENVELOPE_STATE_DECAY,
-	ENVELOPE_STATE_SUSTAIN,
-	ENVELOPE_STATE_RELEASE,
-	ENVELOPE_STATE_MAX,
+	EnvelopeStateAttack = 0,
+	EnvelopeStateDecay,
+	EnvelopeStateSustain,
+	EnvelopeStateRelease,
+	EnvelopeStateMax,
 };
 
 typedef struct _oscillator

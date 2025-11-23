@@ -45,7 +45,7 @@ int const update_oscillator_phase_increment(oscillator_t * const p_oscillator)
 
 int setup_envelope_state(oscillator_t *p_oscillator, uint8_t evelope_state){
 
-	if(ENVELOPE_STATE_MAX <= evelope_state){
+	if(EnvelopeStateMax <= evelope_state){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: undefined state number = %u in %s\r\n",
 						evelope_state, __func__);
 		return -1;

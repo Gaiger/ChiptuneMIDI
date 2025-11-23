@@ -14,7 +14,7 @@ void advance_melodic_amplitude(oscillator_t * const p_oscillator)
 		channel_controller_t const *p_channel_controller
 				= get_channel_controller_pointer_from_index(p_oscillator->voice);
 
-		if(ENVELOPE_STATE_SUSTAIN == p_oscillator->envelope_state){
+		if(EnvelopeStateSustain == p_oscillator->envelope_state){
 			if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 				break;
 			}
@@ -30,16 +30,16 @@ void advance_melodic_amplitude(oscillator_t * const p_oscillator)
 		uint16_t envelope_same_index_number = 0;
 		switch(p_oscillator->envelope_state)
 		{
-		case ENVELOPE_STATE_ATTACK:
+		case EnvelopeStateAttack:
 			envelope_same_index_number = p_channel_controller->envelope_attack_same_index_number;
 			break;
-		case ENVELOPE_STATE_DECAY:
+		case EnvelopeStateDecay:
 			envelope_same_index_number = p_channel_controller->envelope_decay_same_index_number;
 			break;
-		case ENVELOPE_STATE_SUSTAIN:
+		case EnvelopeStateSustain:
 			envelope_same_index_number = p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number;
 			break;
-		case ENVELOPE_STATE_RELEASE:
+		case EnvelopeStateRelease:
 			do {
 				if(true == IS_RESTING(p_oscillator->state_bits)){
 					envelope_same_index_number = p_channel_controller->envelope_attack_same_index_number;
@@ -57,12 +57,12 @@ void advance_melodic_amplitude(oscillator_t * const p_oscillator)
 			int16_t shift_amplitude = 0;
 			switch(p_oscillator->envelope_state)
 			{
-			case ENVELOPE_STATE_ATTACK:
+			case EnvelopeStateAttack:
 				p_envelope_table = p_channel_controller->p_envelope_attack_table;
 				delta_amplitude = p_oscillator->loudness - p_oscillator->attack_decay_reference_amplitude;
 				shift_amplitude = p_oscillator->attack_decay_reference_amplitude;
 				break;
-			case ENVELOPE_STATE_DECAY: {
+			case EnvelopeStateDecay: {
 				p_envelope_table = p_channel_controller->p_envelope_decay_table;
 				int16_t sustain_ampitude
 						= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
@@ -76,12 +76,12 @@ void advance_melodic_amplitude(oscillator_t * const p_oscillator)
 				} while(0);
 				shift_amplitude = sustain_ampitude;
 			}	break;
-			case ENVELOPE_STATE_SUSTAIN:
+			case EnvelopeStateSustain:
 				p_envelope_table = p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table;
 				delta_amplitude = p_oscillator->loudness;
 				break;
 			default:
-			case ENVELOPE_STATE_RELEASE:
+			case EnvelopeStateRelease:
 				do{
 					if(true == IS_RESTING(p_oscillator->state_bits)){
 						p_envelope_table = p_channel_controller->p_envelope_attack_table;
@@ -96,7 +96,7 @@ void advance_melodic_amplitude(oscillator_t * const p_oscillator)
 			p_oscillator->amplitude = MELODIC_ENVELOPE_DELTA_AMPLITUDE(delta_amplitude,
 														 p_envelope_table[p_oscillator->envelope_table_index]);
 			p_oscillator->amplitude	+= shift_amplitude;
-			if(ENVELOPE_STATE_RELEASE != p_oscillator->envelope_state){
+			if(EnvelopeStateRelease != p_oscillator->envelope_state){
 				p_oscillator->release_reference_amplitude = p_oscillator->amplitude;
 			}
 		}
@@ -121,14 +121,14 @@ void advance_melodic_amplitude(oscillator_t * const p_oscillator)
 			p_oscillator->envelope_table_index = 0;
 			switch(p_oscillator->envelope_state)
 			{
-			case ENVELOPE_STATE_ATTACK:
+			case EnvelopeStateAttack:
 				p_oscillator->attack_decay_reference_amplitude = 0;
 				if(0 < p_channel_controller->envelope_decay_same_index_number){
-					p_oscillator->envelope_state = ENVELOPE_STATE_DECAY;
+					p_oscillator->envelope_state = EnvelopeStateDecay;
 					break;
 				}
-			case ENVELOPE_STATE_DECAY:
-				p_oscillator->envelope_state = ENVELOPE_STATE_SUSTAIN;
+			case EnvelopeStateDecay:
+				p_oscillator->envelope_state = EnvelopeStateSustain;
 				/*
 				 * SIN: the last decay point is updated to sustain amplitude in advance.
 				 *
@@ -149,10 +149,10 @@ void advance_melodic_amplitude(oscillator_t * const p_oscillator)
 				if(0 < p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number){
 					break;
 				}
-				p_oscillator->envelope_state = ENVELOPE_STATE_RELEASE;
+				p_oscillator->envelope_state = EnvelopeStateRelease;
 				break;
-			case ENVELOPE_STATE_SUSTAIN:
-			case ENVELOPE_STATE_RELEASE:
+			case EnvelopeStateSustain:
+			case EnvelopeStateRelease:
 				SET_DEACTIVATED(p_oscillator->state_bits);
 				break;
 			}

@@ -134,7 +134,7 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value
 					break;
 				}
 
-				if(ENVELOPE_STATE_RELEASE == p_oscillator->envelope_state){
+				if(EnvelopeStateRelease == p_oscillator->envelope_state){
 					break;
 				}
 
@@ -145,10 +145,10 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value
 				}
 				p_oscillator->loudness = (int16_t)temp;
 				p_oscillator->attack_decay_reference_amplitude = p_oscillator->amplitude;
-				uint8_t to_envelope_state = ENVELOPE_STATE_DECAY;
+				uint8_t to_envelope_state = EnvelopeStateDecay;
 				if(LoundessBreathController != loudness_change_type){
 					if(p_oscillator->amplitude < p_oscillator->loudness){
-						to_envelope_state = ENVELOPE_STATE_ATTACK;
+						to_envelope_state = EnvelopeStateAttack;
 					}
 				}
 
