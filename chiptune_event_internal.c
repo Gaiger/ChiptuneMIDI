@@ -449,7 +449,7 @@ int process_events(uint32_t const tick)
 			SET_FREEING(p_oscillator->state_bits);
 			do {
 #if(0)
-				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice){
+				if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
 					put_event(EVENT_DISCARD, p_head_event->oscillator_index, tick);
 					break;
 				}

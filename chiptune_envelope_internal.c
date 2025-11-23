@@ -7,7 +7,7 @@
 void advance_melodic_amplitude(oscillator_t * const p_oscillator)
 {
 	do {
-		if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice){
+		if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
 			break;
 		}
 
@@ -170,7 +170,7 @@ void advance_melodic_amplitude(oscillator_t * const p_oscillator)
 void advance_percussion_waveform_and_amplitude(oscillator_t * const p_oscillator)
 {
 	do {
-		if(false == (MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice)){
+		if(false == (MIDI_PERCUSSION_CHANNEL == p_oscillator->voice)){
 			break;
 		}
 

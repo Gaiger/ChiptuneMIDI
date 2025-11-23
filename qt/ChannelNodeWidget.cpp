@@ -48,8 +48,8 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 
 		instrument_name = GetInstrumentNameString(instrument_index);
 	}while(0);
-#define MIDI_PERCUSSION_INSTRUMENT_CHANNEL			(9)
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == channel_index){
+#define MIDI_PERCUSSION_CHANNEL						(9)
+	if(MIDI_PERCUSSION_CHANNEL == channel_index){
 		instrument_name = QString("Percussion");
 	}
 	QString string = "#"+ QString::number(channel_index) +" " + instrument_name;
@@ -63,7 +63,7 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 
 	QObject::connect(m_p_pitchtimbre_frame, &PitchTimbreFrame::TimbreChanged, this,
 					 &ChannelNodeWidget::TimbreChanged);
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == channel_index){
+	if(MIDI_PERCUSSION_CHANNEL == channel_index){
 		ui->ExpandCollapsePushButton->setEnabled(false);
 	}
 }

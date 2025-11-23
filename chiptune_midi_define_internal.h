@@ -230,82 +230,90 @@ MAYBE_UNUSED_FUNCTION static inline char const * const get_instrument_name_strin
 
 	return "UNKNOWN_INSTRUMENT";
 }
+
 /**********************************************************************************/
 
-#define MIDI_PERCUSSION_INSTRUMENT_CHANNEL			(9)
+#define MIDI_PERCUSSION_CHANNEL 					(9)
 
 //https://usermanuals.finalemusic.com/SongWriter2012Win/Content/PercussionMaps.htm
 
 #define PERCUSSION_CODE_MIN							(27)
-#define PERCUSSION_CODE_MAX							(93)
+#define PERCUSSION_CODE_MAX							(87)
 
-#define PERCUSSION_CODE_LIST(X)	\
-	X(LASER,				27) \
-	X(WHIP,					28) \
-	X(SCRATCH_PUSH,			29) \
-	X(SCRATCH_PULL,			30) \
-	X(STICK_CLICK,			31) \
-	X(METRONOME_CLICK,		32) \
-	\
-	X(METRONOME_BELL,		34) \
-	X(BASS_DRUM,			35) \
-	X(KICK_DRUM,			36) \
-	X(SIDE_STICK,			37) \
-	X(SNARE_DRUM_1,			38) \
-	X(HAND_CLAP,			39)	\
-	X(SNARE_DRUM_2,			40) \
-	X(LOW_FLOOR_TOM,		41) \
-	X(CLOSED_HI_HAT,		42) \
-	X(HIGH_FLOOR_TOM,		43) \
-	X(PADEL_HI_HAT,			44) \
-	X(LOW_TOM,				45) \
-	X(OPEN_HI_HAT,			46) \
-	X(LOW_MID_TOM,			47) \
-	X(HIGH_MID_TOM,			48) \
-	X(CRASH_CYMBAL_1,		49) \
-	X(HIGH_TOM,				50) \
-	X(RIDE_CYMBAL_1,		51) \
-	X(CHINESE_CYMBAL,		52) \
-	X(RIDE_BELL,			53) \
-	X(TAMBOURINE,			54) \
-	X(SPLASH_CYMBAL,		55) \
-	X(COWBELL,				56) \
-	X(CRASH_CYMBAL_2,		57) \
-	X(VIBRASLAP,			58) \
-	X(RIDE_CYMBAL_2,		59) \
-	X(HIGH_BONGO,			60) \
-	X(LOW_BONGO,			61) \
-	X(CONGA_DEAD_STROKE,	62) \
-	X(CONGA,				63) \
-	X(TUMBA,				64) \
-	X(HIGH_TIMBALE,			65) \
-	X(LOW_TIMBALE,			66) \
-	X(HIGH_AGOGO,			67) \
-	X(LOW_AGOGO,			68) \
-	X(CABASA,				69) \
-	X(MARACAS,				70) \
-	X(WHISTLE_SHORT,		71) \
-	X(WHISTLE_LONG,			72) \
-	X(GUIRO_SHORT,			73) \
-	X(GUIRO_LONG,			74) \
-	X(CLAVES,				75) \
-	X(HIGH_WOODBLOCK,		76) \
-	X(LOW_WOODBLOCK,		77) \
-	X(CUICA_HIGH,			78) \
-	X(CUICA_LOW,			79) \
-	X(TRIANGLE_MUTE,		80) \
-	X(TRIANGLE_OPEN,		81) \
-	X(SHAKER,				82) \
-	X(SLEIGH_BELL,			83) \
-	X(BELL_TREE,			84) \
-	X(CASTANETS,			85) \
-	X(SURDU_DEAD_STROKE,	86) \
-	X(SURDU,				87) \
-	\
-	X(SNARE_DRUM_ROD,		91) \
-	X(OCEAN_DRUM,			92) \
-	X(SNARE_DRUM_BRUSH,		93) \
+/* 35–81 ... */
+//https://musescore.org/sites/musescore.org/files/General%20MIDI%20Standard%20Percussion%20Set%20Key%20Map.pdf
+//
+#define GM1_PERCUSSION_CODE_LIST(X) \
+	X(AcousticBassDrum,		35) \
+	X(BassDrum1,			36) \
+	X(SideStick,			37) \
+	X(AcousticSnare,		38) \
+	X(HandClap,				39) \
+	X(ElectricSnare,		40) \
+	X(LowFloorTom,			41) \
+	X(ClosedHiHat,			42) \
+	X(HighFloorTom,			43) \
+	X(PedalHiHat,			44) \
+	X(LowTom,				45) \
+	X(OpenHiHat,			46) \
+	X(LowMidTom,			47) \
+	X(HighMidTom,			48) \
+	X(CrashCymbal1,			49) \
+	X(HighTom,				50) \
+	X(RideCymbal1,			51) \
+	X(ChineseCymbal,		52) \
+	X(RideBell,				53) \
+	X(Tambourine,			54) \
+	X(SplashCymbal,			55) \
+	X(Cowbell,				56) \
+	X(CrashCymbal2,			57) \
+	X(Vibraslap,			58) \
+	X(RideCymbal2,			59) \
+	X(HighBongo,			60) \
+	X(LowBongo,				61) \
+	X(MuteHighConga,		62) \
+	X(OpenHighConga,		63) \
+	X(LowConga,				64) \
+	X(HighTimbale,			65) \
+	X(LowTimbale,			66) \
+	X(HighAgogo,			67) \
+	X(LowAgogo,				68) \
+	X(Cabasa,				69) \
+	X(Maracas,				70) \
+	X(ShortWhistle,			71) \
+	X(LongWhistle,			72) \
+	X(ShortGuiro,			73) \
+	X(LongGuiro,			74) \
+	X(Claves,				75) \
+	X(HighWoodBlock,		76) \
+	X(LowWoodBlock,			77) \
+	X(MuteCuica,			78) \
+	X(OpenCuica,			79) \
+	X(MuteTriangle,			80) \
+	X(OpenTriangle,			81) \
 
+//https://www.voidaudio.net/percussion.html
+//https://midnightmusic.com/wp-content/uploads/2012/08/GMPercussion-and-Sibelius-Drum-Map.pdf
+#define GM2_PERCUSSION_EXTENSION_CODE_LIST(X) \
+	X(HighQ,				27) \
+	X(Slap,					28) \
+	X(ScratchPush,			29) \
+	X(ScratchPull,			30) \
+	X(Sticks,				31) \
+	X(SquareClick,			32) \
+	X(MetronomeClick,		33) \
+	X(MetronomeBell,		34) \
+	\
+	X(Shaker,				82) \
+	X(JingleBell,			83) \
+	X(Belltree,				84) \
+	X(Castanets,			85) \
+	X(MuteSurdo,			86) \
+	X(OpenSurdo,			87) \
+
+#define PERCUSSION_CODE_LIST(X) \
+	GM1_PERCUSSION_CODE_LIST(X) \
+	GM2_PERCUSSION_EXTENSION_CODE_LIST(X) \
 
 enum PERCUSSION_CODE
 {

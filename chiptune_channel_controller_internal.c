@@ -124,7 +124,7 @@ int set_pitch_channel_parameters(int8_t const index, int8_t const waveform, uint
 									   int8_t const envelope_damper_on_but_note_off_sustain_curve,
 									   float const envelope_damper_on_but_note_off_sustain_duration_in_seconds)
 {
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == index){
+	if(MIDI_PERCUSSION_CHANNEL == index){
 		return 1;
 	}
 
@@ -356,7 +356,7 @@ void initialize_channel_controllers(void)
 	}
 
 #define DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS		(0.03f)
-	channel_controller_t * const p_channel_controller = &s_channel_controllers[MIDI_PERCUSSION_INSTRUMENT_CHANNEL];
+	channel_controller_t * const p_channel_controller = &s_channel_controllers[MIDI_PERCUSSION_CHANNEL ];
 	int8_t const ** pp_phase_table = NULL;
 	pp_phase_table = &p_channel_controller->p_envelope_release_table;
 	set_decline_curve(pp_phase_table, ENVELOPE_CURVE_EXPONENTIAL);
@@ -364,7 +364,7 @@ void initialize_channel_controllers(void)
 	p_channel_controller->envelope_release_same_index_number
 		= (uint16_t)((get_sampling_rate() * DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS)
 					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
-	update_channel_controller_envelope_parameters_related_to_playing_tempo(MIDI_PERCUSSION_INSTRUMENT_CHANNEL);
+	update_channel_controller_envelope_parameters_related_to_playing_tempo(MIDI_PERCUSSION_CHANNEL );
 
 	for(int8_t i = PERCUSSION_CODE_MIN; i <= PERCUSSION_CODE_MAX; i++){
 		reset_percussion_all_parameters_from_index(i);
@@ -414,12 +414,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 
 //http://kometbomb.net/2011/10/11/chiptune-drums/
 	switch(index){
-	case BASS_DRUM:
-	case KICK_DRUM:
+	case AcousticBassDrum:
+	case BassDrum1:
 		start_frequency = 80;
 		end_frequency = 50;
 		total_druation_time_in_second = 1.2f;
-		//p_oscillator->p_percussion_modulation_table = s_linear_decline_table;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.04f;
 		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
@@ -429,8 +428,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->waveform[3] = WAVEFORM_SQUARE;
 		p_percussion->is_implemented = true;
 		break;
-	case SIDE_STICK:
-		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
+	case SideStick:
 		start_frequency = 350;
 		end_frequency = 345;
 		total_druation_time_in_second = 0.4f;
@@ -443,8 +441,8 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
 		break;
-	case SNARE_DRUM_1:
-	case SNARE_DRUM_2:
+	case AcousticSnare:
+	case ElectricSnare:
 		start_frequency = 170;
 		end_frequency = 165;
 		total_druation_time_in_second = 0.35f;
@@ -457,7 +455,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
 		break;
-	case OPEN_HI_HAT:
+	case OpenHiHat:
 		start_frequency = 7600;
 		end_frequency = 7400;
 		total_druation_time_in_second = 0.4f;
@@ -470,7 +468,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 				-waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
 		break;
-	case CLOSED_HI_HAT:
+	case ClosedHiHat:
 		start_frequency = 6800;
 		end_frequency = 6700;
 		total_druation_time_in_second = 0.3f;
@@ -483,12 +481,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
 		break;
-	case RIDE_CYMBAL_1:
-	case RIDE_CYMBAL_2:
+	case RideCymbal1:
+	case RideCymbal2:
 		start_frequency = 7200;
 		end_frequency = 7000;
 		total_druation_time_in_second = 0.4f;
-		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
 		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
@@ -498,7 +495,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
 		break;
-	case PADEL_HI_HAT:
+	case PedalHiHat:
 		start_frequency = 6400;
 		end_frequency = 6300;
 		total_druation_time_in_second = 0.3f;
@@ -511,12 +508,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
 		break;
-	case CRASH_CYMBAL_1:
-	case CRASH_CYMBAL_2:
+	case CrashCymbal1:
+	case CrashCymbal2:
 		start_frequency = 100;
 		end_frequency = 90;
 		total_druation_time_in_second = 0.7f;
-		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
 		p_percussion->waveform[1] = WAVEFORM_SQUARE;
@@ -525,7 +521,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		waveform_duration_time_in_second[2] = total_druation_time_in_second;
 		p_percussion->is_implemented = true;
 		break;
-	case LOW_FLOOR_TOM:
+	case LowFloorTom:
 		start_frequency = 220;
 		end_frequency = 210;
 		total_druation_time_in_second = 0.5f;
@@ -538,7 +534,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
 		break;
-	case HIGH_FLOOR_TOM:
+	case HighFloorTom:
 		start_frequency = 240;
 		end_frequency = 230;
 		total_druation_time_in_second = 0.5f;
@@ -551,7 +547,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
 		break;
-	case LOW_TOM:
+	case LowTom:
 		start_frequency = 250;
 		end_frequency = 240;
 		total_druation_time_in_second = 0.4f;
@@ -564,7 +560,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
 		break;
-	case LOW_MID_TOM:
+	case LowMidTom:
 		start_frequency = 270;
 		end_frequency = 260;
 		total_druation_time_in_second = 0.35f;
@@ -577,7 +573,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
 		break;
-	case HIGH_MID_TOM:
+	case HighMidTom:
 		start_frequency = 290;
 		end_frequency = 280;
 		total_druation_time_in_second = 0.35f;
@@ -590,7 +586,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
 		break;
-	case HIGH_TOM:
+	case HighTom:
 		start_frequency = 310;
 		end_frequency = 300;
 		total_druation_time_in_second = 0.3f;
@@ -603,11 +599,10 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
 		break;
-	case CHINESE_CYMBAL:
+	case ChineseCymbal:
 		start_frequency = 85;
 		end_frequency = 70;
 		total_druation_time_in_second = 1.5f;
-		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
 		p_percussion->waveform[1] = WAVEFORM_SQUARE;
@@ -616,11 +611,10 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		waveform_duration_time_in_second[2] = total_druation_time_in_second;
 		p_percussion->is_implemented = true;
 		break;
-	case TAMBOURINE:
+	case Tambourine:
 		start_frequency = 210;
 		end_frequency = 200;
 		total_druation_time_in_second = 0.4f;
-		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
 		p_percussion->waveform[1] = WAVEFORM_SQUARE;
@@ -629,7 +623,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		waveform_duration_time_in_second[2] = total_druation_time_in_second;
 		p_percussion->is_implemented = true;
 		break;
-	case SPLASH_CYMBAL:
+	case SplashCymbal:
 		start_frequency = 60;
 		end_frequency = 50;
 		total_druation_time_in_second = 2.0f;
@@ -642,11 +636,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		waveform_duration_time_in_second[2] = total_druation_time_in_second;
 		p_percussion->is_implemented = true;
 		break;
-	case CASTANETS:
+	/*GM2*/
+	case Castanets:
 		start_frequency = 12000;
 		end_frequency = 12000;
 		total_druation_time_in_second = 0.08f;
-		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
 		p_percussion->waveform[0] = WAVEFORM_NOISE;
 		waveform_duration_time_in_second[0] = 0.02f;
 		p_percussion->waveform[1] = WAVEFORM_SQUARE;

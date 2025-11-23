@@ -572,7 +572,7 @@ int TuneManager::SetPitchChannelTimbre(int8_t const channel_index,
 		if(nullptr == m_p_private->m_p_midi_file){
 			break;
 		}
-		if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == channel_index){
+		if(MIDI_PERCUSSION_CHANNEL == channel_index){
 			qDebug() << "WARNING :: instrumment channel is unsettable, ignore";
 			break;
 		}

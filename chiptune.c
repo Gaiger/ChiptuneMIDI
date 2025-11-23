@@ -187,7 +187,7 @@ int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
 									  oscillator_t * const p_oscillator)
 {
 	(void)tick; (void)voice; (void)note; (void)velocity;
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
+	if(MIDI_PERCUSSION_CHANNEL == voice){
 		return 1;
 	}
 
@@ -212,7 +212,7 @@ int finalize_percussion_oscillator_setup(uint32_t const tick, int8_t const voice
 										 oscillator_t * const p_oscillator)
 {
 	(void)tick; (void)voice; (void)note; (void)velocity;
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL != voice){
+	if(false == (MIDI_PERCUSSION_CHANNEL == voice)){
 		return 1;
 	}
 
@@ -267,7 +267,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						 int8_t const voice, midi_value_t const note, midi_value_t const velocity)
 {
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
+	if(MIDI_PERCUSSION_CHANNEL == voice){
 		if(NULL == get_percussion_pointer_from_index(note)){
 			CHIPTUNE_PRINTF(cDeveloping, "WARNING:: tick = %u, PERCUSSION_INSTRUMENT = %d (%s)"
 										 " does not be defined in the MIDI standard, ignored\r\n",
@@ -282,7 +282,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		if(true == is_note_on){
 
 			do {
-				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
+				if(MIDI_PERCUSSION_CHANNEL == voice){
 					percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
 					char not_implemented_string[24] = {0};
 					if(false == p_percussion->is_implemented){
@@ -328,7 +328,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			p_oscillator->loudness = temp;
 			p_oscillator->current_phase = 0;
 			do {
-				if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
+				if(MIDI_PERCUSSION_CHANNEL == voice){
 					finalize_percussion_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
 					break;
 				}
@@ -342,7 +342,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}
 
 		do {
-			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
+			if(MIDI_PERCUSSION_CHANNEL == voice){
 				CHIPTUNE_PRINTF(cMidiNote, "tick = %u, %s :: voice = %d, %s, velocity = %d\r\n",
 								tick,  "MIDI_MESSAGE_NOTE_OFF",
 								voice, get_percussion_name_string(note), velocity);
@@ -393,7 +393,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 		}
 
 		do {
-			if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == voice){
+			if(MIDI_PERCUSSION_CHANNEL == voice){
 				break;
 			}
 			if(false == p_channel_controller->is_damper_pedal_on){
@@ -765,7 +765,7 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 			break;
 		}
 
-		if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice){
+		if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
 			break;
 		}
 
@@ -796,7 +796,7 @@ void perform_melodic_envelope(oscillator_t * const p_oscillator)
 				&& false == is_processing_left_channel()){
 			break;
 		}
-		if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice){
+		if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
 			break;
 		}
 
@@ -813,7 +813,7 @@ void perform_percussion(oscillator_t * const p_oscillator)
 				&& false == is_processing_left_channel()){
 			break;
 		}
-		if(false == (MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice)){
+		if(false == (MIDI_PERCUSSION_CHANNEL == p_oscillator->voice)){
 			break;
 		}
 
@@ -859,7 +859,7 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 			= get_channel_controller_pointer_from_index(p_oscillator->voice);
 	int16_t wave = 0;
 	int8_t waveform = p_channel_controller->waveform;
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == p_oscillator->voice){
+	if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
 		percussion_t const * const p_percussion = get_percussion_pointer_from_index(p_oscillator->note);
 		waveform = p_percussion->waveform[p_oscillator->percussion_waveform_index];
 	}
@@ -1391,9 +1391,9 @@ int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const w
 						channel_index, __func__);
 		return -1;
 	}
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == channel_index){
-		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: channel_index = %d is MIDI_PERCUSSION_INSTRUMENT_CHANNEL %s\r\n",
-						MIDI_PERCUSSION_INSTRUMENT_CHANNEL, __func__);
+	if(MIDI_PERCUSSION_CHANNEL == channel_index){
+		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: channel_index = %d is MIDI_PERCUSSION_CHANNEL %s\r\n",
+						MIDI_PERCUSSION_CHANNEL , __func__);
 		return 1;
 	}
 

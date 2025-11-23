@@ -31,8 +31,8 @@ PitchTimbreFrame::PitchTimbreFrame(int index, QWidget *parent)
 	m_previous_dutycycle = 0;// dutycycle 50
 	m_previous_sustain_level = ui->SustainLevelSpinBox->value();
 
-#define MIDI_PERCUSSION_INSTRUMENT_CHANNEL			(9)
-	if(MIDI_PERCUSSION_INSTRUMENT_CHANNEL == index){
+#define MIDI_PERCUSSION_CHANNEL						(9)
+	if(MIDI_PERCUSSION_CHANNEL == index){
 		ui->WaveFormComboBox->setEnabled(false);
 		ui->AttackCurveComboBox->setEnabled(false);
 		ui->AttackTimeSpinBox->setEnabled(false);
