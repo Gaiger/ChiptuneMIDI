@@ -77,16 +77,16 @@ static void set_growth_curve(int8_t const ** pp_phase_table, int8_t const curve)
 {
 	switch(curve)
 	{
-	case ENVELOPE_CURVE_LINEAR:
+	case EnvelopeCurveLinear:
 		*pp_phase_table = &s_linear_growth_table[0];
 		break;
-	case ENVELOPE_CURVE_EXPONENTIAL:
+	case EnvelopeCurveExponential:
 		*pp_phase_table = &s_exponential_growth_table[0];
 		break;
-	case ENVELOPE_CURVE_GAUSSIAN:
+	case EnvelopeCurveGaussian:
 		*pp_phase_table = &s_gaussian_growth_table[0];
 		break;
-	case ENVELOPE_CURVE_FERMI:
+	case EnvelopeCurveFermi:
 		*pp_phase_table = &s_fermi_growth_table[0];
 		break;
 	}
@@ -98,16 +98,16 @@ static void set_decline_curve(int8_t const ** pp_phase_table, int8_t const curve
 {
 	switch(curve)
 	{
-	case ENVELOPE_CURVE_LINEAR:
+	case EnvelopeCurveLinear:
 		*pp_phase_table = &s_linear_decline_table[0];
 		break;
-	case ENVELOPE_CURVE_EXPONENTIAL:
+	case EnvelopeCurveExponential:
 		*pp_phase_table = &s_exponential_decline_table[0];
 		break;
-	case ENVELOPE_CURVE_GAUSSIAN:
+	case EnvelopeCurveGaussian:
 		*pp_phase_table = &s_gaussian_decline_table[0];
 		break;
-	case ENVELOPE_CURVE_FERMI:
+	case EnvelopeCurveFermi:
 		*pp_phase_table = &s_fermi_decline_table[0];
 		break;
 	}
@@ -230,11 +230,11 @@ static void reset_channel_controller_all_parameters(int8_t const index)
 													(8.0f)
 
 	set_pitch_channel_parameters(index, WAVEFORM_TRIANGLE, DUTY_CYLCE_50_CRITICAL_PHASE,
-									  ENVELOPE_CURVE_LINEAR, DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND,
-									  ENVELOPE_CURVE_FERMI, DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND,
+									  EnvelopeCurveLinear, DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND,
+									  EnvelopeCurveFermi, DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND,
 									  DEFAULT_ENVELOPE_SUSTAIN_LEVEL,
-									  ENVELOPE_CURVE_EXPONENTIAL, DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND,
-									  DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL, ENVELOPE_CURVE_LINEAR,
+									  EnvelopeCurveExponential, DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND,
+									  DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL, EnvelopeCurveLinear,
 									  DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND);
 
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
@@ -359,7 +359,7 @@ void initialize_channel_controllers(void)
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[MIDI_PERCUSSION_CHANNEL ];
 	int8_t const ** pp_phase_table = NULL;
 	pp_phase_table = &p_channel_controller->p_envelope_release_table;
-	set_decline_curve(pp_phase_table, ENVELOPE_CURVE_EXPONENTIAL);
+	set_decline_curve(pp_phase_table, EnvelopeCurveExponential);
 	p_channel_controller->envelope_release_duration_in_seconds = DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS;
 	p_channel_controller->envelope_release_same_index_number
 		= (uint16_t)((get_sampling_rate() * DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS)

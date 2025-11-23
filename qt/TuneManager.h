@@ -66,20 +66,20 @@ public:
 
 	enum EnvelopeCurveType
 	{
-		ENVELOPE_CURVE_LINEAR = 0,
-		ENVELOPE_CURVE_EXPONENTIAL,
-		ENVELOPE_CURVE_GAUSSIAN,
-		ENVELOPE_CURVE_FERMI,
+		EnvelopeCurveLinear			= 0,
+		EnvelopeCurveExponential,
+		EnvelopeCurveGaussian,
+		EnvelopeCurveFermi,
 	}; Q_ENUM(EnvelopeCurveType)
 
 	int SetPitchChannelTimbre(int8_t const channel_index,
 							  int8_t const waveform = WAVEFORM_TRIANGLE,
-							  int8_t const envelope_attack_curve = ENVELOPE_CURVE_LINEAR, float const envelope_attack_duration_in_seconds = 0.02,
-							  int8_t const envelope_decay_curve = ENVELOPE_CURVE_FERMI, float const envelope_decay_duration_in_seconds = 0.01,
+							  int8_t const envelope_attack_curve = EnvelopeCurveLinear, float const envelope_attack_duration_in_seconds = 0.02,
+							  int8_t const envelope_decay_curve = EnvelopeCurveFermi, float const envelope_decay_duration_in_seconds = 0.01,
 							  uint8_t const envelope_sustain_level = 96,
-							  int8_t const envelope_release_curve = ENVELOPE_CURVE_EXPONENTIAL, float const envelope_release_duration_in_seconds = 0.03,
+							  int8_t const envelope_release_curve = EnvelopeCurveExponential, float const envelope_release_duration_in_seconds = 0.03,
 							  uint8_t const envelope_damper_on_but_note_off_sustain_level = 24,
-							  int8_t const envelope_damper_on_but_note_off_sustain_curve = ENVELOPE_CURVE_LINEAR,
+							  int8_t const envelope_damper_on_but_note_off_sustain_curve = EnvelopeCurveLinear,
 							  float const envelope_damper_on_but_note_off_sustain_duration_in_seconds = 8.0);
 public slots:
 	void RequestWave(int const size);

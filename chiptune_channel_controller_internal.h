@@ -62,12 +62,12 @@ enum
 	DUTY_CYLCE_75_CRITICAL_PHASE	= (UINT16_MAX + 1) - ((UINT16_MAX + 1) >> 2),
 };
 
-enum
+enum EnvelopeCurve
 {
-	ENVELOPE_CURVE_LINEAR,
-	ENVELOPE_CURVE_EXPONENTIAL,
-	ENVELOPE_CURVE_GAUSSIAN,
-	ENVELOPE_CURVE_FERMI,
+	EnvelopeCurveLinear				= 0,
+	EnvelopeCurveExponential,
+	EnvelopeCurveGaussian,
+	EnvelopeCurveFermi,
 };
 
 

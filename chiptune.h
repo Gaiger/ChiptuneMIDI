@@ -52,12 +52,12 @@ enum CHIPTUNE_WAVEFORM_TYPE
 	CHIPTUNE_WAVEFORM_NOISE,
 };
 
-enum CHIPTUNE_ENVELOPE_CURVE_TYPE
+enum ChiptuneEnvelopeCurveType
 {
-	CHIPTUNE_ENVELOPE_CURVE_LINEAR = 0,
-	CHIPTUNE_ENVELOPE_CURVE_EXPONENTIAL,
-	CHIPTUNE_ENVELOPE_CURVE_GAUSSIAN,
-	CHIPTUNE_ENVELOPE_CURVE_FERMI,
+	ChiptuneEnvelopeCurveLinear			= 0,
+	ChiptuneEnvelopeCurveExponential,
+	ChiptuneEnvelopeCurveGaussian,
+	ChiptuneEnvelopeCurveFermi,
 };
 
 int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const waveform,
