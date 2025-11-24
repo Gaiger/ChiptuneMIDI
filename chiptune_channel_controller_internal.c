@@ -229,7 +229,7 @@ static void reset_channel_controller_all_parameters(int8_t const index)
 #define DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND \
 													(8.0f)
 
-	set_pitch_channel_parameters(index, WAVEFORM_TRIANGLE, DUTY_CYLCE_50_CRITICAL_PHASE,
+	set_pitch_channel_parameters(index, WaveformTriangle, WaveformDutyCycle50,
 									  EnvelopeCurveLinear, DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND,
 									  EnvelopeCurveFermi, DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND,
 									  DEFAULT_ENVELOPE_SUSTAIN_LEVEL,
@@ -400,11 +400,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 	float waveform_duration_time_in_second[3];
 
 	percussion_t * const p_percussion = get_percussion_pointer_from_index(index);
-	p_percussion->waveform[0] = WAVEFORM_NOISE;
+	p_percussion->waveform[0] = WaveformNoise;
 	waveform_duration_time_in_second[0] = 0.02f;
-	p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+	p_percussion->waveform[1] = WaveformTriangle;
 	waveform_duration_time_in_second[1] = 0.1f;
-	p_percussion->waveform[2] = WAVEFORM_NOISE;
+	p_percussion->waveform[2] = WaveformNoise;
 	waveform_duration_time_in_second[2] = total_druation_time_in_second
 			- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 
@@ -419,24 +419,24 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 80;
 		end_frequency = 50;
 		total_druation_time_in_second = 1.2f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.04f;
-		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		p_percussion->waveform[1] = WaveformTriangle;
 		waveform_duration_time_in_second[1] = 0.3f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = 0.05f;
-		p_percussion->waveform[3] = WAVEFORM_SQUARE;
+		p_percussion->waveform[3] = WaveformSquare;
 		p_percussion->is_implemented = true;
 		break;
 	case SideStick:
 		start_frequency = 350;
 		end_frequency = 345;
 		total_druation_time_in_second = 0.4f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_SQUARE;
+		p_percussion->waveform[1] = WaveformSquare;
 		waveform_duration_time_in_second[1] = 0.25f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
@@ -446,11 +446,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 170;
 		end_frequency = 165;
 		total_druation_time_in_second = 0.35f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		p_percussion->waveform[1] = WaveformTriangle;
 		waveform_duration_time_in_second[1] = 0.15f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
@@ -459,11 +459,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 7600;
 		end_frequency = 7400;
 		total_druation_time_in_second = 0.4f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		p_percussion->waveform[1] = WaveformTriangle;
 		waveform_duration_time_in_second[1] = 0.12f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				-waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
@@ -472,11 +472,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 6800;
 		end_frequency = 6700;
 		total_druation_time_in_second = 0.3f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		p_percussion->waveform[1] = WaveformTriangle;
 		waveform_duration_time_in_second[1] = 0.05f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
@@ -486,11 +486,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 7200;
 		end_frequency = 7000;
 		total_druation_time_in_second = 0.4f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		p_percussion->waveform[1] = WaveformTriangle;
 		waveform_duration_time_in_second[1] = 0.12f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
@@ -499,11 +499,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 6400;
 		end_frequency = 6300;
 		total_druation_time_in_second = 0.3f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		p_percussion->waveform[1] = WaveformTriangle;
 		waveform_duration_time_in_second[1] = 0.15f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
@@ -513,11 +513,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 100;
 		end_frequency = 90;
 		total_druation_time_in_second = 0.7f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_SQUARE;
+		p_percussion->waveform[1] = WaveformSquare;
 		waveform_duration_time_in_second[1] = 0.3f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second;
 		p_percussion->is_implemented = true;
 		break;
@@ -525,11 +525,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 220;
 		end_frequency = 210;
 		total_druation_time_in_second = 0.5f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		p_percussion->waveform[1] = WaveformTriangle;
 		waveform_duration_time_in_second[1] = 0.025f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[1] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
@@ -538,11 +538,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 240;
 		end_frequency = 230;
 		total_druation_time_in_second = 0.5f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		p_percussion->waveform[1] = WaveformTriangle;
 		waveform_duration_time_in_second[1] = 0.3f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[1] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
@@ -551,11 +551,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 250;
 		end_frequency = 240;
 		total_druation_time_in_second = 0.4f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		p_percussion->waveform[1] = WaveformTriangle;
 		waveform_duration_time_in_second[1] = 0.2f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[1] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
@@ -564,11 +564,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 270;
 		end_frequency = 260;
 		total_druation_time_in_second = 0.35f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		p_percussion->waveform[1] = WaveformTriangle;
 		waveform_duration_time_in_second[1] = 0.15f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
@@ -577,11 +577,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 290;
 		end_frequency = 280;
 		total_druation_time_in_second = 0.35f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		p_percussion->waveform[1] = WaveformTriangle;
 		waveform_duration_time_in_second[1] = 0.15f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
@@ -590,11 +590,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 310;
 		end_frequency = 300;
 		total_druation_time_in_second = 0.3f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_TRIANGLE;
+		p_percussion->waveform[1] = WaveformTriangle;
 		waveform_duration_time_in_second[1] = 0.18f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[1] = total_druation_time_in_second
 				- waveform_duration_time_in_second[1] - waveform_duration_time_in_second[0];
 		p_percussion->is_implemented = true;
@@ -603,11 +603,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 85;
 		end_frequency = 70;
 		total_druation_time_in_second = 1.5f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_SQUARE;
+		p_percussion->waveform[1] = WaveformSquare;
 		waveform_duration_time_in_second[1] = 0.3f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second;
 		p_percussion->is_implemented = true;
 		break;
@@ -615,11 +615,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 210;
 		end_frequency = 200;
 		total_druation_time_in_second = 0.4f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_SQUARE;
+		p_percussion->waveform[1] = WaveformSquare;
 		waveform_duration_time_in_second[1] = 0.35f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second;
 		p_percussion->is_implemented = true;
 		break;
@@ -628,11 +628,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		end_frequency = 50;
 		total_druation_time_in_second = 2.0f;
 		p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_SQUARE;
+		p_percussion->waveform[1] = WaveformSquare;
 		waveform_duration_time_in_second[1] = 0.5f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second;
 		p_percussion->is_implemented = true;
 		break;
@@ -641,11 +641,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 12000;
 		end_frequency = 12000;
 		total_druation_time_in_second = 0.08f;
-		p_percussion->waveform[0] = WAVEFORM_NOISE;
+		p_percussion->waveform[0] = WaveformNoise;
 		waveform_duration_time_in_second[0] = 0.02f;
-		p_percussion->waveform[1] = WAVEFORM_SQUARE;
+		p_percussion->waveform[1] = WaveformSquare;
 		waveform_duration_time_in_second[1] = 0.05f;
-		p_percussion->waveform[2] = WAVEFORM_NOISE;
+		p_percussion->waveform[2] = WaveformNoise;
 		waveform_duration_time_in_second[2] = total_druation_time_in_second;
 		p_percussion->is_implemented = true;
 		break;

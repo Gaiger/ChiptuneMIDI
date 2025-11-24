@@ -16,13 +16,13 @@ public:
 public:
 	enum WaveformType
 	{
-		WAVEFORM_SQUARE_DUDYCYCLE_50 = 0,
-		WAVEFORM_SQUARE_DUDYCYCLE_25,
-		WAVEFORM_SQUARE_DUDYCYCLE_125,
-		WAVEFORM_SQUARE_DUDYCYCLE_75,
-		WAVEFORM_TRIANGLE,
-		WAVEFORM_SAW,
-		WAVEFORM_NOISE,
+		WaveformSquareDutyCycle50	= 0,
+		WaveformSquareDutyCycle25,
+		WaveformSquareDutyCycle12_5,
+		WaveformSquareDutyCycle75,
+		WaveformTriangle,
+		WaveformSaw,
+		WaveformNoise,
 	}; Q_ENUM(WaveformType)
 
 	void GetTimbre(int *p_waveform,

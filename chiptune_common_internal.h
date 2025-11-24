@@ -24,6 +24,7 @@
 #define _CHECK_EVENT_LIST
 
 #define INT8_MAX_PLUS_1								(INT8_MAX + 1)
+#define INT16_MAX_PLUS_1							(INT16_MAX + 1)
 
 #define DIVIDE_BY_2(VALUE)							((VALUE) >> 1)
 #define DIVIDE_BY_4(VALUE)							((VALUE) >> 2)

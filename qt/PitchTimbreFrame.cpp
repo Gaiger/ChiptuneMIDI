@@ -69,26 +69,26 @@ PitchTimbreFrame::WaveformType PitchTimbreFrame::GetWaveform(void)
 	case 0: //square
 		switch(ui->DutyCycleComboBox->currentIndex()){
 		case 0://50
-			waveform = TuneManager::WAVEFORM_SQUARE_DUDYCYCLE_50;
+			waveform = TuneManager::WaveformSquareDutyCycle50;
 			break;
 		case 1: //25
-			waveform = TuneManager::WAVEFORM_SQUARE_DUDYCYCLE_25;
+			waveform = TuneManager::WaveformSquareDutyCycle25;
 			break;
-		case 2: //125
-			waveform = TuneManager::WAVEFORM_SQUARE_DUDYCYCLE_125;
+		case 2: //12.5
+			waveform = TuneManager::WaveformSquareDutyCycle12_5;
 			break;
 		case 3: //75
 		default:
-			waveform = TuneManager::WAVEFORM_SQUARE_DUDYCYCLE_75;
+			waveform = TuneManager::WaveformSquareDutyCycle75;
 			break;
 		}
 		break;
 	case 1: //triangle
-		waveform = TuneManager::WAVEFORM_TRIANGLE;
+		waveform = TuneManager::WaveformTriangle;
 		break;
 	default:
 	case 2:
-		waveform =TuneManager::WAVEFORM_SAW;
+		waveform =TuneManager::WaveformSaw;
 		break;
 	}
 	return (PitchTimbreFrame::WaveformType)waveform;

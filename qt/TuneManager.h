@@ -55,13 +55,13 @@ public:
 	void SetChannelOutputEnabled(int index, bool is_enabled);
 	enum WaveformType
 	{
-		WAVEFORM_SQUARE_DUDYCYCLE_50 = 0,
-		WAVEFORM_SQUARE_DUDYCYCLE_25,
-		WAVEFORM_SQUARE_DUDYCYCLE_125,
-		WAVEFORM_SQUARE_DUDYCYCLE_75,
-		WAVEFORM_TRIANGLE,
-		WAVEFORM_SAW,
-		WAVEFORM_NOISE,
+		WaveformSquareDutyCycle50	= 0,
+		WaveformSquareDutyCycle25,
+		WaveformSquareDutyCycle12_5,
+		WaveformSquareDutyCycle75,
+		WaveformTriangle,
+		WaveformSaw,
+		WaveformNoise,
 	}; Q_ENUM(WaveformType)
 
 	enum EnvelopeCurveType
@@ -73,7 +73,7 @@ public:
 	}; Q_ENUM(EnvelopeCurveType)
 
 	int SetPitchChannelTimbre(int8_t const channel_index,
-							  int8_t const waveform = WAVEFORM_TRIANGLE,
+							  int8_t const waveform = WaveformTriangle,
 							  int8_t const envelope_attack_curve = EnvelopeCurveLinear, float const envelope_attack_duration_in_seconds = 0.02,
 							  int8_t const envelope_decay_curve = EnvelopeCurveFermi, float const envelope_decay_duration_in_seconds = 0.01,
 							  uint8_t const envelope_sustain_level = 96,

@@ -851,8 +851,6 @@ static uint16_t generate_noise_random(void)
 /**********************************************************************************/
 #define SINE_WAVE(PHASE)							(obtain_sine_wave(PHASE))
 
-#define INT16_MAX_PLUS_1							(INT16_MAX + 1)
-
 int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 {
 	channel_controller_t const *p_channel_controller
@@ -866,11 +864,11 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 
 	switch(waveform)
 	{
-	case WAVEFORM_SQUARE:
-		wave = (p_oscillator->current_phase > p_channel_controller->duty_cycle_critical_phase)
-				? -INT16_MAX_PLUS_1 : INT16_MAX;
+	case WaveformSquare:
+		wave = (p_oscillator->current_phase < p_channel_controller->duty_cycle_critical_phase)
+				? INT16_MAX : -INT16_MAX_PLUS_1;
 		break;
-	case WAVEFORM_TRIANGLE:
+	case WaveformTriangle:
 		do {
 			if(p_oscillator->current_phase < INT16_MAX_PLUS_1){
 				wave = -INT16_MAX_PLUS_1 + MULTIPLY_BY_2(p_oscillator->current_phase);
@@ -879,16 +877,18 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 			wave = INT16_MAX - MULTIPLY_BY_2(p_oscillator->current_phase - INT16_MAX_PLUS_1);
 		} while(0);
 		break;
-	case WAVEFORM_SAW:
+	case WaveformSaw:
 		wave = -INT16_MAX_PLUS_1 + p_oscillator->current_phase;
 		break;
-	case WAVEFORM_SINE:
+	case WaveformSine:
 		wave = SINE_WAVE(p_oscillator->current_phase);
 		break;
-	case WAVEFORM_NOISE:
+	case WaveformNoise:
 		wave = (int16_t)generate_noise_random();
 		break;
 	default:
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: waveform = %d in %s\r\n ",
+						waveform, __func__);
 		wave = 0;
 		break;
 	}
@@ -1397,27 +1397,27 @@ int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const w
 		return 1;
 	}
 
-	int8_t channel_controller_waveform = WAVEFORM_SQUARE;
-	uint16_t dutycycle_critical_phase = DUTY_CYLCE_NONE;
+	int8_t channel_controller_waveform = WaveformSquare;
+	uint16_t dutycycle_critical_phase = WaveformDutyCycle50;
 	switch(waveform)
 	{
-	case CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_50:
-		dutycycle_critical_phase = DUTY_CYLCE_50_CRITICAL_PHASE;
+	case ChiptuneWaveformSquareDutyCycle50:
+		dutycycle_critical_phase = WaveformDutyCycle50;
 		break;
-	case CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_25:
-		dutycycle_critical_phase = DUTY_CYLCE_25_CRITICAL_PHASE;
+	case ChiptuneWaveformSquareDutyCycle25:
+		dutycycle_critical_phase = WaveformDutyCycle25;
 		break;
-	case CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_125:
-		dutycycle_critical_phase = DUTY_CYLCE_125_CRITICAL_PHASE;
+	case ChiptuneWaveformSquareDutyCycle12_5:
+		dutycycle_critical_phase = WaveformDutyCycle12_5;
 		break;
-	case CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_75:
-		dutycycle_critical_phase = DUTY_CYLCE_75_CRITICAL_PHASE;
+	case ChiptuneWaveformSquareDutyCycle75:
+		dutycycle_critical_phase = WaveformDutyCycle75;
 		break;
-	case CHIPTUNE_WAVEFORM_TRIANGLE:
-		channel_controller_waveform = WAVEFORM_TRIANGLE;
+	case ChiptuneWaveformTriangle:
+		channel_controller_waveform = WaveformTriangle;
 		break;
-	case CHIPTUNE_WAVEFORM_SAW:
-		channel_controller_waveform = WAVEFORM_SAW;
+	case ChiptuneWaveformSaw:
+		channel_controller_waveform = WaveformSaw;
 		break;
 	default:
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: waveform = %d is not acceptable for %s\r\n",

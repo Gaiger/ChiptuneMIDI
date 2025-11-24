@@ -41,15 +41,15 @@ void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const 
 void chiptune_set_pitch_shift_in_semitones(int8_t pitch_shift_in_semitones);
 int8_t chiptune_get_pitch_shift_in_semitones(void);
 
-enum CHIPTUNE_WAVEFORM_TYPE
+enum ChiptuneWaveformType
 {
-	CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_50 = 0,
-	CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_25,
-	CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_125,
-	CHIPTUNE_WAVEFORM_SQUARE_DUDYCYCLE_75,
-	CHIPTUNE_WAVEFORM_TRIANGLE,
-	CHIPTUNE_WAVEFORM_SAW,
-	CHIPTUNE_WAVEFORM_NOISE,
+	ChiptuneWaveformSquareDutyCycle50	= 0,
+	ChiptuneWaveformSquareDutyCycle25,
+	ChiptuneWaveformSquareDutyCycle12_5,
+	ChiptuneWaveformSquareDutyCycle75,
+	ChiptuneWaveformTriangle,
+	ChiptuneWaveformSaw,
+	ChiptuneWaveformNoise,
 };
 
 enum ChiptuneEnvelopeCurveType
