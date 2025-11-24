@@ -800,7 +800,7 @@ void perform_melodic_envelope(oscillator_t * const p_oscillator)
 			break;
 		}
 
-		advance_melodic_amplitude(p_oscillator);
+		update_melodic_envelope(p_oscillator);
 	} while(0);
 }
 
@@ -817,7 +817,7 @@ void perform_percussion(oscillator_t * const p_oscillator)
 			break;
 		}
 
-		advance_percussion_waveform_and_amplitude(p_oscillator);
+		update_percussion_envelope(p_oscillator);
 	}while(0);
 }
 

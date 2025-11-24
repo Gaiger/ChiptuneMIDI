@@ -1,5 +1,5 @@
-#include "chiptune_common_internal.h" // IWYU pragma: export
 #include <math.h>
+#include "chiptune_common_internal.h"
 
 #ifndef _FIXED_MAX_OSCILLATOR_AND_EVENT_NUMBER
 #include <stdlib.h>

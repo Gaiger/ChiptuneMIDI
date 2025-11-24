@@ -3,7 +3,7 @@
 
 #include "chiptune_oscillator_internal.h"
 
-void advance_melodic_amplitude(oscillator_t * const p_oscillator);
-void advance_percussion_waveform_and_amplitude(oscillator_t * const p_oscillator);
+void update_melodic_envelope(oscillator_t * const p_oscillator);
+void update_percussion_envelope(oscillator_t * const p_oscillator);
 
 #endif //_CHIPTUNE_ENVELOPE_INTERNAL_H_

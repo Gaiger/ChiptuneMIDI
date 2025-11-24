@@ -45,24 +45,24 @@
 
 enum
 {
-	WaveformSquare			= 0,
-	WaveformTriangle		= 1,
-	WaveformSaw				= 2,
-	WaveformSine			= 3,
-	WaveformNoise			= 4,
+	WaveformSquare				= 0,
+	WaveformTriangle			= 1,
+	WaveformSaw					= 2,
+	WaveformSine				= 3,
+	WaveformNoise				= 4,
 };
 
 enum
 {
-	WaveformDutyCycle50		= DIVIDE_BY_2(UINT16_MAX + 1),
-	WaveformDutyCycle25		= DIVIDE_BY_4(UINT16_MAX + 1),
-	WaveformDutyCycle12_5	= DIVIDE_BY_8(UINT16_MAX + 1),
-	WaveformDutyCycle75		= (UINT16_MAX + 1) - DIVIDE_BY_4(UINT16_MAX + 1),
+	WaveformDutyCycle50			= DIVIDE_BY_2(UINT16_MAX + 1),
+	WaveformDutyCycle25			= DIVIDE_BY_4(UINT16_MAX + 1),
+	WaveformDutyCycle12_5		= DIVIDE_BY_8(UINT16_MAX + 1),
+	WaveformDutyCycle75			= (UINT16_MAX + 1) - DIVIDE_BY_4(UINT16_MAX + 1),
 };
 
 enum EnvelopeCurve
 {
-	EnvelopeCurveLinear				= 0,
+	EnvelopeCurveLinear			= 0,
 	EnvelopeCurveExponential,
 	EnvelopeCurveGaussian,
 	EnvelopeCurveFermi,
