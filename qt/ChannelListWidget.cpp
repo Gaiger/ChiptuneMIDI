@@ -11,6 +11,7 @@ ChannelListWidget::ChannelListWidget(QWidget *parent) :
 
 	QWidget *p_widget = new QWidget(this);
 	ui->scrollArea->setWidget(p_widget);
+	ui->scrollArea->QAbstractScrollArea::setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
 	m_p_vboxlayout = new QVBoxLayout();
 	m_p_vboxlayout->setContentsMargins(0, 0, 0, 0);
