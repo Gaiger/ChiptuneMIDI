@@ -862,6 +862,8 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 		waveform = p_percussion->waveform[p_oscillator->percussion_waveform_index];
 	}
 
+	uint16_t current_phase_advanced_by_quarter_cycle
+			= p_oscillator->current_phase + DIVIDE_BY_2(INT16_MAX_PLUS_1);
 	switch(waveform)
 	{
 	case WaveformSquare:
@@ -870,15 +872,15 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 		break;
 	case WaveformTriangle:
 		do {
-			if(p_oscillator->current_phase < INT16_MAX_PLUS_1){
-				wave = -INT16_MAX_PLUS_1 + MULTIPLY_BY_2(p_oscillator->current_phase);
+			if(current_phase_advanced_by_quarter_cycle < INT16_MAX_PLUS_1){
+				wave = -INT16_MAX_PLUS_1 + MULTIPLY_BY_2(current_phase_advanced_by_quarter_cycle);
 				break;
 			}
-			wave = INT16_MAX - MULTIPLY_BY_2(p_oscillator->current_phase - INT16_MAX_PLUS_1);
+			wave = INT16_MAX - MULTIPLY_BY_2(current_phase_advanced_by_quarter_cycle - INT16_MAX_PLUS_1);
 		} while(0);
 		break;
 	case WaveformSaw:
-		wave = -INT16_MAX_PLUS_1 + p_oscillator->current_phase;
+		wave = -INT16_MAX_PLUS_1 + current_phase_advanced_by_quarter_cycle;
 		break;
 	case WaveformSine:
 		wave = SINE_WAVE(p_oscillator->current_phase);
