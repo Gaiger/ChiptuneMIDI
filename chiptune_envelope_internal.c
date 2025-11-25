@@ -180,8 +180,8 @@ void update_percussion_envelope(oscillator_t * const p_oscillator)
 				== p_oscillator->percussion_duration_sample_count){
 			p_oscillator->percussion_duration_sample_count = 0;
 			p_oscillator->percussion_waveform_index += 1;
-			if(MAX_WAVEFORM_CHANGE_NUMBER == p_oscillator->percussion_waveform_index){
-				p_oscillator->percussion_waveform_index = MAX_WAVEFORM_CHANGE_NUMBER - 1;
+			if(MAX_PERCUSSION_WAVEFORM_SEGMENT_NUMBER == p_oscillator->percussion_waveform_index){
+				p_oscillator->percussion_waveform_index = MAX_PERCUSSION_WAVEFORM_SEGMENT_NUMBER - 1;
 			}
 		}
 		p_oscillator->percussion_duration_sample_count += 1;
