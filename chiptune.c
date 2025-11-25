@@ -916,7 +916,7 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 
 #endif
 
-int32_t generate_channel_wave_amplitude(oscillator_t * const p_oscillator,
+int32_t generate_panned_wave_amplitude(oscillator_t * const p_oscillator,
 				   int32_t const mono_wave_amplitude)
 {
 	int32_t channel_wave_amplitude = mono_wave_amplitude;
@@ -965,9 +965,9 @@ static int64_t chiptune_fetch_64bit_wave(void)
 			perform_percussion(p_oscillator);
 
 			int32_t mono_wave_amplitude = generate_mono_wave_amplitude(p_oscillator);
-			int32_t channel_wave_amplitude
-					= generate_channel_wave_amplitude(p_oscillator, mono_wave_amplitude);
-			accumulated_wave_amplitude += (int32_t)channel_wave_amplitude;
+			int32_t panned_wave_amplitude
+					= generate_panned_wave_amplitude(p_oscillator, mono_wave_amplitude);
+			accumulated_wave_amplitude += (int32_t)panned_wave_amplitude;
 		} while(0);
 		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
