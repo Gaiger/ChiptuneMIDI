@@ -126,7 +126,7 @@ typedef struct _channel_controller
 typedef struct _percussion
 {
 	int8_t				waveform[MAX_PERCUSSION_WAVEFORM_SEGMENT_NUMBER];
-	uint32_t			waveform_duration_sample_number[MAX_PERCUSSION_WAVEFORM_SEGMENT_NUMBER];
+	uint32_t			waveform_segment_duration_sample_number[MAX_PERCUSSION_WAVEFORM_SEGMENT_NUMBER];
 	uint16_t			base_phase_increment;
 	int16_t				max_phase_sweep_delta;
 	int8_t const *		p_phase_sweep_table;

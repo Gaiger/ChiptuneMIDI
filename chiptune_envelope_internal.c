@@ -50,8 +50,15 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 			break;
 		};
 
-		if(0 == p_oscillator->envelope_same_index_count &&
-				0 != envelope_same_index_number){
+		do
+		{
+			if(0 < p_oscillator->envelope_same_index_count){
+				break;
+			}
+			if(0 == envelope_same_index_number){
+				break;
+			}
+
 			int8_t const * p_envelope_table = NULL;
 			int16_t delta_amplitude = 0;
 			int16_t shift_amplitude = 0;
@@ -99,7 +106,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 			if(EnvelopeStateRelease != p_oscillator->envelope_state){
 				p_oscillator->release_reference_amplitude = p_oscillator->amplitude;
 			}
-		}
+		} while(0);
 
 		p_oscillator->envelope_same_index_count += 1;
 		if(envelope_same_index_number > p_oscillator->envelope_same_index_count){
@@ -112,7 +119,6 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 			p_oscillator->envelope_table_index = CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH;
 		}
 
-		bool is_out_of_lookup_table_range = false;
 		do {
 			if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH > p_oscillator->envelope_table_index){
 				break;
@@ -157,11 +163,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 				break;
 			}
 			p_oscillator->release_reference_amplitude = p_oscillator->amplitude;
-			is_out_of_lookup_table_range = true;
 		} while(0);
-		if(true == is_out_of_lookup_table_range){
-			break;
-		}
 	} while(0);
 }
 
@@ -175,31 +177,44 @@ void update_percussion_envelope(oscillator_t * const p_oscillator)
 		}
 
 		percussion_t const * const p_percussion = get_percussion_pointer_from_index(p_oscillator->note);
-		int8_t waveform_index = p_oscillator->percussion_waveform_index;
-		if (p_percussion->waveform_duration_sample_number[waveform_index]
-				== p_oscillator->percussion_duration_sample_count){
-			p_oscillator->percussion_duration_sample_count = 0;
-			p_oscillator->percussion_waveform_index += 1;
-			if(MAX_PERCUSSION_WAVEFORM_SEGMENT_NUMBER == p_oscillator->percussion_waveform_index){
-				p_oscillator->percussion_waveform_index = MAX_PERCUSSION_WAVEFORM_SEGMENT_NUMBER - 1;
+		int8_t waveform_segment_index = p_oscillator->percussion_waveform_segment_index;
+		if (p_percussion->waveform_segment_duration_sample_number[waveform_segment_index]
+				== p_oscillator->percussion_waveform_segment_duration_sample_count){
+			p_oscillator->percussion_waveform_segment_duration_sample_count = 0;
+			p_oscillator->percussion_waveform_segment_index += 1;
+			if(MAX_PERCUSSION_WAVEFORM_SEGMENT_NUMBER == p_oscillator->percussion_waveform_segment_index){
+				p_oscillator->percussion_waveform_segment_index = MAX_PERCUSSION_WAVEFORM_SEGMENT_NUMBER - 1;
 			}
 		}
-		p_oscillator->percussion_duration_sample_count += 1;
+		p_oscillator->percussion_waveform_segment_duration_sample_count += 1;
+
+		do
+		{
+			if(0 < p_oscillator->percussion_envelope_same_index_count){
+				break;
+			}
+
+			if(0 == p_percussion->envelope_same_index_number){
+				break;
+			}
+			p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
+														  p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_envelope_table_index]);
+		} while(0);
+
+		p_oscillator->percussion_envelope_same_index_count += 1;
 		p_oscillator->current_phase += PERCUSSION_PHASE_SWEEP_DELTA(p_percussion->max_phase_sweep_delta,
-											p_percussion->p_phase_sweep_table[p_oscillator->percussion_table_index]);
-		if(p_percussion->envelope_same_index_number > p_oscillator->percussion_same_index_count){
-			p_oscillator->percussion_same_index_count += 1;
+											p_percussion->p_phase_sweep_table[p_oscillator->percussion_envelope_table_index]);
+
+		if(p_percussion->envelope_same_index_number > p_oscillator->percussion_envelope_same_index_count){
 			break;
 		}
 
-		p_oscillator->percussion_same_index_count = 0;
-		p_oscillator->percussion_table_index += 1;
-		if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->percussion_table_index){
+		p_oscillator->percussion_envelope_table_index += 1;
+		p_oscillator->percussion_envelope_same_index_count = 0;
+		if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH == p_oscillator->percussion_envelope_table_index){
 			SET_DEACTIVATED(p_oscillator->state_bits);
-			//p_oscillator->percussion_table_index = CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1;
+			//p_oscillator->percussion_envelope_table_index = CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1;
 			break;
 		}
-		p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
-										p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_table_index]);
-	}while(0);
+	} while(0);
 }

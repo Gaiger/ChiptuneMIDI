@@ -216,15 +216,15 @@ int finalize_percussion_oscillator_setup(uint32_t const tick, int8_t const voice
 		return 1;
 	}
 
-	p_oscillator->percussion_waveform_index = 0;
-	p_oscillator->percussion_duration_sample_count = 0;
-	p_oscillator->percussion_same_index_count = 0;
-	p_oscillator->percussion_table_index = 0;
+	p_oscillator->percussion_waveform_segment_index = 0;
+	p_oscillator->percussion_waveform_segment_duration_sample_count = 0;
+	p_oscillator->percussion_envelope_same_index_count = 0;
+	p_oscillator->percussion_envelope_table_index = 0;
 
 	percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
 	p_oscillator->base_phase_increment = p_percussion->base_phase_increment;
 	p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
-					p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_table_index]);
+					p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_envelope_table_index]);
 	return 0;
 }
 
@@ -859,7 +859,7 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 	int8_t waveform = p_channel_controller->waveform;
 	if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
 		percussion_t const * const p_percussion = get_percussion_pointer_from_index(p_oscillator->note);
-		waveform = p_percussion->waveform[p_oscillator->percussion_waveform_index];
+		waveform = p_percussion->waveform[p_oscillator->percussion_waveform_segment_index];
 	}
 
 	uint16_t current_phase_advanced_by_quarter_cycle

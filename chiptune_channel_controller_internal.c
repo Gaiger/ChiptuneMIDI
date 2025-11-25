@@ -637,7 +637,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 
 	float remain_duration_time_in_second = total_druation_time_in_second;
 	for(int i = 0; i < last_waveform_segment_index; i++){
-		p_percussion->waveform_duration_sample_number[i]
+		p_percussion->waveform_segment_duration_sample_number[i]
 				= (uint32_t)(waveform_duration_time_in_second[i] * get_sampling_rate() + 0.5f);
 		remain_duration_time_in_second -= waveform_duration_time_in_second[i];
 	}
@@ -646,7 +646,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 						__func__);
 		remain_duration_time_in_second = 0.0;
 	}
-	p_percussion->waveform_duration_sample_number[last_waveform_segment_index]
+	p_percussion->waveform_segment_duration_sample_number[last_waveform_segment_index]
 			= (uint32_t)(remain_duration_time_in_second * get_sampling_rate() + 0.5);
 
 	p_percussion->envelope_same_index_number =
