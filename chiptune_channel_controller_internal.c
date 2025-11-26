@@ -434,13 +434,24 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		break;
 	case AcousticSnare:
 	case ElectricSnare:
-		start_frequency = 170;
+		start_frequency = 180;
 		end_frequency = 165;
 		total_druation_time_in_second = 0.35f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.015f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.15f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+	case HandClap:
+		start_frequency = 170;
+		end_frequency = 150;
+		total_druation_time_in_second = 0.45f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.12f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
