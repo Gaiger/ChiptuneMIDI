@@ -857,17 +857,19 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 			= get_channel_controller_pointer_from_index(p_oscillator->voice);
 	int16_t wave = 0;
 	int8_t waveform = p_channel_controller->waveform;
+	uint16_t critical_phase = p_channel_controller->duty_cycle_critical_phase;
 	if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
 		percussion_t const * const p_percussion = get_percussion_pointer_from_index(p_oscillator->note);
 		waveform = p_percussion->waveform[p_oscillator->percussion_waveform_segment_index];
+		critical_phase = INT16_MAX_PLUS_1;
 	}
-
 	uint16_t current_phase_advanced_by_quarter_cycle
 			= p_oscillator->current_phase + DIVIDE_BY_2(INT16_MAX_PLUS_1);
+
 	switch(waveform)
 	{
 	case WaveformSquare:
-		wave = (p_oscillator->current_phase < p_channel_controller->duty_cycle_critical_phase)
+		wave = (p_oscillator->current_phase < critical_phase)
 				? INT16_MAX : -INT16_MAX_PLUS_1;
 		break;
 	case WaveformTriangle:
