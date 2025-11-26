@@ -468,13 +468,13 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		break;
 	case RideCymbal1:
 	case RideCymbal2:
-		start_frequency = 7200;
-		end_frequency = 7000;
-		total_druation_time_in_second = 0.4f;
+		start_frequency = 8000;
+		end_frequency = 7800;
+		total_druation_time_in_second = 3.4f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.12f; last_waveform_segment_index += 1;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.33f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
@@ -491,13 +491,13 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		break;
 	case CrashCymbal1:
 	case CrashCymbal2:
-		start_frequency = 100;
-		end_frequency = 90;
-		total_druation_time_in_second = 0.7f;
+		start_frequency = 8400;
+		end_frequency = 8200;
+		total_druation_time_in_second = 1.7f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformSquare;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.3f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.30f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
@@ -568,13 +568,13 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case ChineseCymbal:
-		start_frequency = 85;
-		end_frequency = 70;
-		total_druation_time_in_second = 1.5f;
+		start_frequency = 7500;
+		end_frequency = 7300;
+		total_druation_time_in_second = 2.0f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformSquare;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.3f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.40f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
@@ -590,13 +590,13 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case SplashCymbal:
-		start_frequency = 60;
-		end_frequency = 50;
-		total_druation_time_in_second = 2.0f;
+		start_frequency = 8600;
+		end_frequency = 8500;
+		total_druation_time_in_second = 0.7f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformSquare;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.5f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.23f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
