@@ -455,14 +455,14 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
-	case OpenHiHat:
-		start_frequency = 7600;
-		end_frequency = 7400;
-		total_druation_time_in_second = 0.4f;
+	case LowFloorTom:
+		start_frequency = 150;
+		end_frequency = 130;
+		total_druation_time_in_second = 0.55f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.12f; last_waveform_segment_index += 1;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.28f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
@@ -477,15 +477,14 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
-	case RideCymbal1:
-	case RideCymbal2:
-		start_frequency = 8000;
-		end_frequency = 7800;
-		total_druation_time_in_second = 3.4f;
+	case HighFloorTom:
+		start_frequency = 170;
+		end_frequency = 160;
+		total_druation_time_in_second = 0.5f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.33f; last_waveform_segment_index += 1;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.25f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
@@ -493,6 +492,50 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 6400;
 		end_frequency = 6300;
 		total_druation_time_in_second = 0.3f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.15f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+	case LowTom:
+		start_frequency = 185;
+		end_frequency = 170;
+		total_druation_time_in_second = 0.4f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.20f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+	case OpenHiHat:
+		start_frequency = 7600;
+		end_frequency = 7400;
+		total_druation_time_in_second = 0.4f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.12f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+	case LowMidTom:
+		start_frequency = 205;
+		end_frequency = 195;
+		total_druation_time_in_second = 0.40f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.18f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+	case HighMidTom:
+		start_frequency = 225;
+		end_frequency = 210;
+		total_druation_time_in_second = 0.35f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
@@ -512,69 +555,26 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
-	case LowFloorTom:
-		start_frequency = 220;
-		end_frequency = 210;
-		total_druation_time_in_second = 0.5f;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.25f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		p_percussion->is_implemented = true;
-		break;
-	case HighFloorTom:
-		start_frequency = 240;
-		end_frequency = 230;
-		total_druation_time_in_second = 0.5f;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.3f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		p_percussion->is_implemented = true;
-		break;
-	case LowTom:
-		start_frequency = 250;
-		end_frequency = 240;
-		total_druation_time_in_second = 0.4f;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.2f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		p_percussion->is_implemented = true;
-		break;
-	case LowMidTom:
-		start_frequency = 270;
-		end_frequency = 260;
-		total_druation_time_in_second = 0.35f;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.15f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		p_percussion->is_implemented = true;
-		break;
-	case HighMidTom:
-		start_frequency = 290;
-		end_frequency = 280;
-		total_druation_time_in_second = 0.35f;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.15f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		p_percussion->is_implemented = true;
-		break;
 	case HighTom:
-		start_frequency = 310;
-		end_frequency = 300;
+		start_frequency = 245;
+		end_frequency = 225;
 		total_druation_time_in_second = 0.3f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.18f; last_waveform_segment_index += 1;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.15f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+	case RideCymbal1:
+	case RideCymbal2:
+		start_frequency = 8000;
+		end_frequency = 7800;
+		total_druation_time_in_second = 3.4f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.33f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
@@ -608,6 +608,27 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.23f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+	case LowBongo:
+		start_frequency = 180;
+		end_frequency = 250;
+		p_percussion->p_phase_sweep_table = s_fermi_decline_table;
+		total_druation_time_in_second = 0.10f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.005f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		p_percussion->is_implemented = true;
+		break;
+	case OpenHighConga:
+		start_frequency = 230;
+		end_frequency = 220;
+		total_druation_time_in_second = 0.7f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.008f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.45f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
