@@ -445,7 +445,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
-	case HandClap:
+	case HandClap: /*looser snare*/
 		start_frequency = 170;
 		end_frequency = 150;
 		total_druation_time_in_second = 0.45f;
@@ -470,11 +470,12 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 	case ClosedHiHat:
 		start_frequency = 6800;
 		end_frequency = 6700;
-		total_druation_time_in_second = 0.3f;
+		total_druation_time_in_second = 0.25f;
+		p_percussion->p_amplitude_envelope_table = s_gaussian_decline_table;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.015f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.05f; last_waveform_segment_index += 1;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.025f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
@@ -492,11 +493,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 	case PedalHiHat:
 		start_frequency = 6400;
 		end_frequency = 6300;
-		total_druation_time_in_second = 0.3f;
+		total_druation_time_in_second = 0.16f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.008f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.15f; last_waveform_segment_index += 1;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.03f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
@@ -512,13 +513,13 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case OpenHiHat:
-		start_frequency = 7600;
-		end_frequency = 7400;
-		total_druation_time_in_second = 0.4f;
+		start_frequency = 7300;
+		end_frequency = 7100;
+		total_druation_time_in_second = 0.3f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.12f; last_waveform_segment_index += 1;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.012f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
