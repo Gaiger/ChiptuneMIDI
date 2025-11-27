@@ -634,6 +634,11 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
+	case Cabasa:
+		total_druation_time_in_second = 0.12f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
 	/*GM2*/
 	case Castanets:
 		start_frequency = 12000;
