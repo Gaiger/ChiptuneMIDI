@@ -726,13 +726,14 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case Castanets:
-		start_frequency = 12000;
-		end_frequency = 12000;
-		total_druation_time_in_second = 0.08f;
+		start_frequency = 2600;
+		end_frequency = 2200;
+		total_druation_time_in_second = 0.045f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformSquare;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.05f; last_waveform_segment_index += 1;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.007f;
+		last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.03f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
