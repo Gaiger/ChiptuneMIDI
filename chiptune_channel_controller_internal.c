@@ -645,7 +645,86 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
+	case Claves:
+		/*
+		total_druation_time_in_second = 0.035f;
+		start_frequency = 3000;
+		end_frequency   = 2600;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.018f;
+		last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise; // 視聽感要不要
+		p_percussion->is_implemented = true;
+		*/
+		total_druation_time_in_second = 0.040f;
+		start_frequency = 2400;
+		end_frequency   = 2000;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.020f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+	case HighWoodBlock:
+		/*
+		total_druation_time_in_second = 0.035f;
+		start_frequency = 2600;
+		end_frequency   = 2200;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.015f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		*/
+		total_druation_time_in_second = 0.05f;
+		start_frequency = 1000;
+		end_frequency   = 820;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.035f; last_waveform_segment_index += 1;
+
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+
+	case LowWoodBlock:
+		/*
+		total_druation_time_in_second = 0.045f;
+		start_frequency = 1600;
+		end_frequency   = 1200;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
+
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+		*/
+		total_druation_time_in_second = 0.06f;
+		start_frequency = 700;
+		end_frequency   = 650;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.038f; last_waveform_segment_index += 1;
+
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+
 	/*GM2*/
+	case Sticks:
+		start_frequency = 2600;
+		end_frequency = 2450;
+		total_druation_time_in_second = 0.040f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.020f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+	case MetronomeClick:
+		start_frequency = 1000;
+		end_frequency = 950;
+		total_druation_time_in_second = 0.06f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.04f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
 	case Castanets:
 		start_frequency = 12000;
 		end_frequency = 12000;
