@@ -626,6 +626,19 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
 		p_percussion->is_implemented = true;
 		break;
+	case MuteHighConga:
+		start_frequency = 230;
+		end_frequency   = 220;
+		total_druation_time_in_second = 0.25f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.003f;
+		last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.14f;
+		last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
 	case OpenHighConga:
 		start_frequency = 230;
 		end_frequency = 220;
@@ -634,6 +647,19 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.008f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.45f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+	case LowConga:
+		start_frequency = 180;
+		end_frequency   = 165;
+		total_druation_time_in_second = 0.8f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.010f;
+		last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.50f;
+		last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
@@ -682,7 +708,6 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		end_frequency   = 820;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.035f; last_waveform_segment_index += 1;
-
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
