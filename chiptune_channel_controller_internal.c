@@ -592,14 +592,17 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case Tambourine:
-		start_frequency = 210;
-		end_frequency = 200;
-		total_druation_time_in_second = 0.4f;
+		start_frequency = 5000;
+		end_frequency   = 5200;
+		total_druation_time_in_second = 0.13f;
+		p_percussion->p_amplitude_envelope_table = s_linear_decline_table;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.03f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformSquare;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.35f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.05f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
 		p_percussion->is_implemented = true;
 		break;
 	case SplashCymbal:
