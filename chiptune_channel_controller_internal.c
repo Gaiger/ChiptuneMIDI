@@ -616,11 +616,22 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
+	case HighBongo:
+		start_frequency = 260;
+		end_frequency   = 340;
+		p_percussion->p_phase_sweep_table = s_fermi_decline_table;
+		total_druation_time_in_second = 0.10f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.004f;
+		last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		p_percussion->is_implemented = true;
+		break;
 	case LowBongo:
 		start_frequency = 180;
 		end_frequency = 250;
 		p_percussion->p_phase_sweep_table = s_fermi_decline_table;
-		total_druation_time_in_second = 0.10f;
+		total_druation_time_in_second = 0.12f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.005f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
