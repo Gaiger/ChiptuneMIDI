@@ -632,7 +632,6 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 700;
 		end_frequency = 705;
 		total_druation_time_in_second = 0.25f;
-		//p_percussion->p_amplitude_envelope_table = s_linear_decline_table;
 		p_percussion->p_phase_sweep_table = s_exponential_growth_table;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.01f; last_waveform_segment_index += 1;
@@ -640,6 +639,19 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.22f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
+		break;
+	case Vibraslap:
+		start_frequency = 200;
+		end_frequency   = 100;
+		total_druation_time_in_second = 1.40f;
+		//p_percussion->p_amplitude_envelope_table = s_linear_decline_table;
+		p_percussion->p_amplitude_envelope_table = s_fermi_decline_table;
+		p_percussion->p_phase_sweep_table = s_exponential_growth_table;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.015f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformSquare;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.90f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise; p_percussion->is_implemented = true;
 		break;
 	case HighBongo:
 		start_frequency = 260;
