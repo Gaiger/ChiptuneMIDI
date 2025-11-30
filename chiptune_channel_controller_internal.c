@@ -749,7 +749,7 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		*/
 		total_druation_time_in_second = 0.05f;
 		start_frequency = 1000;
-		end_frequency   = 820;
+		end_frequency   = 930;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.035f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
