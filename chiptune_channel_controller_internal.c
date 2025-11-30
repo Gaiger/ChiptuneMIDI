@@ -591,6 +591,18 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
+	case RideBell:
+		start_frequency = 8300;
+		end_frequency = 8400;
+		total_druation_time_in_second = 0.65f;
+		p_percussion->p_phase_sweep_table = s_exponential_growth_table;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.01f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.35f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
 	case Tambourine:
 		start_frequency = 5000;
 		end_frequency   = 5200;
@@ -825,6 +837,26 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.03f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+	case MuteSurdo:
+		start_frequency = 130;
+		end_frequency   = 110;
+		total_druation_time_in_second = 0.20f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.005f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		p_percussion->is_implemented = true;
+		break;
+	case OpenSurdo:
+		start_frequency = 130;
+		end_frequency   = 110;
+		total_druation_time_in_second = 0.55f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.015f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.40f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
