@@ -46,6 +46,7 @@ union{
 		uint32_t	percussion_waveform_segment_duration_sample_count;
 		uint16_t	percussion_envelope_table_index;
 		uint16_t	percussion_envelope_same_index_count;
+		int16_t		percussion_phase_sweep_delta;
 	};
 };
 } oscillator_t;
