@@ -199,11 +199,13 @@ void update_percussion_envelope(oscillator_t * const p_oscillator)
 			}
 			p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
 														  p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_envelope_table_index]);
+			p_oscillator->percussion_phase_sweep_delta
+					= PERCUSSION_PHASE_SWEEP_DELTA(p_percussion->max_phase_sweep_delta,
+												   p_percussion->p_phase_sweep_table[p_oscillator->percussion_envelope_table_index]);
 		} while(0);
 
 		p_oscillator->percussion_envelope_same_index_count += 1;
-		p_oscillator->current_phase += PERCUSSION_PHASE_SWEEP_DELTA(p_percussion->max_phase_sweep_delta,
-											p_percussion->p_phase_sweep_table[p_oscillator->percussion_envelope_table_index]);
+		p_oscillator->current_phase += p_oscillator->percussion_phase_sweep_delta;
 
 		if(p_percussion->envelope_same_index_number > p_oscillator->percussion_envelope_same_index_count){
 			break;
