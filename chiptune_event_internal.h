@@ -6,7 +6,7 @@
 enum EventType
 {
 	EventTypeNone = 0,
-	EventTypeActivate  = 1,
+	EventTypeActivate = 1,
 	EventTypeFree,
 	EventTypeRest,
 	EventTypeDeactivate,

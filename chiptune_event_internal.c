@@ -419,7 +419,7 @@ int process_events(uint32_t const tick)
 		int8_t const event_type = p_head_event->type;
 		switch(event_type)
 		{
-		case EventTypeActivate :
+		case EventTypeActivate:
 			CHIPTUNE_PRINTF(cEventTriggering,
 							"tick = %u, ACTIVATE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
 							tick, p_head_event->oscillator_index,

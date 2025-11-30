@@ -353,8 +353,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				finalize_melodic_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
 			} while(0);
 
-			put_event(EventTypeActivate , oscillator_index, tick);
-			process_effects(tick, EventTypeActivate , voice, note, normalized_velocity, oscillator_index);
+			put_event(EventTypeActivate, oscillator_index, tick);
+			process_effects(tick, EventTypeActivate, voice, note, normalized_velocity, oscillator_index);
 			break;
 		}
 
@@ -434,8 +434,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						p_channel_controller->envelop_damper_on_but_note_off_sustain_level);
 
 			finalize_melodic_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
-			put_event(EventTypeActivate , reduced_loundness_oscillator_index, tick);
-			process_effects(tick, EventTypeActivate , voice, note, normalized_velocity,
+			put_event(EventTypeActivate, reduced_loundness_oscillator_index, tick);
+			process_effects(tick, EventTypeActivate, voice, note, normalized_velocity,
 							reduced_loundness_oscillator_index);
 		} while(0);
 
