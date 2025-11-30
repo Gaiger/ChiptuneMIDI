@@ -422,14 +422,13 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case SideStick:
-		start_frequency = 520;
-		end_frequency = 460;
-		total_druation_time_in_second = 0.12f;
-		p_percussion->p_phase_sweep_table = s_exponential_decline_table;
+		start_frequency = 1250;
+		end_frequency = 620;
+		total_druation_time_in_second = 0.06f;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.01f; last_waveform_segment_index += 1;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.003f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.06f; last_waveform_segment_index += 1;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.010f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
@@ -471,7 +470,6 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		start_frequency = 6800;
 		end_frequency = 6700;
 		total_druation_time_in_second = 0.25f;
-		p_percussion->p_amplitude_envelope_table = s_gaussian_decline_table;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.015f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
@@ -604,17 +602,15 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case Tambourine:
-		start_frequency = 5000;
-		end_frequency   = 5200;
-		total_druation_time_in_second = 0.13f;
+		start_frequency = 7000;
+		end_frequency = 6850;
+		total_druation_time_in_second = 0.25f;
 		p_percussion->p_amplitude_envelope_table = s_linear_decline_table;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.03f; last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.02f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.05f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.10f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
 	case SplashCymbal:
