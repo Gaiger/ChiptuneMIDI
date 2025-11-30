@@ -675,13 +675,13 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->is_implemented = true;
 		break;
 	case Cabasa:
-		total_druation_time_in_second = 0.12f;
+		total_druation_time_in_second = 0.07f;
+		p_percussion->p_amplitude_envelope_table = s_linear_decline_table;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
 	case Maracas:
 		total_druation_time_in_second = 0.03f;
-		p_percussion->p_amplitude_envelope_table = s_linear_decline_table;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
@@ -781,15 +781,9 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
-	case Castanets:
-		start_frequency = 2600;
-		end_frequency = 2200;
-		total_druation_time_in_second = 0.045f;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.007f;
-		last_waveform_segment_index += 1;
-		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
-		waveform_duration_time_in_second[last_waveform_segment_index] = 0.03f; last_waveform_segment_index += 1;
+	case Shaker:
+		total_druation_time_in_second = 0.06f;
+		p_percussion->p_amplitude_envelope_table = s_fermi_decline_table;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
@@ -804,6 +798,18 @@ void reset_percussion_all_parameters_from_index(int8_t const index)
 		last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
 		waveform_duration_time_in_second[last_waveform_segment_index] = 0.60f; last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		p_percussion->is_implemented = true;
+		break;
+	case Castanets:
+		start_frequency = 2600;
+		end_frequency = 2200;
+		total_druation_time_in_second = 0.045f;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.007f;
+		last_waveform_segment_index += 1;
+		p_percussion->waveform[last_waveform_segment_index] = WaveformTriangle;
+		waveform_duration_time_in_second[last_waveform_segment_index] = 0.03f; last_waveform_segment_index += 1;
 		p_percussion->waveform[last_waveform_segment_index] = WaveformNoise;
 		p_percussion->is_implemented = true;
 		break;
