@@ -264,7 +264,7 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick, i
 /**********************************************************************************/
 
 static int process_note_message(uint32_t const tick, bool const is_note_on,
-						 int8_t const voice, midi_value_t const note, midi_value_t const velocity)
+						 int8_t const voice, midi_value_t note, midi_value_t const velocity)
 {
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	if(MIDI_PERCUSSION_CHANNEL == voice){
@@ -275,6 +275,10 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			return 1;
 		}
 	}
+	if(MIDI_PERCUSSION_CHANNEL == voice){
+		note = OpenSurdo;
+	}
+
 	normalized_midi_level_t normalized_velocity
 			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(velocity);
 
@@ -284,6 +288,12 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			do {
 				if(MIDI_PERCUSSION_CHANNEL == voice){
 					percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
+
+					if(false == p_percussion->is_implemented){
+						CHIPTUNE_PRINTF(cDeveloping, "%s NOT IMPLEMENTED\r\n",
+									get_percussion_name_string(note));
+					}
+
 					char not_implemented_string[24] = {0};
 					if(false == p_percussion->is_implemented){
 						snprintf(&not_implemented_string[0], sizeof(not_implemented_string), "%s", "(NOT IMPLEMENTED)");
@@ -291,6 +301,13 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 					CHIPTUNE_PRINTF(cMidiNote, "tick = %u, %s :: voice = %d, %s%s, velocity = %d\r\n",
 								tick,  "MIDI_MESSAGE_NOTE_ON",
 								voice, get_percussion_name_string(note), not_implemented_string, velocity);
+#if(0)
+					if(MIDI_PERCUSSION_CHANNEL == voice){
+						CHIPTUNE_PRINTF(cDeveloping, "tick = %u, %s :: voice = %d, %s%s, velocity = %d\r\n",
+									tick,  "MIDI_MESSAGE_NOTE_ON",
+									voice, get_percussion_name_string(note), not_implemented_string, velocity);
+					}
+#endif
 					break;
 				}
 				char pitch_wheel_bend_string[32] = "";
@@ -346,6 +363,11 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				CHIPTUNE_PRINTF(cMidiNote, "tick = %u, %s :: voice = %d, %s, velocity = %d\r\n",
 								tick,  "MIDI_MESSAGE_NOTE_OFF",
 								voice, get_percussion_name_string(note), velocity);
+#if 0
+				CHIPTUNE_PRINTF(cDeveloping, "tick = %u, %s :: voice = %d, %s, velocity = %d\r\n",
+								tick,  "MIDI_MESSAGE_NOTE_OFF",
+								voice, get_percussion_name_string(note), velocity);
+#endif
 				break;
 			}
 
