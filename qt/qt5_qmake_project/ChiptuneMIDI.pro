@@ -86,7 +86,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 win32{
     RC_ICONS = $${CHIPTUNE_QT_DIR}/chiptune.ico
-    VERSION = 0.0.6.0
+    VERSION = 0.0.7.0
     QMAKE_TARGET_PRODUCT = "ChiptuneMIDI"
     QMAKE_TARGET_DESCRIPTION = "ChiptuneMIDI: Convert .mid file into chiptune"
     QMAKE_TARGET_COPYRIGHT = "Copyright 2025 by Chen Gaiger"
