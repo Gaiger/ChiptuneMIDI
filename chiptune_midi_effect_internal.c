@@ -111,7 +111,7 @@ static int16_t const s_reverb_loudness_proportional_coefficients \
 static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 								 int8_t const voice, midi_value_t const note,
 								 normalized_midi_level_t const velocity,
-								 int16_t const native_oscillator_index)
+								 int16_t const primary_oscillator_index)
 {
 	(void)velocity;
 	if(MIDI_PERCUSSION_CHANNEL == voice){
@@ -127,11 +127,11 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 			int cooperative_oscillator_number = 0;
 			cooperative_oscillator_number += 1;
 			cooperative_oscillator_number += count_all_subordinate_oscillators(WITHOUT_EFFECT(MidiEffectReverb),
-																					 native_oscillator_index);
+																					 primary_oscillator_index);
 			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
-			cooperative_oscillator_indexes[0] = native_oscillator_index;
+			cooperative_oscillator_indexes[0] = primary_oscillator_index;
 			get_all_subordinate_oscillator_indexes(WITHOUT_EFFECT(MidiEffectReverb),
-												   native_oscillator_index,
+												   primary_oscillator_index,
 												   &cooperative_oscillator_indexes[1]);
 
 			enum ReverbEffectProfile const reverb_effect_profile = ReverbEffectProfileAudioRoom;
@@ -164,7 +164,8 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 					}
 					associate_oscillator_indexes[i] = oscillator_index;
 					p_oscillator->loudness = loudnesses[1 + i];
-					SET_REVERB_ASSOCIATE(p_oscillator->state_bits);
+					//SET_REVERB_ASSOCIATE(p_oscillator->state_bits);
+					p_oscillator->midi_effect_association = MidiEffectReverb;
 				}
 				store_associate_oscillator_indexes(MidiEffectReverb, cooperative_oscillator_indexes[k],
 											   &associate_oscillator_indexes[0]);
@@ -177,9 +178,9 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 	{
 		int effect_subordinate_oscillator_number = 0;
 		effect_subordinate_oscillator_number = count_all_subordinate_oscillators(MidiEffectReverb,
-																				 native_oscillator_index);
+																				 primary_oscillator_index);
 		STACK_ARRAY(int16_t, effect_subordinate_oscillator_indexes, effect_subordinate_oscillator_number);
-		get_all_subordinate_oscillator_indexes(MidiEffectReverb, native_oscillator_index,
+		get_all_subordinate_oscillator_indexes(MidiEffectReverb, primary_oscillator_index,
 											   &effect_subordinate_oscillator_indexes[0]);
 		int jj = 0;
 		for(int16_t i = 0; i < effect_subordinate_oscillator_number; i++){
@@ -211,7 +212,7 @@ static int16_t const s_chorus_loudness_proportional_coefficients \
 static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 								 int8_t const voice, midi_value_t const note,
 								 normalized_midi_level_t const velocity,
-								 int16_t const native_oscillator_index)
+								 int16_t const primary_oscillator_index)
 {
 	(void)velocity;
 	if(MIDI_PERCUSSION_CHANNEL == voice){
@@ -227,11 +228,11 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 			int cooperative_oscillator_number = 0;
 			cooperative_oscillator_number += 1;
 			cooperative_oscillator_number += count_all_subordinate_oscillators(WITHOUT_EFFECT(MidiEffectChorus),
-																					 native_oscillator_index);
+																					 primary_oscillator_index);
 			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
-			cooperative_oscillator_indexes[0] = native_oscillator_index;
+			cooperative_oscillator_indexes[0] = primary_oscillator_index;
 			get_all_subordinate_oscillator_indexes(WITHOUT_EFFECT(MidiEffectChorus),
-												   native_oscillator_index,
+												   primary_oscillator_index,
 												   &cooperative_oscillator_indexes[1]);
 
 			enum ChorusEffectProfile const chorus_effect_profile = ChorusEffectProfileLeadDominant;
@@ -268,7 +269,8 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 					p_oscillator->base_phase_increment = calculate_phase_increment_from_pitch(
 								(float)p_oscillator->note + p_oscillator->pitch_chorus_detune_in_semitones);
 					associate_oscillator_indexes[i] = oscillator_index;
-					SET_CHORUS_ASSOCIATE(p_oscillator->state_bits);
+					//SET_CHORUS_ASSOCIATE(p_oscillator->state_bits);
+					p_oscillator->midi_effect_association = MidiEffectChorus;
 				}
 				store_associate_oscillator_indexes(MidiEffectChorus, cooperative_oscillator_indexes[k],
 											   &associate_oscillator_indexes[0]);
@@ -281,9 +283,9 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 	{
 		int effect_subordinate_oscillator_number = 0;
 		effect_subordinate_oscillator_number = count_all_subordinate_oscillators(MidiEffectChorus,
-																				 native_oscillator_index);
+																				 primary_oscillator_index);
 		STACK_ARRAY(int16_t, effect_subordinate_oscillator_indexes, effect_subordinate_oscillator_number);
-		get_all_subordinate_oscillator_indexes(MidiEffectChorus, native_oscillator_index,
+		get_all_subordinate_oscillator_indexes(MidiEffectChorus, primary_oscillator_index,
 											   &effect_subordinate_oscillator_indexes[0]);
 		int jj = 0;
 		for(int16_t i = 0; i < effect_subordinate_oscillator_number; i++){
@@ -299,10 +301,10 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 /**********************************************************************************/
 
 int process_effects(uint32_t const tick, int8_t const event_type, int8_t const voice, midi_value_t const note,
-					normalized_midi_level_t const velocity, int16_t const native_oscillator_index)
+					normalized_midi_level_t const velocity, int16_t const primary_oscillator_index)
 {
-	process_reverb_effect(tick, event_type, voice, note, velocity, native_oscillator_index);
-	process_chorus_effect(tick, event_type, voice, note, velocity, native_oscillator_index);
+	process_reverb_effect(tick, event_type, voice, note, velocity, primary_oscillator_index);
+	process_chorus_effect(tick, event_type, voice, note, velocity, primary_oscillator_index);
 	return 0;
 }
 

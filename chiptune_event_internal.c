@@ -339,10 +339,7 @@ static inline char const * const event_additional_string(int16_t const event_ind
 	snprintf(&s_event_additional_string[0], sizeof(s_event_additional_string), "");
 	bool is_empty_string = false;
 	do {
-		if(true == IS_REVERB_ASSOCIATE(p_oscillator->state_bits)){
-			break;
-		}
-		if(true == IS_CHORUS_ASSOCIATE(p_oscillator->state_bits)){
+		if(false == is_primary_oscillator(p_oscillator)){
 			break;
 		}
 		if(true == p_channel_controller->is_damper_pedal_on
@@ -360,14 +357,14 @@ static inline char const * const event_additional_string(int16_t const event_ind
 		snprintf(&s_event_additional_string[0], sizeof(s_event_additional_string), "(");
 		bool is_empty_content = true;
 
-		if(true == IS_REVERB_ASSOCIATE(p_oscillator->state_bits)){
+		if(/*true == IS_REVERB_ASSOCIATE(p_oscillator->state_bits)*/ MidiEffectReverb == p_oscillator->midi_effect_association){
 			size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
 			snprintf(&s_event_additional_string[event_addition_string_length], sizeof(s_event_additional_string)
 					 - event_addition_string_length, "reverb");
 			is_empty_content = false;
 		}
 
-		if(true == IS_CHORUS_ASSOCIATE(p_oscillator->state_bits)){
+		if(/*true == IS_CHORUS_ASSOCIATE(p_oscillator->state_bits)*/ MidiEffectChorus == p_oscillator->midi_effect_association){
 			if(false == is_empty_content){
 				size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
 				snprintf(&s_event_additional_string[event_addition_string_length],
@@ -469,13 +466,13 @@ int process_events(uint32_t const tick)
 							100.0f * p_oscillator->release_reference_amplitude/(float)p_oscillator->loudness,
 							event_additional_string(s_queued_event_head_index));
 			if(true == IS_FREEING(p_oscillator->state_bits)
-					&& true == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
+					&& true == is_primary_oscillator(p_oscillator)){
 				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: rest a freeing native oscillator = %d\r\n",
 							p_head_event->oscillator_index);
 				break;
 			}
 			if(true == IS_RESTING(p_oscillator->state_bits)
-					&& true == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
+					&& true == is_primary_oscillator(p_oscillator)){
 				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: rest a resting native oscillator = %d\r\n",
 							p_head_event->oscillator_index);
 				break;

@@ -1,6 +1,8 @@
 #ifndef _CHIPTUNE_MIDI_DEFINE_H_
 #define _CHIPTUNE_MIDI_DEFINE_H_
 
+#include <stdint.h>
+
 #define MIDI_DEFAULT_TEMPO							(120.0)
 #define MIDI_DEFAULT_RESOLUTION						(960)
 
@@ -61,13 +63,6 @@
 #define EXPAND_ENUM(ITEM, VAL)						ITEM = VAL,
 
 #define EXPAND_CASE_TO_STR(X, DUMMY_VAR)			case X:	return #X;
-
-#include <stdint.h>
-#ifdef __clang__
-	#define MAYBE_UNUSED_FUNCTION __attribute__((unused))
-#else
-	#define MAYBE_UNUSED_FUNCTION
-#endif
 
 /**********************************************************************************/
 
@@ -221,16 +216,6 @@ enum INSTRUMENT_CODE
 	INSTRUMENT_CODE_LIST(EXPAND_ENUM)
 };
 
-MAYBE_UNUSED_FUNCTION static inline char const * const get_instrument_name_string(int8_t const index)
-{
-	switch (index)
-	{
-		INSTRUMENT_CODE_LIST(EXPAND_CASE_TO_STR)
-	}
-
-	return "UNKNOWN_INSTRUMENT";
-}
-
 /**********************************************************************************/
 
 #define MIDI_PERCUSSION_CHANNEL 					(9)
@@ -320,16 +305,5 @@ enum PERCUSSION_CODE
 	PERCUSSION_CODE_LIST(EXPAND_ENUM)
 };
 
-/**********************************************************************************/
-
-MAYBE_UNUSED_FUNCTION static inline char const * const get_percussion_name_string(int8_t const index)
-{
-	switch (index)
-	{
-		PERCUSSION_CODE_LIST(EXPAND_CASE_TO_STR)
-	}
-
-	return "UNKNOWN_PERCUSSIOM";
-}
 
 #endif // _CHIPTUNE_MIDI_DEFINE_H_

@@ -5,7 +5,15 @@
 #ifdef _MSC_VER
 #include <malloc.h>
 #endif
+
+#ifdef __clang__
+	#define MAYBE_UNUSED_FUNCTION __attribute__((unused))
+#else
+	#define MAYBE_UNUSED_FUNCTION
+#endif
+
 #include "chiptune_midi_define_internal.h" // IWYU pragma: export
+
 
 //#define _INCREMENTAL_SAMPLE_INDEX
 //#define _AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
@@ -14,7 +22,7 @@
 
 #define _PRINT_DEVELOPING
 //#define _PRINT_MIDI_NOTE
-//#define _PRINT_MIDI_CONTROLCHANGE
+#define _PRINT_MIDI_CONTROLCHANGE
 //#define _PRINT_MIDI_PROGRAMCHANGE
 //#define _PRINT_MIDI_CHANNELPRESSURE
 //#define _PRINT_MIDI_PITCH_WHEEL
@@ -85,6 +93,27 @@ typedef uint8_t		normalized_midi_level_t;
 		type name[count]
 #endif
 
+MAYBE_UNUSED_FUNCTION static inline char const * const get_instrument_name_string(int8_t const index)
+{
+	switch (index)
+	{
+		INSTRUMENT_CODE_LIST(EXPAND_CASE_TO_STR)
+	}
+
+	return "UNKNOWN_INSTRUMENT";
+}
+
+/**********************************************************************************/
+
+MAYBE_UNUSED_FUNCTION static inline char const * const get_percussion_name_string(int8_t const index)
+{
+	switch (index)
+	{
+		PERCUSSION_CODE_LIST(EXPAND_CASE_TO_STR)
+	}
+
+	return "UNKNOWN_PERCUSSIOM";
+}
 
 uint32_t const get_sampling_rate(void);
 uint32_t const get_resolution(void);

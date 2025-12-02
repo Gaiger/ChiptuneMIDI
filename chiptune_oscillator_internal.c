@@ -503,8 +503,9 @@ oscillator_t * const replicate_oscillator(int16_t const original_index, int16_t 
 		if(NULL == p_oscillator){
 			break;
 		}
-		oscillator_t  * const p_original_oscillator = get_oscillator_address_from_index(original_index);
+		oscillator_t * const p_original_oscillator = get_oscillator_address_from_index(original_index);
 		memcpy(p_oscillator, p_original_oscillator, sizeof(oscillator_t));
+		p_oscillator->midi_effect_association = MidiEffectNone;
 		p_oscillator->midi_effect_aassociate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
 	}while(0);
 

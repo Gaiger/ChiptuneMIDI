@@ -2,6 +2,7 @@
 #define _CHIPTUNE_OSCILLATOR_INTERNAL_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "chiptune_common_internal.h"
 
 enum EnvelopeState
@@ -11,6 +12,14 @@ enum EnvelopeState
 	EnvelopeStateSustain,
 	EnvelopeStateRelease,
 	EnvelopeStateMax,
+};
+
+enum MidiEffectType
+{
+	MidiEffectNone = 0,
+	MidiEffectReverb = (0x01 << 0),
+	MidiEffectChorus = (0x01 << 1),
+	MidiEffectAll = MidiEffectReverb | MidiEffectChorus,
 };
 
 typedef struct _oscillator
@@ -39,6 +48,7 @@ union{
 
 		float		pitch_chorus_detune_in_semitones;
 
+		uint8_t		midi_effect_association;
 		int16_t		midi_effect_aassociate_link_index;//internal
 	};
 	struct {
@@ -85,19 +95,8 @@ union{
 #define SET_NOTE_OFF(STATE_BITS)					( (STATE_BITS) &= (~(0x01 << STATE_NOTE_BIT)) )
 #define IS_NOTE_ON(STATE_BITS)						(((0x01 << STATE_NOTE_BIT) & (STATE_BITS) ) ? true : false)
 
-#define STATE_REVERB_ASSOCIATE_BIT					(6)
-#define SET_REVERB_ASSOCIATE(STATE_BITS)			( (STATE_BITS) |= ((0x01)<< STATE_REVERB_ASSOCIATE_BIT))
-#define IS_REVERB_ASSOCIATE(STATE_BITS)				(((0x01 << STATE_REVERB_ASSOCIATE_BIT) & (STATE_BITS)) ? true : false)
-
-#define STATE_CHORUS_ASSOCIATE_BIT					(7)
-#define SET_CHORUS_ASSOCIATE(STATE_BITS)			( (STATE_BITS) |= ((0x01)<< STATE_CHORUS_ASSOCIATE_BIT))
-#define IS_CHORUS_ASSOCIATE(STATE_BITS)				(((0x01 << STATE_CHORUS_ASSOCIATE_BIT) & (STATE_BITS)) ? true : false)
-
-
-#define IS_NATIVE_OSCILLATOR(STATE_BITS)			((IS_REVERB_ASSOCIATE(STATE_BITS) || IS_CHORUS_ASSOCIATE(STATE_BITS)) ? false : true)
 
 #define SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER	(4 - 1)
-
 
 void set_pitch_shift_in_semitones(int16_t pitch_shift_in_semitones);
 int16_t get_pitch_shift_in_semitones(void);
@@ -119,14 +118,6 @@ int16_t const get_occupied_oscillator_next_index(int16_t const index);
 
 oscillator_t * const get_oscillator_pointer_from_index(int16_t const index);
 
-
-enum MidiEffectType
-{
-	MidiEffectNone = 0,
-	MidiEffectReverb = (0x01 << 0),
-	MidiEffectChorus = (0x01 << 1),
-	MidiEffectAll = MidiEffectReverb | MidiEffectChorus,
-};
 #define WITHOUT_EFFECT(MIDI_EFFECT)   (MidiEffectAll & (~(MIDI_EFFECT)))
 
 int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const index,
@@ -134,5 +125,13 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 int16_t count_all_subordinate_oscillators(uint8_t const midi_effect_type, int16_t const root_index);
 int get_all_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_index,
 										   int16_t * const p_associate_indexes);
+
+MAYBE_UNUSED_FUNCTION static inline bool is_primary_oscillator(oscillator_t const * const p_oscillator)
+{
+	if(MidiEffectNone == p_oscillator->midi_effect_association){
+		return true;
+	}
+	return false;
+}
 
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_

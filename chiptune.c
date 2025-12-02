@@ -202,6 +202,7 @@ int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
 	p_oscillator->envelope_table_index = 0;
 	p_oscillator->release_reference_amplitude = 0;
 	p_oscillator->attack_decay_reference_amplitude = 0;
+	p_oscillator->midi_effect_association = MidiEffectNone;
 	return 0;
 }
 
@@ -245,7 +246,7 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick, i
 			if(voice != p_oscillator->voice){
 				break;
 			}
-			if(false == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
+			if(false == is_primary_oscillator(p_oscillator)){
 				break;
 			}
 			if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
@@ -366,8 +367,7 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				if(voice != p_oscillator->voice){
 					break;
 				}
-
-				if(false == IS_NATIVE_OSCILLATOR(p_oscillator->state_bits)){
+				if(false == is_primary_oscillator(p_oscillator)){
 					break;
 				}
 				if(false == IS_NOTE_ON(p_oscillator->state_bits)){
