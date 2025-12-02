@@ -73,7 +73,6 @@ inline uint8_t one_to_zero(uint8_t x){
 typedef int8_t		midi_value_t;
 typedef uint8_t		normalized_midi_level_t;
 
-
 #ifndef _USING_STATIC_RESOURCE_ALLOCATION
 	void* chiptune_malloc(size_t size);
 	void chiptune_free(void* ptr);
@@ -92,6 +91,22 @@ typedef uint8_t		normalized_midi_level_t;
 	#define STACK_ARRAY(type, name, count) \
 		type name[count]
 #endif
+
+#define EXPAND_ENUM(ITEM, VAL)						ITEM = VAL,
+
+enum INSTRUMENT_CODE
+{
+	INSTRUMENT_CODE_LIST(EXPAND_ENUM)
+};
+
+enum PERCUSSION_CODE
+{
+	PERCUSSION_CODE_LIST(EXPAND_ENUM)
+};
+
+/**********************************************************************************/
+
+#define EXPAND_CASE_TO_STR(X, DUMMY_VAR)			case X:	return #X;
 
 MAYBE_UNUSED_FUNCTION static inline char const * const get_instrument_name_string(int8_t const index)
 {
@@ -114,6 +129,8 @@ MAYBE_UNUSED_FUNCTION static inline char const * const get_percussion_name_strin
 
 	return "UNKNOWN_PERCUSSIOM";
 }
+
+/**********************************************************************************/
 
 uint32_t const get_sampling_rate(void);
 uint32_t const get_resolution(void);

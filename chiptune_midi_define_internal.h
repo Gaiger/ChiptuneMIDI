@@ -1,8 +1,6 @@
 #ifndef _CHIPTUNE_MIDI_DEFINE_H_
 #define _CHIPTUNE_MIDI_DEFINE_H_
 
-#include <stdint.h>
-
 #define MIDI_DEFAULT_TEMPO							(120.0)
 #define MIDI_DEFAULT_RESOLUTION						(960)
 
@@ -57,12 +55,6 @@
 #define MIDI_CC_RPN_TURNING_BANK_SELECT				(4)
 #define MIDI_CC_RPN_MODULATION_DEPTH_RANGE			(5)
 #define MIDI_CC_RPN_NULL						((127 << 8) + 127)
-
-/**********************************************************************************/
-
-#define EXPAND_ENUM(ITEM, VAL)						ITEM = VAL,
-
-#define EXPAND_CASE_TO_STR(X, DUMMY_VAR)			case X:	return #X;
 
 /**********************************************************************************/
 
@@ -211,11 +203,6 @@
 	X(Applause,					126) \
 	X(Gunshot,					127) \
 
-enum INSTRUMENT_CODE
-{
-	INSTRUMENT_CODE_LIST(EXPAND_ENUM)
-};
-
 /**********************************************************************************/
 
 #define MIDI_PERCUSSION_CHANNEL 					(9)
@@ -227,7 +214,7 @@ enum INSTRUMENT_CODE
 
 /* 35–81 ... */
 //https://musescore.org/sites/musescore.org/files/General%20MIDI%20Standard%20Percussion%20Set%20Key%20Map.pdf
-//
+
 #define GM1_PERCUSSION_CODE_LIST(X) \
 	X(AcousticBassDrum,		35) \
 	X(BassDrum1,			36) \
@@ -300,10 +287,6 @@ enum INSTRUMENT_CODE
 	GM1_PERCUSSION_CODE_LIST(X) \
 	GM2_PERCUSSION_EXTENSION_CODE_LIST(X) \
 
-enum PERCUSSION_CODE
-{
-	PERCUSSION_CODE_LIST(EXPAND_ENUM)
-};
 
 
 #endif // _CHIPTUNE_MIDI_DEFINE_H_
