@@ -31,12 +31,14 @@
 
 #define MIDI_CC_DAMPER_PEDAL						(64)
 
-#define MIDI_CC_REVERB_DEPTH						(91)
-#define MIDI_CC_EFFECT_2_DEPTH						(92)
-#define MIDI_CC_EFFECT_3_DEPTH						(93)
-#define MIDI_CC_CHORUS_EFFECT						(MIDI_CC_EFFECT_3_DEPTH)
-#define MIDI_CC_EFFECT_4_DEPTH						(94)
-#define MIDI_CC_EFFECT_5_DEPTH						(95)
+#define MIDI_CC_EFFECT_1							(91)
+#define MIDI_CC_EFFECT_2							(92)
+#define MIDI_CC_EFFECT_3							(93)
+#define MIDI_CC_EFFECT_4							(94)
+#define MIDI_CC_EFFECT_5							(95)
+#define MIDI_CC_REVERB_EFFECT						(MIDI_CC_EFFECT_1)
+#define MIDI_CC_CHORUS_EFFECT						(MIDI_CC_EFFECT_3)
+#define MIDI_CC_DETUNE_EFFECT						(MIDI_CC_EFFECT_4)
 
 #define MIDI_CC_NRPN_LSB							(98)
 #define MIDI_CC_NRPN_MSB							(99)

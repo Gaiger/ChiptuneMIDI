@@ -56,6 +56,7 @@ void reset_channel_controller_midi_control_change_parameters(int8_t const index)
 	p_channel_controller->modulation_wheel = NORMALIZE_MIDI_LEVEL(0);
 	p_channel_controller->reverb = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
 	p_channel_controller->chorus = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
+	p_channel_controller->detune = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
 	p_channel_controller->is_damper_pedal_on = false;
 }
 

@@ -264,8 +264,8 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, mid
 
 static void process_cc_reverb_effect(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
-	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_REVERB_DEPTH(%d) :: voice = %d, value = %d\r\n",
-					tick, MIDI_CC_REVERB_DEPTH, voice, value);
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_REVERB_EFFECT(%d) :: voice = %d, depth = %d\r\n",
+					tick, MIDI_CC_REVERB_EFFECT, voice, value);
 	get_channel_controller_pointer_from_index(voice)->reverb
 			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
 }
@@ -274,9 +274,19 @@ static void process_cc_reverb_effect(uint32_t const tick, int8_t const voice, mi
 
 static void process_cc_chorus_effect(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
-	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_CHORUS_EFFECT(%d) :: voice = %d, value = %d\r\n",
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_CHORUS_EFFECT(%d) :: voice = %d, depth = %d\r\n",
 					tick, MIDI_CC_CHORUS_EFFECT, voice, value);
 	get_channel_controller_pointer_from_index(voice)->chorus
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
+}
+
+/**********************************************************************************/
+
+static void process_cc_detune_effect(uint32_t const tick, int8_t const voice, midi_value_t const value)
+{
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_DETUNE_EFFECT(%d) :: voice = %d, depth = %d\r\n",
+					tick, MIDI_CC_DETUNE_EFFECT, voice, value);
+	get_channel_controller_pointer_from_index(voice)->detune
 			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
 }
 
@@ -330,22 +340,21 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 	case MIDI_CC_DAMPER_PEDAL:
 		process_cc_damper_pedal(tick, voice, value);
 		break;
-	case MIDI_CC_REVERB_DEPTH:
+	case MIDI_CC_REVERB_EFFECT:
 		process_cc_reverb_effect(tick, voice, value);
 		break;
-	case MIDI_CC_EFFECT_2_DEPTH:
-		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EFFECT_2_DEPTH(%d) :: voice = %d, value = %d %s\r\n",
+	case MIDI_CC_EFFECT_2:
+		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EFFECT_2(%d) :: voice = %d, depth = %d %s\r\n",
 						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_CHORUS_EFFECT:
 		process_cc_chorus_effect(tick, voice, value);
 		break;
-	case MIDI_CC_EFFECT_4_DEPTH:
-		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EFFECT_4_DEPTH(%d) :: voice = %d, value = %d %s\r\n",
-						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
+	case MIDI_CC_DETUNE_EFFECT:
+		process_cc_detune_effect(tick, voice, value);
 		break;
-	case MIDI_CC_EFFECT_5_DEPTH:
-		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EFFECT_5_DEPTH(%d) :: voice = %d, value = %d %s\r\n",
+	case MIDI_CC_EFFECT_5:
+		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EFFECT_5(%d) :: voice = %d, depth = %d %s\r\n",
 						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_NRPN_LSB:

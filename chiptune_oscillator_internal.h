@@ -16,16 +16,19 @@ enum EnvelopeState
 
 enum MidiEffectType
 {
-	MidiEffectNone = 0,
-	MidiEffectReverb = (0x01 << 0),
-	MidiEffectChorus = (0x01 << 1),
-	MidiEffectAll = MidiEffectReverb | MidiEffectChorus,
+	MidiEffectNone		= 0,
+	MidiEffectReverb	= (0x01 << 0),
+	//MidiEffectTremolo	= (0x01 << 1),
+	MidiEffectChorus	= (0x01 << 2),
+	MidiEffectDetune	= (0x01 << 3),
+	//MidiEffectPhaser	= (0x01 << 4),
+	MidiEffectAll
+		= (MidiEffectReverb | MidiEffectChorus | MidiEffectDetune),
 };
 
 typedef struct _oscillator
 {
 	uint8_t			state_bits;
-	uint8_t			envelope_state;
 
 	int8_t			voice;
 	midi_value_t	note;
@@ -37,6 +40,8 @@ typedef struct _oscillator
 	int16_t			amplitude;
 union{
 	struct {
+		uint8_t		envelope_state;
+
 		uint16_t	envelope_table_index;
 		uint16_t	envelope_same_index_count;
 		int16_t		release_reference_amplitude;
@@ -46,7 +51,7 @@ union{
 		uint16_t	vibrato_table_index;
 		uint16_t	vibrato_same_index_count;
 
-		float		pitch_chorus_detune_in_semitones;
+		float		pitch_detune_in_semitones;
 
 		uint8_t		midi_effect_association;
 		int16_t		midi_effect_aassociate_link_index;//internal

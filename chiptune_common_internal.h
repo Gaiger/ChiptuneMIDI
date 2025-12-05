@@ -22,7 +22,7 @@
 
 #define _PRINT_DEVELOPING
 //#define _PRINT_MIDI_NOTE
-#define _PRINT_MIDI_CONTROLCHANGE
+//#define _PRINT_MIDI_CONTROLCHANGE
 //#define _PRINT_MIDI_PROGRAMCHANGE
 //#define _PRINT_MIDI_CHANNELPRESSURE
 //#define _PRINT_MIDI_PITCH_WHEEL
@@ -39,6 +39,7 @@
 #define DIVIDE_BY_8(VALUE)							((VALUE) >> 3)
 #define DIVIDE_BY_16(VALUE)							((VALUE) >> 4)
 #define DIVIDE_BY_32(VALUE)							((VALUE) >> 5)
+#define DIVIDE_BY_64(VALUE)							((VALUE) >> 6)
 #define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
 
 #define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)

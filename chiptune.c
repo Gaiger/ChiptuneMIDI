@@ -193,7 +193,7 @@ int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
 
 	update_oscillator_phase_increment(p_oscillator);
 	p_oscillator->amplitude = 0;
-	p_oscillator->pitch_chorus_detune_in_semitones = 0.0;
+	p_oscillator->pitch_detune_in_semitones = 0.0;
 	p_oscillator->vibrato_table_index = 0;
 	p_oscillator->vibrato_same_index_count = 0;
 
@@ -337,8 +337,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 				finalize_melodic_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
 			} while(0);
 
-			put_event(EventTypeActivate , oscillator_index, tick);
-			process_effects(tick, EventTypeActivate , voice, note, normalized_velocity, oscillator_index);
+			put_event(EventTypeActivate, oscillator_index, tick);
+			process_effects(tick, EventTypeActivate, voice, note, normalized_velocity, oscillator_index);
 			break;
 		}
 
@@ -412,8 +412,8 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 						p_channel_controller->envelop_damper_on_but_note_off_sustain_level);
 
 			finalize_melodic_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
-			put_event(EventTypeActivate , reduced_loundness_oscillator_index, tick);
-			process_effects(tick, EventTypeActivate , voice, note, normalized_velocity,
+			put_event(EventTypeActivate, reduced_loundness_oscillator_index, tick);
+			process_effects(tick, EventTypeActivate, voice, note, normalized_velocity,
 							reduced_loundness_oscillator_index);
 		} while(0);
 

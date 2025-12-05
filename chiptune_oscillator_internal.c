@@ -32,7 +32,7 @@ int const update_oscillator_phase_increment(oscillator_t * const p_oscillator)
 			+ s_pitch_shift_in_semitones
 			+ p_channel_controller->tuning_in_semitones
 			+ p_channel_controller->pitch_wheel_bend_in_semitones
-			+ p_oscillator->pitch_chorus_detune_in_semitones;
+			+ p_oscillator->pitch_detune_in_semitones;
 	p_oscillator->base_phase_increment =  calculate_phase_increment_from_pitch(corrected_pitch);
 
 	corrected_pitch += p_channel_controller->vibrato_depth_in_semitones;
@@ -505,7 +505,6 @@ oscillator_t * const replicate_oscillator(int16_t const original_index, int16_t 
 		}
 		oscillator_t * const p_original_oscillator = get_oscillator_address_from_index(original_index);
 		memcpy(p_oscillator, p_original_oscillator, sizeof(oscillator_t));
-		p_oscillator->midi_effect_association = MidiEffectNone;
 		p_oscillator->midi_effect_aassociate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
 	}while(0);
 
@@ -688,7 +687,7 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 				break;
 			}
 		}
-		s_used_midi_effect_associate_link_number +=1;
+		s_used_midi_effect_associate_link_number += 1;
 
 		{
 			midi_effect_associate_link_t * const p_new_link
