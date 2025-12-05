@@ -55,6 +55,8 @@ union{
 
 		uint8_t		midi_effect_association;
 		int16_t		midi_effect_aassociate_link_index;//internal
+
+		int32_t		mono_wave_amplitude;
 	};
 	struct {
 		int8_t		percussion_waveform_segment_index;

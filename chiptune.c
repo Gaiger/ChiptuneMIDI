@@ -853,56 +853,63 @@ static uint16_t generate_noise_random(void)
 
 int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 {
-	channel_controller_t const *p_channel_controller
-			= get_channel_controller_pointer_from_index(p_oscillator->voice);
-	int16_t wave = 0;
-	int8_t waveform = p_channel_controller->waveform;
-	uint16_t critical_phase = p_channel_controller->duty_cycle_critical_phase;
-	if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
-		percussion_t const * const p_percussion = get_percussion_pointer_from_index(p_oscillator->note);
-		waveform = p_percussion->waveform[p_oscillator->percussion_waveform_segment_index];
-		critical_phase = INT16_MAX_PLUS_1;
-	}
-	uint16_t current_phase_advanced_by_quarter_cycle
-			= p_oscillator->current_phase + DIVIDE_BY_2(INT16_MAX_PLUS_1);
-
-	switch(waveform)
+	do
 	{
-	case WaveformSquare:
-		wave = (p_oscillator->current_phase < critical_phase)
-				? INT16_MAX : -INT16_MAX_PLUS_1;
-		break;
-	case WaveformTriangle:
-		do {
-			if(current_phase_advanced_by_quarter_cycle < INT16_MAX_PLUS_1){
-				wave = -INT16_MAX_PLUS_1 + MULTIPLY_BY_2(current_phase_advanced_by_quarter_cycle);
-				break;
-			}
-			wave = INT16_MAX - MULTIPLY_BY_2(current_phase_advanced_by_quarter_cycle - INT16_MAX_PLUS_1);
-		} while(0);
-		break;
-	case WaveformSaw:
-		wave = -INT16_MAX_PLUS_1 + current_phase_advanced_by_quarter_cycle;
-		break;
-	case WaveformSine:
-		wave = SINE_WAVE(p_oscillator->current_phase);
-		break;
-	case WaveformNoise:
-		wave = (int16_t)generate_noise_random();
-		break;
-	default:
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: waveform = %d in %s\r\n ",
-						waveform, __func__);
-		wave = 0;
-		break;
-	}
+		if(false == is_stereo()
+				|| false == is_processing_left_channel()){
+			p_oscillator->current_phase += p_oscillator->base_phase_increment;
+			break;
+		}
 
-	if(false == is_stereo()
-			|| false == is_processing_left_channel()){
-		p_oscillator->current_phase += p_oscillator->base_phase_increment;
-	}
+		channel_controller_t const *p_channel_controller
+				= get_channel_controller_pointer_from_index(p_oscillator->voice);
 
-	return wave * p_oscillator->amplitude;
+		int8_t waveform = p_channel_controller->waveform;
+		uint16_t critical_phase = p_channel_controller->duty_cycle_critical_phase;
+		if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
+			percussion_t const * const p_percussion = get_percussion_pointer_from_index(p_oscillator->note);
+			waveform = p_percussion->waveform[p_oscillator->percussion_waveform_segment_index];
+			critical_phase = INT16_MAX_PLUS_1;
+		}
+		uint16_t current_phase_advanced_by_quarter_cycle
+				= p_oscillator->current_phase + DIVIDE_BY_2(INT16_MAX_PLUS_1);
+
+		int16_t wave = 0;
+		switch(waveform)
+		{
+		case WaveformSquare:
+			wave = (p_oscillator->current_phase < critical_phase)
+					? INT16_MAX : -INT16_MAX_PLUS_1;
+			break;
+		case WaveformTriangle:
+			do {
+				if(current_phase_advanced_by_quarter_cycle < INT16_MAX_PLUS_1){
+					wave = -INT16_MAX_PLUS_1 + MULTIPLY_BY_2(current_phase_advanced_by_quarter_cycle);
+					break;
+				}
+				wave = INT16_MAX - MULTIPLY_BY_2(current_phase_advanced_by_quarter_cycle - INT16_MAX_PLUS_1);
+			} while(0);
+			break;
+		case WaveformSaw:
+			wave = -INT16_MAX_PLUS_1 + current_phase_advanced_by_quarter_cycle;
+			break;
+		case WaveformSine:
+			wave = SINE_WAVE(p_oscillator->current_phase);
+			break;
+		case WaveformNoise:
+			wave = (int16_t)generate_noise_random();
+			break;
+		default:
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: waveform = %d in %s\r\n ",
+							waveform, __func__);
+			wave = 0;
+			break;
+		}
+
+		p_oscillator->mono_wave_amplitude = wave * p_oscillator->amplitude;
+	} while(0);
+
+	return p_oscillator->mono_wave_amplitude;
 }
 
 /**********************************************************************************/
