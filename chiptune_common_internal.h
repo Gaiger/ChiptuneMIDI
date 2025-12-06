@@ -15,10 +15,10 @@
 #include "chiptune_midi_define_internal.h" // IWYU pragma: export
 
 
-//#define _INCREMENTAL_SAMPLE_INDEX
+#define _USE_SAMPLE_INDEX_AS_TIMEBASE
 //#define _AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
 //#define _KEEP_NOTELESS_CHANNELS
-//#define _USING_STATIC_RESOURCE_ALLOCATION
+//#define _USE_STATIC_RESOURCE_ALLOCATION
 
 #define _PRINT_DEVELOPING
 //#define _PRINT_MIDI_NOTE
@@ -74,7 +74,7 @@ inline uint8_t one_to_zero(uint8_t x){
 typedef int8_t		midi_value_t;
 typedef uint8_t		normalized_midi_level_t;
 
-#ifndef _USING_STATIC_RESOURCE_ALLOCATION
+#ifndef _USE_STATIC_RESOURCE_ALLOCATION
 	void* chiptune_malloc(size_t size);
 	void chiptune_free(void* ptr);
 #endif

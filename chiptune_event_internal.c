@@ -28,7 +28,7 @@ typedef struct _event
 	int16_t next_event_index;
 } event_t;
 
-#ifdef _USING_STATIC_RESOURCE_ALLOCATION
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
 	#define EVENT_POOL_CAPACITY						(768)
 #else
 	#define EVENT_POOL_CAPACITY						(64)
@@ -39,7 +39,7 @@ typedef struct _event_pool
 	event_t events[EVENT_POOL_CAPACITY];
 } event_pool_t;
 
-#ifdef _USING_STATIC_RESOURCE_ALLOCATION
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
 static event_pool_t		s_event_pool;
 
 static event_pool_t *	const s_event_pool_pointer_table[1] = {&s_event_pool};
@@ -68,7 +68,7 @@ static event_t * const get_event_pointer_from_index(int16_t const index)
 				->events[index % EVENT_POOL_CAPACITY];
 }
 
-#ifdef _USING_STATIC_RESOURCE_ALLOCATION
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
 /**********************************************************************************/
 
 static inline bool is_to_append_event_pool_successfully(void){ return false; }
@@ -151,7 +151,7 @@ static int mark_all_events_unused(void)
 
 static int release_all_events(void)
 {
-#ifdef _USING_STATIC_RESOURCE_ALLOCATION
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
 	return mark_all_events_unused();
 #else
 	for(int16_t j = 0; j < s_number_of_event_pool; j++){

@@ -65,7 +65,7 @@ typedef struct _oscillator_link
 	int16_t next;
 } oscillator_link_t;
 
-#ifdef _USING_STATIC_RESOURCE_ALLOCATION
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
 	#define OSCILLATOR_POOL_CAPACITY			(512)
 #else
 	#define OSCILLATOR_POOL_CAPACITY			(64)
@@ -77,7 +77,7 @@ typedef struct _oscillator_pool
 	oscillator_link_t oscillator_links[OSCILLATOR_POOL_CAPACITY];
 } oscillator_pool_t;
 
-#ifdef _USING_STATIC_RESOURCE_ALLOCATION
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
 static oscillator_pool_t	s_oscillator_pool;
 
 static oscillator_pool_t *	const s_oscillator_pool_pointer_table[1] = {&s_oscillator_pool};
@@ -114,7 +114,7 @@ static inline oscillator_t * const get_oscillator_address_from_index(int16_t con
 				->oscillators[index % OSCILLATOR_POOL_CAPACITY];
 }
 
-#ifdef _USING_STATIC_RESOURCE_ALLOCATION
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
 /**********************************************************************************/
 
 static inline bool is_to_append_oscillator_pool_successfully(void){ return false;}
@@ -204,7 +204,7 @@ static int mark_all_oscillators_and_links_unused(void)
 
 static int release_all_oscillators_and_links(void)
 {
-#ifdef _USING_STATIC_RESOURCE_ALLOCATION
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
 	return mark_all_oscillators_and_links_unused();
 #else
 	for(int j = 0; j < s_number_of_oscillator_pool; j++){
@@ -313,7 +313,7 @@ typedef struct _midi_effect_associate_link_pool
 } midi_effect_associate_link_pool_t;
 
 
-#ifdef _USING_STATIC_RESOURCE_ALLOCATION
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
 static midi_effect_associate_link_pool_t	s_associate_midi_effect_associate_link_pool;
 static midi_effect_associate_link_pool_t *	const s_midi_effect_associate_link_pool_t_pointer_table[1]
 											= {&s_associate_midi_effect_associate_link_pool};
@@ -342,7 +342,7 @@ static midi_effect_associate_link_t * const get_midi_effect_associate_link_from_
 
 /**********************************************************************************/
 
-#ifdef _USING_STATIC_RESOURCE_ALLOCATION
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
 /**********************************************************************************/
 static inline bool is_to_midi_effect_associate_link_pool_successfully(void){ return false; }
 #else
@@ -424,7 +424,7 @@ static void mark_all_midi_effect_associate_links_unused(void)
 
 static void release_all_midi_effect_associate_links(void)
 {
-#ifdef _USING_STATIC_RESOURCE_ALLOCATION
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
 	mark_all_midi_effect_associate_links_unused();
 #else
 	for(int16_t j = 0; j < s_number_of_associate_midi_effect_associate_link_pool; j++){

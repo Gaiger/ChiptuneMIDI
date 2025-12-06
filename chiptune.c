@@ -18,7 +18,7 @@
 
 #include "chiptune.h"
 
-#ifdef _INCREMENTAL_SAMPLE_INDEX
+#ifdef _USE_SAMPLE_INDEX_AS_TIMEBASE
 typedef float chiptune_float;
 #else
 typedef double chiptune_float;
@@ -34,15 +34,20 @@ static uint32_t s_resolution = MIDI_DEFAULT_RESOLUTION;
 static bool s_is_stereo = false;
 bool s_is_processing_left_channel = true;
 
-#ifdef _INCREMENTAL_SAMPLE_INDEX
+#ifdef _USE_SAMPLE_INDEX_AS_TIMEBASE
 static uint32_t s_current_sample_index = 0;
 static chiptune_float s_tick_to_sample_index_ratio = \
-		(chiptune_float)(DEFAULT_SAMPLING_RATE * 1.0/(MIDI_DEFAULT_TEMPO/DEFAULT_PLAYING_SPEED_RATIO/60.0)/MIDI_DEFAULT_RESOLUTION);
+		(chiptune_float)(DEFAULT_SAMPLING_RATE * 1.0/(MIDI_DEFAULT_TEMPO * DEFAULT_PLAYING_SPEED_RATIO/60.0)/MIDI_DEFAULT_RESOLUTION);
+static chiptune_float s_sample_index_to_tick_ratio = \
+		(chiptune_float)(MIDI_DEFAULT_TEMPO * DEFAULT_PLAYING_SPEED_RATIO * MIDI_DEFAULT_RESOLUTION/60.0)/DEFAULT_SAMPLING_RATE;
+static uint32_t s_current_tick = 0;
 
 #define UPDATE_SAMPLES_TO_TICK_RATIO()				\
 													do { \
 														s_tick_to_sample_index_ratio \
-														= (chiptune_float)(s_sampling_rate * 60.0/s_tempo/s_playing_speed_ratio/s_resolution); \
+															= (chiptune_float)(s_sampling_rate * (60.0/s_tempo)/s_playing_speed_ratio/s_resolution); \
+														s_sample_index_to_tick_ratio \
+															= (chiptune_float)((s_tempo/60.0) * s_playing_speed_ratio * s_resolution/s_sampling_rate); \
 													} while(0)
 
 #define UPDATE_SAMPLING_RATE(SAMPLING_RATE)			\
@@ -72,22 +77,25 @@ static chiptune_float s_tick_to_sample_index_ratio = \
 														UPDATE_SAMPLES_TO_TICK_RATIO(); \
 													} while(0)
 
-#define TICK_TO_SAMPLE_INDEX(TICK)					((uint32_t)(s_tick_to_sample_index_ratio * (chiptune_float)(TICK) + 0.5))
+//#define TICK_TO_SAMPLE_INDEX(TICK)					((uint32_t)(s_tick_to_sample_index_ratio * (chiptune_float)(TICK) + 0.5))
 
 #define RESET_CURRENT_TICK()						\
 													do { \
 														s_current_sample_index = 0; \
+														s_current_tick = 0; \
 													} while(0)
 
-#define CURRENT_TICK()								( (uint32_t)(s_current_sample_index/(s_tick_to_sample_index_ratio) + 0.5))
+#define CURRENT_TICK()								(s_current_tick)
 
 #define ADVANCE_CURRENT_TICK()			\
 													do { \
 														s_current_sample_index += 1; \
+														s_current_tick = (uint32_t)((s_current_sample_index * s_sample_index_to_tick_ratio) + 0.5); \
 													} while(0)
 
 #define UPDATE_CURRENT_TICK(TICK)					do { \
 														s_current_sample_index = (uint32_t)((TICK) * s_tick_to_sample_index_ratio + 0.5); \
+														s_current_tick = (uint32_t)((s_current_sample_index * s_sample_index_to_tick_ratio) + 0.5); \
 													} while(0)
 
 #else
