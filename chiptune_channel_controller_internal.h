@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #include "chiptune_common_internal.h"
 
@@ -10,6 +12,11 @@
 #define CHANNEL_CONTROLLER_INSTRUMENT_UNUSED_CHANNEL	(-2)
 
 #define CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH		(64)
+
+//SIN, 2 ticks for keeping changing breathing to complete the release table
+#define COMPLEMENTARY_RELEASE_TICK_NUMBER			(2)
+#define ENSURE_RELEASE_TICK_NUMBER_SUFFICIENT(RELREASE_TICK_NUMBER)	\
+	(ceilf(RELREASE_TICK_NUMBER) + (COMPLEMENTARY_RELEASE_TICK_NUMBER))
 
 #define NORMALIZE_VIBRATO_PHASE_INCREMENT(VALUE)	DIVIDE_BY_128(DIVIDE_BY_128(((int32_t)(VALUE))))
 

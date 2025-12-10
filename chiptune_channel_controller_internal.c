@@ -1,7 +1,5 @@
 #include <stddef.h>
 #include <float.h>
-#define _USE_MATH_DEFINES
-#include <math.h>
 
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
@@ -69,7 +67,8 @@ static void update_channel_controller_envelope_parameters_related_to_playing_tem
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
 
 	p_channel_controller->envelope_release_tick_number
-		= (uint16_t)(p_channel_controller->envelope_release_duration_in_seconds * resolution * playing_tempo/60.0f + 0.5f);
+		= (uint16_t)ENSURE_RELEASE_TICK_NUMBER_SUFFICIENT(
+				p_channel_controller->envelope_release_duration_in_seconds * resolution * playing_tempo/60.0f);
 }
 
 /**********************************************************************************/
@@ -357,7 +356,7 @@ void initialize_channel_controllers(void)
 	}
 
 #define DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS		(0.03f)
-	channel_controller_t * const p_channel_controller = &s_channel_controllers[MIDI_PERCUSSION_CHANNEL ];
+	channel_controller_t * const p_channel_controller = &s_channel_controllers[MIDI_PERCUSSION_CHANNEL];
 	int8_t const ** pp_phase_table = NULL;
 	pp_phase_table = &p_channel_controller->p_envelope_release_table;
 	set_decline_curve(pp_phase_table, EnvelopeCurveExponential);

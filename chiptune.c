@@ -540,8 +540,8 @@ static int process_midi_message(struct _tick_message const tick_message)
 		const uint32_t tick = tick_message.tick;
 		u.data_as_uint32_t = tick_message.message;
 
-		uint8_t type = u.data_as_bytes[0] & 0xF0;
-		int8_t voice = u.data_as_bytes[0] & 0x0F;
+		uint8_t const type = u.data_as_bytes[0] & 0xF0;
+		int8_t const voice = u.data_as_bytes[0] & 0x0F;
 #ifndef _KEEP_NOTELESS_CHANNELS
 		if(true == s_is_chase_to_last_done){
 			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL == s_ending_instrument_array[voice]){

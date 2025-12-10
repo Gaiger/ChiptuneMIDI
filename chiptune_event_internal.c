@@ -399,6 +399,17 @@ static inline char const * const event_additional_string(int16_t const event_ind
 
 /**********************************************************************************/
 
+static inline bool is_amplitude_to_loudness_percentage_over_threshold(
+		oscillator_t const * const p_oscillator, float const threshold)
+{
+	if((100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness) > threshold){
+		return true;
+	}
+	return false;
+}
+
+/**********************************************************************************/
+
 int process_events(uint32_t const tick)
 {
 	while(NO_EVENT != s_queued_event_head_index)
@@ -454,7 +465,7 @@ int process_events(uint32_t const tick)
 				/*It does not a matter there is a postponement to discard the resting oscillator*/
 				setup_envelope_state(p_oscillator, EnvelopeStateRelease);
 				put_event(EVENT_DISCARD, p_head_event->oscillator_index,
-				tick + p_channel_controller->envelope_release_tick_number);
+					tick + p_channel_controller->envelope_release_tick_number);
 			} while(0);
 			break;
 
@@ -495,6 +506,15 @@ int process_events(uint32_t const tick)
 							p_oscillator->voice, p_oscillator->note,
 							100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness,
 							event_additional_string(s_queued_event_head_index));
+			if(MIDI_PERCUSSION_CHANNEL != p_oscillator->voice &&
+					0 != p_oscillator->envelope_table_index && 0 != p_oscillator->envelope_same_index_count){
+				if(true == is_amplitude_to_loudness_percentage_over_threshold(p_oscillator, 1.0f)){
+					CHIPTUNE_PRINTF(cDeveloping, "WARNING :: amplitude = %1.2f%% of loudness as discard\r\n",
+									100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness);
+					CHIPTUNE_PRINTF(cDeveloping, "voice = %d, note = %d, envelope_table_index = %d\r\n",
+									p_oscillator->voice, p_oscillator->note, p_oscillator->envelope_table_index);
+				}
+			}
 			discard_oscillator(p_head_event->oscillator_index);
 			break;
 		default:
@@ -521,10 +541,17 @@ uint32_t const get_next_event_triggering_tick(void)
 }
 
 /**********************************************************************************/
+#define FLOAT_TOLERANCE								(1e-5f)
+#define IS_FLOAT_EQUAL(A, B)						\
+	((fabsf(((A) - (B))/(B)) < FLOAT_TOLERANCE) ? true : false)
 
 int adjust_event_triggering_tick_by_playing_tempo(uint32_t const tick, float const new_playing_tempo)
 {
 	float tempo_ratio = new_playing_tempo/get_playing_tempo();
+	if(true == IS_FLOAT_EQUAL(tempo_ratio, 1.0f)){
+		return 1;
+	}
+
 	uint16_t event_index = s_queued_event_head_index;
 	bool is_reported = false;
 	for(int16_t i = 0; i < s_queued_event_number; i++){
@@ -535,8 +562,9 @@ int adjust_event_triggering_tick_by_playing_tempo(uint32_t const tick, float con
 				break;
 			}
 
-			uint32_t const triggering_tick =
-					(uint32_t)((p_event->triggering_tick - tick) * tempo_ratio) + tick;
+			uint32_t const triggering_tick
+					= (uint32_t)ENSURE_RELEASE_TICK_NUMBER_SUFFICIENT(
+						(p_event->triggering_tick - tick) * tempo_ratio) + tick;
 			if(triggering_tick == p_event->triggering_tick){
 				break;
 			}

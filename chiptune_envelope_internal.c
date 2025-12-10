@@ -41,10 +41,12 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 			break;
 		case EnvelopeStateRelease:
 			do {
+#if 0 /*treat as normal release, to match envelope_release_tick_number*/
 				if(true == IS_RESTING(p_oscillator->state_bits)){
 					envelope_same_index_number = p_channel_controller->envelope_attack_same_index_number;
 					break;
 				}
+#endif
 				envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
 			} while(0);
 			break;
@@ -90,10 +92,12 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 			default:
 			case EnvelopeStateRelease:
 				do{
+#if 0  /*treat as normal release*/
 					if(true == IS_RESTING(p_oscillator->state_bits)){
 						p_envelope_table = p_channel_controller->p_envelope_attack_table;
 						break;
 					}
+#endif
 					p_envelope_table = p_channel_controller->p_envelope_release_table;
 				}while(0);
 				delta_amplitude = p_oscillator->release_reference_amplitude;
