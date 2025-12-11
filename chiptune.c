@@ -200,7 +200,7 @@ int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
 	}
 
 	update_oscillator_phase_increment(p_oscillator);
-	//p_oscillator->amplitude = 0;
+	p_oscillator->amplitude = 0;
 	p_oscillator->pitch_detune_in_semitones = 0.0;
 	p_oscillator->vibrato_table_index = 0;
 	p_oscillator->vibrato_same_index_count = 0;
