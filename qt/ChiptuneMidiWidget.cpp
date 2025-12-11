@@ -338,7 +338,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			int instrument = m_p_tune_manager->GetChannelInstrumentPairList().at(i).second;
 			p_channellist_widget->AddChannel(channel_index, instrument);
 
-			if(MIDI_PERCUSSION_CHANNEL == i){
+			if(MIDI_PERCUSSION_CHANNEL == channel_index){
 				continue;
 			}
 			int waveform;

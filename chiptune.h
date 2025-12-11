@@ -24,7 +24,7 @@ bool chiptune_is_tune_ending(void);
 
 void chiptune_set_tempo(float const tempo);
 float chiptune_get_tempo(void);
-void chiptune_set_playing_speed_ratio(float playing_speed_ratio);
+void chiptune_set_playing_speed_ratio(float const playing_speed_ratio);
 float chiptune_get_playing_effective_tempo(void);
 
 #define CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER			(16)
@@ -32,7 +32,7 @@ float chiptune_get_playing_effective_tempo(void);
 #define CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL			(-2)
 int chiptune_get_ending_instruments(int8_t instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
 
-void chiptune_set_current_message_index(uint32_t index);
+void chiptune_set_current_message_index(uint32_t const index);
 uint32_t chiptune_get_current_tick(void);
 
 void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const is_enabled);

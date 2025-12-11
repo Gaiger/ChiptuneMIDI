@@ -573,7 +573,7 @@ int TuneManager::SetPitchChannelTimbre(int8_t const channel_index,
 			break;
 		}
 		if(MIDI_PERCUSSION_CHANNEL == channel_index){
-			qDebug() << "WARNING :: instrumment channel is unsettable, ignore";
+			qDebug() << "WARNING :: MIDI_PERCUSSION_CHANNEL timbre is unsettable, ignored";
 			break;
 		}
 		ret = chiptune_set_pitch_channel_timbre(channel_index, waveform,

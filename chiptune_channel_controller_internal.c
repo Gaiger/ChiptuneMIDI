@@ -35,6 +35,10 @@ channel_controller_t * const get_channel_controller_pointer_from_index(int8_t co
 
 void reset_channel_controller_midi_control_change_parameters(int8_t const index)
 {
+	if(MIDI_PERCUSSION_CHANNEL == index){
+	CHIPTUNE_PRINTF(cMidiControlChange, "ignore channel MIDI_PERCUSSION_CHANNEL in %s\r\n",
+					__func__);
+	}
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[index];
 	p_channel_controller->coarse_tuning_value = (midi_value_t)MIDI_SEVEN_BITS_CENTER_VALUE;
 	p_channel_controller->fine_tuning_value = MIDI_FOURTEEN_BITS_CENTER_VALUE;
@@ -220,6 +224,12 @@ int set_pitch_channel_parameters(int8_t const index, int8_t const waveform, uint
 
 static void reset_channel_controller_all_parameters(int8_t const index)
 {
+	if(MIDI_PERCUSSION_CHANNEL == index){
+		CHIPTUNE_PRINTF(cMidiControlChange, "ignore channel MIDI_PERCUSSION_CHANNEL in %s\r\n",
+						__func__);
+		return ;
+	}
+
 #define DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND	(0.02f)
 #define DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND	(0.01f)
 #define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(96)
@@ -248,6 +258,9 @@ static void reset_channel_controller_all_parameters(int8_t const index)
 void reset_all_channel_controllers()
 {
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		if(MIDI_PERCUSSION_CHANNEL == voice){
+			continue;
+		}
 		reset_channel_controller_all_parameters(voice);
 	}
 }
@@ -355,7 +368,7 @@ void initialize_channel_controllers(void)
 			= (uint16_t)(get_sampling_rate()/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_RATE_IN_HZ);
 	}
 
-#define DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS		(0.03f)
+#define DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS		(0.005f)
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[MIDI_PERCUSSION_CHANNEL];
 	int8_t const ** pp_phase_table = NULL;
 	pp_phase_table = &p_channel_controller->p_envelope_release_table;

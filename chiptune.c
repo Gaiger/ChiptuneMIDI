@@ -200,7 +200,7 @@ int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
 	}
 
 	update_oscillator_phase_increment(p_oscillator);
-	p_oscillator->amplitude = 0;
+	//p_oscillator->amplitude = 0;
 	p_oscillator->pitch_detune_in_semitones = 0.0;
 	p_oscillator->vibrato_table_index = 0;
 	p_oscillator->vibrato_same_index_count = 0;
@@ -232,8 +232,8 @@ int finalize_percussion_oscillator_setup(uint32_t const tick, int8_t const voice
 
 	percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
 	p_oscillator->base_phase_increment = p_percussion->base_phase_increment;
-	p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
-					p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_envelope_table_index]);
+	//p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
+	//				p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_envelope_table_index]);
 	return 0;
 }
 
@@ -1036,7 +1036,7 @@ static void chase_midi_messages(const uint32_t end_midi_message_index)
 	bool is_has_note[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
 	memset(&is_has_note[0], false, sizeof(bool)*CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER);
 #endif
-	int16_t max_event_occupied_oscillator_number = 0;
+	int16_t max_occupied_oscillator_number = 0;
 
 	fetch_midi_tick_message(s_midi_messge_index, &s_fetched_tick_message);
 	s_midi_messge_index += 1;
@@ -1103,8 +1103,8 @@ static void chase_midi_messages(const uint32_t end_midi_message_index)
 
 			s_previous_timely_tick = CURRENT_TICK();
 
-			if(max_event_occupied_oscillator_number < get_occupied_oscillator_number()){
-				max_event_occupied_oscillator_number = get_occupied_oscillator_number();
+			if(max_occupied_oscillator_number < get_occupied_oscillator_number()){
+				max_occupied_oscillator_number = get_occupied_oscillator_number();
 			}
 
 			int16_t oscillator_index = get_occupied_oscillator_head_index();
@@ -1140,8 +1140,8 @@ static void chase_midi_messages(const uint32_t end_midi_message_index)
 	}
 
 	if(-1 == end_midi_message_index){
-		CHIPTUNE_PRINTF(cDeveloping, "max_event_occupied_oscillator_number = %d\r\n",
-						max_event_occupied_oscillator_number);
+		CHIPTUNE_PRINTF(cDeveloping, "max_occupied_oscillator_number = %d\r\n",
+						max_occupied_oscillator_number);
 	}
 
 #ifndef _KEEP_NOTELESS_CHANNELS
@@ -1307,13 +1307,14 @@ float chiptune_get_tempo(void)
 
 /**********************************************************************************/
 
-void chiptune_set_playing_speed_ratio(float playing_speed_ratio)
+void chiptune_set_playing_speed_ratio(float const playing_speed_ratio)
 {
 	adjust_event_triggering_tick_by_playing_tempo(CURRENT_TICK(), chiptune_get_tempo() * playing_speed_ratio);
 	UPDATE_PLAYING_SPEED_RATIO(playing_speed_ratio);
 	update_effect_tick();
 	update_channel_controllers_parameters_related_to_playing_tempo();
 }
+
 /**********************************************************************************/
 
 float chiptune_get_playing_effective_tempo(void)
