@@ -34,6 +34,7 @@ int switch_melodic_envelope_state(oscillator_t * const p_oscillator, uint8_t con
 	p_oscillator->envelope_state = evelope_state;
 	p_oscillator->envelope_table_index = 0;
 	p_oscillator->envelope_same_index_count = 0;
+	p_oscillator->envelope_reference_amplitude = p_oscillator->amplitude;
 	return 0;
 }
 
@@ -75,15 +76,8 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 			envelope_same_index_number = p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number;
 			break;
 		case EnvelopeStateRelease:
-			do {
-#if 0 /*treat as normal release, to match envelope_release_tick_number*/
-				if(true == IS_RESTING(p_oscillator->state_bits)){
-					envelope_same_index_number = p_channel_controller->envelope_attack_same_index_number;
-					break;
-				}
-#endif
-				envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
-			} while(0);
+			/*even true == IS_RESTING() treat as the normal release.*/
+			envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
 			break;
 		};
 
@@ -126,15 +120,8 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 				break;
 			default:
 			case EnvelopeStateRelease:
-				do{
-#if 0  /*treat as normal release*/
-					if(true == IS_RESTING(p_oscillator->state_bits)){
-						p_envelope_table = p_channel_controller->p_envelope_attack_table;
-						break;
-					}
-#endif
-					p_envelope_table = p_channel_controller->p_envelope_release_table;
-				}while(0);
+				/*even true == IS_RESTING() treat as the normal release.*/
+				p_envelope_table = p_channel_controller->p_envelope_release_table;
 				delta_amplitude = p_oscillator->envelope_reference_amplitude;
 				break;
 			}

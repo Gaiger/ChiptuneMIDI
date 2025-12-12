@@ -151,17 +151,10 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value
 				p_oscillator->loudness = (int16_t)temp;
 
 				uint8_t to_envelope_state = EnvelopeStateDecay;
-#if 0 /*it is unable to decay from low to high */
-				if(LoundessBreathController != loudness_change_type){
-					if(p_oscillator->amplitude < p_oscillator->loudness){
-						to_envelope_state = EnvelopeStateAttack;
-					}
-				}
-#else
+				/*low to high, always attack, even it is LoundessBreathController.*/
 				if(p_oscillator->amplitude < p_oscillator->loudness){
 					to_envelope_state = EnvelopeStateAttack;
 				}
-#endif
 				switch_melodic_envelope_state(p_oscillator, to_envelope_state);
 			} while(0);
 			oscillator_index = get_occupied_oscillator_next_index(oscillator_index);

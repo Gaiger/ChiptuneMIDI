@@ -506,15 +506,28 @@ int process_events(uint32_t const tick)
 							p_oscillator->voice, p_oscillator->note,
 							100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness,
 							event_additional_string(s_queued_event_head_index));
-			if(MIDI_PERCUSSION_CHANNEL != p_oscillator->voice &&
-					0 != p_oscillator->envelope_table_index && 0 != p_oscillator->envelope_same_index_count){
-				if(true == is_amplitude_to_loudness_percentage_over_threshold(p_oscillator, 1.0f)){
-					CHIPTUNE_PRINTF(cDeveloping, "WARNING :: amplitude = %1.2f%% of loudness as discard\r\n",
-									100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness);
-					CHIPTUNE_PRINTF(cDeveloping, "voice = %d, note = %d, envelope_table_index = %d\r\n",
-									p_oscillator->voice, p_oscillator->note, p_oscillator->envelope_table_index);
+			do
+			{
+				if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
+					break;
 				}
-			}
+				if(0 == p_oscillator->envelope_table_index){
+					break;
+				}
+				if(0 == p_oscillator->envelope_same_index_count){
+					break;
+				}
+				if(false == is_amplitude_to_loudness_percentage_over_threshold(p_oscillator, 1.0f)){
+					break;
+				}
+				if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1 >= p_oscillator->envelope_table_index){
+					break;
+				}
+				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: amplitude = %1.2f%% of loudness as discard\r\n",
+								100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness);
+				CHIPTUNE_PRINTF(cDeveloping, "voice = %d, note = %d, envelope_table_index = %d\r\n",
+								p_oscillator->voice, p_oscillator->note, p_oscillator->envelope_table_index);
+			} while(0);
 			discard_oscillator(p_head_event->oscillator_index);
 			break;
 		default:
