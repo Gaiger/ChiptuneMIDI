@@ -149,7 +149,7 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value
 					temp = INT16_MAX;
 				}
 				p_oscillator->loudness = (int16_t)temp;
-				p_oscillator->attack_decay_reference_amplitude = p_oscillator->amplitude;
+
 				uint8_t to_envelope_state = EnvelopeStateDecay;
 #if 0 /*it is unable to decay from low to high */
 				if(LoundessBreathController != loudness_change_type){

@@ -44,8 +44,7 @@ union{
 
 		uint16_t	envelope_table_index;
 		uint16_t	envelope_same_index_count;
-		int16_t		release_reference_amplitude;
-		int16_t		attack_decay_reference_amplitude;
+		int16_t		envelope_reference_amplitude;
 
 		uint16_t	max_vibrato_phase_increment;
 		uint16_t	vibrato_table_index;

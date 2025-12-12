@@ -447,7 +447,7 @@ int process_events(uint32_t const tick)
 							"tick = %u, FREE oscillator = %d, voice = %d, note = %d, amplitude = %2.1f%% of loudness %s\r\n",
 							tick, p_head_event->oscillator_index,
 							p_oscillator->voice, p_oscillator->note,
-							100.0f * p_oscillator->release_reference_amplitude/(float)p_oscillator->loudness,
+							100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness,
 							event_additional_string(s_queued_event_head_index));
 			if(true == IS_FREEING(p_oscillator->state_bits)) {
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: free a freeing oscillator = %d\r\n",
@@ -474,7 +474,7 @@ int process_events(uint32_t const tick)
 							"tick = %u, REST oscillator = %d, voice = %d, note = %d, amplitude = %2.1f%% of loudness %s\r\n",
 							tick, p_head_event->oscillator_index,
 							p_oscillator->voice, p_oscillator->note,
-							100.0f * p_oscillator->release_reference_amplitude/(float)p_oscillator->loudness,
+							100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness,
 							event_additional_string(s_queued_event_head_index));
 			if(true == IS_FREEING(p_oscillator->state_bits)
 					&& true == is_primary_oscillator(p_oscillator)){
