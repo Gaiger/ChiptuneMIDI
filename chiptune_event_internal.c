@@ -489,7 +489,6 @@ int process_events(uint32_t const tick)
 				break;
 			}
 			SET_RESTING(p_oscillator->state_bits);
-			setup_envelope_state(p_oscillator, EnvelopeStateRelease);
 			switch_melodic_envelope_state(p_oscillator, EnvelopeStateRelease);
 			break;
 		case EventTypeDeactivate:
