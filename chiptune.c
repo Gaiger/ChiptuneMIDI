@@ -1,7 +1,11 @@
 //NOLINTBEGIN(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
 
 #include <string.h>
-#include <stdio.h>
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_NONSTDC_NO_WARNINGS
+#endif
+#include <stdio.h>	// IWYU pragma: keep
 
 #define _USE_MATH_DEFINES
 #include <math.h>

@@ -1,6 +1,10 @@
 // NOLINTBEGIN(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
 
-#include <stdio.h>
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_NONSTDC_NO_WARNINGS
+#endif
+#include <stdio.h>	// IWYU pragma: keep
 #include <string.h>
 
 #include "chiptune_common_internal.h"
@@ -9,6 +13,7 @@
 #include "chiptune_channel_controller_internal.h"
 #include "chiptune_oscillator_internal.h"
 #include "chiptune_event_internal.h"
+#include "chiptune_envelope_internal.h"
 #include "chiptune_midi_effect_internal.h"
 
 #include "chiptune_midi_control_change_internal.h"
@@ -157,7 +162,7 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value
 					to_envelope_state = EnvelopeStateAttack;
 				}
 #endif
-				setup_envelope_state(p_oscillator, to_envelope_state);
+				switch_melodic_envelope_state(p_oscillator, to_envelope_state);
 			} while(0);
 			oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 		}

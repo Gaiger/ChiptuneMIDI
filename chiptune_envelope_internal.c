@@ -1,4 +1,5 @@
 #include "chiptune_midi_define_internal.h"
+#include "chiptune_printf_internal.h"
 #include "chiptune_oscillator_internal.h"
 #include "chiptune_channel_controller_internal.h"
 
@@ -15,6 +16,28 @@
 
 #define PERCUSSION_ENVELOPE(LOUDNESS, ENVELOPE_TABLE_VALUE)	\
 	CHANNEL_CONTROLLER_SCALE_BY_LEVEL((LOUDNESS), (ENVELOPE_TABLE_VALUE))
+
+/**********************************************************************************/
+
+int switch_melodic_envelope_state(oscillator_t * const p_oscillator, uint8_t const evelope_state)
+{
+	if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
+		return 1;
+	}
+
+	if(EnvelopeStateMax <= evelope_state){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: undefined state number = %u in %s\r\n",
+						evelope_state, __func__);
+		return -1;
+	}
+
+	p_oscillator->envelope_state = evelope_state;
+	p_oscillator->envelope_table_index = 0;
+	p_oscillator->envelope_same_index_count = 0;
+	return 0;
+}
+
+/**********************************************************************************/
 
 void update_melodic_envelope(oscillator_t * const p_oscillator)
 {

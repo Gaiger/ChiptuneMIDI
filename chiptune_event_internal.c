@@ -1,5 +1,4 @@
 // NOLINTBEGIN(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
-
 #include <stdio.h>
 #include  <string.h>
 
@@ -7,6 +6,7 @@
 #include "chiptune_printf_internal.h"
 #include "chiptune_channel_controller_internal.h"
 #include "chiptune_oscillator_internal.h"
+#include "chiptune_envelope_internal.h"
 
 #include "chiptune_event_internal.h"
 
@@ -439,7 +439,7 @@ int process_events(uint32_t const tick)
 				return -1;
 			}
 			SET_ACTIVATED(p_oscillator->state_bits);
-			setup_envelope_state(p_oscillator, EnvelopeStateAttack);
+			switch_melodic_envelope_state(p_oscillator, EnvelopeStateAttack);
 			break;
 
 		case EventTypeFree:
@@ -463,7 +463,7 @@ int process_events(uint32_t const tick)
 				}
 #endif
 				/*It does not a matter there is a postponement to discard the resting oscillator*/
-				setup_envelope_state(p_oscillator, EnvelopeStateRelease);
+				switch_melodic_envelope_state(p_oscillator, EnvelopeStateRelease);
 				put_event(EVENT_DISCARD, p_head_event->oscillator_index,
 					tick + p_channel_controller->envelope_release_tick_number);
 			} while(0);
@@ -490,6 +490,7 @@ int process_events(uint32_t const tick)
 			}
 			SET_RESTING(p_oscillator->state_bits);
 			setup_envelope_state(p_oscillator, EnvelopeStateRelease);
+			switch_melodic_envelope_state(p_oscillator, EnvelopeStateRelease);
 			break;
 		case EventTypeDeactivate:
 			CHIPTUNE_PRINTF(cEventTriggering,

@@ -43,22 +43,6 @@ int const update_oscillator_phase_increment(oscillator_t * const p_oscillator)
 
 /**********************************************************************************/
 
-int setup_envelope_state(oscillator_t *p_oscillator, uint8_t evelope_state){
-
-	if(EnvelopeStateMax <= evelope_state){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: undefined state number = %u in %s\r\n",
-						evelope_state, __func__);
-		return -1;
-	}
-
-	p_oscillator->envelope_state = evelope_state;
-	p_oscillator->envelope_table_index = 0;
-	p_oscillator->envelope_same_index_count = 0;
-	return 0;
-}
-
-/**********************************************************************************/
-
 typedef struct _oscillator_link
 {
 	int16_t previous;

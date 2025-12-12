@@ -110,8 +110,6 @@ int16_t get_pitch_shift_in_semitones(void);
 
 int const update_oscillator_phase_increment(oscillator_t * const p_oscillator);
 
-int setup_envelope_state(oscillator_t *p_oscillator, uint8_t evelope_state);
-
 oscillator_t * const acquire_oscillator(int16_t * const p_index);
 oscillator_t * const replicate_oscillator(int16_t const original_index, int16_t * const p_index);
 int discard_oscillator(int16_t const index);
