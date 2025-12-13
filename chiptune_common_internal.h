@@ -95,14 +95,14 @@ typedef uint8_t		normalized_midi_level_t;
 
 #define EXPAND_ENUM(ITEM, VAL)						ITEM = VAL,
 
-enum INSTRUMENT_CODE
+enum MidiInstrumentCode
 {
-	INSTRUMENT_CODE_LIST(EXPAND_ENUM)
+	MIDI_INSTRUMENT_CODE_LIST(EXPAND_ENUM)
 };
 
-enum PERCUSSION_CODE
+enum MidiPercussionKeyMap
 {
-	PERCUSSION_CODE_LIST(EXPAND_ENUM)
+	MIDI_PERCUSSION_KEY_MAP_LIST(EXPAND_ENUM)
 };
 
 /**********************************************************************************/
@@ -113,10 +113,10 @@ MAYBE_UNUSED_FUNCTION static inline char const * const get_instrument_name_strin
 {
 	switch (index)
 	{
-		INSTRUMENT_CODE_LIST(EXPAND_CASE_TO_STR)
+		MIDI_INSTRUMENT_CODE_LIST(EXPAND_CASE_TO_STR)
 	}
 
-	return "UNKNOWN_INSTRUMENT";
+	return "UnknownInstrument";
 }
 
 /**********************************************************************************/
@@ -125,10 +125,10 @@ MAYBE_UNUSED_FUNCTION static inline char const * const get_percussion_name_strin
 {
 	switch (index)
 	{
-		PERCUSSION_CODE_LIST(EXPAND_CASE_TO_STR)
+		MIDI_PERCUSSION_KEY_MAP_LIST(EXPAND_CASE_TO_STR)
 	}
 
-	return "UNKNOWN_PERCUSSIOM";
+	return "UnknownPercussion";
 }
 
 /**********************************************************************************/

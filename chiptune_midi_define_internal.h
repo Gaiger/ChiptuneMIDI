@@ -60,7 +60,7 @@
 
 /**********************************************************************************/
 
-#define INSTRUMENT_CODE_LIST(X)	\
+#define MIDI_INSTRUMENT_CODE_LIST(X)	\
 	X(AcousticGrandPiano,		0) \
 	X(BrightAcousticPiano,		1) \
 	X(ElectricGrandPiano,		2) \
@@ -211,13 +211,13 @@
 
 //https://usermanuals.finalemusic.com/SongWriter2012Win/Content/PercussionMaps.htm
 
-#define PERCUSSION_CODE_MIN							(27)
-#define PERCUSSION_CODE_MAX							(87)
+#define MIDI_PERCUSSION_KEY_MAP_MIN					(27)
+#define MIDI_PERCUSSION_KEY_MAP_MAX					(87)
 
 /* 35–81 ... */
 //https://musescore.org/sites/musescore.org/files/General%20MIDI%20Standard%20Percussion%20Set%20Key%20Map.pdf
 
-#define GM1_PERCUSSION_CODE_LIST(X) \
+#define GM1_PERCUSSION_KEY_MAP_LIST(X) \
 	X(AcousticBassDrum,		35) \
 	X(BassDrum1,			36) \
 	X(SideStick,			37) \
@@ -268,7 +268,7 @@
 
 //https://www.voidaudio.net/percussion.html
 //https://midnightmusic.com/wp-content/uploads/2012/08/GMPercussion-and-Sibelius-Drum-Map.pdf
-#define GM2_PERCUSSION_EXTENSION_CODE_LIST(X) \
+#define GM2_PERCUSSION_EXTENSION_KEY_MAP_LIST(X) \
 	X(HighQ,				27) \
 	X(Slap,					28) \
 	X(ScratchPush,			29) \
@@ -285,9 +285,9 @@
 	X(MuteSurdo,			86) \
 	X(OpenSurdo,			87) \
 
-#define PERCUSSION_CODE_LIST(X) \
-	GM1_PERCUSSION_CODE_LIST(X) \
-	GM2_PERCUSSION_EXTENSION_CODE_LIST(X) \
+#define MIDI_PERCUSSION_KEY_MAP_LIST(X) \
+	GM1_PERCUSSION_KEY_MAP_LIST(X) \
+	GM2_PERCUSSION_EXTENSION_KEY_MAP_LIST(X) \
 
 
 

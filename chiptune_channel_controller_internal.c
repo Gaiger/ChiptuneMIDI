@@ -379,7 +379,7 @@ void initialize_channel_controllers(void)
 					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 	update_channel_controller_envelope_parameters_related_to_playing_tempo(MIDI_PERCUSSION_CHANNEL );
 
-	for(int8_t i = PERCUSSION_CODE_MIN; i <= PERCUSSION_CODE_MAX; i++){
+	for(int8_t i = MIDI_PERCUSSION_KEY_MAP_MIN; i <= MIDI_PERCUSSION_KEY_MAP_MAX; i++){
 		reset_percussion_all_parameters_from_index(i);
 	}
 
@@ -388,21 +388,21 @@ void initialize_channel_controllers(void)
 
 /**********************************************************************************/
 
-percussion_t s_percussion[PERCUSSION_CODE_MAX - PERCUSSION_CODE_MIN + 1];
+percussion_t s_percussion[MIDI_PERCUSSION_KEY_MAP_MAX - MIDI_PERCUSSION_KEY_MAP_MIN + 1];
 
 percussion_t * const get_percussion_pointer_from_index(int8_t const index)
 {
-	if(false == (PERCUSSION_CODE_MIN <= index && PERCUSSION_CODE_MAX >= index)){
+	if(false == (MIDI_PERCUSSION_KEY_MAP_MIN <= index && MIDI_PERCUSSION_KEY_MAP_MAX >= index)){
 		return NULL;
 	}
-	return &s_percussion[index - PERCUSSION_CODE_MIN];
+	return &s_percussion[index - MIDI_PERCUSSION_KEY_MAP_MIN];
 }
 
 /**********************************************************************************/
 
 void reset_percussion_all_parameters_from_index(int8_t const index)
 {
-	if(false == (PERCUSSION_CODE_MIN <= index && PERCUSSION_CODE_MAX >= index)){
+	if(false == (MIDI_PERCUSSION_KEY_MAP_MIN <= index && MIDI_PERCUSSION_KEY_MAP_MAX >= index)){
 		CHIPTUNE_PRINTF(cDeveloping, "percussion = %d, out of range\r\n", index);
 		return;
 	}
