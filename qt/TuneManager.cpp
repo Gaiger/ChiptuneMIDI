@@ -5,11 +5,11 @@
 #include <QDebug>
 
 #include "QMidiFile.h"
-#include "../chiptune.h"
+
+#include "chiptune_midi_define.h"
+#include "chiptune.h"
 
 #include "TuneManager.h"
-
-
 
 class TuneManagerPrivate
 {

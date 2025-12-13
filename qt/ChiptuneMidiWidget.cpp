@@ -16,6 +16,8 @@
 #endif
 #endif
 
+#include "chiptune_midi_define.h"
+
 #include "ui_ChiptuneMidiWidgetForm.h"
 #include "ProgressSlider.h"
 

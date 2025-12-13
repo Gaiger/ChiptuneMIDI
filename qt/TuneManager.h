@@ -8,9 +8,6 @@
 
 class TuneManagerPrivate;
 
-#define MIDI_PERCUSSION_CHANNEL						(9)
-#define MIDI_MAX_CHANNEL_NUMBER						(16)
-
 class TuneManager : public QObject
 {
 	Q_OBJECT

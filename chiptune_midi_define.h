@@ -153,8 +153,8 @@
 	\
 	X(Lead1Square,				80) \
 	X(Lead2Sawtooth,			81) \
-	X(Lead3CalliopeLead,		82) \
-	X(Lead4ChifferLead,			83) \
+	X(Lead3Calliope,			82) \
+	X(Lead4Chiffer,				83) \
 	X(Lead5Charang,				84) \
 	X(Lead6Voice,				85) \
 	X(Lead7Fifths,				86) \

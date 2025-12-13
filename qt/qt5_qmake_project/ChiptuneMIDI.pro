@@ -24,6 +24,7 @@ CHIPTUNE_ROOT_DIR = ../..
 CHIPTUNE_QT_DIR = $${CHIPTUNE_ROOT_DIR}/qt
 
 include($${CHIPTUNE_QT_DIR}/QMidi/src/QMidi.pri)
+INCLUDEPATH += $${CHIPTUNE_ROOT_DIR}
 
 SOURCES += \
     $${CHIPTUNE_ROOT_DIR}/chiptune.c \
@@ -58,7 +59,7 @@ HEADERS += \
     $${CHIPTUNE_ROOT_DIR}/chiptune_channel_controller_internal.h \
     $${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.h \
     $${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.h \
-    $${CHIPTUNE_ROOT_DIR}/chiptune_midi_define_internal.h \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_midi_define.h \
     $${CHIPTUNE_QT_DIR}/ChannelListWidget.h \
     $${CHIPTUNE_QT_DIR}/ChannelNodeWidget.h \
     $${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.h \

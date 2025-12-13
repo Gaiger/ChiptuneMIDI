@@ -12,7 +12,7 @@
 	#define MAYBE_UNUSED_FUNCTION
 #endif
 
-#include "chiptune_midi_define_internal.h" // IWYU pragma: export
+#include "chiptune_midi_define.h" // IWYU pragma: export
 
 
 #define _USE_SAMPLE_INDEX_AS_TIMEBASE
@@ -107,7 +107,7 @@ enum MidiPercussionKeyMap
 
 /**********************************************************************************/
 
-#define EXPAND_CASE_TO_STR(X, DUMMY_VAR)			case X:	return #X;
+#define EXPAND_CASE_TO_STR(ENUMS_ELEMENT, DUMMY_VAR)			case ENUMS_ELEMENT:	return #ENUMS_ELEMENT;
 
 MAYBE_UNUSED_FUNCTION static inline char const * const get_instrument_name_string(int8_t const index)
 {

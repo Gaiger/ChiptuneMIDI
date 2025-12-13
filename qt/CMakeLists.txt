@@ -42,7 +42,7 @@ set(ENGINE
     ${CHIPTUNE_ROOT_DIR}/chiptune_channel_controller_internal.h
     ${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.h
     ${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.h
-    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_define_internal.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_define.h
 )
 
 
@@ -84,7 +84,7 @@ set(FORMS
 )
 
 if(WIN32)
-    set(RESOURCE ${CHIPTUNE_QT_DIR}/ChiptuneMIDI.rc)
+    set(RESOURCES ${CHIPTUNE_QT_DIR}/ChiptuneMIDI.rc)
 endif()
 
 
@@ -92,13 +92,15 @@ source_group("Engine" FILES ${ENGINE})
 source_group("Application" FILES ${APPILCATION})
 source_group("Forms" FILES ${FORMS})
 if(WIN32)
-    source_group("Resource" FILES ${RESOURCE})
+    source_group("Resources" FILES ${RESOURCES})
 endif()
 
 add_executable(ChiptuneMIDI WIN32
     ${ENGINE} ${APPILCATION} ${FORMS})
 
-target_include_directories(ChiptuneMIDI PRIVATE ${CHIPTUNE_QT_DIR}/QMidi/src)
+target_include_directories(ChiptuneMIDI PRIVATE
+    ${CHIPTUNE_QT_DIR}/QMidi/src
+    ${CHIPTUNE_ROOT_DIR})
 
 target_link_libraries(ChiptuneMIDI
     PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts Qt${QT_VERSION_MAJOR}::Multimedia  QMidi)

@@ -2,6 +2,8 @@
 #include <QLabel>
 #include <QDebug>
 
+#include "chiptune_midi_define.h"
+
 #include "GetInstrumentNameString.h"
 #include "PitchTimbreFrame.h"
 
@@ -48,7 +50,6 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 
 		instrument_name = GetInstrumentNameString(instrument_index);
 	}while(0);
-#define MIDI_PERCUSSION_CHANNEL						(9)
 	if(MIDI_PERCUSSION_CHANNEL == channel_index){
 		instrument_name = QString("Percussion");
 	}
