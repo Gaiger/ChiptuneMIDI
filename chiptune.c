@@ -333,9 +333,9 @@ static int process_note_message(uint32_t const tick, bool const is_note_on,
 			int32_t temp = DIVIDE_BY_128((int32_t)normalized_velocity
 										 * expression_added_pressure * p_channel_controller->volume);
 
-			if(temp > INT16_MAX){
+			if(temp > INT16_MAX_PLUS_1){
 				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: loudness over IN16_MAX in %s\r\n", __func__);
-				temp = INT16_MAX;
+				temp = INT16_MAX_PLUS_1;
 			}
 			p_oscillator->loudness = temp;
 			p_oscillator->current_phase = 0;
@@ -862,13 +862,12 @@ static uint16_t generate_noise_random(void)
 /**********************************************************************************/
 #define SINE_WAVE(PHASE)							(obtain_sine_wave(PHASE))
 
-int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
+void update_mono_wave_amplitude(oscillator_t * const p_oscillator)
 {
 	do
 	{
-		if(false == is_stereo()
-				|| false == is_processing_left_channel()){
-			p_oscillator->current_phase += p_oscillator->base_phase_increment;
+		if(true == is_stereo()
+				&& false == is_processing_left_channel()){
 			break;
 		}
 
@@ -889,12 +888,12 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 		switch(waveform)
 		{
 		case WaveformSquare:
-			wave = (p_oscillator->current_phase < critical_phase)
+			wave = (critical_phase > p_oscillator->current_phase)
 					? INT16_MAX : -INT16_MAX_PLUS_1;
 			break;
 		case WaveformTriangle:
 			do {
-				if(current_phase_advanced_by_quarter_cycle < INT16_MAX_PLUS_1){
+				if(INT16_MAX_PLUS_1 > current_phase_advanced_by_quarter_cycle){
 					wave = -INT16_MAX_PLUS_1 + MULTIPLY_BY_2(current_phase_advanced_by_quarter_cycle);
 					break;
 				}
@@ -916,11 +915,10 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 			wave = 0;
 			break;
 		}
+		p_oscillator->current_phase += p_oscillator->base_phase_increment;
 
-		p_oscillator->mono_wave_amplitude = wave * p_oscillator->amplitude;
+		p_oscillator->mono_wave_amplitude = wave * (int32_t)p_oscillator->amplitude;
 	} while(0);
-
-	return p_oscillator->mono_wave_amplitude;
 }
 
 /**********************************************************************************/
@@ -936,10 +934,9 @@ int32_t generate_mono_wave_amplitude(oscillator_t * const p_oscillator)
 
 #endif
 
-int32_t generate_panned_wave_amplitude(oscillator_t * const p_oscillator,
-				   int32_t const mono_wave_amplitude)
+int32_t generate_panned_wave_amplitude(oscillator_t * const p_oscillator)
 {
-	int32_t channel_wave_amplitude = mono_wave_amplitude;
+	int32_t pannel_wave_amplitude = p_oscillator->mono_wave_amplitude;
 	do {
 		if(false == is_stereo()){
 			break;
@@ -952,10 +949,11 @@ int32_t generate_panned_wave_amplitude(oscillator_t * const p_oscillator,
 		if(true == is_processing_left_channel()){
 			channel_panning_weight = 2 * MIDI_SEVEN_BITS_CENTER_VALUE - channel_panning_weight;
 		}
-		channel_wave_amplitude = CHANNEL_WAVE_AMPLITUDE(mono_wave_amplitude, channel_panning_weight)/2;
+		pannel_wave_amplitude
+				= CHANNEL_WAVE_AMPLITUDE(p_oscillator->mono_wave_amplitude, channel_panning_weight)/2;
 	} while(0);
 
-	return channel_wave_amplitude;
+	return pannel_wave_amplitude;
 }
 
 /**********************************************************************************/
@@ -984,10 +982,9 @@ static int64_t chiptune_fetch_64bit_wave(void)
 			perform_melodic_envelope(p_oscillator);
 			perform_percussion(p_oscillator);
 
-			int32_t mono_wave_amplitude = generate_mono_wave_amplitude(p_oscillator);
-			int32_t panned_wave_amplitude
-					= generate_panned_wave_amplitude(p_oscillator, mono_wave_amplitude);
-			accumulated_wave_amplitude += (int32_t)panned_wave_amplitude;
+			update_mono_wave_amplitude(p_oscillator);
+			int32_t panned_wave_amplitude = generate_panned_wave_amplitude(p_oscillator);
+			accumulated_wave_amplitude += (int64_t)panned_wave_amplitude;
 		} while(0);
 		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
@@ -1389,7 +1386,7 @@ bool chiptune_is_tune_ending(void)
 
 void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const is_enabled)
 {
-	if( 0 > channel_index  || channel_index >= MIDI_MAX_CHANNEL_NUMBER){
+	if( 0 > channel_index  || MIDI_MAX_CHANNEL_NUMBER <= channel_index ){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: channel_index = %d is not acceptable for %s\r\n",
 						channel_index, __func__);
 		return ;

@@ -138,15 +138,14 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value
 				if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
 					break;
 				}
-
 				if(EnvelopeStateRelease == p_oscillator->envelope_state){
 					break;
 				}
 
 				int32_t temp = (p_oscillator->loudness * change_to_value) / ZERO_AS_ONE(original_value);
-				if(temp > INT16_MAX){
+				if(temp > INT16_MAX_PLUS_1){
 					CHIPTUNE_PRINTF(cDeveloping, "WARNING :: loudness over IN16_MAX in %s\r\n", __func__);
-					temp = INT16_MAX;
+					temp = INT16_MAX_PLUS_1;
 				}
 				p_oscillator->loudness = (int16_t)temp;
 

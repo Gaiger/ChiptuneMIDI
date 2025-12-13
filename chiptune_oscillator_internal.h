@@ -36,15 +36,15 @@ typedef struct _oscillator
 	uint16_t		base_phase_increment;
 	uint16_t		current_phase;
 
-	int16_t			loudness;
-	int16_t			amplitude;
+	uint16_t		loudness; // [0, INT16_MAX_PLUS_1]
+	uint16_t		amplitude; // [0, INT16_MAX_PLUS_1]
 union{
 	struct {
 		uint8_t		envelope_state;
 
 		uint16_t	envelope_table_index;
 		uint16_t	envelope_same_index_count;
-		int16_t		envelope_reference_amplitude;
+		uint16_t	envelope_reference_amplitude;
 
 		uint16_t	max_vibrato_phase_increment;
 		uint16_t	vibrato_table_index;

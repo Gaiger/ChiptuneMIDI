@@ -21,21 +21,41 @@
 
 int switch_melodic_envelope_state(oscillator_t * const p_oscillator, uint8_t const evelope_state)
 {
-	if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
-		return 1;
-	}
+	int ret = 0;
+	do
+	{
+		if(EnvelopeStateMax <= evelope_state){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: undefined state number = %u in %s\r\n",
+							evelope_state, __func__);
+			ret = -1;
+			break;
+		}
 
-	if(EnvelopeStateMax <= evelope_state){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: undefined state number = %u in %s\r\n",
-						evelope_state, __func__);
-		return -1;
-	}
+		if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
+			ret = 1;
+			break;
+		}
+		if(evelope_state == p_oscillator->envelope_state){
+			ret = 2;
+			break;
+		}
+		if(false == IS_ACTIVATED(p_oscillator->state_bits)){
+			ret = 3;
+			break;
+		}
 
-	p_oscillator->envelope_state = evelope_state;
-	p_oscillator->envelope_table_index = 0;
-	p_oscillator->envelope_same_index_count = 0;
-	p_oscillator->envelope_reference_amplitude = p_oscillator->amplitude;
-	return 0;
+		if(EnvelopeStateRelease == p_oscillator->envelope_state){
+			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: voice = %d, note = %d,"
+										 "from evelope_state = EnvelopeStateRelease in %s\r\n",
+							p_oscillator->voice, p_oscillator->note, __func__);
+		}
+		p_oscillator->envelope_state = evelope_state;
+		p_oscillator->envelope_table_index = 0;
+		p_oscillator->envelope_same_index_count = 0;
+		p_oscillator->envelope_reference_amplitude = p_oscillator->amplitude;
+	} while(0);
+
+	return ret;
 }
 
 /**********************************************************************************/
@@ -129,8 +149,10 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 			p_oscillator->amplitude = MELODIC_ENVELOPE_DELTA_AMPLITUDE(delta_amplitude,
 														 p_envelope_table[p_oscillator->envelope_table_index]);
 			p_oscillator->amplitude	+= shift_amplitude;
-			if(EnvelopeStateRelease != p_oscillator->envelope_state){
-				p_oscillator->envelope_reference_amplitude = p_oscillator->amplitude;
+			p_oscillator->envelope_reference_amplitude = p_oscillator->amplitude;
+			if(INT16_MAX_PLUS_1 < p_oscillator->amplitude){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: amplitude = %u, "
+								"greater than INT16_MAX_PLUS_1 in %s\r\n", __func__);
 			}
 		} while(0);
 
