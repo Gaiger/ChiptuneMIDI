@@ -1198,19 +1198,19 @@ int32_t s_loudness_nomalization_right_shift = DEFAULT_AMPLITUDE_NORMALIZATION_RI
 #define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE) >> s_loudness_nomalization_right_shift))
 #else
 #define DEFAULT_AMPLITUDE_NORMALIZATION_GAIN		(1024)
-static int32_t s_amplitude_normaliztion_gain = DEFAULT_AMPLITUDE_NORMALIZATION_GAIN;
+static int32_t s_amplitude_normalization_gain = DEFAULT_AMPLITUDE_NORMALIZATION_GAIN;
 #define RESET_AMPLITUDE_NORMALIZATION_GAIN()		\
 													do { \
-														s_amplitude_normaliztion_gain = DEFAULT_AMPLITUDE_NORMALIZATION_GAIN; \
+														s_amplitude_normalization_gain = DEFAULT_AMPLITUDE_NORMALIZATION_GAIN; \
 													}while(0)
 
-#define AMPLITUDE_NORMALIZATION_GAIN()				(s_amplitude_normaliztion_gain)
+#define AMPLITUDE_NORMALIZATION_GAIN()				(s_amplitude_normalization_gain)
 #define UPDATE_AMPLITUDE_NORMALIZATION_GAIN(AMPLITUDE_NORMALIZATION_GAIN)	\
 													do { \
-														s_amplitude_normaliztion_gain = (AMPLITUDE_NORMALIZATION_GAIN); \
+														s_amplitude_normalization_gain = (AMPLITUDE_NORMALIZATION_GAIN); \
 													}while(0)
 
-#define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE)/(int32_t)s_amplitude_normaliztion_gain))
+#define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE)/(int32_t)s_amplitude_normalization_gain))
 #endif
 
 static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER])
