@@ -28,6 +28,7 @@ INCLUDEPATH += $${CHIPTUNE_ROOT_DIR}
 
 SOURCES += \
     $${CHIPTUNE_ROOT_DIR}/chiptune.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_midi_note_internal.c \
     $${CHIPTUNE_ROOT_DIR}/chiptune_midi_effect_internal.c \
     $${CHIPTUNE_ROOT_DIR}/chiptune_midi_control_change_internal.c \
     $${CHIPTUNE_ROOT_DIR}/chiptune_envelope_internal.c \
@@ -47,10 +48,11 @@ SOURCES += \
     $${CHIPTUNE_QT_DIR}/AudioPlayer.cpp \
     $${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp \
     $${CHIPTUNE_QT_DIR}/WaveChartView.cpp \
-    $${CHIPTUNE_QT_DIR}/main.cpp
+    $${CHIPTUNE_QT_DIR}/main.cpp \
 
 HEADERS += \
     $${CHIPTUNE_ROOT_DIR}/chiptune.h \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_midi_note_internal.h \
     $${CHIPTUNE_ROOT_DIR}/chiptune_midi_effect_internal.h \
     $${CHIPTUNE_ROOT_DIR}/chiptune_midi_control_change_internal.h \
     $${CHIPTUNE_ROOT_DIR}/chiptune_envelope_internal.h \
@@ -71,7 +73,7 @@ HEADERS += \
     $${CHIPTUNE_QT_DIR}/TuneManager.h \
     $${CHIPTUNE_QT_DIR}/AudioPlayer.h \
     $${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.h \
-    $${CHIPTUNE_QT_DIR}/WaveChartView.h
+    $${CHIPTUNE_QT_DIR}/WaveChartView.h  \
 
 FORMS += \
     $${CHIPTUNE_QT_DIR}/ChannelListWidgetForm.ui \

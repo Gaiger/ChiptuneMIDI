@@ -24,6 +24,7 @@ add_subdirectory(${CHIPTUNE_QT_DIR}/QMidi ${CMAKE_CURRENT_BINARY_DIR}/QMidi-buil
 
 set(ENGINE
     ${CHIPTUNE_ROOT_DIR}/chiptune.c
+    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_note_internal.c
     ${CHIPTUNE_ROOT_DIR}/chiptune_midi_effect_internal.c
     ${CHIPTUNE_ROOT_DIR}/chiptune_midi_control_change_internal.c
     ${CHIPTUNE_ROOT_DIR}/chiptune_envelope_internal.c
@@ -34,6 +35,7 @@ set(ENGINE
     ${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.c
 
     ${CHIPTUNE_ROOT_DIR}/chiptune.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_note_internal.h
     ${CHIPTUNE_ROOT_DIR}/chiptune_midi_effect_internal.h
     ${CHIPTUNE_ROOT_DIR}/chiptune_midi_control_change_internal.h
     ${CHIPTUNE_ROOT_DIR}/chiptune_envelope_internal.h
