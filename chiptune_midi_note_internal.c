@@ -5,13 +5,15 @@
 #endif
 #include <stdio.h>	// IWYU pragma: keep
 
+#include "chiptune_midi_define.h"
 #include "chiptune_printf_internal.h"
 
 #include "chiptune_oscillator_internal.h"
 #include "chiptune_channel_controller_internal.h"
+#include "chiptune_event_internal.h"
+#include "chiptune_envelope_internal.h"
 #include "chiptune_midi_effect_internal.h"
 #include "chiptune_midi_control_change_internal.h"
-#include "chiptune_event_internal.h"
 
 #include "chiptune_midi_note_internal.h"
 

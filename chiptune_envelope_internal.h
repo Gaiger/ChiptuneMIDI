@@ -3,6 +3,16 @@
 
 #include "chiptune_oscillator_internal.h"
 
+enum EnvelopeState
+{
+	EnvelopeStateAttack = 0,
+	EnvelopeStateDecay,
+	EnvelopeStateNoteOnSustain,
+	EnvelopeStatePedalSustain,
+	EnvelopeStateRelease,
+	EnvelopeStateMax,
+};
+
 int switch_melodic_envelope_state(oscillator_t * const p_oscillator, uint8_t const evelope_state);
 
 void update_melodic_envelope(oscillator_t * const p_oscillator);

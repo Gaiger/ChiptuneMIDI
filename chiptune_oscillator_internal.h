@@ -5,15 +5,6 @@
 #include <stdbool.h>
 #include "chiptune_common_internal.h"
 
-enum EnvelopeState
-{
-	EnvelopeStateAttack = 0,
-	EnvelopeStateDecay,
-	EnvelopeStateSustain,
-	EnvelopeStateRelease,
-	EnvelopeStateMax,
-};
-
 enum MidiEffectType
 {
 	MidiEffectNone		= 0,

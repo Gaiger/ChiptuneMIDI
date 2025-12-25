@@ -69,11 +69,10 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 
 		channel_controller_t const *p_channel_controller
 				= get_channel_controller_pointer_from_index(p_oscillator->voice);
-
-		if(EnvelopeStateSustain == p_oscillator->envelope_state){
-			if(true == IS_NOTE_ON(p_oscillator->state_bits)){
-				break;
-			}
+		if(EnvelopeStateNoteOnSustain == p_oscillator->envelope_state){
+			break;
+		}
+		if(EnvelopeStatePedalSustain == p_oscillator->envelope_state){
 			if(UINT16_MAX == p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number){
 				break;
 			}
@@ -92,13 +91,16 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 		case EnvelopeStateDecay:
 			envelope_same_index_number = p_channel_controller->envelope_decay_same_index_number;
 			break;
-		case EnvelopeStateSustain:
+		case EnvelopeStatePedalSustain:
 			envelope_same_index_number = p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number;
 			break;
 		case EnvelopeStateRelease:
 			/*even true == IS_RESTING() treat as the normal release.*/
 			envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
 			break;
+		default:
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR::envelope_state = %d in %s\r\n",
+							p_oscillator->envelope_state, __func__);
 		};
 
 		do
@@ -134,7 +136,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 				} while(0);
 				shift_amplitude = sustain_ampitude;
 			}	break;
-			case EnvelopeStateSustain:
+			case EnvelopeStatePedalSustain:
 				p_envelope_table = p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table;
 				delta_amplitude = p_oscillator->loudness;
 				break;
@@ -181,7 +183,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 					break;
 				}
 			case EnvelopeStateDecay:
-				p_oscillator->envelope_state = EnvelopeStateSustain;
+				p_oscillator->envelope_state = EnvelopeStateNoteOnSustain;
 				/*
 				 * SIN: the last decay point is updated to sustain amplitude in advance.
 				 *
@@ -199,12 +201,13 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 				if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 					break;
 				}
+				p_oscillator->envelope_state = EnvelopeStatePedalSustain;
 				if(0 < p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number){
 					break;
 				}
 				p_oscillator->envelope_state = EnvelopeStateRelease;
 				break;
-			case EnvelopeStateSustain:
+			case EnvelopeStatePedalSustain:
 			case EnvelopeStateRelease:
 				SET_DEACTIVATED(p_oscillator->state_bits);
 				break;
