@@ -529,7 +529,7 @@ void perform_vibrato(oscillator_t * const p_oscillator)
 			break;
 		}
 
-		if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
+		if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
 			break;
 		}
 
@@ -560,7 +560,7 @@ void perform_melodic_envelope(oscillator_t * const p_oscillator)
 				&& false == is_processing_left_channel()){
 			break;
 		}
-		if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
+		if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
 			break;
 		}
 
@@ -577,7 +577,7 @@ void perform_percussion(oscillator_t * const p_oscillator)
 				&& false == is_processing_left_channel()){
 			break;
 		}
-		if(false == (MIDI_PERCUSSION_CHANNEL == p_oscillator->voice)){
+		if(false == (true == IS_PERCUSSION_OSCILLATOR(p_oscillator))){
 			break;
 		}
 
@@ -629,7 +629,7 @@ void update_mono_wave_amplitude(oscillator_t * const p_oscillator)
 
 		int8_t waveform = p_channel_controller->waveform;
 		uint16_t critical_phase = p_channel_controller->duty_cycle_critical_phase;
-		if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
+		if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
 			percussion_t const * const p_percussion = get_percussion_pointer_from_index(p_oscillator->note);
 			waveform = p_percussion->waveform[p_oscillator->percussion_waveform_segment_index];
 			critical_phase = INT16_MAX_PLUS_1;

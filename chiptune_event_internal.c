@@ -339,7 +339,7 @@ static inline char const * const event_additional_string(int16_t const event_ind
 	snprintf(&s_event_additional_string[0], sizeof(s_event_additional_string), "");
 	bool is_empty_string = false;
 	do {
-		if(false == is_primary_oscillator(p_oscillator)){
+		if(false == IS_PRIMARY_OSCILLATOR(p_oscillator)){
 			break;
 		}
 		if(true == p_channel_controller->is_damper_pedal_on
@@ -457,7 +457,7 @@ int process_events(uint32_t const tick)
 			SET_FREEING(p_oscillator->state_bits);
 			do {
 #if(0)
-				if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
+				if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
 					put_event(EVENT_DISCARD, p_head_event->oscillator_index, tick);
 					break;
 				}
@@ -477,13 +477,13 @@ int process_events(uint32_t const tick)
 							100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness,
 							event_additional_string(s_queued_event_head_index));
 			if(true == IS_FREEING(p_oscillator->state_bits)
-					&& true == is_primary_oscillator(p_oscillator)){
+					&& true == IS_PRIMARY_OSCILLATOR(p_oscillator)){
 				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: rest a freeing native oscillator = %d\r\n",
 							p_head_event->oscillator_index);
 				break;
 			}
 			if(true == IS_RESTING(p_oscillator->state_bits)
-					&& true == is_primary_oscillator(p_oscillator)){
+					&& true == IS_PRIMARY_OSCILLATOR(p_oscillator)){
 				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: rest a resting native oscillator = %d\r\n",
 							p_head_event->oscillator_index);
 				break;
@@ -508,7 +508,7 @@ int process_events(uint32_t const tick)
 							event_additional_string(s_queued_event_head_index));
 			do
 			{
-				if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
+				if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
 					break;
 				}
 				if(0 == p_oscillator->envelope_table_index){

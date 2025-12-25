@@ -31,7 +31,7 @@ int switch_melodic_envelope_state(oscillator_t * const p_oscillator, uint8_t con
 			break;
 		}
 
-		if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
+		if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
 			ret = 1;
 			break;
 		}
@@ -63,7 +63,7 @@ int switch_melodic_envelope_state(oscillator_t * const p_oscillator, uint8_t con
 void update_melodic_envelope(oscillator_t * const p_oscillator)
 {
 	do {
-		if(MIDI_PERCUSSION_CHANNEL == p_oscillator->voice){
+		if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
 			break;
 		}
 
@@ -222,7 +222,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 void update_percussion_envelope(oscillator_t * const p_oscillator)
 {
 	do {
-		if(false == (MIDI_PERCUSSION_CHANNEL == p_oscillator->voice)){
+		if(false == (true == IS_PERCUSSION_OSCILLATOR(p_oscillator))){
 			break;
 		}
 

@@ -239,7 +239,7 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, mid
 			if(voice != p_oscillator->voice){
 				break;
 			}
-			if(false == is_primary_oscillator(p_oscillator)){
+			if(false == IS_PRIMARY_OSCILLATOR(p_oscillator)){
 				break;
 			}
 			if(true == IS_NOTE_ON(p_oscillator->state_bits)){

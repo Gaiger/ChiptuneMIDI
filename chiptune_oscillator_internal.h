@@ -59,6 +59,9 @@ union{
 } oscillator_t;
 
 #define UNOCCUPIED_OSCILLATOR						(-1)
+#define IS_PERCUSSION_OSCILLATOR(OSCILLATOR_POINTER) \
+	((MIDI_PERCUSSION_CHANNEL == (OSCILLATOR_POINTER)->voice) ? true : false)
+
 #define RESET_STATE_BITES(STATE_BITES)				((STATE_BITES) = 0)
 
 #define STATE_ACTIVATED_BIT							(0)
@@ -92,6 +95,9 @@ union{
 #define SET_NOTE_OFF(STATE_BITS)					( (STATE_BITS) &= (~(0x01 << STATE_NOTE_BIT)) )
 #define IS_NOTE_ON(STATE_BITS)						(((0x01 << STATE_NOTE_BIT) & (STATE_BITS) ) ? true : false)
 
+#define IS_PRIMARY_OSCILLATOR(OSCILLATOR_POINTER) \
+	(((MidiEffectNone == (OSCILLATOR_POINTER)->midi_effect_association) \
+	|| true == IS_PERCUSSION_OSCILLATOR(OSCILLATOR_POINTER)) ? true : false)
 
 #define SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER	(4 - 1)
 
@@ -120,13 +126,5 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 int16_t count_all_subordinate_oscillators(uint8_t const midi_effect_type, int16_t const root_index);
 int get_all_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_index,
 										   int16_t * const p_associate_indexes);
-
-MAYBE_UNUSED_FUNCTION static inline bool is_primary_oscillator(oscillator_t const * const p_oscillator)
-{
-	if(MidiEffectNone == p_oscillator->midi_effect_association){
-		return true;
-	}
-	return false;
-}
 
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_

@@ -23,7 +23,7 @@ int finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
 									  oscillator_t * const p_oscillator)
 {
 	(void)tick; (void)voice; (void)note; (void)velocity;
-	if(MIDI_PERCUSSION_CHANNEL == voice){
+	if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
 		return 1;
 	}
 
@@ -48,7 +48,7 @@ int finalize_percussion_oscillator_setup(uint32_t const tick, int8_t const voice
 										 oscillator_t * const p_oscillator)
 {
 	(void)tick; (void)voice; (void)note; (void)velocity;
-	if(false == (MIDI_PERCUSSION_CHANNEL == voice)){
+	if(false == (true == IS_PERCUSSION_OSCILLATOR(p_oscillator))){
 		return 1;
 	}
 
@@ -81,7 +81,7 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick, i
 			if(voice != p_oscillator->voice){
 				break;
 			}
-			if(false == is_primary_oscillator(p_oscillator)){
+			if(false == IS_PRIMARY_OSCILLATOR(p_oscillator)){
 				break;
 			}
 			if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
@@ -202,7 +202,7 @@ int process_note_message(uint32_t const tick, bool const is_note_on,
 				if(voice != p_oscillator->voice){
 					break;
 				}
-				if(false == is_primary_oscillator(p_oscillator)){
+				if(false == IS_PRIMARY_OSCILLATOR(p_oscillator)){
 					break;
 				}
 				if(false == IS_NOTE_ON(p_oscillator->state_bits)){

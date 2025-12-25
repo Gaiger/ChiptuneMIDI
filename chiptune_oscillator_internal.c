@@ -537,7 +537,7 @@ int discard_oscillator(int16_t const index)
 
 	oscillator_t * const p_oscillator = get_oscillator_address_from_index(index);
 
-	if(false == (MIDI_PERCUSSION_CHANNEL == p_oscillator->voice)){
+	if(false == (true == IS_PERCUSSION_OSCILLATOR(p_oscillator))){
 		if(NO_MIDI_EFFECT_ASSOCIATE_LINK != p_oscillator->midi_effect_aassociate_link_index){
 			midi_effect_associate_link_t *p_midi_effect_associate_link
 					= get_midi_effect_associate_link_from_index(p_oscillator->midi_effect_aassociate_link_index);
