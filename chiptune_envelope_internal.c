@@ -44,9 +44,9 @@ int switch_melodic_envelope_state(oscillator_t * const p_oscillator, uint8_t con
 			break;
 		}
 
-		if(EnvelopeStateRelease == p_oscillator->envelope_state){
+		if(EnvelopeStateFreeRelease == p_oscillator->envelope_state){
 			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: voice = %d, note = %d,"
-										 "from evelope_state = EnvelopeStateRelease in %s\r\n",
+										 "from evelope_state = EnvelopeStateFreeRelease in %s\r\n",
 							p_oscillator->voice, p_oscillator->note, __func__);
 		}
 		p_oscillator->envelope_state = evelope_state;
@@ -94,7 +94,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 		case EnvelopeStatePedalSustain:
 			envelope_same_index_number = p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number;
 			break;
-		case EnvelopeStateRelease:
+		case EnvelopeStateFreeRelease:
 			/*even true == IS_RESTING() treat as the normal release.*/
 			envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
 			break;
@@ -141,7 +141,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 				delta_amplitude = p_oscillator->loudness;
 				break;
 			default:
-			case EnvelopeStateRelease:
+			case EnvelopeStateFreeRelease:
 				/*even true == IS_RESTING() treat as the normal release.*/
 				p_envelope_table = p_channel_controller->p_envelope_release_table;
 				delta_amplitude = p_oscillator->envelope_reference_amplitude;
@@ -205,10 +205,10 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 				if(0 < p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number){
 					break;
 				}
-				p_oscillator->envelope_state = EnvelopeStateRelease;
+				p_oscillator->envelope_state = EnvelopeStateFreeRelease;
 				break;
 			case EnvelopeStatePedalSustain:
-			case EnvelopeStateRelease:
+			case EnvelopeStateFreeRelease:
 				SET_DEACTIVATED(p_oscillator->state_bits);
 				break;
 			}

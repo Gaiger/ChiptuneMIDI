@@ -463,7 +463,7 @@ int process_events(uint32_t const tick)
 				}
 #endif
 				/*It does not a matter there is a postponement to discard the resting oscillator*/
-				switch_melodic_envelope_state(p_oscillator, EnvelopeStateRelease);
+				switch_melodic_envelope_state(p_oscillator, EnvelopeStateFreeRelease);
 				put_event(EVENT_DISCARD, p_head_event->oscillator_index,
 					tick + p_channel_controller->envelope_release_tick_number);
 			} while(0);
@@ -489,7 +489,7 @@ int process_events(uint32_t const tick)
 				break;
 			}
 			SET_RESTING(p_oscillator->state_bits);
-			switch_melodic_envelope_state(p_oscillator, EnvelopeStateRelease);
+			switch_melodic_envelope_state(p_oscillator, EnvelopeStateFreeRelease);
 			break;
 		case EventTypeDeactivate:
 			CHIPTUNE_PRINTF(cEventTriggering,

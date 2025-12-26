@@ -9,7 +9,8 @@ enum EnvelopeState
 	EnvelopeStateDecay,
 	EnvelopeStateNoteOnSustain,
 	EnvelopeStatePedalSustain,
-	EnvelopeStateRelease,
+	EnvelopeStatePedalEntryRelease,
+	EnvelopeStateFreeRelease,
 	EnvelopeStateMax,
 };
 
