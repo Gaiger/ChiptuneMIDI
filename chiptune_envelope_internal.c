@@ -1,4 +1,3 @@
-#include "chiptune_midi_define.h"
 #include "chiptune_printf_internal.h"
 #include "chiptune_oscillator_internal.h"
 #include "chiptune_channel_controller_internal.h"
