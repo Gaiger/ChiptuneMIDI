@@ -98,7 +98,7 @@ typedef struct _channel_controller
 	int8_t const *				p_envelope_decay_table;
 	uint16_t					envelope_decay_same_index_number;
 
-	normalized_midi_level_t		envelope_sustain_level;
+	normalized_midi_level_t		envelope_note_on_sustain_level;
 
 	float						envelope_release_duration_in_seconds;
 	int8_t const *				p_envelope_release_table;
@@ -145,7 +145,7 @@ void update_channel_controllers_parameters_related_to_playing_tempo(void);
 int set_pitch_channel_parameters(int8_t const channel_index, int8_t const waveform, uint16_t const dutycycle_critical_phase,
 									   int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
 									   int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
-									   uint8_t const envelope_sustain_level,
+									   uint8_t const envelope_note_on_sustain_level,
 									   int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
 									   uint8_t const envelope_damper_on_but_note_off_sustain_level,
 									   int8_t const envelope_damper_on_but_note_off_sustain_curve,

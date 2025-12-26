@@ -31,11 +31,13 @@ public:
 		} while(0);
 
 		QAudioDevice info(QMediaDevices::defaultAudioOutput());
+		qDebug() << info.description();
+		qDebug() << "minimumSampleRate : " << info.minimumSampleRate()
+				 << ", maximumSampleRate : " << info.maximumSampleRate();
 		qDebug() << info.supportedSampleFormats();
 		if (false == info.isFormatSupported(format)) {
 			qWarning()<<"raw audio format not supported by backend, cannot play audio.";
 		}
-		qDebug() << info.description();
 		qDebug() << format;
 
 		if(nullptr != m_p_audio_sink){

@@ -122,7 +122,7 @@ static void set_decline_curve(int8_t const ** pp_phase_table, int8_t const curve
 int set_pitch_channel_parameters(int8_t const index, int8_t const waveform, uint16_t const dutycycle_critical_phase,
 									   int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
 									   int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
-									   uint8_t const envelope_sustain_level,
+									   uint8_t const envelope_note_on_sustain_level,
 									   int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
 									   uint8_t const envelope_damper_on_but_note_off_sustain_level,
 									   int8_t const envelope_damper_on_but_note_off_sustain_curve,
@@ -157,13 +157,13 @@ int set_pitch_channel_parameters(int8_t const index, int8_t const waveform, uint
 		= (uint16_t)((sampling_rate * envelope_decay_duration_in_seconds)
 					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
-	p_channel_controller->envelope_sustain_level
-			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(envelope_sustain_level);
+	p_channel_controller->envelope_note_on_sustain_level
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(envelope_note_on_sustain_level);
 
 	if(0 == p_channel_controller->envelope_decay_same_index_number){
-		if(INT8_MAX_PLUS_1 != p_channel_controller->envelope_sustain_level){
+		if(INT8_MAX_PLUS_1 != p_channel_controller->envelope_note_on_sustain_level){
 			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_decay_same_index_number is zero"
-										 " but envelope_sustain_level is not INT8_MAX_PLUS_1\r\n");
+										 " but envelope_note_on_sustain_level is not INT8_MAX_PLUS_1\r\n");
 		}
 		ret |= 0x01 << 1;
 	}

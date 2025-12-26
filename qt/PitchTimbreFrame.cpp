@@ -113,7 +113,7 @@ void PitchTimbreFrame::EmitTimbreChanged(void)
 void PitchTimbreFrame::GetTimbre(int *p_waveform,
 			   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,
 			   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
-			   int *p_envelope_sustain_level,
+			   int *p_envelope_note_on_sustain_level,
 			   int *p_envelope_release_curve, double *p_envelope_release_duration_in_seconds,
 			   int *p_envelope_damper_on_but_note_off_sustain_level,
 			   int *p_envelope_damper_on_but_note_off_sustain_curve,
@@ -127,7 +127,7 @@ void PitchTimbreFrame::GetTimbre(int *p_waveform,
 	*p_envelope_decay_curve = ui->DecayCurveComboBox->currentIndex();
 	*p_envelope_decay_duration_in_seconds = ui->DecayTimeSpinBox->value()/1000.0;
 
-	*p_envelope_sustain_level = ui->SustainLevelSpinBox->value();
+	*p_envelope_note_on_sustain_level = ui->SustainLevelSpinBox->value();
 
 	*p_envelope_release_curve = ui->ReleaseCurveComboBox->currentIndex();
 	*p_envelope_release_duration_in_seconds = ui->ReleaseTimeSpinBox->value()/1000.0;

@@ -71,7 +71,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 		if(EnvelopeStateNoteOnSustain == p_oscillator->envelope_state){
 			break;
 		}
-		if(EnvelopeStatePedalSustain == p_oscillator->envelope_state){
+		if(EnvelopeStateDamperSustain == p_oscillator->envelope_state){
 			if(UINT16_MAX == p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number){
 				break;
 			}
@@ -90,7 +90,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 		case EnvelopeStateDecay:
 			envelope_same_index_number = p_channel_controller->envelope_decay_same_index_number;
 			break;
-		case EnvelopeStatePedalSustain:
+		case EnvelopeStateDamperSustain:
 			envelope_same_index_number = p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number;
 			break;
 		case EnvelopeStateFreeRelease:
@@ -125,7 +125,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 				p_envelope_table = p_channel_controller->p_envelope_decay_table;
 				int16_t sustain_ampitude
 						= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-											p_channel_controller->envelope_sustain_level);
+											p_channel_controller->envelope_note_on_sustain_level);
 				do {
 					if(0 != p_oscillator->envelope_reference_amplitude){
 						delta_amplitude = p_oscillator->envelope_reference_amplitude - sustain_ampitude;
@@ -135,7 +135,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 				} while(0);
 				shift_amplitude = sustain_ampitude;
 			}	break;
-			case EnvelopeStatePedalSustain:
+			case EnvelopeStateDamperSustain:
 				p_envelope_table = p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table;
 				delta_amplitude = p_oscillator->loudness;
 				break;
@@ -196,17 +196,17 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 				 * (Known issue with a workaround; behavior is intentional.)
 				 */
 				p_oscillator->amplitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-															p_channel_controller->envelope_sustain_level);
+															p_channel_controller->envelope_note_on_sustain_level);
 				if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 					break;
 				}
-				p_oscillator->envelope_state = EnvelopeStatePedalSustain;
+				p_oscillator->envelope_state = EnvelopeStateDamperSustain;
 				if(0 < p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number){
 					break;
 				}
 				p_oscillator->envelope_state = EnvelopeStateFreeRelease;
 				break;
-			case EnvelopeStatePedalSustain:
+			case EnvelopeStateDamperSustain:
 			case EnvelopeStateFreeRelease:
 				SET_DEACTIVATED(p_oscillator->state_bits);
 				break;

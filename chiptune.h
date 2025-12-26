@@ -63,7 +63,7 @@ enum ChiptuneEnvelopeCurveType
 int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const waveform,
 									  int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
 									  int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
-									  uint8_t const envelope_sustain_level,
+									  uint8_t const envelope_note_on_sustain_level,
 									  int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
 									  uint8_t const envelope_damper_on_but_note_off_sustain_level,
 									  int8_t const envelope_damper_on_but_note_off_sustain_curve,

@@ -73,7 +73,7 @@ public:
 							  int8_t const waveform = WaveformTriangle,
 							  int8_t const envelope_attack_curve = EnvelopeCurveLinear, float const envelope_attack_duration_in_seconds = 0.02,
 							  int8_t const envelope_decay_curve = EnvelopeCurveFermi, float const envelope_decay_duration_in_seconds = 0.01,
-							  uint8_t const envelope_sustain_level = 96,
+							  uint8_t const envelope_note_on_sustain_level = 96,
 							  int8_t const envelope_release_curve = EnvelopeCurveExponential, float const envelope_release_duration_in_seconds = 0.03,
 							  uint8_t const envelope_damper_on_but_note_off_sustain_level = 24,
 							  int8_t const envelope_damper_on_but_note_off_sustain_curve = EnvelopeCurveLinear,

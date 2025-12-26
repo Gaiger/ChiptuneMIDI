@@ -346,7 +346,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			int waveform;
 			int envelope_attack_curve; double envelope_attack_duration_in_seconds;
 			int envelope_decay_curve; double envelope_decay_duration_in_seconds;
-			int envelope_sustain_level;
+			int envelope_note_on_sustain_level;
 			int envelope_release_curve; double envelope_release_duration_in_seconds;
 			int envelope_damper_on_but_note_off_sustain_level;
 			int envelope_damper_on_but_note_off_sustain_curve;
@@ -355,7 +355,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			p_channellist_widget->GetTimbre(channel_index,
 											&waveform, &envelope_attack_curve, &envelope_attack_duration_in_seconds,
 											&envelope_decay_curve, &envelope_decay_duration_in_seconds,
-											&envelope_sustain_level,
+											&envelope_note_on_sustain_level,
 											&envelope_release_curve, &envelope_release_duration_in_seconds,
 											&envelope_damper_on_but_note_off_sustain_level,
 											&envelope_damper_on_but_note_off_sustain_curve,
@@ -363,7 +363,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 			m_p_tune_manager->SetPitchChannelTimbre((int8_t)channel_index, (int8_t)waveform,
 													(int8_t)envelope_attack_curve, (float)envelope_attack_duration_in_seconds,
 													(int8_t)envelope_decay_curve, (float)envelope_decay_duration_in_seconds,
-													(uint8_t)envelope_sustain_level,
+													(uint8_t)envelope_note_on_sustain_level,
 													(int8_t)envelope_release_curve, (float)envelope_release_duration_in_seconds,
 													(uint8_t)envelope_damper_on_but_note_off_sustain_level,
 													(int8_t)envelope_damper_on_but_note_off_sustain_curve,
@@ -583,7 +583,7 @@ void ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged(int index,
 										int waveform,
 										int envelope_attack_curve, double envelope_attack_duration_in_seconds,
 										int envelope_decay_curve, double envelope_decay_duration_in_seconds,
-										int envelope_sustain_level,
+										int envelope_note_on_sustain_level,
 										int envelope_release_curve, double envelope_release_duration_in_seconds,
 										int envelope_damper_on_but_note_off_sustain_level,
 										int envelope_damper_on_but_note_off_sustain_curve,
@@ -592,7 +592,7 @@ void ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged(int index,
 	m_p_tune_manager->SetPitchChannelTimbre((int8_t)index, (int8_t)waveform,
 											(int8_t)envelope_attack_curve, (float)envelope_attack_duration_in_seconds,
 											(int8_t)envelope_decay_curve, (float)envelope_decay_duration_in_seconds,
-											(uint8_t)envelope_sustain_level,
+											(uint8_t)envelope_note_on_sustain_level,
 											(int8_t)envelope_release_curve, (float)envelope_release_duration_in_seconds,
 											(uint8_t)envelope_damper_on_but_note_off_sustain_level,
 											(int8_t)envelope_damper_on_but_note_off_sustain_curve,

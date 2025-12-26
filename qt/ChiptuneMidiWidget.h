@@ -57,7 +57,7 @@ private slots:
 											int waveform,
 											int envelope_attack_curve, double envelope_attack_duration_in_seconds,
 											int envelope_decay_curve, double envelope_decay_duration_in_seconds,
-											int envelope_sustain_level,
+											int envelope_note_on_sustain_level,
 											int envelope_release_curve, double envelope_release_duration_in_seconds,
 											int envelope_damper_on_but_note_off_sustain_level,
 											int envelope_damper_on_but_note_off_sustain_curve,
