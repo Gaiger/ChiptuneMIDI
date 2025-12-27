@@ -183,29 +183,14 @@ int set_pitch_channel_parameters(int8_t const index, int8_t const waveform, uint
 	set_decline_curve(pp_phase_table, envelope_damper_sustain_curve);
 	p_channel_controller->envelop_damper_sustain_level
 			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(envelope_damper_sustain_level);
-	p_channel_controller->envelope_damper_sustain_duration_in_seconds
-			= envelope_damper_sustain_duration_in_seconds;
 	do {
-		if(FLT_MAX == p_channel_controller->envelope_damper_sustain_duration_in_seconds){
+		if(FLT_MAX == envelope_damper_sustain_duration_in_seconds){
 			p_channel_controller->envelope_damper_sustain_same_index_number = UINT16_MAX;
 			break;
 		}
 		uint32_t envelope_damper_sustain_same_index_number
 				= (uint32_t)((sampling_rate * envelope_damper_sustain_duration_in_seconds)
 					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
-
-		if(envelope_damper_sustain_same_index_number >= UINT16_MAX){
-			envelope_damper_sustain_same_index_number = UINT16_MAX - 1;
-			float fixed_envelope_damper_sustain_duration_in_seconds
-					= (envelope_damper_sustain_same_index_number * CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH)
-					/ (float)sampling_rate;
-			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_sustain_duration_in_seconds = %3.2f,"
-										 "greater than UINT16_MAX, set as %3.2f seconds\r\n",
-							p_channel_controller->envelope_damper_sustain_duration_in_seconds,
-							fixed_envelope_damper_sustain_duration_in_seconds);
-			p_channel_controller->envelope_damper_sustain_duration_in_seconds
-					= fixed_envelope_damper_sustain_duration_in_seconds;
-		}
 
 		p_channel_controller->envelope_damper_sustain_same_index_number
 				= (uint16_t)envelope_damper_sustain_same_index_number;

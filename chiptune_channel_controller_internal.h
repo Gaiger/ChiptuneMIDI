@@ -108,7 +108,6 @@ typedef struct _channel_controller
 	bool						is_damper_pedal_on;
 
 	normalized_midi_level_t 	envelop_damper_sustain_level;
-	float						envelope_damper_sustain_duration_in_seconds;
 	int8_t const *				p_envelope_damper_sustain_table;
 	uint16_t					envelope_damper_sustain_same_index_number;
 
