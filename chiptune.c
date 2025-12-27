@@ -1155,9 +1155,9 @@ int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const w
 									  int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
 									  uint8_t const envelope_note_on_sustain_level,
 									  int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
-									  uint8_t const envelope_damper_on_but_note_off_sustain_level,
-									  int8_t const envelope_damper_on_but_note_off_sustain_curve,
-									  float const envelope_damper_on_but_note_off_sustain_duration_in_seconds)
+									  uint8_t const envelope_damper_sustain_level,
+									  int8_t const envelope_damper_sustain_curve,
+									  float const envelope_damper_sustain_duration_in_seconds)
 {
 	if( 0 > channel_index  || channel_index >= MIDI_MAX_CHANNEL_NUMBER){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: channel_index = %d is not acceptable for %s\r\n",
@@ -1203,9 +1203,9 @@ int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const w
 									  envelope_decay_curve, envelope_decay_duration_in_seconds,
 									  envelope_note_on_sustain_level,
 									  envelope_release_curve, envelope_release_duration_in_seconds,
-									  envelope_damper_on_but_note_off_sustain_level,
-									  envelope_damper_on_but_note_off_sustain_curve,
-									  envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+									  envelope_damper_sustain_level,
+									  envelope_damper_sustain_curve,
+									  envelope_damper_sustain_duration_in_seconds);
 }
 
 /**********************************************************************************/

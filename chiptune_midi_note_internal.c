@@ -200,7 +200,7 @@ static int process_note_off_message(uint32_t const tick, int8_t const voice,
 		p_oscillator->loudness
 				= LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(
 					p_oscillator->loudness,
-					p_channel_controller->envelop_damper_on_but_note_off_sustain_level);
+					p_channel_controller->envelop_damper_sustain_level);
 
 		finalize_melodic_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
 		put_event(EventTypeActivate, reduced_loundness_oscillator_index, tick);

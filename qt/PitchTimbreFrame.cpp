@@ -42,9 +42,9 @@ PitchTimbreFrame::PitchTimbreFrame(int index, QWidget *parent)
 		ui->ReleaseCurveComboBox->setEnabled(false);
 		ui->ReleaseTimeSpinBox->setEnabled(false);
 
-		ui->DamperOnButNoteOffSustainSustainLevelSpinBox->setEnabled(false);
-		ui->DamperOnButNoteOffSustainCurveComboBox->setEnabled(false);
-		ui->DamperOnButNoteOffSustainTimeDoubleSpinBox->setEnabled(false);
+		ui->DamperSustainLevelSpinBox->setEnabled(false);
+		ui->DamperSustainCurveComboBox->setEnabled(false);
+		ui->DamperSustainTimeDoubleSpinBox->setEnabled(false);
 	}
 	QStandardItemModel *p_model =
 		  qobject_cast<QStandardItemModel *>(ui->DutyCycleComboBox->model());
@@ -103,9 +103,9 @@ void PitchTimbreFrame::EmitTimbreChanged(void)
 						ui->DecayCurveComboBox->currentIndex(), ui->DecayTimeSpinBox->value()/1000.0,
 						ui->SustainLevelSpinBox->value(),
 						ui->ReleaseCurveComboBox->currentIndex(), ui->ReleaseTimeSpinBox->value()/1000.0,
-						ui->DamperOnButNoteOffSustainSustainLevelSpinBox->value(),
-						ui->DamperOnButNoteOffSustainCurveComboBox->currentIndex(),
-						ui->DamperOnButNoteOffSustainTimeDoubleSpinBox->value());
+						ui->DamperSustainLevelSpinBox->value(),
+						ui->DamperSustainCurveComboBox->currentIndex(),
+						ui->DamperSustainTimeDoubleSpinBox->value());
 }
 
 /**********************************************************************************/
@@ -115,9 +115,9 @@ void PitchTimbreFrame::GetTimbre(int *p_waveform,
 			   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
 			   int *p_envelope_note_on_sustain_level,
 			   int *p_envelope_release_curve, double *p_envelope_release_duration_in_seconds,
-			   int *p_envelope_damper_on_but_note_off_sustain_level,
-			   int *p_envelope_damper_on_but_note_off_sustain_curve,
-			   double *p_envelope_damper_on_but_note_off_sustain_duration_in_seconds)
+			   int *p_envelope_damper_sustain_level,
+			   int *p_envelope_damper_sustain_curve,
+			   double *p_envelope_damper_sustain_duration_in_seconds)
 {
 	*p_waveform = GetWaveform();
 
@@ -132,9 +132,9 @@ void PitchTimbreFrame::GetTimbre(int *p_waveform,
 	*p_envelope_release_curve = ui->ReleaseCurveComboBox->currentIndex();
 	*p_envelope_release_duration_in_seconds = ui->ReleaseTimeSpinBox->value()/1000.0;
 
-	*p_envelope_damper_on_but_note_off_sustain_level = ui->DamperOnButNoteOffSustainSustainLevelSpinBox->value();
-	*p_envelope_damper_on_but_note_off_sustain_curve = ui->DamperOnButNoteOffSustainCurveComboBox->currentIndex();
-	*p_envelope_damper_on_but_note_off_sustain_duration_in_seconds = ui->DamperOnButNoteOffSustainTimeDoubleSpinBox->value();
+	*p_envelope_damper_sustain_level = ui->DamperSustainLevelSpinBox->value();
+	*p_envelope_damper_sustain_curve = ui->DamperSustainCurveComboBox->currentIndex();
+	*p_envelope_damper_sustain_duration_in_seconds = ui->DamperSustainTimeDoubleSpinBox->value();
 }
 
 /**********************************************************************************/
@@ -245,7 +245,7 @@ void PitchTimbreFrame::on_ReleaseTimeSpinBox_valueChanged(int value)
 
 /**********************************************************************************/
 
-void PitchTimbreFrame::on_DamperOnButNoteOffSustainTimeDoubleSpinBox_valueChanged(double value)
+void PitchTimbreFrame::on_DamperSustainTimeDoubleSpinBox_valueChanged(double value)
 {
 	Q_UNUSED(value);
 	EmitTimbreChanged();
@@ -253,7 +253,7 @@ void PitchTimbreFrame::on_DamperOnButNoteOffSustainTimeDoubleSpinBox_valueChange
 
 /**********************************************************************************/
 
-void PitchTimbreFrame::on_DamperOnButNoteOffSustainCurveComboBox_currentIndexChanged(int index)
+void PitchTimbreFrame::on_DamperSustainCurveComboBox_currentIndexChanged(int index)
 {
 	Q_UNUSED(index);
 	EmitTimbreChanged();
@@ -261,7 +261,7 @@ void PitchTimbreFrame::on_DamperOnButNoteOffSustainCurveComboBox_currentIndexCha
 
 /**********************************************************************************/
 
-void PitchTimbreFrame::on_DamperOnButNoteOffSustainSustainLevelSpinBox_valueChanged(int value)
+void PitchTimbreFrame::on_DamperSustainLevelSpinBox_valueChanged(int value)
 {
 	Q_UNUSED(value);
 	EmitTimbreChanged();

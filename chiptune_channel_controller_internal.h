@@ -107,10 +107,10 @@ typedef struct _channel_controller
 
 	bool						is_damper_pedal_on;
 
-	normalized_midi_level_t 	envelop_damper_on_but_note_off_sustain_level;
-	float						envelope_damper_on_but_note_off_sustain_duration_in_seconds;
-	int8_t const *				p_envelope_damper_on_but_note_off_sustain_table;
-	uint16_t					envelope_damper_on_but_note_off_sustain_same_index_number;
+	normalized_midi_level_t 	envelop_damper_sustain_level;
+	float						envelope_damper_sustain_duration_in_seconds;
+	int8_t const *				p_envelope_damper_sustain_table;
+	uint16_t					envelope_damper_sustain_same_index_number;
 
 	uint16_t					registered_parameter_number;
 	uint16_t					registered_parameter_value;
@@ -147,8 +147,8 @@ int set_pitch_channel_parameters(int8_t const channel_index, int8_t const wavefo
 									   int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
 									   uint8_t const envelope_note_on_sustain_level,
 									   int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
-									   uint8_t const envelope_damper_on_but_note_off_sustain_level,
-									   int8_t const envelope_damper_on_but_note_off_sustain_curve,
-									   float const envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+									   uint8_t const envelope_damper_sustain_level,
+									   int8_t const envelope_damper_sustain_curve,
+									   float const envelope_damper_sustain_duration_in_seconds);
 
 #endif // _CHIPTUNE_CHANNEL_CONTROLLER_INTERNAL_H_

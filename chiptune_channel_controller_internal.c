@@ -124,9 +124,9 @@ int set_pitch_channel_parameters(int8_t const index, int8_t const waveform, uint
 									   int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
 									   uint8_t const envelope_note_on_sustain_level,
 									   int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
-									   uint8_t const envelope_damper_on_but_note_off_sustain_level,
-									   int8_t const envelope_damper_on_but_note_off_sustain_curve,
-									   float const envelope_damper_on_but_note_off_sustain_duration_in_seconds)
+									   uint8_t const envelope_damper_sustain_level,
+									   int8_t const envelope_damper_sustain_curve,
+									   float const envelope_damper_sustain_duration_in_seconds)
 {
 	if(MIDI_PERCUSSION_CHANNEL == index){
 		return 1;
@@ -179,40 +179,40 @@ int set_pitch_channel_parameters(int8_t const index, int8_t const waveform, uint
 		ret |= 0x01 << 2;
 	}
 
-	pp_phase_table = &p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table;
-	set_decline_curve(pp_phase_table, envelope_damper_on_but_note_off_sustain_curve);
-	p_channel_controller->envelop_damper_on_but_note_off_sustain_level
-			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(envelope_damper_on_but_note_off_sustain_level);
-	p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_seconds
-			= envelope_damper_on_but_note_off_sustain_duration_in_seconds;
+	pp_phase_table = &p_channel_controller->p_envelope_damper_sustain_table;
+	set_decline_curve(pp_phase_table, envelope_damper_sustain_curve);
+	p_channel_controller->envelop_damper_sustain_level
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(envelope_damper_sustain_level);
+	p_channel_controller->envelope_damper_sustain_duration_in_seconds
+			= envelope_damper_sustain_duration_in_seconds;
 	do {
-		if(FLT_MAX == p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_seconds){
-			p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number = UINT16_MAX;
+		if(FLT_MAX == p_channel_controller->envelope_damper_sustain_duration_in_seconds){
+			p_channel_controller->envelope_damper_sustain_same_index_number = UINT16_MAX;
 			break;
 		}
-		uint32_t envelope_damper_on_but_note_off_sustain_same_index_number
-				= (uint32_t)((sampling_rate * envelope_damper_on_but_note_off_sustain_duration_in_seconds)
+		uint32_t envelope_damper_sustain_same_index_number
+				= (uint32_t)((sampling_rate * envelope_damper_sustain_duration_in_seconds)
 					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
-		if(envelope_damper_on_but_note_off_sustain_same_index_number >= UINT16_MAX){
-			envelope_damper_on_but_note_off_sustain_same_index_number = UINT16_MAX - 1;
-			float fixed_envelope_damper_on_but_note_off_sustain_duration_in_seconds
-					= (envelope_damper_on_but_note_off_sustain_same_index_number * CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH)
+		if(envelope_damper_sustain_same_index_number >= UINT16_MAX){
+			envelope_damper_sustain_same_index_number = UINT16_MAX - 1;
+			float fixed_envelope_damper_sustain_duration_in_seconds
+					= (envelope_damper_sustain_same_index_number * CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH)
 					/ (float)sampling_rate;
-			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_on_but_note_off_sustain_duration_in_second = %3.2f,"
+			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_sustain_duration_in_seconds = %3.2f,"
 										 "greater than UINT16_MAX, set as %3.2f seconds\r\n",
-							p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_seconds,
-							fixed_envelope_damper_on_but_note_off_sustain_duration_in_seconds);
-			p_channel_controller->envelope_damper_on_but_note_off_sustain_duration_in_seconds
-					= fixed_envelope_damper_on_but_note_off_sustain_duration_in_seconds;
+							p_channel_controller->envelope_damper_sustain_duration_in_seconds,
+							fixed_envelope_damper_sustain_duration_in_seconds);
+			p_channel_controller->envelope_damper_sustain_duration_in_seconds
+					= fixed_envelope_damper_sustain_duration_in_seconds;
 		}
 
-		p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number
-				= (uint16_t)envelope_damper_on_but_note_off_sustain_same_index_number;
+		p_channel_controller->envelope_damper_sustain_same_index_number
+				= (uint16_t)envelope_damper_sustain_same_index_number;
 	} while(0);
 #if(0)
-	if(FLT_MAX == p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number){
-		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_on_but_note_off_sustain_duration_in_seconds is forever\r\n");
+	if(FLT_MAX == p_channel_controller->envelope_damper_sustain_same_index_number){
+		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_sustain_duration_in_seconds is forever\r\n");
 		ret |= 0x01 << 3;
 	}
 #endif

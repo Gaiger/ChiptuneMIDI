@@ -72,7 +72,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 			break;
 		}
 		if(EnvelopeStateDamperSustain == p_oscillator->envelope_state){
-			if(UINT16_MAX == p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number){
+			if(UINT16_MAX == p_channel_controller->envelope_damper_sustain_same_index_number){
 				break;
 			}
 		}
@@ -91,7 +91,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 			envelope_same_index_number = p_channel_controller->envelope_decay_same_index_number;
 			break;
 		case EnvelopeStateDamperSustain:
-			envelope_same_index_number = p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number;
+			envelope_same_index_number = p_channel_controller->envelope_damper_sustain_same_index_number;
 			break;
 		case EnvelopeStateFreeRelease:
 			/*even true == IS_RESTING() treat as the normal release.*/
@@ -136,7 +136,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 				shift_amplitude = sustain_ampitude;
 			}	break;
 			case EnvelopeStateDamperSustain:
-				p_envelope_table = p_channel_controller->p_envelope_damper_on_but_note_off_sustain_table;
+				p_envelope_table = p_channel_controller->p_envelope_damper_sustain_table;
 				delta_amplitude = p_oscillator->loudness;
 				break;
 			default:
@@ -201,7 +201,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 					break;
 				}
 				p_oscillator->envelope_state = EnvelopeStateDamperSustain;
-				if(0 < p_channel_controller->envelope_damper_on_but_note_off_sustain_same_index_number){
+				if(0 < p_channel_controller->envelope_damper_sustain_same_index_number){
 					break;
 				}
 				p_oscillator->envelope_state = EnvelopeStateFreeRelease;

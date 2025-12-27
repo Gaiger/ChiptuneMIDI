@@ -397,13 +397,13 @@ QSpinBox:disabled {
     <string>Sustain</string>
    </property>
   </widget>
-  <widget class="QLabel" name="DamperOnButNoteOffSustainLabel">
+  <widget class="QGroupBox" name="DamperSustainGroupBox">
    <property name="geometry">
     <rect>
-     <x>8</x>
-     <y>170</y>
-     <width>212</width>
-     <height>24</height>
+     <x>10</x>
+     <y>156</y>
+     <width>304</width>
+     <height>80</height>
     </rect>
    </property>
    <property name="font">
@@ -411,115 +411,174 @@ QSpinBox:disabled {
      <pointsize>10</pointsize>
     </font>
    </property>
-   <property name="text">
-    <string>Sustain as damper on but note off</string>
+   <property name="title">
+    <string>Damper Sustain</string>
    </property>
-  </widget>
-  <widget class="QComboBox" name="DamperOnButNoteOffSustainCurveComboBox">
-   <property name="geometry">
-    <rect>
-     <x>8</x>
-     <y>200</y>
-     <width>128</width>
-     <height>24</height>
-    </rect>
+   <property name="flat">
+    <bool>false</bool>
    </property>
-   <item>
-    <property name="text">
-     <string>Linear</string>
+   <widget class="QDoubleSpinBox" name="DamperSustainTimeDoubleSpinBox">
+    <property name="geometry">
+     <rect>
+      <x>212</x>
+      <y>20</y>
+      <width>60</width>
+      <height>24</height>
+     </rect>
     </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Exponential</string>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
     </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Gaussian</string>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Fermi</string>
+    <property name="decimals">
+     <number>1</number>
     </property>
-   </item>
-  </widget>
-  <widget class="QSpinBox" name="DamperOnButNoteOffSustainSustainLevelSpinBox">
-   <property name="geometry">
-    <rect>
-     <x>240</x>
-     <y>200</y>
-     <width>58</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-   <property name="minimum">
-    <number>1</number>
-   </property>
-   <property name="maximum">
-    <number>127</number>
-   </property>
-   <property name="singleStep">
-    <number>8</number>
-   </property>
-   <property name="value">
-    <number>24</number>
-   </property>
-  </widget>
-  <widget class="QLabel" name="StartLevelLabel">
-   <property name="geometry">
-    <rect>
-     <x>144</x>
-     <y>200</y>
-     <width>91</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Start Level</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="SecLabel">
-   <property name="geometry">
-    <rect>
-     <x>284</x>
-     <y>170</y>
-     <width>32</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>sec</string>
-   </property>
-  </widget>
-  <widget class="QDoubleSpinBox" name="DamperOnButNoteOffSustainTimeDoubleSpinBox">
-   <property name="geometry">
-    <rect>
-     <x>224</x>
-     <y>170</y>
-     <width>54</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-   <property name="decimals">
-    <number>1</number>
-   </property>
-   <property name="maximum">
-    <double>99.900000000000006</double>
-   </property>
-   <property name="singleStep">
-    <double>0.500000000000000</double>
-   </property>
-   <property name="value">
-    <double>8.000000000000000</double>
-   </property>
+    <property name="maximum">
+     <double>99.900000000000006</double>
+    </property>
+    <property name="singleStep">
+     <double>0.500000000000000</double>
+    </property>
+    <property name="value">
+     <double>8.000000000000000</double>
+    </property>
+   </widget>
+   <widget class="QLabel" name="SecLabel">
+    <property name="geometry">
+     <rect>
+      <x>276</x>
+      <y>20</y>
+      <width>24</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>11</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>sec</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="DamperSustainLevelSpinBox">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>20</y>
+      <width>52</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <property name="minimum">
+     <number>1</number>
+    </property>
+    <property name="maximum">
+     <number>127</number>
+    </property>
+    <property name="singleStep">
+     <number>8</number>
+    </property>
+    <property name="value">
+     <number>24</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="StartLevelLabel">
+    <property name="geometry">
+     <rect>
+      <x>4</x>
+      <y>20</y>
+      <width>72</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>11</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Start Level</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="DamperSustainCurveComboBox">
+    <property name="geometry">
+     <rect>
+      <x>52</x>
+      <y>52</y>
+      <width>128</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <item>
+     <property name="text">
+      <string>Linear</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Exponential</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Gaussian</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Fermi</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QLabel" name="DurationLabel">
+    <property name="geometry">
+     <rect>
+      <x>148</x>
+      <y>20</y>
+      <width>60</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>11</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Duration</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Fallofflabel">
+    <property name="geometry">
+     <rect>
+      <x>4</x>
+      <y>52</y>
+      <width>44</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>11</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Falloff</string>
+    </property>
+   </widget>
   </widget>
  </widget>
  <resources/>

@@ -63,9 +63,9 @@ void ChannelListWidget::GetTimbre(int channel_index, int *p_waveform,
 			   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
 			   int *p_envelope_note_on_sustain_level,
 			   int *p_envelope_release_curve, double *p_envelope_release_duration_in_seconds,
-			   int *p_envelope_damper_on_but_note_off_sustain_level,
-			   int *p_envelope_damper_on_but_note_off_sustain_curve,
-			   double *p_envelope_damper_on_but_note_off_sustain_duration_in_seconds)
+			   int *p_envelope_damper_sustain_level,
+			   int *p_envelope_damper_sustain_curve,
+			   double *p_envelope_damper_sustain_duration_in_seconds)
 {
 	ChannelNodeWidget *p_channelnode_widget
 			= (ChannelNodeWidget*)m_p_vboxlayout->itemAt(m_channel_position_map.value(channel_index))->widget();
@@ -74,7 +74,7 @@ void ChannelListWidget::GetTimbre(int channel_index, int *p_waveform,
 									p_envelope_decay_curve, p_envelope_decay_duration_in_seconds,
 									p_envelope_note_on_sustain_level,
 									p_envelope_release_curve, p_envelope_release_duration_in_seconds,
-									p_envelope_damper_on_but_note_off_sustain_level,
-									p_envelope_damper_on_but_note_off_sustain_curve,
-									p_envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+									p_envelope_damper_sustain_level,
+									p_envelope_damper_sustain_curve,
+									p_envelope_damper_sustain_duration_in_seconds);
 }

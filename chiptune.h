@@ -65,9 +65,9 @@ int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const w
 									  int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
 									  uint8_t const envelope_note_on_sustain_level,
 									  int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
-									  uint8_t const envelope_damper_on_but_note_off_sustain_level,
-									  int8_t const envelope_damper_on_but_note_off_sustain_curve,
-									  float const envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+									  uint8_t const envelope_damper_sustain_level,
+									  int8_t const envelope_damper_sustain_curve,
+									  float const envelope_damper_sustain_duration_in_seconds);
 
 
 int32_t chiptune_get_amplitude_gain(void);

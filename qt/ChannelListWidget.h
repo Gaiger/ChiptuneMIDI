@@ -25,9 +25,9 @@ public :
 				   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
 				   int *p_envelope_note_on_sustain_level,
 				   int *p_envelope_release_curve, double *p_envelope_release_duration_in_seconds,
-				   int *p_envelope_damper_on_but_note_off_sustain_level,
-				   int *p_envelope_damper_on_but_note_off_sustain_curve,
-				   double *p_envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+				   int *p_envelope_damper_sustain_level,
+				   int *p_envelope_damper_sustain_curve,
+				   double *p_envelope_damper_sustain_duration_in_seconds);
 public:
 	signals:
 void OutputEnabled(int index, bool is_enabled);
@@ -37,9 +37,9 @@ void TimbreChanged(int index,
 				   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
 				   int envelope_note_on_sustain_level,
 				   int envelope_release_curve, double envelope_release_duration_in_seconds,
-				   int envelope_damper_on_but_note_off_sustain_level,
-				   int envelope_damper_on_but_note_off_sustain_curve,
-				   double envelope_damper_on_but_note_off_sustain_duration_in_seconds);
+				   int envelope_damper_sustain_level,
+				   int envelope_damper_sustain_curve,
+				   double envelope_damper_sustain_duration_in_seconds);
 private:
 	QVBoxLayout *m_p_vboxlayout;
 	QMap<int, int> m_channel_position_map;

@@ -75,9 +75,9 @@ public:
 							  int8_t const envelope_decay_curve = EnvelopeCurveFermi, float const envelope_decay_duration_in_seconds = 0.01,
 							  uint8_t const envelope_note_on_sustain_level = 96,
 							  int8_t const envelope_release_curve = EnvelopeCurveExponential, float const envelope_release_duration_in_seconds = 0.03,
-							  uint8_t const envelope_damper_on_but_note_off_sustain_level = 24,
-							  int8_t const envelope_damper_on_but_note_off_sustain_curve = EnvelopeCurveLinear,
-							  float const envelope_damper_on_but_note_off_sustain_duration_in_seconds = 8.0);
+							  uint8_t const envelope_damper_sustain_level = 24,
+							  int8_t const envelope_damper_sustain_curve = EnvelopeCurveLinear,
+							  float const envelope_damper_sustain_duration_in_seconds = 8.0);
 public slots:
 	void RequestWave(int const size);
 public:
