@@ -6,7 +6,6 @@
 
 #define SUSTAIN_AMPLITUDE(LOUNDNESS, SUSTAIN_LEVEL)	\
 	CHANNEL_CONTROLLER_SCALE_BY_LEVEL((LOUNDNESS), (SUSTAIN_LEVEL))
-
 #define MELODIC_ENVELOPE_DELTA_AMPLITUDE(AMPLITUDE, TABLE_VALUE)	\
 	CHANNEL_CONTROLLER_SCALE_BY_LEVEL((AMPLITUDE), (TABLE_VALUE))
 
@@ -93,6 +92,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 		case EnvelopeStateDamperSustain:
 			envelope_same_index_number = p_channel_controller->envelope_damper_sustain_same_index_number;
 			break;
+		case EnvelopeStateDamperEntryRelease:
 		case EnvelopeStateFreeRelease:
 			/*even true == IS_RESTING() treat as the normal release.*/
 			envelope_same_index_number = p_channel_controller->envelope_release_same_index_number;
@@ -111,50 +111,59 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 				break;
 			}
 
-			int8_t const * p_envelope_table = NULL;
-			int16_t delta_amplitude = 0;
-			int16_t shift_amplitude = 0;
-			switch(p_oscillator->envelope_state)
+			do
 			{
-			case EnvelopeStateAttack:
-				p_envelope_table = p_channel_controller->p_envelope_attack_table;
-				delta_amplitude = p_oscillator->loudness - p_oscillator->envelope_reference_amplitude;
-				shift_amplitude = p_oscillator->envelope_reference_amplitude;
-				break;
-			case EnvelopeStateDecay: {
-				p_envelope_table = p_channel_controller->p_envelope_decay_table;
-				int16_t sustain_ampitude
-						= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-											p_channel_controller->envelope_note_on_sustain_level);
-				do {
-					if(0 != p_oscillator->envelope_reference_amplitude){
-						delta_amplitude = p_oscillator->envelope_reference_amplitude - sustain_ampitude;
-						break;
-					}
-					delta_amplitude = p_oscillator->loudness - sustain_ampitude;
-				} while(0);
-				shift_amplitude = sustain_ampitude;
-			}	break;
-			case EnvelopeStateDamperSustain:
-				p_envelope_table = p_channel_controller->p_envelope_damper_sustain_table;
-				delta_amplitude = p_oscillator->loudness;
-				break;
-			default:
-			case EnvelopeStateFreeRelease:
-				/*even true == IS_RESTING() treat as the normal release.*/
-				p_envelope_table = p_channel_controller->p_envelope_release_table;
-				delta_amplitude = p_oscillator->envelope_reference_amplitude;
-				break;
-			}
+				if(0 < p_oscillator->envelope_table_index){
+					break;
+				}
+				uint16_t delta_amplitude = 0;
+				uint16_t shift_amplitude = 0;
+				int8_t const * p_envelope_table = NULL;
 
-			p_oscillator->amplitude = MELODIC_ENVELOPE_DELTA_AMPLITUDE(delta_amplitude,
-														 p_envelope_table[p_oscillator->envelope_table_index]);
-			p_oscillator->amplitude	+= shift_amplitude;
-			p_oscillator->envelope_reference_amplitude = p_oscillator->amplitude;
+				switch(p_oscillator->envelope_state)
+				{
+				case EnvelopeStateAttack:
+					p_envelope_table = p_channel_controller->p_envelope_attack_table;
+					delta_amplitude = p_oscillator->loudness - p_oscillator->envelope_reference_amplitude;
+					shift_amplitude = p_oscillator->envelope_reference_amplitude;
+					break;
+				case EnvelopeStateDecay: {
+					p_envelope_table = p_channel_controller->p_envelope_decay_table;
+					uint16_t sustain_ampitude
+							= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
+												p_channel_controller->envelope_note_on_sustain_level);
+					do {
+						if(0 != p_oscillator->envelope_reference_amplitude){
+							delta_amplitude = p_oscillator->envelope_reference_amplitude - sustain_ampitude;
+							break;
+						}
+						delta_amplitude = p_oscillator->loudness - sustain_ampitude;
+					} while(0);
+					shift_amplitude = sustain_ampitude;
+				}	break;
+				case EnvelopeStateDamperSustain:
+					p_envelope_table = p_channel_controller->p_envelope_damper_sustain_table;
+					delta_amplitude = p_oscillator->loudness;
+					break;
+				default:
+				case EnvelopeStateFreeRelease:
+					/*even true == IS_RESTING() treat as the normal release.*/
+					p_envelope_table = p_channel_controller->p_envelope_release_table;
+					delta_amplitude = p_oscillator->envelope_reference_amplitude;
+					break;
+				}
+				p_oscillator->p_envelope_table = p_envelope_table;
+				p_oscillator->delta_amplitude = delta_amplitude;
+				p_oscillator->shift_amplitude = shift_amplitude;
+			} while(0);
+			p_oscillator->amplitude = MELODIC_ENVELOPE_DELTA_AMPLITUDE(p_oscillator->delta_amplitude,
+														 p_oscillator->p_envelope_table[p_oscillator->envelope_table_index]);
+			p_oscillator->amplitude	+= p_oscillator->shift_amplitude;
 			if(INT16_MAX_PLUS_1 < p_oscillator->amplitude){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: amplitude = %u, "
-								"greater than INT16_MAX_PLUS_1 in %s\r\n", __func__);
+								"greater than INT16_MAX_PLUS_1 in %s\r\n", p_oscillator->amplitude, __func__);
 			}
+			p_oscillator->envelope_reference_amplitude = p_oscillator->amplitude;
 		} while(0);
 
 		p_oscillator->envelope_same_index_count += 1;

@@ -151,7 +151,7 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value
 
 				uint8_t to_envelope_state = EnvelopeStateDecay;
 				/*low to high, always attack, even it is LoundessBreathController.*/
-				if(p_oscillator->amplitude < p_oscillator->loudness){
+				if(p_oscillator->amplitude < MULTIPLY_THEN_DIVIDE_BY_128(p_oscillator->loudness, 127)){
 					to_envelope_state = EnvelopeStateAttack;
 				}
 				switch_melodic_envelope_state(p_oscillator, to_envelope_state);
