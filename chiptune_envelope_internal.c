@@ -33,19 +33,19 @@ int switch_melodic_envelope_state(oscillator_t * const p_oscillator, uint8_t con
 			ret = 1;
 			break;
 		}
-		if(evelope_state == p_oscillator->envelope_state){
-			ret = 2;
-			break;
-		}
+
 		if(false == IS_ACTIVATED(p_oscillator->state_bits)){
 			ret = 3;
 			break;
 		}
 
 		if(EnvelopeStateFreeRelease == p_oscillator->envelope_state){
-			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: voice = %d, note = %d,"
-										 "from evelope_state = EnvelopeStateFreeRelease in %s\r\n",
-							p_oscillator->voice, p_oscillator->note, __func__);
+			if(EnvelopeStateFreeRelease != evelope_state){
+				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: voice = %d, note = %d,"
+											 "ignore from EnvelopeStateFreeRelease to %u in %s\r\n",
+								p_oscillator->voice, p_oscillator->note, evelope_state, __func__);
+			}
+			break;
 		}
 		p_oscillator->envelope_state = evelope_state;
 		p_oscillator->envelope_table_index = 0;
@@ -133,10 +133,16 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 							= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
 												p_channel_controller->envelope_note_on_sustain_level);
 					do {
-						if(0 != p_oscillator->envelope_reference_amplitude){
+						if(p_oscillator->envelope_reference_amplitude >= sustain_ampitude)
+						{
 							delta_amplitude = p_oscillator->envelope_reference_amplitude - sustain_ampitude;
 							break;
 						}
+						//Theoretically, envelope_reference_amplitude should be always greater than sustain_ampitude
+						// here the fallback uses loudness to get delta_amplitude
+						CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_reference_amplitude = %u"
+													 ", greater than sustain_ampitude = %u in %s\r\n",
+										p_oscillator->envelope_reference_amplitude, sustain_ampitude, __func__);
 						delta_amplitude = p_oscillator->loudness - sustain_ampitude;
 					} while(0);
 					shift_amplitude = sustain_ampitude;

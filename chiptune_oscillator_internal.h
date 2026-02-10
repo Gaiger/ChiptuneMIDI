@@ -31,6 +31,7 @@ typedef struct _oscillator
 	uint16_t		amplitude; // [0, INT16_MAX_PLUS_1]
 union{
 	struct {
+		normalized_midi_level_t velocity;
 		uint8_t			envelope_state;
 
 		int8_t const *  p_envelope_table;

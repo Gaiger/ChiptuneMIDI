@@ -12,12 +12,12 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 
 enum
 {
-	LoundnessChangePressure = 0,
+	LoudnessChangePressure = 0,
 	LoudnessChangeVolume,
 	LoudnessChangeExpression,
-	LoundessBreathController,
+	LoudessBreathController,
 };
 void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value_t const value,
-									int8_t loudness_change_type);
+									int8_t const loudness_change_type);
 
 #endif // _CHIPTUNE_MIDI_CONTROL_CHANGE_INTERNAL_H_

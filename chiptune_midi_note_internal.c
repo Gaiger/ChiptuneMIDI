@@ -115,6 +115,7 @@ static int process_note_on_message(uint32_t const tick, int8_t const voice,
 	SET_NOTE_ON(p_oscillator->state_bits);
 	p_oscillator->voice = voice;
 	p_oscillator->note = note;
+	p_oscillator->velocity = normalized_velocity;
 
 	int16_t expression_added_pressure = p_channel_controller->expression
 			+ EFFECTIVE_PRESSURE_LEVEL(p_channel_controller->pressure);
@@ -182,7 +183,7 @@ static int process_note_off_message(uint32_t const tick, int8_t const voice,
 						tick, voice, note);
 		return -2;
 	}
-
+#if 1
 	do {
 		if(MIDI_PERCUSSION_CHANNEL == voice){
 			break;
@@ -207,7 +208,7 @@ static int process_note_off_message(uint32_t const tick, int8_t const voice,
 		process_effects(tick, EventTypeActivate, voice, note, normalized_velocity,
 						reduced_loundness_oscillator_index);
 	} while(0);
-
+#endif
 	return 0;
 }
 
