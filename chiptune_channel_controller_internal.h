@@ -74,6 +74,8 @@ typedef struct _channel_controller
 	normalized_midi_level_t		volume;
 	normalized_midi_level_t		pressure;
 	normalized_midi_level_t		expression;
+	normalized_midi_level_t		breath;
+
 	midi_value_t				pan;
 
 	int8_t						waveform;

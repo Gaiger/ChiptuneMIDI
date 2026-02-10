@@ -4,20 +4,12 @@
 #include <stdint.h>
 #include "chiptune_common_internal.h"
 
-#define EFFECTIVE_PRESSURE_LEVEL(NORMALIZED_PRESSURE_LEVEL)	\
-	DIVIDE_BY_16(((NORMALIZED_PRESSURE_LEVEL) - 1) + 15)
+uint16_t compute_loudness(normalized_midi_level_t const velocity,
+						  normalized_midi_level_t const volume, normalized_midi_level_t const pressure,
+						  normalized_midi_level_t const expression, normalized_midi_level_t const breath);
 
 int process_control_change_message(uint32_t const tick, int8_t const voice,
 								   midi_value_t const number, midi_value_t const value);
-
-enum
-{
-	LoudnessChangePressure = 0,
-	LoudnessChangeVolume,
-	LoudnessChangeExpression,
-	LoudessBreathController,
-};
-void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value_t const value,
-									int8_t const loudness_change_type);
+int process_channel_pressure_message(uint32_t const tick, int8_t const voice, midi_value_t const value);
 
 #endif // _CHIPTUNE_MIDI_CONTROL_CHANGE_INTERNAL_H_

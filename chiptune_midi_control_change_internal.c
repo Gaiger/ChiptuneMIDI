@@ -18,6 +18,29 @@
 
 #include "chiptune_midi_control_change_internal.h"
 
+#define EFFECTIVE_PRESSURE_LEVEL(NORMALIZED_PRESSURE_LEVEL)	\
+	DIVIDE_BY_16(((NORMALIZED_PRESSURE_LEVEL) - 1) + 15)
+
+#define EFFECTIVE_BREATH_LEVEL(NORMALIZED_BREATH_LEVEL) \
+	(NORMALIZED_BREATH_LEVEL)
+
+uint16_t compute_loudness(normalized_midi_level_t const velocity,
+						  normalized_midi_level_t const volume, normalized_midi_level_t const pressure,
+						  normalized_midi_level_t const expression, normalized_midi_level_t const breath)
+{
+	int16_t expression_pressure_breath_sum = expression + EFFECTIVE_PRESSURE_LEVEL(pressure)
+			+ EFFECTIVE_BREATH_LEVEL(breath);
+	uint32_t temp = DIVIDE_BY_128((uint32_t)velocity
+								 * expression_pressure_breath_sum * volume);
+	if(temp > INT16_MAX_PLUS_1){
+		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: loudness over IN16_MAX in %s\r\n", __func__);
+		temp = INT16_MAX_PLUS_1;
+	}
+
+	return (uint16_t)temp;
+}
+
+/**********************************************************************************/
 
 static inline void process_modulation_wheel(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
@@ -97,8 +120,15 @@ static void process_cc_registered_parameter(uint32_t const tick, int8_t const vo
 }
 
 /**********************************************************************************/
+enum
+{
+	LoudnessChangePressure = 0,
+	LoudnessChangeVolume,
+	LoudnessChangeExpression,
+	LoudessChangeBreathController,
+};
 
-void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value_t const value,
+static void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value_t const value,
 									int8_t const loudness_change_type)
 {
 	normalized_midi_level_t const normalized_value
@@ -107,8 +137,13 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value
 	normalized_midi_level_t pressure = p_channel_controller->pressure;
 	normalized_midi_level_t expression = p_channel_controller->expression;
 	normalized_midi_level_t volume = p_channel_controller->volume;
+	normalized_midi_level_t breath = p_channel_controller->breath;
 	do
 	{
+		if(LoudessChangeBreathController == loudness_change_type){
+			breath = normalized_value;
+			break;
+		}
 		if(LoudnessChangePressure == loudness_change_type){
 			pressure = normalized_value;
 			break;
@@ -123,8 +158,6 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value
 			break;
 		}
 	}while(0);
-
-	int16_t expression_added_pressure = expression + EFFECTIVE_PRESSURE_LEVEL(pressure);
 
 	do {
 		int16_t oscillator_index = get_occupied_oscillator_head_index();
@@ -142,17 +175,16 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value
 					break;
 				}
 
-				uint32_t updated_loudness = DIVIDE_BY_128((int32_t)p_oscillator->velocity
-											 * expression_added_pressure * volume);
-				if(updated_loudness > INT16_MAX_PLUS_1){
-					CHIPTUNE_PRINTF(cDeveloping, "WARNING :: loudness over IN16_MAX in %s\r\n", __func__);
-					updated_loudness = INT16_MAX_PLUS_1;
+				uint16_t updated_loudness = compute_loudness(p_oscillator->velocity, volume, pressure, expression, breath);
+				uint16_t original_pre_effect_loudness
+						= compute_loudness(p_oscillator->velocity, p_channel_controller->volume, p_channel_controller->pressure,
+										   p_channel_controller->expression, p_channel_controller->breath);
+
+				updated_loudness = (updated_loudness * p_oscillator->loudness + original_pre_effect_loudness/2)
+						/ ZERO_AS_ONE(original_pre_effect_loudness);
+				if(updated_loudness == p_oscillator->loudness){
+					break;
 				}
-				uint32_t theoretical_original_loudness = DIVIDE_BY_128(
-							p_oscillator->velocity *
-							(p_channel_controller->expression + EFFECTIVE_PRESSURE_LEVEL(p_channel_controller->pressure))
-							* p_channel_controller->volume);
-				updated_loudness = (updated_loudness * p_oscillator->loudness) / ZERO_AS_ONE(theoretical_original_loudness);
 
 #define SUSTAIN_AMPLITUDE(LOUNDNESS, SUSTAIN_LEVEL)	\
 	CHANNEL_CONTROLLER_SCALE_BY_LEVEL((LOUNDNESS), (SUSTAIN_LEVEL))
@@ -170,80 +202,6 @@ void process_loudness_change(uint32_t const tick, int8_t const voice, midi_value
 			oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 		}
 	} while(0);
-
-#if 0
-	int16_t expression_added_pressure = p_channel_controller->expression
-			+ EFFECTIVE_PRESSURE_LEVEL(p_channel_controller->pressure);
-	int32_t temp = DIVIDE_BY_128((int32_t)normalized_velocity
-								 * expression_added_pressure * p_channel_controller->volume);
-	if(temp > INT16_MAX_PLUS_1){
-		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: loudness over IN16_MAX in %s\r\n", __func__);
-		temp = INT16_MAX_PLUS_1;
-	}
-	uint16_t updated_loudness = temp;
-#endif
-
-#if 0
-	normalized_midi_level_t const normalized_value
-			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
-	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
-	int16_t original_value;
-	int16_t change_to_value;
-	do{
-		if(LoudnessChangeVolume == loudness_change_type){
-			original_value = p_channel_controller->volume;
-			change_to_value = normalized_value;
-			break;
-		}
-
-		original_value = p_channel_controller->expression + EFFECTIVE_PRESSURE_LEVEL(p_channel_controller->pressure);
-		if(LoundnessChangePressure == loudness_change_type){
-			change_to_value = p_channel_controller->expression + EFFECTIVE_PRESSURE_LEVEL(normalized_value);
-			break;
-		}
-		//LoudnessChangeExpression || LoundessBreathController
-		change_to_value = EFFECTIVE_PRESSURE_LEVEL(p_channel_controller->pressure) + normalized_value;
-	} while(0);
-
-	do {
-		if(normalized_value == original_value){
-			break;
-		}
-
-		int16_t oscillator_index = get_occupied_oscillator_head_index();
-		int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
-		for(int16_t i = 0; i < occupied_oscillator_number; i++){
-			oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
-			do {
-				if(voice != p_oscillator->voice){
-					break;
-				}
-				if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
-					break;
-				}
-				if(EnvelopeStateFreeRelease == p_oscillator->envelope_state){
-					break;
-				}
-
-				int32_t temp = (p_oscillator->loudness * change_to_value) / ZERO_AS_ONE(original_value);
-				if(temp > INT16_MAX_PLUS_1){
-					CHIPTUNE_PRINTF(cDeveloping, "WARNING :: loudness over IN16_MAX in %s\r\n", __func__);
-					temp = INT16_MAX_PLUS_1;
-				}
-				uint16_t const original_loudness = p_oscillator->loudness;
-				p_oscillator->loudness = (int16_t)temp;
-
-				uint8_t to_envelope_state = EnvelopeStateDecay;
-				/*low to high, always attack, even it is LoundessBreathController.*/
-				if(original_loudness < p_oscillator->loudness ){
-					to_envelope_state = EnvelopeStateAttack;
-				}
-				switch_melodic_envelope_state(p_oscillator, to_envelope_state);
-			} while(0);
-			oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
-		}
-	} while(0);
-#endif
 }
 
 /**********************************************************************************/
@@ -252,7 +210,9 @@ static void process_breath_controller(uint32_t const tick, int8_t const voice, m
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_BREATH_CONTROLLER(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_BREATH_CONTROLLER, voice, value);
-	process_loudness_change(tick, voice, value, LoudessBreathController);
+	process_loudness_change(tick, voice, value, LoudessChangeBreathController);
+	get_channel_controller_pointer_from_index(voice)->breath
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
 }
 
 /**********************************************************************************/
@@ -261,9 +221,9 @@ static void process_cc_volume(uint32_t const tick, int8_t const voice, midi_valu
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_VOLUME(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_VOLUME, voice, value);
-	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	process_loudness_change(tick, voice, value, LoudnessChangeVolume);
-	p_channel_controller->volume = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
+	get_channel_controller_pointer_from_index(voice)->volume
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
 }
 
 /**********************************************************************************/
@@ -297,9 +257,9 @@ static void process_cc_expression(uint32_t const tick, int8_t const voice, midi_
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EXPRESSION(%d) :: voice = %d, value = %d\r\n",
 					tick, MIDI_CC_EXPRESSION, voice, value);
-	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	process_loudness_change(tick, voice, value, LoudnessChangeExpression);
-	p_channel_controller->expression = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
+	get_channel_controller_pointer_from_index(voice)->expression
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
 }
 
 /**********************************************************************************/
@@ -473,6 +433,18 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 		break;
 	}
 
+	return 0;
+}
+
+/**********************************************************************************/
+
+int process_channel_pressure_message(uint32_t const tick, int8_t const voice, midi_value_t const value)
+{
+	CHIPTUNE_PRINTF(cMidiChannelPressure, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %d, value = %d, and expression = %d\r\n",
+					tick, voice, value, get_channel_controller_pointer_from_index(voice)->expression);
+
+	process_loudness_change(tick, voice, value, LoudnessChangePressure);
+	get_channel_controller_pointer_from_index(voice)->pressure = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
 	return 0;
 }
 

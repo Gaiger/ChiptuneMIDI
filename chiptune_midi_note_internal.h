@@ -2,6 +2,7 @@
 #define _CHIPTUNE_MIDI_NOTE_INTERNAL_H_
 
 #include <stdint.h>
+#include "chiptune_common_internal.h"
 
 int process_note_message(uint32_t const tick, bool const is_note_on,
 						 int8_t const voice, midi_value_t const note, midi_value_t const velocity);

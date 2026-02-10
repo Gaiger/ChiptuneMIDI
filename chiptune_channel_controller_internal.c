@@ -49,6 +49,8 @@ void reset_channel_controller_midi_control_change_parameters(int8_t const index)
 	p_channel_controller->volume = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(MIDI_SEVEN_BITS_CENTER_VALUE);
 	p_channel_controller->pressure = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
 	p_channel_controller->expression = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(INT8_MAX);
+	p_channel_controller->breath = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
+
 	p_channel_controller->pan = (midi_value_t)MIDI_SEVEN_BITS_CENTER_VALUE;
 
 	p_channel_controller->pitch_wheel_bend_range_in_semitones

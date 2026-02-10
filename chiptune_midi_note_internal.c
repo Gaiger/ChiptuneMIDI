@@ -100,11 +100,11 @@ static void rest_occupied_oscillator_with_same_voice_note(uint32_t const tick, i
 /**********************************************************************************/
 
 static int process_note_on_message(uint32_t const tick, int8_t const voice,
-								   midi_value_t const note, normalized_midi_level_t const normalized_velocity)
+								   midi_value_t const note, normalized_midi_level_t const velocity)
 {
 	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 
-	rest_occupied_oscillator_with_same_voice_note(tick, voice, note, normalized_velocity);
+	rest_occupied_oscillator_with_same_voice_note(tick, voice, note, velocity);
 
 	int16_t oscillator_index;
 	oscillator_t * const p_oscillator = acquire_oscillator(&oscillator_index);
@@ -115,28 +115,21 @@ static int process_note_on_message(uint32_t const tick, int8_t const voice,
 	SET_NOTE_ON(p_oscillator->state_bits);
 	p_oscillator->voice = voice;
 	p_oscillator->note = note;
-	p_oscillator->velocity = normalized_velocity;
-
-	int16_t expression_added_pressure = p_channel_controller->expression
-			+ EFFECTIVE_PRESSURE_LEVEL(p_channel_controller->pressure);
-	int32_t temp = DIVIDE_BY_128((int32_t)normalized_velocity
-								 * expression_added_pressure * p_channel_controller->volume);
-	if(temp > INT16_MAX_PLUS_1){
-		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: loudness over IN16_MAX in %s\r\n", __func__);
-		temp = INT16_MAX_PLUS_1;
-	}
-	p_oscillator->loudness = temp;
+	p_oscillator->velocity = velocity;
+	p_oscillator->loudness = compute_loudness(velocity, p_channel_controller->volume,
+											  p_channel_controller->pressure, p_channel_controller->expression,
+											  p_channel_controller->breath);
 	p_oscillator->current_phase = 0;
 	do {
 		if(MIDI_PERCUSSION_CHANNEL == voice){
-			finalize_percussion_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
+			finalize_percussion_oscillator_setup(tick, voice, note, velocity, p_oscillator);
 			break;
 		}
-		finalize_melodic_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
+		finalize_melodic_oscillator_setup(tick, voice, note, velocity, p_oscillator);
 	} while(0);
 
 	put_event(EventTypeActivate, oscillator_index, tick);
-	process_effects(tick, EventTypeActivate, voice, note, normalized_velocity, oscillator_index);
+	process_effects(tick, EventTypeActivate, voice, note, velocity, oscillator_index);
 	return 0;
 }
 

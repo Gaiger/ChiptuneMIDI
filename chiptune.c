@@ -211,17 +211,6 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 	return 0;
 }
 
-/**********************************************************************************/
-
-static int process_channel_pressure_message(uint32_t const tick, int8_t const voice, midi_value_t const value)
-{
-	CHIPTUNE_PRINTF(cMidiChannelPressure, "tick = %u, MIDI_MESSAGE_CHANNEL_PRESSURE :: voice = %d, value = %d, and expression = %d\r\n",
-					tick, voice, value, get_channel_controller_pointer_from_index(voice)->expression);
-
-	process_loudness_change(tick, voice, value, LoudnessChangePressure);
-	get_channel_controller_pointer_from_index(voice)->pressure = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
-	return 0;
-}
 
 /**********************************************************************************/
 
