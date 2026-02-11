@@ -186,11 +186,9 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, mid
 					break;
 				}
 
-#define SUSTAIN_AMPLITUDE(LOUNDNESS, SUSTAIN_LEVEL)	\
-	CHANNEL_CONTROLLER_SCALE_BY_LEVEL((LOUNDNESS), (SUSTAIN_LEVEL))
 				uint16_t updated_sustain_amplitude
-						= SUSTAIN_AMPLITUDE((uint16_t)updated_loudness,
-											p_channel_controller->envelope_note_on_sustain_level);
+						= calculate_sustain_amplitude((uint16_t)updated_loudness,
+													p_channel_controller->envelope_note_on_sustain_level);
 				uint8_t to_envelope_state = EnvelopeStateDecay;
 				if(p_oscillator->amplitude < updated_sustain_amplitude){
 					to_envelope_state = EnvelopeStateAttack;

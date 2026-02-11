@@ -135,11 +135,45 @@ static int process_note_on_message(uint32_t const tick, int8_t const voice,
 
 /**********************************************************************************/
 
-static int process_note_off_message(uint32_t const tick, int8_t const voice,
-								   midi_value_t const note, normalized_midi_level_t const normalized_velocity)
+static int process_damper_on_note_off(int16_t const primary_oscillator_index)
 {
-	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	if(MIDI_PERCUSSION_CHANNEL == get_oscillator_pointer_from_index(primary_oscillator_index)->voice){
+		return -1;
+	}
 
+	channel_controller_t const * const p_channel_controller
+			= get_channel_controller_pointer_from_index(get_oscillator_pointer_from_index(primary_oscillator_index)->voice);
+	if(false == p_channel_controller->is_damper_pedal_on){
+		return 1;
+	}
+
+	int cooperative_oscillator_number = 0;
+	cooperative_oscillator_number += 1;
+	cooperative_oscillator_number += count_all_subordinate_oscillators(MidiEffectAll,
+																			 primary_oscillator_index);
+	STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
+	cooperative_oscillator_indexes[0] = primary_oscillator_index;
+	get_all_subordinate_oscillator_indexes(MidiEffectAll,
+										   primary_oscillator_index,
+										   &cooperative_oscillator_indexes[1]);
+
+	for(int16_t i = 0; i < cooperative_oscillator_number; i++){
+		oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(cooperative_oscillator_indexes[i]);
+		SET_NOTE_OFF(p_oscillator->state_bits);
+		uint8_t evelope_state = EnvelopeStateDamperEntryRelease;
+		if(p_oscillator->amplitude < calculate_sustain_amplitude(p_oscillator->loudness, p_channel_controller->envelop_damper_sustain_level)){
+			evelope_state = EnvelopeStateDamperSustain;
+		}
+		switch_melodic_envelope_state(p_oscillator, evelope_state);
+	}
+	return 0;
+}
+
+/**********************************************************************************/
+
+static int process_note_off_message(uint32_t const tick, int8_t const voice,
+								   midi_value_t const note, normalized_midi_level_t const velocity)
+{
 	bool is_found = false;
 	int16_t oscillator_index = get_occupied_oscillator_head_index();
 	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
@@ -161,9 +195,15 @@ static int process_note_off_message(uint32_t const tick, int8_t const voice,
 			if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
 				break;
 			}
-			put_event(EventTypeFree, oscillator_index, tick);
-			process_effects(tick, EventTypeFree, voice, note, normalized_velocity, oscillator_index);
+
 			is_found = true;
+			if(MIDI_PERCUSSION_CHANNEL == voice
+					|| false == get_channel_controller_pointer_from_index(voice)->is_damper_pedal_on){
+				put_event(EventTypeFree, oscillator_index, tick);
+				process_effects(tick, EventTypeFree, voice, note, velocity, oscillator_index);
+				break;
+			}
+			process_damper_on_note_off(oscillator_index);
 		} while(0);
 		if(true == is_found){
 			break;
@@ -176,32 +216,6 @@ static int process_note_off_message(uint32_t const tick, int8_t const voice,
 						tick, voice, note);
 		return -2;
 	}
-#if 1
-	do {
-		if(MIDI_PERCUSSION_CHANNEL == voice){
-			break;
-		}
-		if(false == p_channel_controller->is_damper_pedal_on){
-			break;
-		}
-		int16_t const original_oscillator_index = oscillator_index;
-		int16_t reduced_loundness_oscillator_index;
-		oscillator_t * const p_oscillator = replicate_oscillator(original_oscillator_index,
-																 &reduced_loundness_oscillator_index);
-		RESET_STATE_BITES(p_oscillator->state_bits);
-
-		SET_NOTE_OFF(p_oscillator->state_bits);
-		p_oscillator->loudness
-				= LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(
-					p_oscillator->loudness,
-					p_channel_controller->envelop_damper_sustain_level);
-
-		finalize_melodic_oscillator_setup(tick, voice, note, normalized_velocity, p_oscillator);
-		put_event(EventTypeActivate, reduced_loundness_oscillator_index, tick);
-		process_effects(tick, EventTypeActivate, voice, note, normalized_velocity,
-						reduced_loundness_oscillator_index);
-	} while(0);
-#endif
 	return 0;
 }
 

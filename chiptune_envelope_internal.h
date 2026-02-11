@@ -3,6 +3,10 @@
 
 #include "chiptune_oscillator_internal.h"
 
+
+uint16_t calculate_sustain_amplitude(uint16_t const loudness,
+								   normalized_midi_level_t const envelope_sustain_level);
+
 enum EnvelopeState
 {
 	EnvelopeStateAttack = 0,
