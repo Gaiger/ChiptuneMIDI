@@ -137,7 +137,7 @@ static int process_note_on_message(uint32_t const tick, int8_t const voice,
 
 static int process_damper_on_note_off(int16_t const primary_oscillator_index)
 {
-	if(MIDI_PERCUSSION_CHANNEL == get_oscillator_pointer_from_index(primary_oscillator_index)->voice){
+	if(true == IS_PERCUSSION_OSCILLATOR(get_oscillator_pointer_from_index(primary_oscillator_index))){
 		return -1;
 	}
 
@@ -197,7 +197,7 @@ static int process_note_off_message(uint32_t const tick, int8_t const voice,
 			}
 
 			is_found = true;
-			if(MIDI_PERCUSSION_CHANNEL == voice
+			if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)
 					|| false == get_channel_controller_pointer_from_index(voice)->is_damper_pedal_on){
 				put_event(EventTypeFree, oscillator_index, tick);
 				process_effects(tick, EventTypeFree, voice, note, velocity, oscillator_index);
