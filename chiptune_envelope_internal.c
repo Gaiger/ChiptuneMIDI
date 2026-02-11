@@ -153,7 +153,7 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 						//Theoretically, envelope_reference_amplitude should be always greater than sustain_ampitude
 						// here the fallback uses loudness to get delta_amplitude
 						CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_reference_amplitude = %u"
-													 ", greater than sustain_ampitude = %u as envelope_state = %u in %s\r\n",
+													 ", less than sustain_ampitude = %u as envelope_state = %u in %s\r\n",
 										p_oscillator->envelope_reference_amplitude, sustain_ampitude,
 										p_oscillator->envelope_state, __func__);
 						delta_amplitude = p_oscillator->loudness - sustain_ampitude;

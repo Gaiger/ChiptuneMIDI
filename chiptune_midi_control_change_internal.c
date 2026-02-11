@@ -24,7 +24,7 @@
 #define EFFECTIVE_BREATH_LEVEL(NORMALIZED_BREATH_LEVEL) \
 	(NORMALIZED_BREATH_LEVEL)
 
-uint16_t compute_loudness(normalized_midi_level_t const velocity,
+uint16_t calculate_loudness(normalized_midi_level_t const velocity,
 						  normalized_midi_level_t const volume, normalized_midi_level_t const pressure,
 						  normalized_midi_level_t const expression, normalized_midi_level_t const breath)
 {
@@ -33,7 +33,7 @@ uint16_t compute_loudness(normalized_midi_level_t const velocity,
 	uint32_t temp = DIVIDE_BY_128((uint32_t)velocity
 								 * expression_pressure_breath_sum * volume);
 	if(temp > INT16_MAX_PLUS_1){
-		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: loudness over IN16_MAX in %s\r\n", __func__);
+		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: loudness over INT16_MAX_PLUS_1 in %s\r\n", __func__);
 		temp = INT16_MAX_PLUS_1;
 	}
 
@@ -183,9 +183,9 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, mid
 					break;
 				}
 
-				uint16_t updated_loudness = compute_loudness(p_oscillator->velocity, volume, pressure, expression, breath);
+				uint16_t updated_loudness = calculate_loudness(p_oscillator->velocity, volume, pressure, expression, breath);
 				uint16_t original_pre_effect_loudness
-						= compute_loudness(p_oscillator->velocity, p_channel_controller->volume, p_channel_controller->pressure,
+						= calculate_loudness(p_oscillator->velocity, p_channel_controller->volume, p_channel_controller->pressure,
 										   p_channel_controller->expression, p_channel_controller->breath);
 
 				updated_loudness = (updated_loudness * p_oscillator->loudness + original_pre_effect_loudness/2)

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "chiptune_common_internal.h"
 
-uint16_t compute_loudness(normalized_midi_level_t const velocity,
+uint16_t calculate_loudness(normalized_midi_level_t const velocity,
 						  normalized_midi_level_t const volume, normalized_midi_level_t const pressure,
 						  normalized_midi_level_t const expression, normalized_midi_level_t const breath);
 

@@ -586,12 +586,12 @@ static inline int16_t obtain_sine_wave(uint16_t phase)
 
 static uint16_t s_noise_random_seed = 1;
 
-static uint16_t generate_noise_random(void)
+static uint16_t generate_lfsr15_random(void)
 {
 	uint8_t feedback;
 	/*hardware chiptune project version :*/
-	feedback=((s_noise_random_seed>>13)&1)^((s_noise_random_seed>>14)&1);
-	s_noise_random_seed = (s_noise_random_seed<<1)+feedback;
+	feedback=((s_noise_random_seed >> 13) & 1)^((s_noise_random_seed >> 14) & 1 );
+	s_noise_random_seed = (s_noise_random_seed<<1) + feedback;
 	s_noise_random_seed &= 0x7fff;
 	/*
 	 * NES version :
@@ -601,7 +601,13 @@ static uint16_t generate_noise_random(void)
 	return s_noise_random_seed;
 }
 
+static uint16_t generate_waveform_noise_value(void)
+{
+	return MULTIPLY_BY_2(generate_lfsr15_random()) - INT16_MAX_PLUS_1;
+}
+
 /**********************************************************************************/
+
 #define SINE_WAVE(PHASE)							(obtain_sine_wave(PHASE))
 
 void update_mono_wave_amplitude(oscillator_t * const p_oscillator)
@@ -649,7 +655,7 @@ void update_mono_wave_amplitude(oscillator_t * const p_oscillator)
 			wave = SINE_WAVE(p_oscillator->current_phase);
 			break;
 		case WaveformNoise:
-			wave = (int16_t)generate_noise_random();
+			wave = (int16_t)generate_waveform_noise_value();
 			break;
 		default:
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: waveform = %d in %s\r\n ",

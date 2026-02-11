@@ -305,12 +305,19 @@ static inline uint32_t calculate_chorus_delta_tick(normalized_midi_level_t choru
 //xor-shift pesudo random https://en.wikipedia.org/wiki/Xorshift
 static uint32_t s_chorus_random_seed = 20240129;
 
-static uint16_t generate_chorus_random(void)
+static uint16_t generate_xorshift_random(void)
 {
 	s_chorus_random_seed ^= s_chorus_random_seed << 13;
 	s_chorus_random_seed ^= s_chorus_random_seed >> 17;
 	s_chorus_random_seed ^= s_chorus_random_seed << 5;
 	return (uint16_t)(s_chorus_random_seed);
+}
+
+/**********************************************************************************/
+
+static inline uint16_t generate_chorus_detune_value()
+{
+	return generate_xorshift_random();
 }
 
 /**********************************************************************************/
@@ -327,7 +334,8 @@ static float const calculate_chorus_detune_in_semitones(normalized_midi_level_t 
 	}
 
 	float chorus_detune_semitones
-			= RANDOM_RANGE_TO_PLUS_MINUS_ONE(generate_chorus_random()) * (float)chorus_depth/(float)(INT8_MAX_PLUS_1);
+			= RANDOM_RANGE_TO_PLUS_MINUS_ONE(generate_chorus_detune_value())
+			* (float)chorus_depth/(float)(INT8_MAX_PLUS_1);
 	chorus_detune_semitones *= max_chorus_detune_in_semitones;
 	//CHIPTUNE_PRINTF(cDeveloping, "chorus_detune_semitones = %3.2f\r\n", chorus_detune_semitones);
 	return chorus_detune_semitones;

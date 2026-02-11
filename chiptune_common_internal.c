@@ -24,7 +24,7 @@ uint16_t const calculate_phase_increment_from_pitch(float const pitch_in_semiton
 	 * freq = 440 * 2**((note - 69)/12)
 	*/
 	float frequency = 440.0f * powf(2.0f, (pitch_in_semitones - 69.0f)/12.0f);
-	frequency = roundf(frequency * 100.0f + 0.5f)/100.0f;
+	frequency = roundf(frequency * 100.0f)/100.0f;
 
 	/*
 	 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX + 1)/delta_phase
