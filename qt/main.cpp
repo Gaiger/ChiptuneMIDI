@@ -67,7 +67,11 @@ int main(int argc, char* argv[])
 	//p_player->moveToThread(a.thread());
 	p_player->Play();
 #endif
-	TuneManager *p_tune_manager = new TuneManager(true, 16000, 16);
+	int sampling_rate = 44100;
+#ifdef _DEBUG
+	sampling_rate = 16000;
+#endif
+	TuneManager *p_tune_manager = new TuneManager(true, sampling_rate, 16);
 	QObject::connect(&app, &QCoreApplication::aboutToQuit,
 					   p_tune_manager, &QObject::deleteLater);
 
