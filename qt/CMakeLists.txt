@@ -114,7 +114,7 @@ if (QT_VERSION_MAJOR EQUAL 5)
 endif()
 
 if(WIN32)
-    target_sources(ChiptuneMIDI PRIVATE ${RESOURCE})
+    target_sources(ChiptuneMIDI PRIVATE ${RESOURCES})
 endif()
 
 add_custom_command(TARGET ChiptuneMIDI POST_BUILD
