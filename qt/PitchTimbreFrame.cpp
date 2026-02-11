@@ -32,20 +32,26 @@ PitchTimbreFrame::PitchTimbreFrame(int index, QWidget *parent)
 	m_previous_dutycycle = 0;// dutycycle 50
 	m_previous_sustain_level = ui->SustainLevelSpinBox->value();
 
-	if(MIDI_PERCUSSION_CHANNEL == index){
-		ui->WaveFormComboBox->setEnabled(false);
-		ui->AttackCurveComboBox->setEnabled(false);
-		ui->AttackTimeSpinBox->setEnabled(false);
-		ui->DecayCurveComboBox->setEnabled(false);
-		ui->DecayTimeSpinBox->setEnabled(false);
-		ui->SustainLevelSpinBox->setEnabled(false);
-		ui->ReleaseCurveComboBox->setEnabled(false);
-		ui->ReleaseTimeSpinBox->setEnabled(false);
+	do
+	{
+		if(MIDI_PERCUSSION_CHANNEL == index){
+			ui->WaveFormComboBox->setEnabled(false);
+			ui->AttackCurveComboBox->setEnabled(false);
+			ui->AttackTimeSpinBox->setEnabled(false);
+			ui->DecayCurveComboBox->setEnabled(false);
+			ui->DecayTimeSpinBox->setEnabled(false);
+			ui->SustainLevelSpinBox->setEnabled(false);
+			ui->ReleaseCurveComboBox->setEnabled(false);
+			ui->ReleaseTimeSpinBox->setEnabled(false);
 
-		ui->DamperSustainLevelSpinBox->setEnabled(false);
-		ui->DamperSustainCurveComboBox->setEnabled(false);
-		ui->DamperSustainTimeDoubleSpinBox->setEnabled(false);
-	}
+			ui->DamperSustainLevelSpinBox->setEnabled(false);
+			ui->DamperSustainCurveComboBox->setEnabled(false);
+			ui->DamperSustainTimeDoubleSpinBox->setEnabled(false);
+			break;
+		}
+		ui->DamperSustainLevelSpinBox->setMaximum(ui->SustainLevelSpinBox->value());
+	} while(0);
+
 	QStandardItemModel *p_model =
 		  qobject_cast<QStandardItemModel *>(ui->DutyCycleComboBox->model());
 	QStandardItem *p_item = p_model->item(4); //no duty cycle
@@ -223,7 +229,7 @@ void PitchTimbreFrame::on_DecayTimeSpinBox_valueChanged(int value)
 
 void PitchTimbreFrame::on_SustainLevelSpinBox_valueChanged(int value)
 {
-	Q_UNUSED(value);
+	ui->DamperSustainLevelSpinBox->setMaximum(value);
 	EmitTimbreChanged();
 }
 

@@ -222,7 +222,7 @@ static void reset_channel_controller_all_parameters(int8_t const index)
 #define DEFAULT_ENVELOPE_SUSTAIN_LEVEL				(96)
 #define DEFAULT_ENVELOPE_RLEASE_DURATION_IN_SECOND	(0.03f)
 #define DEFAULT_DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL	\
-													(24)
+													(72)
 #define DEFAULT_ENVELOPE_DAMPER_ON_BUT_NOTE_OFF_SUSTAIN_DURATION_IN_SECOND \
 													(8.0f)
 
