@@ -134,44 +134,32 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 					delta_amplitude = p_oscillator->loudness - p_oscillator->envelope_reference_amplitude;
 					shift_amplitude = p_oscillator->envelope_reference_amplitude;
 					break;
-				case EnvelopeStateDecay: {
+				case EnvelopeStateDecay:
+				case EnvelopeStateDamperEntryRelease: {
 					p_envelope_table = p_channel_controller->p_envelope_decay_table;
-					uint16_t note_on_sustain_ampitude
-							= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-												p_channel_controller->envelope_note_on_sustain_level);
+					normalized_midi_level_t sustain_level = p_channel_controller->envelope_note_on_sustain_level;
+					if(EnvelopeStateDamperEntryRelease == p_oscillator->envelope_state){
+						p_envelope_table = p_channel_controller->p_envelope_release_table;
+						sustain_level = p_channel_controller->envelop_damper_sustain_level;
+					}
+
+					uint16_t sustain_ampitude = SUSTAIN_AMPLITUDE(p_oscillator->loudness, sustain_level);
 					do {
-						if(p_oscillator->envelope_reference_amplitude >= note_on_sustain_ampitude)
+						if(p_oscillator->envelope_reference_amplitude >= sustain_ampitude)
 						{
-							delta_amplitude = p_oscillator->envelope_reference_amplitude - note_on_sustain_ampitude;
+							delta_amplitude = p_oscillator->envelope_reference_amplitude - sustain_ampitude;
 							break;
 						}
 						//Theoretically, envelope_reference_amplitude should be always greater than sustain_ampitude
 						// here the fallback uses loudness to get delta_amplitude
 						CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_reference_amplitude = %u"
-													 ", greater than note_on_sustain_ampitude = %u in %s\r\n",
-										p_oscillator->envelope_reference_amplitude, note_on_sustain_ampitude, __func__);
-						delta_amplitude = p_oscillator->loudness - note_on_sustain_ampitude;
+													 ", greater than sustain_ampitude = %u as envelope_state = %u in %s\r\n",
+										p_oscillator->envelope_reference_amplitude, sustain_ampitude,
+										p_oscillator->envelope_state, __func__);
+						delta_amplitude = p_oscillator->loudness - sustain_ampitude;
 					} while(0);
-					shift_amplitude = note_on_sustain_ampitude;
-				}	break;
-				case EnvelopeStateDamperEntryRelease: {
-					p_envelope_table = p_channel_controller->p_envelope_release_table;
-					uint16_t damper_sustain_ampitude
-							= SUSTAIN_AMPLITUDE(p_oscillator->loudness,
-												p_channel_controller->envelop_damper_sustain_level);
-					do {
-						if(p_oscillator->envelope_reference_amplitude >= damper_sustain_ampitude)
-						{
-							delta_amplitude = p_oscillator->envelope_reference_amplitude - damper_sustain_ampitude;
-							break;
-						}
-						CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_reference_amplitude = %u"
-													 ", greater than damper_sustain_ampitude = %u in %s\r\n",
-										p_oscillator->envelope_reference_amplitude, damper_sustain_ampitude, __func__);
-						delta_amplitude = p_oscillator->loudness - damper_sustain_ampitude;
-					} while(0);
-					shift_amplitude = damper_sustain_ampitude;
-				}	break;
+					shift_amplitude = sustain_ampitude;
+				  } break;
 				case EnvelopeStateDamperSustain:
 					p_envelope_table = p_channel_controller->p_envelope_damper_sustain_table;
 					delta_amplitude = p_oscillator->envelope_reference_amplitude;

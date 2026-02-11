@@ -171,6 +171,14 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, mid
 				if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
 					break;
 				}
+				/*
+				 * NOTE_OFF + damper tail: ignore loudness updates.
+				 * Reason: loudness-driven envelope adjustment WILL leave the oscillator in a
+				 * state that cannot re-enter EnvelopeStateDamperSustain in the current design.
+				 */
+				if(false == IS_NOTE_ON(p_oscillator->state_bits)){
+					break;
+				}
 				if(EnvelopeStateFreeRelease == p_oscillator->envelope_state){
 					break;
 				}
