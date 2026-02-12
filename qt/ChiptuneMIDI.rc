@@ -3,8 +3,8 @@
 IDI_ICON1	ICON	DISCARDABLE	"chiptune.ico"
 
 VS_VERSION_INFO VERSIONINFO
-	FILEVERSION 0,0,7,0
-	PRODUCTVERSION 0,0,7,0
+	FILEVERSION 0,0,8,0
+	PRODUCTVERSION 0,0,8,0
 	FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
 	FILEFLAGS VS_FF_DEBUG
@@ -21,11 +21,11 @@ VS_VERSION_INFO VERSIONINFO
 			BEGIN
 				VALUE "CompanyName", "\0"
 				VALUE "FileDescription", "ChiptuneMIDI: Convert .mid file into chiptune\0"
-				VALUE "FileVersion", "0.0.7.0\0"
-				VALUE "LegalCopyright", "Copyright 2025 by Chen Gaiger\0"
+				VALUE "FileVersion", "0.0.8.0\0"
+				VALUE "LegalCopyright", "Copyright 2026 by Chen Gaiger\0"
 				VALUE "OriginalFilename", "ChiptuneMIDI.exe\0"
 				VALUE "ProductName", "ChiptuneMIDI\0"
-				VALUE "ProductVersion", "0.0.7.0\0"
+				VALUE "ProductVersion", "0.0.8.0\0"
 			END
 		END
 		BLOCK "VarFileInfo"
