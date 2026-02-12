@@ -670,17 +670,9 @@ void update_mono_wave_amplitude(oscillator_t * const p_oscillator)
 }
 
 /**********************************************************************************/
-#if(0)
-#define CHANNEL_WAVE_AMPLITUDE(MONO_WAVE_AMPLITUDE, CHANNEL_PANNING_WEIGHT) \
-													MULTIPLY_BY_2( \
-														DIVIDE_BY_128((int64_t)(MONO_WAVE_AMPLITUDE) * (CHANNEL_PANNING_WEIGHT)) \
-													)
-#else
-#define CHANNEL_WAVE_AMPLITUDE(MONO_WAVE_AMPLITUDE, CHANNEL_PANNING_WEIGHT) \
-														\
-														DIVIDE_BY_128((int64_t)(MONO_WAVE_AMPLITUDE) * (CHANNEL_PANNING_WEIGHT))
 
-#endif
+#define PANNED_WAVE_AMPLITUDE(MONO_WAVE_AMPLITUDE, PANNING_WEIGHT) \
+	DIVIDE_BY_128((int64_t)(MONO_WAVE_AMPLITUDE) * (PANNING_WEIGHT))
 
 int32_t generate_panned_wave_amplitude(oscillator_t * const p_oscillator)
 {
@@ -692,13 +684,13 @@ int32_t generate_panned_wave_amplitude(oscillator_t * const p_oscillator)
 
 		channel_controller_t const * const p_channel_controller
 				= get_channel_controller_pointer_from_index(p_oscillator->voice);
-		int8_t channel_panning_weight = p_channel_controller->pan;
-		channel_panning_weight = ZERO_AS_ONE(channel_panning_weight);
+		bool is_pan_not_centered = (MIDI_SEVEN_BITS_CENTER_VALUE != p_channel_controller->pan);
+		uint8_t panning_weight = ONE_TO_ZERO(p_channel_controller->pan + (uint8_t)is_pan_not_centered);
 		if(true == is_processing_left_channel()){
-			channel_panning_weight = 2 * MIDI_SEVEN_BITS_CENTER_VALUE - channel_panning_weight;
+			panning_weight = 2 * MIDI_SEVEN_BITS_CENTER_VALUE - panning_weight;
 		}
 		pannel_wave_amplitude
-				= CHANNEL_WAVE_AMPLITUDE(p_oscillator->mono_wave_amplitude, channel_panning_weight)/2;
+				= PANNED_WAVE_AMPLITUDE(p_oscillator->mono_wave_amplitude, panning_weight);
 	} while(0);
 
 	return pannel_wave_amplitude;
