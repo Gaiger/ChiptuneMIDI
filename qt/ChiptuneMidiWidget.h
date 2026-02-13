@@ -39,7 +39,7 @@ private slots:
 	void on_OpenMidiFilePushButton_released(void);
 	void on_SaveFilePushButton_released(void);
 
-	void on_StopPushButton_released(void);
+	void on_EjectPushButton_released(void);
 	void on_PlayPausePushButton_released(void);
 	void on_AmplitudeGainSlider_sliderMoved(int value);
 	void on_AllOutputDisabledPushButton_released(void);
@@ -63,10 +63,10 @@ private slots:
 											int envelope_damper_sustain_curve,
 											double envelope_damper_sustain_duration_in_seconds);
 private:
-	int PlayMidiFile(QString filename_string);
+	int LoadAndPlayMidiFile(QString filename_string);
 	void SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds,
 															   bool is_to_prime_audio_player = false);
-	void StopMidiFile(void);
+	void EjectMidiFile(void);
 	void UpdateTempoLabelText(void);
 
 private:

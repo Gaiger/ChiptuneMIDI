@@ -100,7 +100,7 @@ QSlider::handle {
    </property>
    <property name="font">
     <font>
-     <pointsize>20</pointsize>
+     <pointsize>24</pointsize>
      <bold>true</bold>
     </font>
    </property>
@@ -172,7 +172,7 @@ color: rgb(208, 208, 208);
     <string>00:00 / 00:00</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="StopPushButton">
+  <widget class="QPushButton" name="EjectPushButton">
    <property name="geometry">
     <rect>
      <x>16</x>
@@ -183,12 +183,11 @@ color: rgb(208, 208, 208);
    </property>
    <property name="font">
     <font>
-     <pointsize>12</pointsize>
-     <bold>true</bold>
+     <pointsize>22</pointsize>
     </font>
    </property>
    <property name="text">
-    <string>◽</string>
+    <string>⏏️</string>
    </property>
   </widget>
   <widget class="QPushButton" name="PlayPausePushButton">
@@ -205,12 +204,11 @@ color: rgb(208, 208, 208);
    </property>
    <property name="font">
     <font>
-     <pointsize>12</pointsize>
-     <bold>true</bold>
+     <pointsize>22</pointsize>
     </font>
    </property>
    <property name="text">
-    <string>▷</string>
+    <string>▶️</string>
    </property>
   </widget>
   <widget class="QSlider" name="AmplitudeGainSlider">

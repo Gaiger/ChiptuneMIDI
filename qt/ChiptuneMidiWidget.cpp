@@ -275,7 +275,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidge
 	QWidget::setAcceptDrops(true);
 
 	qApp->installEventFilter(this);
-	StopMidiFile();
+	EjectMidiFile();
 }
 
 /**********************************************************************************/
@@ -311,9 +311,9 @@ static QString FormatTimeString(qint64 timeMilliSeconds)
 
 /**********************************************************************************/
 
-int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
+int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 {
-	StopMidiFile();
+	EjectMidiFile();
 
 	QThread::msleep(10);
 	QString message_string;
@@ -406,7 +406,7 @@ int ChiptuneMidiWidget::PlayMidiFile(QString filename_string)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::StopMidiFile(void)
+void ChiptuneMidiWidget::EjectMidiFile(void)
 {
 	if(nullptr != m_p_sequencer_widget){
 		delete m_p_sequencer_widget;
@@ -773,7 +773,7 @@ void ChiptuneMidiWidget::dropEvent(QDropEvent *event)
 			break;
 		}
 
-		PlayMidiFile(dropped_filename_string);
+		LoadAndPlayMidiFile(dropped_filename_string);
 	}while(0);
 	QWidget::activateWindow();
 	QWidget::setFocus();
@@ -829,7 +829,7 @@ void ChiptuneMidiWidget::on_OpenMidiFilePushButton_released(void)
 		if(true == open_filename_string.isNull()){
 			break;
 		}
-		PlayMidiFile(open_filename_string);
+		LoadAndPlayMidiFile(open_filename_string);
 	} while(0);
 }
 
@@ -876,15 +876,15 @@ void ChiptuneMidiWidget::on_SaveFilePushButton_released(void)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_StopPushButton_released(void)
+void ChiptuneMidiWidget::on_EjectPushButton_released(void)
 {
-	StopMidiFile();
+	EjectMidiFile();
 }
 
 /**********************************************************************************/
 
-#define UNICODE_PLAY_ICON						u8"\u25B7"
-#define UNICODE_PAUSE_ICON						u8"\u2016"
+#define UNICODE_PLAY_ICON						u8"▶️"
+#define UNICODE_PAUSE_ICON						u8"⏸️"
 
 bool ChiptuneMidiWidget::IsPlayPauseButtonInPlayState(void)
 {
