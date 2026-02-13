@@ -197,13 +197,27 @@ static int process_note_off_message(uint32_t const tick, int8_t const voice,
 			}
 
 			is_found = true;
-			if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)
-					|| false == get_channel_controller_pointer_from_index(voice)->is_damper_pedal_on){
-				put_event(EventTypeFree, oscillator_index, tick);
-				process_effects(tick, EventTypeFree, voice, note, velocity, oscillator_index);
+			bool is_damper_take_effect = false;
+			do
+			{
+				if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
+					break;
+				}
+				if(true == IS_RESTING_OR_PREPARE_TO_REST(p_oscillator->state_bits)){
+					break;
+				}
+				if(false == get_channel_controller_pointer_from_index(voice)->is_damper_pedal_on){
+					break;
+				}
+				process_damper_on_note_off(oscillator_index);
+				is_damper_take_effect = true;
+			}while(0);
+			if(true == is_damper_take_effect){
 				break;
 			}
-			process_damper_on_note_off(oscillator_index);
+
+			put_event(EventTypeFree, oscillator_index, tick);
+			process_effects(tick, EventTypeFree, voice, note, velocity, oscillator_index);
 		} while(0);
 		if(true == is_found){
 			break;
