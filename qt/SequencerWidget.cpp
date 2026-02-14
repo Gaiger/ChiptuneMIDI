@@ -491,11 +491,11 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, double audio_out_l
 			drawn_hightest_pitch = G9;
 			break;
 		}
-		drawn_hightest_pitch = highest_pitch + TOP_PADDING_IN_PITCH    ;
+		drawn_hightest_pitch = highest_pitch + TOP_PADDING_IN_PITCH;
 	} while(0);
 
 	if((drawn_hightest_pitch - A0 + 1) * ONE_BEAT_HEIGHT < QWidget::height()){
-		drawn_hightest_pitch = (QWidget::height()/ONE_BEAT_HEIGHT) + 1;
+		drawn_hightest_pitch = (QWidget::height()/ONE_BEAT_HEIGHT) + A0 - 1;
 	}
 	m_p_note_name_widget = new NoteNameWidget(drawn_hightest_pitch, this);
 	m_p_note_duration_widget = new NoteDurationWidget(p_tune_manager, drawn_hightest_pitch, audio_out_latency_in_seconds, this);
