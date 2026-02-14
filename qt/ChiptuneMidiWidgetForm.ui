@@ -301,9 +301,9 @@ color: rgb(208, 208, 208);
   <widget class="QSpinBox" name="PitchShiftSpinBox">
    <property name="geometry">
     <rect>
-     <x>1072</x>
+     <x>1068</x>
      <y>732</y>
-     <width>40</width>
+     <width>52</width>
      <height>24</height>
     </rect>
    </property>
@@ -314,10 +314,10 @@ color: rgb(208, 208, 208);
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
    <property name="minimum">
-    <number>-5</number>
+    <number>-12</number>
    </property>
    <property name="maximum">
-    <number>5</number>
+    <number>12</number>
    </property>
   </widget>
   <widget class="QComboBox" name="PlayingSpeedRatioComboBox">

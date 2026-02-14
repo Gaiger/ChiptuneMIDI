@@ -968,9 +968,9 @@ void ChiptuneMidiWidget::on_AllOutputEnabledPushButton_released(void)
 
 void ChiptuneMidiWidget::on_PitchShiftSpinBox_valueChanged(int i)
 {
-	QLineEdit *p_lineEdit = ui->PitchShiftSpinBox->findChild<QLineEdit *>();
+	ui->PitchShiftSpinBox->setPrefix("");
 	if(i > 0){
-		p_lineEdit->setText("+" + p_lineEdit->text());
+		ui->PitchShiftSpinBox->setPrefix("+");
 	}
 
 	m_p_tune_manager->SetPitchShift((int8_t)i);
