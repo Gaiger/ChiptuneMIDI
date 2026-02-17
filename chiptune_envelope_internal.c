@@ -258,7 +258,7 @@ void update_percussion_envelope(oscillator_t * const p_oscillator)
 			break;
 		}
 
-		percussion_t const * const p_percussion = get_percussion_pointer_from_index(p_oscillator->note);
+		percussion_t const * const p_percussion = get_percussion_pointer_from_key(p_oscillator->note);
 		int8_t waveform_segment_index = p_oscillator->percussion_waveform_segment_index;
 		if (p_percussion->waveform_segment_duration_sample_number[waveform_segment_index]
 				== p_oscillator->percussion_waveform_segment_duration_sample_count){

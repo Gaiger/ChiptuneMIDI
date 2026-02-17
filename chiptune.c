@@ -625,7 +625,7 @@ void update_mono_wave_amplitude(oscillator_t * const p_oscillator)
 		int8_t waveform = p_channel_controller->waveform;
 		uint16_t critical_phase = p_channel_controller->duty_cycle_critical_phase;
 		if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
-			percussion_t const * const p_percussion = get_percussion_pointer_from_index(p_oscillator->note);
+			percussion_t const * const p_percussion = get_percussion_pointer_from_key(p_oscillator->note);
 			waveform = p_percussion->waveform[p_oscillator->percussion_waveform_segment_index];
 			critical_phase = INT16_MAX_PLUS_1;
 		}
@@ -763,7 +763,7 @@ static void destroy_all_oscillators_and_events(void)
 static void chase_midi_messages(const uint32_t end_midi_message_index)
 {
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-		reset_channel_controller_midi_control_change_parameters(voice);
+		reset_channel_controller_to_midi_defaults(voice);
 	}
 	clear_all_oscillators_and_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
@@ -965,7 +965,7 @@ static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMB
 #ifndef _KEEP_NOTELESS_CHANNELS
 	s_is_chase_to_last_done = true;
 #endif
-	reset_all_channel_controllers();
+	reset_all_channels_to_defaults();
 	clear_all_oscillators_and_events();
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
@@ -1004,7 +1004,7 @@ void chiptune_prepare_song(uint32_t const resolution)
 		s_is_channels_output_enabled_array[voice] = true;
 	}
 	clear_all_oscillators_and_events();
-	reset_all_channel_controllers();
+	reset_all_channels_to_defaults();
 	get_ending_instruments(&s_ending_instrument_array[0]);
 
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
@@ -1035,7 +1035,7 @@ void chiptune_set_tempo(float const tempo)
 	adjust_event_triggering_tick_by_playing_tempo(CURRENT_TICK(), tempo * get_playing_speed_ratio());
 	UPDATE_TEMPO(tempo);
 	update_effect_tick();
-	update_channel_controllers_parameters_related_to_playing_tempo();
+	synchronize_channel_controllers_to_playing_tempo();
 }
 
 /**********************************************************************************/
@@ -1052,7 +1052,7 @@ void chiptune_set_playing_speed_ratio(float const playing_speed_ratio)
 	adjust_event_triggering_tick_by_playing_tempo(CURRENT_TICK(), chiptune_get_tempo() * playing_speed_ratio);
 	UPDATE_PLAYING_SPEED_RATIO(playing_speed_ratio);
 	update_effect_tick();
-	update_channel_controllers_parameters_related_to_playing_tempo();
+	synchronize_channel_controllers_to_playing_tempo();
 }
 
 /**********************************************************************************/
@@ -1137,7 +1137,7 @@ void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const 
 
 /**********************************************************************************/
 
-int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const waveform,
+int chiptune_set_melodic_channel_timbre(int8_t const channel_index, int8_t const waveform,
 									  int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
 									  int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
 									  uint8_t const envelope_note_on_sustain_level,
@@ -1185,7 +1185,7 @@ int chiptune_set_pitch_channel_timbre(int8_t const channel_index, int8_t const w
 		return -2;
 	}
 
-	return set_pitch_channel_parameters(channel_index, channel_controller_waveform, dutycycle_critical_phase,
+	return set_melodic_channel_timbre(channel_index, channel_controller_waveform, dutycycle_critical_phase,
 									  envelope_attack_curve, envelope_attack_duration_in_seconds,
 									  envelope_decay_curve, envelope_decay_duration_in_seconds,
 									  envelope_note_on_sustain_level,

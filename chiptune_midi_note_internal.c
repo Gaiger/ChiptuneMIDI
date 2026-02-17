@@ -57,7 +57,7 @@ int finalize_percussion_oscillator_setup(uint32_t const tick, int8_t const voice
 	p_oscillator->percussion_envelope_same_index_count = 0;
 	p_oscillator->percussion_envelope_table_index = 0;
 
-	percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
+	percussion_t const * const p_percussion = get_percussion_pointer_from_key(note);
 	p_oscillator->base_phase_increment = p_percussion->base_phase_increment;
 	//p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
 	//				p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_envelope_table_index]);
@@ -239,7 +239,7 @@ int process_note_message(uint32_t const tick, bool const is_note_on,
 						 int8_t const voice, midi_value_t const note, midi_value_t const velocity)
 {
 	if(MIDI_PERCUSSION_CHANNEL == voice){
-		if(NULL == get_percussion_pointer_from_index(note)){
+		if(NULL == get_percussion_pointer_from_key(note)){
 			CHIPTUNE_PRINTF(cDeveloping, "WARNING:: tick = %u, PERCUSSION_INSTRUMENT = %d (%s)"
 										 " does not be defined in the MIDI standard, ignored\r\n",
 							tick, note, is_note_on ? "on" : "off");
@@ -252,7 +252,7 @@ int process_note_message(uint32_t const tick, bool const is_note_on,
 	if(true == is_note_on){
 		do {
 			if(MIDI_PERCUSSION_CHANNEL == voice){
-				percussion_t const * const p_percussion = get_percussion_pointer_from_index(note);
+				percussion_t const * const p_percussion = get_percussion_pointer_from_key(note);
 				char not_implemented_string[24] = {0};
 				if(false == p_percussion->is_implemented){
 					snprintf(&not_implemented_string[0], sizeof(not_implemented_string), "%s", "(NOT IMPLEMENTED)");

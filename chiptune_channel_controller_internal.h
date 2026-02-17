@@ -28,13 +28,6 @@
 #define REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(INDEX) \
 	((INDEX) & (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1))
 
-
-#define LOUNDNESS_AS_DAMPING_PEDAL_ON_BUT_NOTE_OFF(NOTE_ON_LOUNDNESS, DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL) \
-						(\
-							(int16_t)DIVIDE_BY_128((int32_t)(NOTE_ON_LOUNDNESS) \
-							* (DAMPER_ON_BUT_NOTE_OFF_LOUDNESS_LEVEL))\
-						)
-
 #define CHANNEL_CONTROLLER_SCALE_BY_LEVEL(VALUE, LEVEL)	\
 	MULTIPLY_THEN_DIVIDE_BY_128((VALUE), (LEVEL))
 
@@ -135,15 +128,15 @@ typedef struct _percussion
 
 void initialize_channel_controllers(void);
 
-void reset_channel_controller_midi_control_change_parameters(int8_t const index);
-void reset_all_channel_controllers();
+void reset_channel_controller_to_midi_defaults(int8_t const channel_index);
+void reset_all_channels_to_defaults();
 
-channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index);
-percussion_t * const get_percussion_pointer_from_index(int8_t const index);
+void synchronize_channel_controllers_to_playing_tempo(void);
 
-void update_channel_controllers_parameters_related_to_playing_tempo(void);
+channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const channel_index);
+percussion_t * const get_percussion_pointer_from_key(int8_t const percussion_key);
 
-int set_pitch_channel_parameters(int8_t const channel_index, int8_t const waveform, uint16_t const dutycycle_critical_phase,
+int set_melodic_channel_timbre(int8_t const channel_index, int8_t const waveform, uint16_t const dutycycle_critical_phase,
 									   int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
 									   int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
 									   uint8_t const envelope_note_on_sustain_level,
