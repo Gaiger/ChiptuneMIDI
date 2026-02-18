@@ -33,7 +33,7 @@ int const update_oscillator_phase_increment(oscillator_t * const p_oscillator)
 			+ p_channel_controller->tuning_in_semitones
 			+ p_channel_controller->pitch_wheel_bend_in_semitones
 			+ p_oscillator->pitch_detune_in_semitones;
-	p_oscillator->base_phase_increment =  calculate_phase_increment_from_pitch(corrected_pitch);
+	p_oscillator->base_phase_increment = calculate_phase_increment_from_pitch(corrected_pitch);
 
 	corrected_pitch += p_channel_controller->vibrato_depth_in_semitones;
 	p_oscillator->max_vibrato_phase_increment =

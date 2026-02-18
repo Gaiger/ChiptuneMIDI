@@ -510,6 +510,12 @@ static int process_timely_midi_message_and_event(void)
 
 /**********************************************************************************/
 
+#define NORMALIZE_VIBRATO_PHASE_INCREMENT(VALUE)	DIVIDE_BY_128(DIVIDE_BY_128(((int32_t)(VALUE))))
+
+#define VIBRATO_PHASE_INCREMENT(MODULATION_WHEEL, MAX_VIBRATO_PHASE_INCREMENT, VIBRATO_TABLE_VALUE) \
+	NORMALIZE_VIBRATO_PHASE_INCREMENT( \
+		(MAX_VIBRATO_PHASE_INCREMENT) * ((MODULATION_WHEEL) * (VIBRATO_TABLE_VALUE)) )
+
 void perform_vibrato(oscillator_t * const p_oscillator)
 {
 	do {
