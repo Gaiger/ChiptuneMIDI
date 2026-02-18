@@ -511,16 +511,13 @@ int process_events(uint32_t const tick)
 				if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
 					break;
 				}
-				if(0 == p_oscillator->envelope_table_index){
+				if(false == IS_ACTIVATED(p_oscillator->state_bits)){
 					break;
 				}
-				if(0 == p_oscillator->envelope_same_index_count){
+				if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1 == p_oscillator->envelope_table_index){
 					break;
 				}
 				if(false == is_amplitude_to_loudness_percentage_over_threshold(p_oscillator, 1.0f)){
-					break;
-				}
-				if(CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1 >= p_oscillator->envelope_table_index){
 					break;
 				}
 				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: amplitude = %1.2f%% of loudness as discard\r\n",
