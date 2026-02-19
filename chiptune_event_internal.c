@@ -62,10 +62,10 @@ static inline int16_t const get_event_capacity()
 
 /**********************************************************************************/
 
-static event_t * const get_event_pointer_from_index(int16_t const index)
+static event_t * const get_event_pointer_from_index(int16_t const event_index)
 {
-	return &s_event_pool_pointer_table[index / EVENT_POOL_CAPACITY]
-				->events[index % EVENT_POOL_CAPACITY];
+	return &s_event_pool_pointer_table[event_index / EVENT_POOL_CAPACITY]
+				->events[event_index % EVENT_POOL_CAPACITY];
 }
 
 #ifdef _USE_STATIC_RESOURCE_ALLOCATION
@@ -170,7 +170,7 @@ static int release_all_events(void)
 static int check_queued_events(uint32_t const tick)
 {
 	int ret = 0;
-	int16_t index = s_queued_event_head_index;
+	int16_t event_index = s_queued_event_head_index;
 	do {
 		if(NO_EVENT != s_queued_event_head_index){
 			break;
@@ -191,9 +191,9 @@ static int check_queued_events(uint32_t const tick)
 		}
 		uint32_t previous_tick = 0;
 		for(int16_t i = 0; i < s_queued_event_number; i++){
-			event_t * const p_event = get_event_pointer_from_index(index);
+			event_t * const p_event = get_event_pointer_from_index(event_index);
 			if(EVENT_UNQUEUED == p_event->type){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event %d is EVENT_UNQUEUED but on the list\r\n", index);
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event %d is EVENT_UNQUEUED but on the list\r\n", event_index);
 				is_listing_error_occur = true;
 			}
 			if(previous_tick > p_event->triggering_tick){
@@ -201,7 +201,7 @@ static int check_queued_events(uint32_t const tick)
 				is_listing_error_occur = true;
 			}
 			if(UNOCCUPIED_OSCILLATOR == p_event->oscillator_index){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event %d oscillator is UNOCCUPIED_OSCILLATOR\r\n", index);
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR:: event %d oscillator is UNOCCUPIED_OSCILLATOR\r\n", event_index);
 				is_listing_error_occur = true;
 			}
 			if(UNOCCUPIED_OSCILLATOR == get_oscillator_pointer_from_index(p_event->oscillator_index)->voice){
@@ -214,7 +214,7 @@ static int check_queued_events(uint32_t const tick)
 				break;
 			}
 			previous_tick = p_event->triggering_tick;
-			index = p_event->next_event_index;
+			event_index = p_event->next_event_index;
 		}
 	} while(0);
 
@@ -223,12 +223,12 @@ static int check_queued_events(uint32_t const tick)
 			break;
 		}
 		CHIPTUNE_PRINTF(cDeveloping, "tick = %u\r\n", tick);
-		index = s_queued_event_head_index;
+		event_index = s_queued_event_head_index;
 		for(int16_t i = 0; i < s_queued_event_number; i++){
-			event_t * const p_event = get_event_pointer_from_index(index);
+			event_t * const p_event = get_event_pointer_from_index(event_index);
 			CHIPTUNE_PRINTF(cDeveloping, "event = %d, type = %d, oscillator = %d, triggering_tick = %u\r\n",
-							index, p_event->type, p_event->oscillator_index, p_event->triggering_tick);
-			index = p_event->next_event_index;
+							event_index, p_event->type, p_event->oscillator_index, p_event->triggering_tick);
+			event_index = p_event->next_event_index;
 		}
 		CHIPTUNE_PRINTF(cDeveloping, "-------------------------------------------------\r\n");
 		CHIPTUNE_PRINTF(cDeveloping, "-------------------------------------------------\r\n");

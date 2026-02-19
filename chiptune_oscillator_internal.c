@@ -9,7 +9,7 @@
 
 static int16_t s_pitch_shift_in_semitones = 0;
 
-void set_pitch_shift_in_semitones(int16_t pitch_shift_in_semitones)
+void set_pitch_shift_in_semitones(int16_t const pitch_shift_in_semitones)
 {
 	s_pitch_shift_in_semitones = pitch_shift_in_semitones;
 }

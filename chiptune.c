@@ -337,11 +337,11 @@ static int process_midi_message(struct _tick_message const tick_message)
 
 /**********************************************************************************/
 
-static int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_message)
+static int fetch_midi_tick_message(uint32_t const message_index, struct _tick_message *p_tick_message)
 {
 	uint32_t tick;
 	uint32_t message;
-	int ret = s_handler_get_midi_message(index, &tick, &message);
+	int ret = s_handler_get_midi_message(message_index, &tick, &message);
 	do {
 		if(0 > ret){
 			SET_TICK_MESSAGE_NULL(*p_tick_message);
@@ -357,7 +357,7 @@ static int fetch_midi_tick_message(uint32_t index, struct _tick_message *p_tick_
 
 /**********************************************************************************/
 
-static int free_note_off_but_damper_pedal_on_oscillators(const uint32_t tick)
+static int free_note_off_but_damper_pedal_on_oscillators(uint32_t const tick)
 {
 	int ret = 0;
 	int16_t oscillator_index = get_occupied_oscillator_head_index();
@@ -385,7 +385,7 @@ static int free_note_off_but_damper_pedal_on_oscillators(const uint32_t tick)
 
 /**********************************************************************************/
 
-static int free_remaining_oscillators(const uint32_t tick)
+static int free_remaining_oscillators(uint32_t const tick)
 {
 	int ret = 0;
 	do {
@@ -419,7 +419,7 @@ static int free_remaining_oscillators(const uint32_t tick)
 
 /**********************************************************************************/
 
-int process_ending(const uint32_t tick)
+int process_ending(uint32_t const tick)
 {
 	int ret = 0;
 	ret += free_note_off_but_damper_pedal_on_oscillators(tick);
@@ -582,7 +582,7 @@ void perform_percussion(oscillator_t * const p_oscillator)
 
 /**********************************************************************************/
 
-static inline int16_t obtain_sine_wave(uint16_t phase)
+static inline int16_t obtain_sine_wave(uint16_t const phase)
 {
 #define DIVIDE_BY_UINT16_MAX_PLUS_ONE(VALUE)		(((int32_t)(VALUE)) >> 16)
 	return s_sine_table[DIVIDE_BY_UINT16_MAX_PLUS_ONE(phase * SINE_TABLE_LENGTH)];
@@ -680,7 +680,7 @@ void update_mono_wave_amplitude(oscillator_t * const p_oscillator)
 #define PANNED_WAVE_AMPLITUDE(MONO_WAVE_AMPLITUDE, PANNING_WEIGHT) \
 	DIVIDE_BY_128((int64_t)(MONO_WAVE_AMPLITUDE) * (PANNING_WEIGHT))
 
-int32_t generate_panned_wave_amplitude(oscillator_t * const p_oscillator)
+int32_t generate_panned_wave_amplitude(oscillator_t const * const p_oscillator)
 {
 	int32_t pannel_wave_amplitude = p_oscillator->mono_wave_amplitude;
 	do {
@@ -766,7 +766,7 @@ static void destroy_all_oscillators_and_events(void)
 /**********************************************************************************/
 #define TO_LAST_MESSAGE_INDEX						(-1)
 
-static void chase_midi_messages(const uint32_t end_midi_message_index)
+static void chase_midi_messages(uint32_t const end_midi_message_index)
 {
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		reset_channel_controller_to_midi_defaults(voice);
@@ -980,7 +980,7 @@ static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMB
 /**********************************************************************************/
 
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
-						 chiptune_get_midi_message_callback_t get_midi_message_callback)
+						 chiptune_get_midi_message_callback_t const get_midi_message_callback)
 {
 	s_is_stereo = is_stereo;
 	s_is_processing_left_channel = true;
@@ -1023,13 +1023,13 @@ int32_t chiptune_get_amplitude_gain(void){ return AMPLITUDE_NORMALIZATION_GAIN()
 
 /**********************************************************************************/
 
-void chiptune_set_amplitude_gain(int32_t amplitude_gain) { UPDATE_AMPLITUDE_NORMALIZATION_GAIN(amplitude_gain); }
+void chiptune_set_amplitude_gain(int32_t const amplitude_gain) { UPDATE_AMPLITUDE_NORMALIZATION_GAIN(amplitude_gain); }
 
 /**********************************************************************************/
 
-void chiptune_set_current_message_index(uint32_t const index)
+void chiptune_set_current_message_index(uint32_t const message_index)
 {
-	chase_midi_messages(index);
+	chase_midi_messages(message_index);
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
 }
 
@@ -1203,7 +1203,7 @@ int chiptune_set_melodic_channel_timbre(int8_t const channel_index, int8_t const
 
 /**********************************************************************************/
 
-void chiptune_set_pitch_shift_in_semitones(int8_t pitch_shift_in_semitones)
+void chiptune_set_pitch_shift_in_semitones(int8_t const pitch_shift_in_semitones)
 {
 	set_pitch_shift_in_semitones((int16_t)pitch_shift_in_semitones);
 }

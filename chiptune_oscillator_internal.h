@@ -107,7 +107,7 @@ union{
 
 #define SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER	(4 - 1)
 
-void set_pitch_shift_in_semitones(int16_t pitch_shift_in_semitones);
+void set_pitch_shift_in_semitones(int16_t const pitch_shift_in_semitones);
 int16_t get_pitch_shift_in_semitones(void);
 
 int const update_oscillator_phase_increment(oscillator_t * const p_oscillator);

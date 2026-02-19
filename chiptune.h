@@ -10,11 +10,11 @@ extern "C"
 #endif
 
 typedef int (*chiptune_get_midi_message_callback_t)(
-		uint32_t index, uint32_t *p_tick,uint32_t *p_message);
+		uint32_t const message_index, uint32_t * const p_tick, uint32_t * const p_message);
 
 
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
-						 chiptune_get_midi_message_callback_t get_midi_message_callback);
+						 chiptune_get_midi_message_callback_t const get_midi_message_callback);
 void chiptune_finalize(void);
 void chiptune_prepare_song(uint32_t const resolution);
 
@@ -32,13 +32,13 @@ float chiptune_get_playing_effective_tempo(void);
 #define CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL			(-2)
 int chiptune_get_ending_instruments(int8_t instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
 
-void chiptune_set_current_message_index(uint32_t const index);
+void chiptune_set_current_message_index(uint32_t const message_index);
 uint32_t chiptune_get_current_tick(void);
 
 void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const is_enabled);
 
 
-void chiptune_set_pitch_shift_in_semitones(int8_t pitch_shift_in_semitones);
+void chiptune_set_pitch_shift_in_semitones(int8_t const pitch_shift_in_semitones);
 int8_t chiptune_get_pitch_shift_in_semitones(void);
 
 enum ChiptuneWaveformType
@@ -71,7 +71,7 @@ int chiptune_set_melodic_channel_timbre(int8_t const channel_index, int8_t const
 
 
 int32_t chiptune_get_amplitude_gain(void);
-void chiptune_set_amplitude_gain(int32_t amplitude_gain);
+void chiptune_set_amplitude_gain(int32_t const amplitude_gain);
 #ifdef __cplusplus
 }
 #endif

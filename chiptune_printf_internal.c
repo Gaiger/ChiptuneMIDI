@@ -1,4 +1,3 @@
-#include <stdbool.h>
 #include<stdarg.h>
 #include <stdio.h>
 
@@ -9,7 +8,7 @@ static bool s_enable_processing_print_out = true;
 
 /**********************************************************************************/
 
-void chiptune_printf(int const print_type, const char* fmt, ...)
+void chiptune_printf(int const print_type, char const * const fmt, ...)
 {
 	bool is_print_out = false;
 
@@ -76,7 +75,7 @@ void chiptune_printf(int const print_type, const char* fmt, ...)
 
 /**********************************************************************************/
 
-void set_chiptune_processing_printf_enabled(bool is_enabled)
+void set_chiptune_processing_printf_enabled(bool const is_enabled)
 {
 	s_enable_processing_print_out = is_enabled;
 }

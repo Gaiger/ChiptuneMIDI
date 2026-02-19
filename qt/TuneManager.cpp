@@ -91,9 +91,9 @@ public:
 
 static TuneManagerPrivate *s_p_private_instance = nullptr;
 
-extern "C" int get_midi_message(uint32_t index, uint32_t * const p_tick, uint32_t * const p_message)
+extern "C" int get_midi_message(uint32_t const message_index, uint32_t * const p_tick, uint32_t * const p_message)
 {
-	return s_p_private_instance->GetMidiMessage((int)index, p_tick, p_message);
+	return s_p_private_instance->GetMidiMessage((int)message_index, p_tick, p_message);
 }
 
 /**********************************************************************************/

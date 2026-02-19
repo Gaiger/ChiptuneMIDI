@@ -6,11 +6,11 @@
 
 /**********************************************************************************/
 
-void* chiptune_malloc(size_t size){ return malloc(size);}
+void* chiptune_malloc(size_t const size){ return malloc(size);}
 
 /**********************************************************************************/
 
-void chiptune_free(void* ptr){ free(ptr);}
+void chiptune_free(void * const ptr){ free(ptr);}
 
 #endif
 

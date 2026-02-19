@@ -293,7 +293,7 @@ static float s_max_chorus_detune_in_semitones = DEFAULT_MAX_CHORUS_DETUNE_IN_SEM
 
 /**********************************************************************************/
 
-static inline uint32_t calculate_chorus_delta_tick(normalized_midi_level_t chorus_depth)
+static inline uint32_t calculate_chorus_delta_tick(normalized_midi_level_t const chorus_depth)
 {
 	uint32_t chorus_delta_tick = (uint32_t)(chorus_depth * s_min_chorus_delta_tick + 0.5);
 	chorus_delta_tick = ZERO_AS_ONE(chorus_delta_tick);

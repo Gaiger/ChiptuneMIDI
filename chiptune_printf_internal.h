@@ -42,8 +42,8 @@ enum
 	cEventTriggering		= 6,
 };
 
-void chiptune_printf(int const print_type, const char* fmt, ...);
-void set_chiptune_processing_printf_enabled(bool is_enabled);
+void chiptune_printf(int const print_type, char const * const, ...);
+void set_chiptune_processing_printf_enabled(bool const is_enabled);
 
 
 #endif // _CHIPTUNE_PRINTF_INTERNAL_H_

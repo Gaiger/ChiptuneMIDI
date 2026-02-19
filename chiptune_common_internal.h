@@ -75,8 +75,8 @@ typedef int8_t		midi_value_t;
 typedef uint8_t		normalized_midi_level_t;
 
 #ifndef _USE_STATIC_RESOURCE_ALLOCATION
-	void* chiptune_malloc(size_t size);
-	void chiptune_free(void* ptr);
+	void* chiptune_malloc(size_t const size);
+	void chiptune_free(void * const ptr);
 #endif
 
 #if defined(_MSC_VER)
@@ -109,9 +109,9 @@ enum MidiPercussionKeyMap
 
 #define EXPAND_CASE_TO_STR(ENUMS_ELEMENT, DUMMY_VAR)			case ENUMS_ELEMENT:	return #ENUMS_ELEMENT;
 
-MAYBE_UNUSED_FUNCTION static inline char const * const get_instrument_name_string(int8_t const index)
+MAYBE_UNUSED_FUNCTION static inline char const * const get_instrument_name_string(int8_t const instrument_code)
 {
-	switch (index)
+	switch (instrument_code)
 	{
 		MIDI_INSTRUMENT_CODE_LIST(EXPAND_CASE_TO_STR)
 	}
@@ -121,9 +121,9 @@ MAYBE_UNUSED_FUNCTION static inline char const * const get_instrument_name_strin
 
 /**********************************************************************************/
 
-MAYBE_UNUSED_FUNCTION static inline char const * const get_percussion_name_string(int8_t const index)
+MAYBE_UNUSED_FUNCTION static inline char const * const get_percussion_name_string(int8_t const percussion_key)
 {
-	switch (index)
+	switch (percussion_key)
 	{
 		MIDI_PERCUSSION_KEY_MAP_LIST(EXPAND_CASE_TO_STR)
 	}
