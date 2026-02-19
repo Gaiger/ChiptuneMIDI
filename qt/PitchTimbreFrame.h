@@ -11,7 +11,7 @@ class PitchTimbreFrame : public QFrame
 {
 	Q_OBJECT
 public:
-	explicit PitchTimbreFrame(int index, QWidget *parent = nullptr);
+	explicit PitchTimbreFrame(int channel_index, QWidget *parent = nullptr);
 	~PitchTimbreFrame(void) Q_DECL_OVERRIDE;
 public:
 	enum WaveformType
@@ -36,7 +36,7 @@ public:
 
 public:
 	signals:
-	void TimbreChanged(int index,
+	void MelodicChannelTimbreChanged(int channel_index,
 					   int waveform,
 					   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
 					   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
@@ -66,9 +66,9 @@ private slots:
 	void on_DamperSustainLevelSpinBox_valueChanged(int value);
 private :
 	WaveformType GetWaveform(void);
-	void EmitTimbreChanged(void);
+	void EmitMelodicChannelTimbreChanged(void);
 private:
-	int m_index;
+	int const m_channel_index;
 	int m_previous_dutycycle;
 	int m_previous_sustain_level;
 private:

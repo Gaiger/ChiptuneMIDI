@@ -49,7 +49,7 @@ public:
 	int SetStartTimeInSeconds(float target_start_time_in_seconds);
 
 	QList<QPair<int, int>> GetChannelInstrumentPairList(void);
-	void SetChannelOutputEnabled(int index, bool is_enabled);
+	void SetChannelOutputEnabled(int channel_index, bool is_enabled);
 	enum WaveformType
 	{
 		WaveformSquareDutyCycle50	= 0,
@@ -69,7 +69,7 @@ public:
 		EnvelopeCurveFermi,
 	}; Q_ENUM(EnvelopeCurveType)
 
-	int SetPitchChannelTimbre(int8_t const channel_index,
+	int SetMelodicChannelTimbre(int8_t const channel_index,
 							  int8_t const waveform = WaveformTriangle,
 							  int8_t const envelope_attack_curve = EnvelopeCurveLinear, float const envelope_attack_duration_in_seconds = 0.02,
 							  int8_t const envelope_decay_curve = EnvelopeCurveFermi, float const envelope_decay_duration_in_seconds = 0.01,

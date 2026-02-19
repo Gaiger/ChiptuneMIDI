@@ -539,22 +539,22 @@ QList<QPair<int, int>> TuneManager::GetChannelInstrumentPairList(void)
 
 /**********************************************************************************/
 
-void TuneManager::SetChannelOutputEnabled(int index, bool is_enabled)
+void TuneManager::SetChannelOutputEnabled(int channel_index, bool is_enabled)
 {
 	QMutexLocker locker(&m_p_private->m_mutex);
 	do
 	{
-		if(index < 0 || index >= CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER){
+		if(channel_index < 0 || channel_index >= CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER){
 			break;
 		}
 
-		chiptune_set_channel_output_enabled((int8_t)index, is_enabled);
+		chiptune_set_channel_output_enabled((int8_t)channel_index, is_enabled);
 	} while(0);
 }
 
 /**********************************************************************************/
 
-int TuneManager::SetPitchChannelTimbre(int8_t const channel_index,
+int TuneManager::SetMelodicChannelTimbre(int8_t const channel_index,
 						   int8_t const waveform,
 						   int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
 						   int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,

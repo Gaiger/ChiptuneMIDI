@@ -28,8 +28,8 @@ public:
 				   double *p_envelope_damper_sustain_duration_in_seconds);
 public :
 	signals:
-void OutputEnabled(int index, bool is_enabled);
-void TimbreChanged(int index,
+void OutputEnabled(int channel_index, bool is_enabled);
+void MelodicChannelTimbreChanged(int channel_index,
 				   int waveform,
 				   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
 				   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
@@ -45,7 +45,7 @@ private slots:
 	void on_ExpandCollapsePushButton_clicked(bool checked);
 
 private:
-	int m_channel_index;
+	int const m_channel_index;
 	QSize m_expanded_size;
 	QSize m_collapsed_size;
 

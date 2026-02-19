@@ -38,8 +38,8 @@ void ChannelListWidget::AddChannel(int channel_index, int instrument_index)
 	m_p_vboxlayout->addWidget(p_channelnode_widget);
 	QObject::connect(p_channelnode_widget, &ChannelNodeWidget::OutputEnabled, this,
 					 &ChannelListWidget::OutputEnabled);
-	QObject::connect(p_channelnode_widget, &ChannelNodeWidget::TimbreChanged, this,
-					 &ChannelListWidget::TimbreChanged);
+	QObject::connect(p_channelnode_widget, &ChannelNodeWidget::MelodicChannelTimbreChanged, this,
+					 &ChannelListWidget::MelodicChannelTimbreChanged);
 	m_channel_position_map.insert(channel_index, m_p_vboxlayout->count() - 1);
 }
 

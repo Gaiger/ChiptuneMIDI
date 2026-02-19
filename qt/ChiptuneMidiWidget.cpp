@@ -330,8 +330,8 @@ int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 		ChannelListWidget *p_channellist_widget = new ChannelListWidget(ui->TimbreListWidget);
 		QObject::connect(p_channellist_widget, &ChannelListWidget::OutputEnabled,
 						 this, &ChiptuneMidiWidget::HandleChannelOutputEnabled);
-		QObject::connect(p_channellist_widget, &ChannelListWidget::TimbreChanged,
-						 this, &ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged);
+		QObject::connect(p_channellist_widget, &ChannelListWidget::MelodicChannelTimbreChanged,
+						 this, &ChiptuneMidiWidget::HandleMelodicChannelTimbreChanged);
 		FillWidget(p_channellist_widget, ui->TimbreListWidget);
 
 		int channel_number = m_p_tune_manager->GetChannelInstrumentPairList().size();
@@ -360,7 +360,7 @@ int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 											&envelope_damper_sustain_level,
 											&envelope_damper_sustain_curve,
 											&envelope_damper_sustain_duration_in_seconds);
-			m_p_tune_manager->SetPitchChannelTimbre((int8_t)channel_index, (int8_t)waveform,
+			m_p_tune_manager->SetMelodicChannelTimbre((int8_t)channel_index, (int8_t)waveform,
 													(int8_t)envelope_attack_curve, (float)envelope_attack_duration_in_seconds,
 													(int8_t)envelope_decay_curve, (float)envelope_decay_duration_in_seconds,
 													(uint8_t)envelope_note_on_sustain_level,
@@ -571,15 +571,15 @@ void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton bu
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::HandleChannelOutputEnabled(int index, bool is_enabled)
+void ChiptuneMidiWidget::HandleChannelOutputEnabled(int channel_index, bool is_enabled)
 {
-	m_p_tune_manager->SetChannelOutputEnabled(index, is_enabled);
-	m_p_sequencer_widget->SetChannelDrawAsEnabled(index, is_enabled);
+	m_p_tune_manager->SetChannelOutputEnabled(channel_index, is_enabled);
+	m_p_sequencer_widget->SetChannelDrawAsEnabled(channel_index, is_enabled);
 }
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged(int index,
+void ChiptuneMidiWidget::HandleMelodicChannelTimbreChanged(int channel_index,
 										int waveform,
 										int envelope_attack_curve, double envelope_attack_duration_in_seconds,
 										int envelope_decay_curve, double envelope_decay_duration_in_seconds,
@@ -589,7 +589,7 @@ void ChiptuneMidiWidget::HandlePitchTimbreValueFrameChanged(int index,
 										int envelope_damper_sustain_curve,
 										double envelope_damper_sustain_duration_in_seconds)
 {
-	m_p_tune_manager->SetPitchChannelTimbre((int8_t)index, (int8_t)waveform,
+	m_p_tune_manager->SetMelodicChannelTimbre((int8_t)channel_index, (int8_t)waveform,
 											(int8_t)envelope_attack_curve, (float)envelope_attack_duration_in_seconds,
 											(int8_t)envelope_decay_curve, (float)envelope_decay_duration_in_seconds,
 											(uint8_t)envelope_note_on_sustain_level,

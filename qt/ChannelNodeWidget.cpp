@@ -62,8 +62,8 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 	p_layout->setContentsMargins(0, 0, 0, 0);
 	p_layout->setSpacing(0);
 
-	QObject::connect(m_p_pitchtimbre_frame, &PitchTimbreFrame::TimbreChanged, this,
-					 &ChannelNodeWidget::TimbreChanged);
+	QObject::connect(m_p_pitchtimbre_frame, &PitchTimbreFrame::MelodicChannelTimbreChanged, this,
+					 &ChannelNodeWidget::MelodicChannelTimbreChanged);
 	if(MIDI_PERCUSSION_CHANNEL == channel_index){
 		ui->ExpandCollapsePushButton->setEnabled(false);
 	}
