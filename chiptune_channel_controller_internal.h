@@ -12,7 +12,9 @@
 #define REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(INDEX) \
 	((INDEX) & (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1))
 
-//NOTE :: 5 extra ticks make the envenlop release in linear curve able to down to 1% of loudness.
+// NOTE :: Add a few extra release ticks so the discrete envelope lookup can reach the tail.
+// This is mainly to ensure the slowest curve (linear) can decay down to ~1% loudness
+// before the oscillator is eligible for discard.
 #define COMPLEMENTARY_RELEASE_TICK_NUMBER			(5)
 #define ENSURE_RELEASE_TICK_NUMBER_SUFFICIENT(RELREASE_TICK_NUMBER)	\
 	(ceilf(RELREASE_TICK_NUMBER) + (COMPLEMENTARY_RELEASE_TICK_NUMBER))
