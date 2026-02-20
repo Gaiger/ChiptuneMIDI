@@ -22,13 +22,13 @@ static int8_t s_gaussian_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = 
 static int8_t s_fermi_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
 static int8_t s_fermi_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH]  = {0};
 
-channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const index)
+channel_controller_t * get_channel_controller_pointer_from_index(int8_t const channel_index)
 {
-	if(false == (index >= 0 && index < MIDI_MAX_CHANNEL_NUMBER) ){
-		CHIPTUNE_PRINTF(cDeveloping, "channel_controller = %d, out of range\r\n", index);
+	if(false == (channel_index >= 0 && channel_index < MIDI_MAX_CHANNEL_NUMBER) ){
+		CHIPTUNE_PRINTF(cDeveloping, "channel_controller = %d, out of range\r\n", channel_index);
 		return NULL;
 	}
-	return &s_channel_controllers[index];
+	return &s_channel_controllers[channel_index];
 }
 
 /**********************************************************************************/
@@ -379,7 +379,7 @@ void initialize_channel_controllers(void)
 
 percussion_t s_percussion[MIDI_PERCUSSION_KEY_MAP_MAX - MIDI_PERCUSSION_KEY_MAP_MIN + 1];
 
-percussion_t * const get_percussion_pointer_from_key(int8_t const percussion_key)
+percussion_t const * get_percussion_pointer_from_key(int8_t const percussion_key)
 {
 	if(false == (MIDI_PERCUSSION_KEY_MAP_MIN <= percussion_key && MIDI_PERCUSSION_KEY_MAP_MAX >= percussion_key)){
 		return NULL;
@@ -401,7 +401,7 @@ static void reset_percussion_timbre_from_index(int8_t const percussion_key)
 	float total_druation_time_in_second = 0.0;
 	float waveform_duration_time_in_second[MAX_PERCUSSION_WAVEFORM_SEGMENT_NUMBER - 1] = {0.0};
 
-	percussion_t * const p_percussion = get_percussion_pointer_from_key(percussion_key);
+	percussion_t * const p_percussion = (percussion_t*)get_percussion_pointer_from_key(percussion_key);
 	p_percussion->p_phase_sweep_table = s_linear_decline_table;
 	p_percussion->p_amplitude_envelope_table = s_exponential_decline_table;
 	p_percussion->is_implemented = false;

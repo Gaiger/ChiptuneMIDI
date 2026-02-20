@@ -157,30 +157,30 @@ static bool s_is_tune_ending = false;
 
 /**********************************************************************************/
 
-uint32_t const get_sampling_rate(void) { return s_sampling_rate; }
+uint32_t get_sampling_rate(void) { return s_sampling_rate; }
 
 /**********************************************************************************/
 
-uint32_t const get_resolution(void) { return s_resolution; }
+uint32_t get_resolution(void) { return s_resolution; }
 
 /**********************************************************************************/
 
-static float const get_playing_speed_ratio(void) {return s_playing_speed_ratio; }
+static float get_playing_speed_ratio(void) {return s_playing_speed_ratio; }
 
 /**********************************************************************************/
 
-float const get_playing_tempo(void)
+float get_playing_tempo(void)
 {
 	return s_tempo * s_playing_speed_ratio;
 }
 
 /**********************************************************************************/
 
-static inline bool const is_stereo() { return s_is_stereo;}
+static inline bool is_stereo() { return s_is_stereo;}
 
 /**********************************************************************************/
 
-static inline bool const is_processing_left_channel() { return s_is_processing_left_channel; }
+static inline bool is_processing_left_channel() { return s_is_processing_left_channel; }
 
 /**********************************************************************************/
 
@@ -777,7 +777,7 @@ static void chase_midi_messages(uint32_t const end_midi_message_index)
 		return ;
 	}
 
-	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(false);
+	SET_CHIPTUNE_PRINTF_ENABLED(false);
 #ifndef _KEEP_NOTELESS_CHANNELS
 	bool is_has_note[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
 	memset(&is_has_note[0], false, sizeof(bool)*CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER);
@@ -898,7 +898,7 @@ static void chase_midi_messages(uint32_t const end_midi_message_index)
 		}
 	}
 #endif
-	SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(true);
+	SET_CHIPTUNE_PRINTF_ENABLED(true);
 }
 
 /**********************************************************************************/

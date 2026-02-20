@@ -133,10 +133,10 @@ MAYBE_UNUSED_FUNCTION static inline char const * const get_percussion_name_strin
 
 /**********************************************************************************/
 
-uint32_t const get_sampling_rate(void);
-uint32_t const get_resolution(void);
-float const get_playing_tempo(void);
+uint32_t get_sampling_rate(void);
+uint32_t get_resolution(void);
+float get_playing_tempo(void);
 
-uint16_t const calculate_phase_increment_from_pitch(float const pitch_in_semitones);
+uint16_t calculate_phase_increment_from_pitch(float const pitch_in_semitones);
 
 #endif // _CHIPTUNE_COMMON_INTERNAL_H_

@@ -12,7 +12,7 @@
 #define REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(INDEX) \
 	((INDEX) & (CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH - 1))
 
-//NOTE :: 2 extra ticks for keeping changing breathing to complete the release table
+//NOTE :: 5 extra ticks make the envenlop release in linear curve able to down to 1% of loudness.
 #define COMPLEMENTARY_RELEASE_TICK_NUMBER			(5)
 #define ENSURE_RELEASE_TICK_NUMBER_SUFFICIENT(RELREASE_TICK_NUMBER)	\
 	(ceilf(RELREASE_TICK_NUMBER) + (COMPLEMENTARY_RELEASE_TICK_NUMBER))
@@ -120,8 +120,8 @@ void reset_all_channels_to_defaults();
 
 void synchronize_channel_controllers_to_playing_tempo(void);
 
-channel_controller_t * const get_channel_controller_pointer_from_index(int8_t const channel_index);
-percussion_t * const get_percussion_pointer_from_key(int8_t const percussion_key);
+channel_controller_t * get_channel_controller_pointer_from_index(int8_t const channel_index);
+percussion_t const * get_percussion_pointer_from_key(int8_t const percussion_key);
 
 int set_melodic_channel_timbre(int8_t const channel_index, int8_t const waveform, uint16_t const dutycycle_critical_phase,
 									   int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,

@@ -110,21 +110,21 @@ union{
 void set_pitch_shift_in_semitones(int16_t const pitch_shift_in_semitones);
 int16_t get_pitch_shift_in_semitones(void);
 
-int const update_oscillator_phase_increment(oscillator_t * const p_oscillator);
+int update_oscillator_phase_increment(oscillator_t * const p_oscillator);
 
-oscillator_t * const acquire_oscillator(int16_t * const p_oscillator_index);
-oscillator_t * const replicate_oscillator(int16_t const original_oscillator_index,
+oscillator_t * acquire_oscillator(int16_t * const p_oscillator_index);
+oscillator_t * replicate_oscillator(int16_t const original_oscillator_index,
 										  int16_t * const p_replicated_oscillator_index);
 int discard_oscillator(int16_t const oscillator_index);
 
 int clear_all_oscillators(void);
 int destroy_all_oscillators(void);
 
-int16_t const get_occupied_oscillator_number(void);
-int16_t const get_occupied_oscillator_head_index();
-int16_t const get_occupied_oscillator_next_index(int16_t const oscillator_index);
+int16_t get_occupied_oscillator_number(void);
+int16_t get_occupied_oscillator_head_index();
+int16_t get_occupied_oscillator_next_index(int16_t const oscillator_index);
 
-oscillator_t * const get_oscillator_pointer_from_index(int16_t const oscillator_index);
+oscillator_t * get_oscillator_pointer_from_index(int16_t const oscillator_index);
 
 #define WITHOUT_EFFECT(MIDI_EFFECT)					(MidiEffectAll & (~(MIDI_EFFECT)))
 

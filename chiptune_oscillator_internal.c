@@ -23,7 +23,7 @@ int16_t get_pitch_shift_in_semitones(void)
 
 /**********************************************************************************/
 
-int const update_oscillator_phase_increment(oscillator_t * const p_oscillator)
+int update_oscillator_phase_increment(oscillator_t * const p_oscillator)
 {
 	channel_controller_t const * const p_channel_controller
 			= get_channel_controller_pointer_from_index(p_oscillator->voice);
@@ -450,7 +450,7 @@ static int occupy_oscillator(int16_t const oscillator_index)
 
 /**********************************************************************************/
 
-oscillator_t * const acquire_oscillator(int16_t * const p_oscillator_index)
+oscillator_t * acquire_oscillator(int16_t * const p_oscillator_index)
 {
 	*p_oscillator_index = UNOCCUPIED_OSCILLATOR;
 	if(false == is_unoccupied_oscillator_available()){
@@ -484,7 +484,7 @@ oscillator_t * const acquire_oscillator(int16_t * const p_oscillator_index)
 
 /**********************************************************************************/
 
-oscillator_t * const replicate_oscillator(int16_t const original_oscillator_index,
+oscillator_t * replicate_oscillator(int16_t const original_oscillator_index,
 										  int16_t * const p_replicated_oscillator_index)
 {
 	oscillator_t * const p_replicated_oscillator = acquire_oscillator(p_replicated_oscillator_index);
@@ -572,14 +572,14 @@ int discard_oscillator(int16_t const oscillator_index)
 
 /**********************************************************************************/
 
-int16_t const get_occupied_oscillator_number(void)
+int16_t get_occupied_oscillator_number(void)
 {
 	return s_occupied_oscillator_number;
 }
 
 /**********************************************************************************/
 
-int16_t const get_occupied_oscillator_head_index()
+int16_t get_occupied_oscillator_head_index()
 {
 	if(-1 == s_occupied_oscillator_head_index
 			&& 0 != s_occupied_oscillator_number){
@@ -609,7 +609,7 @@ static inline bool is_occupied_oscillator_index_out_of_range(int16_t const oscil
 
 /**********************************************************************************/
 
-int16_t const get_occupied_oscillator_next_index(int16_t const oscillator_index)
+int16_t get_occupied_oscillator_next_index(int16_t const oscillator_index)
 {
 	if(true == is_occupied_oscillator_index_out_of_range(oscillator_index)){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator index = %d, out of range \r\n", oscillator_index);
@@ -621,7 +621,7 @@ int16_t const get_occupied_oscillator_next_index(int16_t const oscillator_index)
 
 /**********************************************************************************/
 
-oscillator_t * const get_oscillator_pointer_from_index(int16_t const oscillator_index)
+oscillator_t * get_oscillator_pointer_from_index(int16_t const oscillator_index)
 {
 	if(true == is_occupied_oscillator_index_out_of_range(oscillator_index)){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator index = %d, out of range \r\n", oscillator_index);

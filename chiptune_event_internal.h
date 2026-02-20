@@ -19,7 +19,7 @@ int process_events(uint32_t const tick);
 int clear_all_events(void);
 int destroy_all_events(void);
 
-uint32_t const get_next_event_triggering_tick(void);
+uint32_t get_next_event_triggering_tick(void);
 int adjust_event_triggering_tick_by_playing_tempo(uint32_t const tick, float const new_playing_tempo);
 
 #endif // _CHIPTUNE_EVENT_INTERNAL_H_

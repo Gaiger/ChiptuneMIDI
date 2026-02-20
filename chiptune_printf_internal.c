@@ -4,7 +4,7 @@
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
 
-static bool s_enable_processing_print_out = true;
+static bool s_is_enable_print_out = true;
 
 /**********************************************************************************/
 
@@ -20,7 +20,7 @@ void chiptune_printf(int const print_type, char const * const fmt, ...)
 #endif
 
 	if(false == is_print_out){
-		if(false == s_enable_processing_print_out){
+		if(false == s_is_enable_print_out){
 			return ;
 		}
 	}
@@ -75,7 +75,7 @@ void chiptune_printf(int const print_type, char const * const fmt, ...)
 
 /**********************************************************************************/
 
-void set_chiptune_processing_printf_enabled(bool const is_enabled)
+void set_chiptune_printf_enabled(bool const is_enabled)
 {
-	s_enable_processing_print_out = is_enabled;
+	s_is_enable_print_out = is_enabled;
 }

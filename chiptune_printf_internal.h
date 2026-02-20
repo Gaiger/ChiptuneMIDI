@@ -15,7 +15,6 @@
 													do { \
 														chiptune_printf(PRINT_TYPE, FMT, ##__VA_ARGS__); \
 													}while(0)
-
 #else
 #define CHIPTUNE_PRINTF(PRINT_TYPE, FMT, ...)		\
 													do { \
@@ -23,11 +22,10 @@
 													}while(0)
 #endif
 
-#define SET_PROCESSING_CHIPTUNE_PRINTF_ENABLED(IS_ENABLED)		\
+#define SET_CHIPTUNE_PRINTF_ENABLED(IS_ENABLED)		\
 													do { \
-														set_chiptune_processing_printf_enabled(IS_ENABLED); \
+														set_chiptune_printf_enabled(IS_ENABLED); \
 													} while(0)
-
 
 enum
 {
@@ -43,7 +41,6 @@ enum
 };
 
 void chiptune_printf(int const print_type, char const * const, ...);
-void set_chiptune_processing_printf_enabled(bool const is_enabled);
-
+void set_chiptune_printf_enabled(bool const is_enabled);
 
 #endif // _CHIPTUNE_PRINTF_INTERNAL_H_

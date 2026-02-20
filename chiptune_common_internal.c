@@ -16,7 +16,7 @@ void chiptune_free(void * const ptr){ free(ptr);}
 
 /**********************************************************************************/
 
-uint16_t const calculate_phase_increment_from_pitch(float const pitch_in_semitones)
+uint16_t calculate_phase_increment_from_pitch(float const pitch_in_semitones)
 {
 	// TO DO : too many float variable
 

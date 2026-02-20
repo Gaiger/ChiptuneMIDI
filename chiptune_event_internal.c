@@ -330,7 +330,7 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 
 static char s_event_additional_string[32];
 
-static inline char const * const event_additional_string(int16_t const event_index)
+static inline char const * get_event_additional_string(int16_t const event_index)
 {
 	oscillator_t const * const p_oscillator
 		= get_oscillator_pointer_from_index(get_event_pointer_from_index(event_index)->oscillator_index);
@@ -432,7 +432,7 @@ int process_events(uint32_t const tick)
 							"tick = %u, ACTIVATE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
 							tick, p_head_event->oscillator_index,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness,
-							event_additional_string(s_queued_event_head_index));
+							get_event_additional_string(s_queued_event_head_index));
 			if(true == IS_ACTIVATED(p_oscillator->state_bits)){
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: activate an activated oscillator = %d\r\n",
 								p_head_event->oscillator_index);
@@ -448,7 +448,7 @@ int process_events(uint32_t const tick)
 							tick, p_head_event->oscillator_index,
 							p_oscillator->voice, p_oscillator->note,
 							100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness,
-							event_additional_string(s_queued_event_head_index));
+							get_event_additional_string(s_queued_event_head_index));
 			if(true == IS_FREEING(p_oscillator->state_bits)) {
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: free a freeing oscillator = %d\r\n",
 							p_head_event->oscillator_index);
@@ -475,7 +475,7 @@ int process_events(uint32_t const tick)
 							tick, p_head_event->oscillator_index,
 							p_oscillator->voice, p_oscillator->note,
 							100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness,
-							event_additional_string(s_queued_event_head_index));
+							get_event_additional_string(s_queued_event_head_index));
 			if(true == IS_FREEING(p_oscillator->state_bits)
 					&& true == IS_PRIMARY_OSCILLATOR(p_oscillator)){
 				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: rest a freeing native oscillator = %d\r\n",
@@ -496,7 +496,7 @@ int process_events(uint32_t const tick)
 							"tick = %u, DEACTIVATE oscillator = %d, voice = %d, note = %d, loudness = 0x%04x %s\r\n",
 							tick, p_head_event->oscillator_index,
 							p_oscillator->voice, p_oscillator->note, p_oscillator->loudness,
-							event_additional_string(s_queued_event_head_index));
+							get_event_additional_string(s_queued_event_head_index));
 			SET_DEACTIVATED(p_oscillator->state_bits);
 			break;
 		case EVENT_DISCARD:
@@ -505,7 +505,7 @@ int process_events(uint32_t const tick)
 							tick, p_head_event->oscillator_index,
 							p_oscillator->voice, p_oscillator->note,
 							100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness,
-							event_additional_string(s_queued_event_head_index));
+							get_event_additional_string(s_queued_event_head_index));
 			do
 			{
 				if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
@@ -541,7 +541,7 @@ int process_events(uint32_t const tick)
 
 /**********************************************************************************/
 
-uint32_t const get_next_event_triggering_tick(void)
+uint32_t get_next_event_triggering_tick(void)
 {
 	if(0 == s_queued_event_number){
 			return NULL_TICK;
