@@ -153,7 +153,7 @@ static int process_damper_on_note_off(int16_t const primary_oscillator_index)
 																			 primary_oscillator_index);
 	STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
 	cooperative_oscillator_indexes[0] = primary_oscillator_index;
-	get_all_subordinate_oscillator_indexes(MidiEffectAll,
+	get_subordinate_oscillator_indexes(MidiEffectAll,
 										   primary_oscillator_index,
 										   &cooperative_oscillator_indexes[1]);
 

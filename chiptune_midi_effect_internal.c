@@ -84,7 +84,7 @@ static int process_detune_effect(uint32_t const tick, int8_t const event_type,
 																					 primary_oscillator_index);
 			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
 			cooperative_oscillator_indexes[0] = primary_oscillator_index;
-			get_all_subordinate_oscillator_indexes(WITHOUT_EFFECT(MidiEffectDetune),
+			get_subordinate_oscillator_indexes(WITHOUT_EFFECT(MidiEffectDetune),
 												   primary_oscillator_index,
 												   &cooperative_oscillator_indexes[1]);
 			float oscillator_detune_in_semitones = calculate_detune_detune_in_semitones(
@@ -132,7 +132,7 @@ static int process_detune_effect(uint32_t const tick, int8_t const event_type,
 		effect_subordinate_oscillator_number = count_all_subordinate_oscillators(MidiEffectDetune,
 																				 primary_oscillator_index);
 		STACK_ARRAY(int16_t, effect_subordinate_oscillator_indexes, effect_subordinate_oscillator_number);
-		get_all_subordinate_oscillator_indexes(MidiEffectDetune, primary_oscillator_index,
+		get_subordinate_oscillator_indexes(MidiEffectDetune, primary_oscillator_index,
 											   &effect_subordinate_oscillator_indexes[0]);
 		for(int16_t i = 0; i < effect_subordinate_oscillator_number; i++){
 			put_event(event_type, effect_subordinate_oscillator_indexes[i], tick);
@@ -214,7 +214,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 																					 primary_oscillator_index);
 			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
 			cooperative_oscillator_indexes[0] = primary_oscillator_index;
-			get_all_subordinate_oscillator_indexes(WITHOUT_EFFECT(MidiEffectReverb),
+			get_subordinate_oscillator_indexes(WITHOUT_EFFECT(MidiEffectReverb),
 												   primary_oscillator_index,
 												   &cooperative_oscillator_indexes[1]);
 
@@ -263,7 +263,7 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 		effect_subordinate_oscillator_number = count_all_subordinate_oscillators(MidiEffectReverb,
 																				 primary_oscillator_index);
 		STACK_ARRAY(int16_t, effect_subordinate_oscillator_indexes, effect_subordinate_oscillator_number);
-		get_all_subordinate_oscillator_indexes(MidiEffectReverb, primary_oscillator_index,
+		get_subordinate_oscillator_indexes(MidiEffectReverb, primary_oscillator_index,
 											   &effect_subordinate_oscillator_indexes[0]);
 		int jj = 0;
 		for(int16_t i = 0; i < effect_subordinate_oscillator_number; i++){
@@ -380,7 +380,7 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 																					 primary_oscillator_index);
 			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
 			cooperative_oscillator_indexes[0] = primary_oscillator_index;
-			get_all_subordinate_oscillator_indexes(WITHOUT_EFFECT(MidiEffectChorus),
+			get_subordinate_oscillator_indexes(WITHOUT_EFFECT(MidiEffectChorus),
 												   primary_oscillator_index,
 												   &cooperative_oscillator_indexes[1]);
 
@@ -432,7 +432,7 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 		effect_subordinate_oscillator_number = count_all_subordinate_oscillators(MidiEffectChorus,
 																				 primary_oscillator_index);
 		STACK_ARRAY(int16_t, effect_subordinate_oscillator_indexes, effect_subordinate_oscillator_number);
-		get_all_subordinate_oscillator_indexes(MidiEffectChorus, primary_oscillator_index,
+		get_subordinate_oscillator_indexes(MidiEffectChorus, primary_oscillator_index,
 											   &effect_subordinate_oscillator_indexes[0]);
 		int jj = 0;
 		for(int16_t i = 0; i < effect_subordinate_oscillator_number; i++){

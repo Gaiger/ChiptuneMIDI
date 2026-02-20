@@ -50,7 +50,7 @@ union{
 		float		pitch_detune_in_semitones;
 
 		uint8_t		midi_effect_association;
-		int16_t		midi_effect_aassociate_link_index;//internal
+		int16_t		midi_effect_associate_link_index;//internal
 
 		int32_t		mono_wave_amplitude;
 	};
@@ -102,8 +102,8 @@ union{
 #define IS_NOTE_ON(STATE_BITS)						(((0x01 << STATE_NOTE_BIT) & (STATE_BITS) ) ? true : false)
 
 #define IS_PRIMARY_OSCILLATOR(OSCILLATOR_POINTER) \
-	(((MidiEffectNone == (OSCILLATOR_POINTER)->midi_effect_association) \
-	|| true == IS_PERCUSSION_OSCILLATOR(OSCILLATOR_POINTER)) ? true : false)
+	( ( (true == IS_PERCUSSION_OSCILLATOR(OSCILLATOR_POINTER)) \
+	|| (MidiEffectNone == (OSCILLATOR_POINTER)->midi_effect_association)) ? true : false)
 
 #define SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER	(4 - 1)
 
@@ -112,25 +112,26 @@ int16_t get_pitch_shift_in_semitones(void);
 
 int const update_oscillator_phase_increment(oscillator_t * const p_oscillator);
 
-oscillator_t * const acquire_oscillator(int16_t * const p_index);
-oscillator_t * const replicate_oscillator(int16_t const original_index, int16_t * const p_index);
-int discard_oscillator(int16_t const index);
+oscillator_t * const acquire_oscillator(int16_t * const p_oscillator_index);
+oscillator_t * const replicate_oscillator(int16_t const original_oscillator_index,
+										  int16_t * const p_replicated_oscillator_index);
+int discard_oscillator(int16_t const oscillator_index);
 
 int clear_all_oscillators(void);
 int destroy_all_oscillators(void);
 
 int16_t const get_occupied_oscillator_number(void);
 int16_t const get_occupied_oscillator_head_index();
-int16_t const get_occupied_oscillator_next_index(int16_t const index);
+int16_t const get_occupied_oscillator_next_index(int16_t const oscillator_index);
 
-oscillator_t * const get_oscillator_pointer_from_index(int16_t const index);
+oscillator_t * const get_oscillator_pointer_from_index(int16_t const oscillator_index);
 
-#define WITHOUT_EFFECT(MIDI_EFFECT)   (MidiEffectAll & (~(MIDI_EFFECT)))
+#define WITHOUT_EFFECT(MIDI_EFFECT)					(MidiEffectAll & (~(MIDI_EFFECT)))
 
-int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const index,
-									  int16_t const * const p_associate_indexes);
-int16_t count_all_subordinate_oscillators(uint8_t const midi_effect_type, int16_t const root_index);
-int get_all_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_index,
-										   int16_t * const p_associate_indexes);
+int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const primary_oscillator_index,
+									  int16_t const * const p_associate_oscillator_indexes);
+int16_t count_all_subordinate_oscillators(uint8_t const midi_effect_type, int16_t const root_oscillator_index);
+int get_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_oscillator_index,
+										   int16_t * const p_subordinate_indexes);
 
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_

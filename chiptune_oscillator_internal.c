@@ -45,8 +45,8 @@ int const update_oscillator_phase_increment(oscillator_t * const p_oscillator)
 
 typedef struct _oscillator_link
 {
-	int16_t previous;
-	int16_t next;
+	int16_t previous_index;
+	int16_t next_index;
 } oscillator_link_t;
 
 #ifdef _USE_STATIC_RESOURCE_ALLOCATION
@@ -84,18 +84,18 @@ static inline int16_t const get_oscillator_capacity()
 
 /**********************************************************************************/
 
-static inline oscillator_link_t * const get_oscillator_link_address_from_index(int16_t const index)
+static inline oscillator_link_t * const get_oscillator_link_address_from_index(int16_t const oscillator_index)
 {
-	return &s_oscillator_pool_pointer_table[index / OSCILLATOR_POOL_CAPACITY]
-				->oscillator_links[index % OSCILLATOR_POOL_CAPACITY];
+	return &s_oscillator_pool_pointer_table[oscillator_index / OSCILLATOR_POOL_CAPACITY]
+				->oscillator_links[oscillator_index % OSCILLATOR_POOL_CAPACITY];
 }
 
 /**********************************************************************************/
 
-static inline oscillator_t * const get_oscillator_address_from_index(int16_t const index)
+static inline oscillator_t * const get_oscillator_address_from_index(int16_t const oscillator_index)
 {
-	return &s_oscillator_pool_pointer_table[index / OSCILLATOR_POOL_CAPACITY]
-				->oscillators[index % OSCILLATOR_POOL_CAPACITY];
+	return &s_oscillator_pool_pointer_table[oscillator_index / OSCILLATOR_POOL_CAPACITY]
+				->oscillators[oscillator_index % OSCILLATOR_POOL_CAPACITY];
 }
 
 #ifdef _USE_STATIC_RESOURCE_ALLOCATION
@@ -120,8 +120,8 @@ static int allocate_append_oscillator_pool(void)
 		}
 		for(int16_t i = 0; i < OSCILLATOR_POOL_CAPACITY; i++){
 			p_new_appending_oscillator_pool->oscillators[i].voice = UNOCCUPIED_OSCILLATOR;
-			p_new_appending_oscillator_pool->oscillator_links[i].previous = UNOCCUPIED_OSCILLATOR;
-			p_new_appending_oscillator_pool->oscillator_links[i].next = UNOCCUPIED_OSCILLATOR;
+			p_new_appending_oscillator_pool->oscillator_links[i].previous_index = UNOCCUPIED_OSCILLATOR;
+			p_new_appending_oscillator_pool->oscillator_links[i].next_index = UNOCCUPIED_OSCILLATOR;
 		}
 
 		s_oscillator_pool_pointer_table[s_number_of_oscillator_pool] = p_new_appending_oscillator_pool;
@@ -173,8 +173,8 @@ static int mark_all_oscillators_and_links_unused(void)
 		oscillator_pool_t *p_oscillator_pool = s_oscillator_pool_pointer_table[j];
 		for(int16_t i = 0; i < OSCILLATOR_POOL_CAPACITY; i++){
 			p_oscillator_pool->oscillators[i].voice = UNOCCUPIED_OSCILLATOR;
-			p_oscillator_pool->oscillator_links[i].previous = UNOCCUPIED_OSCILLATOR;
-			p_oscillator_pool->oscillator_links[i].next = UNOCCUPIED_OSCILLATOR;
+			p_oscillator_pool->oscillator_links[i].previous_index = UNOCCUPIED_OSCILLATOR;
+			p_oscillator_pool->oscillator_links[i].next_index = UNOCCUPIED_OSCILLATOR;
 		}
 	}
 
@@ -212,7 +212,8 @@ static int check_occupied_oscillator_list(void)
 	int ret = 0;
 	do {
 		if(0 > s_occupied_oscillator_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number = %d\r\n", s_occupied_oscillator_number);
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number = %d\r\n",
+							s_occupied_oscillator_number);
 			ret = -1;
 			break;
 		}
@@ -231,10 +232,10 @@ static int check_occupied_oscillator_list(void)
 
 		current_index = s_occupied_oscillator_head_index;
 		counter= 1;
-		while(UNOCCUPIED_OSCILLATOR != get_oscillator_link_address_from_index(current_index)->next)
+		while(UNOCCUPIED_OSCILLATOR != get_oscillator_link_address_from_index(current_index)->next_index)
 		{
 			counter += 1;
-			current_index = get_oscillator_link_address_from_index(current_index)->next;
+			current_index = get_oscillator_link_address_from_index(current_index)->next_index;
 		}
 		if(counter != s_occupied_oscillator_number){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: FORWARDING occupied_oscillators list length = %d"
@@ -245,10 +246,10 @@ static int check_occupied_oscillator_list(void)
 
 		current_index = s_occupied_oscillator_last_index;
 		counter = 1;
-		while(UNOCCUPIED_OSCILLATOR != get_oscillator_link_address_from_index(current_index)->previous)
+		while(UNOCCUPIED_OSCILLATOR != get_oscillator_link_address_from_index(current_index)->previous_index)
 		{
 			counter += 1;
-			current_index = get_oscillator_link_address_from_index(current_index)->previous;
+			current_index = get_oscillator_link_address_from_index(current_index)->previous_index;
 		}
 
 		if(counter != s_occupied_oscillator_number){
@@ -318,10 +319,12 @@ static inline int16_t const get_midi_effect_associate_link_capacity()
 
 /**********************************************************************************/
 
-static midi_effect_associate_link_t * const get_midi_effect_associate_link_from_index(int16_t const index)
+static midi_effect_associate_link_t * const get_midi_effect_associate_link_from_index(
+		int16_t const oscillator_index)
 {
-	return &s_midi_effect_associate_link_pool_t_pointer_table[index / MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY]
-				->midi_effect_associate_links[index % MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY];
+	return &s_midi_effect_associate_link_pool_t_pointer_table[
+			oscillator_index / MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY]
+				->midi_effect_associate_links[oscillator_index % MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY];
 }
 
 /**********************************************************************************/
@@ -422,22 +425,24 @@ static void release_all_midi_effect_associate_links(void)
 
 /**********************************************************************************/
 
-static int occupy_oscillator(int16_t const index)
+static int occupy_oscillator(int16_t const oscillator_index)
 {
 	do {
-		oscillator_link_t * const p_this_index_oscillator_link = get_oscillator_link_address_from_index(index);
+		oscillator_link_t * const p_this_link
+				= get_oscillator_link_address_from_index(oscillator_index);
 		if(0 == s_occupied_oscillator_number){
-			p_this_index_oscillator_link->previous = UNOCCUPIED_OSCILLATOR;
-			p_this_index_oscillator_link->next = UNOCCUPIED_OSCILLATOR;
-			s_occupied_oscillator_head_index = index;
+			p_this_link->previous_index = UNOCCUPIED_OSCILLATOR;
+			p_this_link->next_index = UNOCCUPIED_OSCILLATOR;
+			s_occupied_oscillator_head_index = oscillator_index;
 			break;
 		}
 
-		get_oscillator_link_address_from_index(s_occupied_oscillator_last_index)->next = index;
-		p_this_index_oscillator_link->previous = s_occupied_oscillator_last_index;
-		p_this_index_oscillator_link->next = UNOCCUPIED_OSCILLATOR;
+		get_oscillator_link_address_from_index(s_occupied_oscillator_last_index)->next_index
+				= oscillator_index;
+		p_this_link->previous_index = s_occupied_oscillator_last_index;
+		p_this_link->next_index = UNOCCUPIED_OSCILLATOR;
 	} while(0);
-	s_occupied_oscillator_last_index = index;
+	s_occupied_oscillator_last_index = oscillator_index;
 	s_occupied_oscillator_number += 1;
 	CHECK_OCCUPIED_OSCILLATOR_LIST();
 	return 0;
@@ -445,9 +450,9 @@ static int occupy_oscillator(int16_t const index)
 
 /**********************************************************************************/
 
-oscillator_t * const acquire_oscillator(int16_t * const p_index)
+oscillator_t * const acquire_oscillator(int16_t * const p_oscillator_index)
 {
-	*p_index = UNOCCUPIED_OSCILLATOR;
+	*p_oscillator_index = UNOCCUPIED_OSCILLATOR;
 	if(false == is_unoccupied_oscillator_available()){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all oscillators are used\r\n");
 		return NULL;
@@ -468,10 +473,10 @@ oscillator_t * const acquire_oscillator(int16_t * const p_index)
 			break;
 		}
 		occupy_oscillator(i);
-		*p_index = i;
+		*p_oscillator_index = i;
 		p_oscillator = get_oscillator_address_from_index(i);
 		memset(p_oscillator, 0, sizeof(oscillator_t));
-		p_oscillator->midi_effect_aassociate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+		p_oscillator->midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
 	} while(0);
 
 	return p_oscillator;
@@ -479,29 +484,32 @@ oscillator_t * const acquire_oscillator(int16_t * const p_index)
 
 /**********************************************************************************/
 
-oscillator_t * const replicate_oscillator(int16_t const original_index, int16_t * const p_index)
+oscillator_t * const replicate_oscillator(int16_t const original_oscillator_index,
+										  int16_t * const p_replicated_oscillator_index)
 {
-	oscillator_t * const p_oscillator = acquire_oscillator(p_index);
+	oscillator_t * const p_replicated_oscillator = acquire_oscillator(p_replicated_oscillator_index);
 	do
 	{
-		if(NULL == p_oscillator){
+		if(NULL == p_replicated_oscillator){
 			break;
 		}
-		oscillator_t * const p_original_oscillator = get_oscillator_address_from_index(original_index);
-		memcpy(p_oscillator, p_original_oscillator, sizeof(oscillator_t));
-		p_oscillator->midi_effect_aassociate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+		oscillator_t * const p_original_oscillator
+				= get_oscillator_address_from_index(original_oscillator_index);
+		memcpy(p_replicated_oscillator, p_original_oscillator, sizeof(oscillator_t));
+		p_replicated_oscillator->midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
 	}while(0);
 
-	return p_oscillator;
+	return p_replicated_oscillator;
 }
 
 /**********************************************************************************/
 
-int discard_oscillator(int16_t const index)
+int discard_oscillator(int16_t const oscillator_index)
 {
-	oscillator_link_t * const p_this_index_oscillator_link = get_oscillator_link_address_from_index(index);
-	int16_t previous_index = p_this_index_oscillator_link->previous;
-	int16_t next_index = p_this_index_oscillator_link->next;
+	oscillator_link_t * const p_this_link
+			= get_oscillator_link_address_from_index(oscillator_index);
+	int16_t const previous_index = p_this_link->previous_index;
+	int16_t const next_index = p_this_link->next_index;
 
 	do {
 		if(0 == s_occupied_oscillator_number){
@@ -511,36 +519,38 @@ int discard_oscillator(int16_t const index)
 
 		if(1 != s_occupied_oscillator_number
 				&& (UNOCCUPIED_OSCILLATOR == previous_index && UNOCCUPIED_OSCILLATOR == next_index) ){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator %d is not on the occupied list\r\n", index);
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator %d is not on the occupied list\r\n", oscillator_index);
 			return -2;
 		}
 	} while(0);
 
 	do {
-		if(index == s_occupied_oscillator_head_index){
+		if(oscillator_index == s_occupied_oscillator_head_index){
 			s_occupied_oscillator_head_index = next_index;
-			get_oscillator_link_address_from_index(s_occupied_oscillator_head_index)->previous = UNOCCUPIED_OSCILLATOR;
+			get_oscillator_link_address_from_index(s_occupied_oscillator_head_index)->previous_index
+					= UNOCCUPIED_OSCILLATOR;
 			break;
 		}
 
-		if(index == s_occupied_oscillator_last_index){
+		if(oscillator_index == s_occupied_oscillator_last_index){
 			s_occupied_oscillator_last_index = previous_index;
-			get_oscillator_link_address_from_index(s_occupied_oscillator_last_index)->next = UNOCCUPIED_OSCILLATOR;
+			get_oscillator_link_address_from_index(s_occupied_oscillator_last_index)->next_index
+					= UNOCCUPIED_OSCILLATOR;
 			break;
 		}
 
-		get_oscillator_link_address_from_index(previous_index)->next = next_index;
-		get_oscillator_link_address_from_index(next_index)->previous = previous_index;
+		get_oscillator_link_address_from_index(previous_index)->next_index = next_index;
+		get_oscillator_link_address_from_index(next_index)->previous_index = previous_index;
 	} while (0);
-	p_this_index_oscillator_link->previous = UNOCCUPIED_OSCILLATOR;
-	p_this_index_oscillator_link->next = UNOCCUPIED_OSCILLATOR;
+	p_this_link->previous_index = UNOCCUPIED_OSCILLATOR;
+	p_this_link->next_index = UNOCCUPIED_OSCILLATOR;
 
-	oscillator_t * const p_oscillator = get_oscillator_address_from_index(index);
+	oscillator_t * const p_oscillator = get_oscillator_address_from_index(oscillator_index);
 
 	if(false == (true == IS_PERCUSSION_OSCILLATOR(p_oscillator))){
-		if(NO_MIDI_EFFECT_ASSOCIATE_LINK != p_oscillator->midi_effect_aassociate_link_index){
+		if(NO_MIDI_EFFECT_ASSOCIATE_LINK != p_oscillator->midi_effect_associate_link_index){
 			midi_effect_associate_link_t *p_midi_effect_associate_link
-					= get_midi_effect_associate_link_from_index(p_oscillator->midi_effect_aassociate_link_index);
+					= get_midi_effect_associate_link_from_index(p_oscillator->midi_effect_associate_link_index);
 			while(1)
 			{
 				p_midi_effect_associate_link->midi_effect_type = MidiEffectNone;
@@ -552,7 +562,7 @@ int discard_oscillator(int16_t const index)
 						= get_midi_effect_associate_link_from_index(p_midi_effect_associate_link->next_link_index);
 			}
 		}
-		p_oscillator->midi_effect_aassociate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+		p_oscillator->midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
 	}
 	p_oscillator->voice = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number -= 1;
@@ -581,14 +591,14 @@ int16_t const get_occupied_oscillator_head_index()
 
 /**********************************************************************************/
 
-static inline bool is_occupied_oscillator_index_out_of_range(int16_t const index)
+static inline bool is_occupied_oscillator_index_out_of_range(int16_t const oscillator_index)
 {
 	bool is_out_of_range = true;
 	do {
-		if(index < 0){
+		if(oscillator_index < 0){
 			break;
 		}
-		if(index >= get_oscillator_capacity()){
+		if(oscillator_index >= get_oscillator_capacity()){
 			break;
 		}
 		is_out_of_range = false;
@@ -599,26 +609,26 @@ static inline bool is_occupied_oscillator_index_out_of_range(int16_t const index
 
 /**********************************************************************************/
 
-int16_t const get_occupied_oscillator_next_index(int16_t const index)
+int16_t const get_occupied_oscillator_next_index(int16_t const oscillator_index)
 {
-	if(true == is_occupied_oscillator_index_out_of_range(index)){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator index = %d, out of range \r\n", index);
+	if(true == is_occupied_oscillator_index_out_of_range(oscillator_index)){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator index = %d, out of range \r\n", oscillator_index);
 		return UNOCCUPIED_OSCILLATOR;
 	}
 
-	return get_oscillator_link_address_from_index(index)->next;
+	return get_oscillator_link_address_from_index(oscillator_index)->next_index;
 }
 
 /**********************************************************************************/
 
-oscillator_t * const get_oscillator_pointer_from_index(int16_t const index)
+oscillator_t * const get_oscillator_pointer_from_index(int16_t const oscillator_index)
 {
-	if(true == is_occupied_oscillator_index_out_of_range(index)){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator index = %d, out of range \r\n", index);
+	if(true == is_occupied_oscillator_index_out_of_range(oscillator_index)){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator index = %d, out of range \r\n", oscillator_index);
 		return NULL;
 	}
 
-	return get_oscillator_address_from_index(index);
+	return get_oscillator_address_from_index(oscillator_index);
 }
 
 /**********************************************************************************/
@@ -641,14 +651,14 @@ int destroy_all_oscillators(void)
 
 /**********************************************************************************/
 
-int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const index,
-									  int16_t const * const p_associate_indexes)
+int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const primary_oscillator_index,
+									  int16_t const * const p_associate_oscillator_indexes)
 {
 	int ret = 0;
-	oscillator_t  * const p_oscillator = get_oscillator_address_from_index(index);
+	oscillator_t  * const p_primary_oscillator = get_oscillator_address_from_index(primary_oscillator_index);
 	do
 	{
-		if(NULL == p_oscillator){
+		if(NULL == p_primary_oscillator){
 			ret = -1;
 			break;
 		}
@@ -679,14 +689,14 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 			p_new_link->midi_effect_type = midi_effect_type;
 			p_new_link->next_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
 			for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-				p_new_link->associate_oscillator_indexes[i] = p_associate_indexes[i];
+				p_new_link->associate_oscillator_indexes[i] = p_associate_oscillator_indexes[i];
 			}
 		}
 
 		{
-			int16_t current_link_index = p_oscillator->midi_effect_aassociate_link_index;
+			int16_t current_link_index = p_primary_oscillator->midi_effect_associate_link_index;
 			if(NO_MIDI_EFFECT_ASSOCIATE_LINK == current_link_index){
-				p_oscillator->midi_effect_aassociate_link_index = new_link_index;
+				p_primary_oscillator->midi_effect_associate_link_index = new_link_index;
 				break;
 			}
 
@@ -708,24 +718,24 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 
 /**********************************************************************************/
 
-int16_t count_all_subordinate_oscillators(uint8_t const midi_effect_type, int16_t const root_index)
+int16_t count_all_subordinate_oscillators(uint8_t const midi_effect_type, int16_t const root_oscillator_index)
 {
-	return get_all_subordinate_oscillator_indexes(midi_effect_type, root_index, NULL);
+	return get_subordinate_oscillator_indexes(midi_effect_type, root_oscillator_index, NULL);
 }
 
 /**********************************************************************************/
 
-int get_all_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_index,
-										   int16_t * const p_associate_indexes)
+int get_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_oscillator_index,
+										   int16_t * const p_subordinate_indexes)
 {
-	oscillator_t * const p_oscillator
-			= get_oscillator_address_from_index(root_index);
+	oscillator_t * const p_root_oscillator
+			= get_oscillator_address_from_index(root_oscillator_index);
 	int16_t subordinate_number = 0;
 	do{
-		if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_oscillator->midi_effect_aassociate_link_index){
+		if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_root_oscillator->midi_effect_associate_link_index){
 			break;
 		}
-		int16_t midi_effect_associate_link_index = p_oscillator->midi_effect_aassociate_link_index;
+		int16_t midi_effect_associate_link_index = p_root_oscillator->midi_effect_associate_link_index;
 
 		while(1)
 		{
@@ -741,9 +751,9 @@ int get_all_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16
 			{
 				if(true == IS_MIDI_EFFECT_TYPE_MATCHED(midi_effect_type,
 													   p_midi_effect_associate_link->midi_effect_type)){
-					if(NULL != p_associate_indexes){
+					if(NULL != p_subordinate_indexes){
 						for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-							p_associate_indexes[i + subordinate_number]
+							p_subordinate_indexes[subordinate_number + i]
 									= p_midi_effect_associate_link->associate_oscillator_indexes[i];
 						}
 					}
@@ -752,12 +762,12 @@ int get_all_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16
 				}
 
 				for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-					int16_t * p_moving_associate_indexes
-							= p_associate_indexes + subordinate_number * ( NULL != p_associate_indexes);
+					int16_t * p_moving_subordinate_indexes
+							= p_subordinate_indexes + subordinate_number * ( NULL != p_subordinate_indexes);
 					subordinate_number +=
-							get_all_subordinate_oscillator_indexes(midi_effect_type,
+							get_subordinate_oscillator_indexes(midi_effect_type,
 																   p_midi_effect_associate_link->associate_oscillator_indexes[i],
-																   p_moving_associate_indexes);
+																   p_moving_subordinate_indexes);
 				}
 			}while(0);
 			if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_midi_effect_associate_link->next_link_index){
