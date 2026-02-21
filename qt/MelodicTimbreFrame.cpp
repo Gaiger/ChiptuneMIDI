@@ -1,7 +1,6 @@
 #include <QDebug>
 #include <QStandardItemModel>
 
-#include "chiptune_midi_define.h"
 #include "TuneManager.h"
 
 #include "ui_MelodicTimbreFrameForm.h"
@@ -9,9 +8,8 @@
 
 /**********************************************************************************/
 
-MelodicTimbreFrame::MelodicTimbreFrame(int channel_index, QWidget *parent)
+MelodicTimbreFrame::MelodicTimbreFrame(QWidget *parent)
 	: QFrame(parent),
-	  m_channel_index(channel_index),
 	  ui(new Ui::MelodicTimbreFrame)
 {
 	do
@@ -32,25 +30,7 @@ MelodicTimbreFrame::MelodicTimbreFrame(int channel_index, QWidget *parent)
 	m_previous_dutycycle = 0;// dutycycle 50
 	m_previous_sustain_level = ui->SustainLevelSpinBox->value();
 
-	do
-	{
-		if(MIDI_PERCUSSION_CHANNEL == m_channel_index){
-			ui->WaveFormComboBox->setEnabled(false);
-			ui->AttackCurveComboBox->setEnabled(false);
-			ui->AttackTimeSpinBox->setEnabled(false);
-			ui->DecayCurveComboBox->setEnabled(false);
-			ui->DecayTimeSpinBox->setEnabled(false);
-			ui->SustainLevelSpinBox->setEnabled(false);
-			ui->ReleaseCurveComboBox->setEnabled(false);
-			ui->ReleaseTimeSpinBox->setEnabled(false);
-
-			ui->DamperSustainLevelSpinBox->setEnabled(false);
-			ui->DamperSustainCurveComboBox->setEnabled(false);
-			ui->DamperSustainTimeDoubleSpinBox->setEnabled(false);
-			break;
-		}
-		ui->DamperSustainLevelSpinBox->setMaximum(ui->SustainLevelSpinBox->value());
-	} while(0);
+	ui->DamperSustainLevelSpinBox->setMaximum(ui->SustainLevelSpinBox->value());
 
 	QStandardItemModel *p_model =
 		  qobject_cast<QStandardItemModel *>(ui->DutyCycleComboBox->model());
@@ -104,14 +84,14 @@ MelodicTimbreFrame::WaveformType MelodicTimbreFrame::GetWaveform(void)
 
 void MelodicTimbreFrame::EmitMelodicChannelTimbreChanged(void)
 {
-	emit MelodicChannelTimbreChanged(m_channel_index, GetWaveform(),
-						ui->AttackCurveComboBox->currentIndex(), ui->AttackTimeSpinBox->value()/1000.0,
-						ui->DecayCurveComboBox->currentIndex(), ui->DecayTimeSpinBox->value()/1000.0,
-						ui->SustainLevelSpinBox->value(),
-						ui->ReleaseCurveComboBox->currentIndex(), ui->ReleaseTimeSpinBox->value()/1000.0,
-						ui->DamperSustainLevelSpinBox->value(),
-						ui->DamperSustainCurveComboBox->currentIndex(),
-						ui->DamperSustainTimeDoubleSpinBox->value());
+	emit TimbreChanged(GetWaveform(),
+					   ui->AttackCurveComboBox->currentIndex(), ui->AttackTimeSpinBox->value()/1000.0,
+					   ui->DecayCurveComboBox->currentIndex(), ui->DecayTimeSpinBox->value()/1000.0,
+					   ui->SustainLevelSpinBox->value(),
+					   ui->ReleaseCurveComboBox->currentIndex(), ui->ReleaseTimeSpinBox->value()/1000.0,
+					   ui->DamperSustainLevelSpinBox->value(),
+					   ui->DamperSustainCurveComboBox->currentIndex(),
+					   ui->DamperSustainTimeDoubleSpinBox->value());
 }
 
 /**********************************************************************************/

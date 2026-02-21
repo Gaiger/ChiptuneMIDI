@@ -15,7 +15,7 @@
 ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QWidget *parent) :
 	QWidget(parent),
 	m_channel_index(channel_index),
-	m_p_melodic_timbre_frame(new MelodicTimbreFrame(channel_index, this)),
+	m_p_melodic_timbre_frame(new MelodicTimbreFrame(this)),
 	ui(new Ui::ChannelNodeWidget)
 {
 	ui->setupUi(this);
@@ -62,8 +62,8 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 	p_layout->setContentsMargins(0, 0, 0, 0);
 	p_layout->setSpacing(0);
 
-	QObject::connect(m_p_melodic_timbre_frame, &MelodicTimbreFrame::MelodicChannelTimbreChanged, this,
-					 &ChannelNodeWidget::MelodicChannelTimbreChanged);
+	QObject::connect(m_p_melodic_timbre_frame, &MelodicTimbreFrame::TimbreChanged, this,
+					 &ChannelNodeWidget::HandleMelodicTimbreFrameTimbreChanged);
 	if(MIDI_PERCUSSION_CHANNEL == channel_index){
 		ui->ExpandCollapsePushButton->setEnabled(false);
 	}
@@ -79,7 +79,29 @@ ChannelNodeWidget::~ChannelNodeWidget()
 
 /**********************************************************************************/
 
-void ChannelNodeWidget::GetTimbre(int *p_waveform,
+void ChannelNodeWidget::HandleMelodicTimbreFrameTimbreChanged(int waveform,
+										   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
+										   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
+										   int envelope_note_on_sustain_level,
+										   int envelope_release_curve, double envelope_release_duration_in_seconds,
+										   int envelope_damper_sustain_level,
+										   int envelope_damper_sustain_curve,
+										   double envelope_damper_sustain_duration_in_seconds)
+{
+	emit MelodicChannelTimbreChanged(m_channel_index,
+									 waveform,
+									 envelope_attack_curve, envelope_attack_duration_in_seconds,
+									 envelope_decay_curve, envelope_decay_duration_in_seconds,
+									 envelope_note_on_sustain_level,
+									 envelope_release_curve, envelope_release_duration_in_seconds,
+									 envelope_damper_sustain_level,
+									 envelope_damper_sustain_curve,
+									 envelope_damper_sustain_duration_in_seconds);
+}
+
+/**********************************************************************************/
+
+void ChannelNodeWidget::GetMelodicChannelTimbre(int *p_waveform,
 			   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,
 			   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
 			   int *p_envelope_note_on_sustain_level,
@@ -88,13 +110,21 @@ void ChannelNodeWidget::GetTimbre(int *p_waveform,
 			   int *p_envelope_damper_sustain_curve,
 			   double *p_envelope_damper_sustain_duration_in_seconds)
 {
-	m_p_melodic_timbre_frame->GetTimbre(p_waveform, p_envelope_attack_curve, p_envelope_attack_duration_in_seconds,
-									 p_envelope_decay_curve, p_envelope_decay_duration_in_seconds,
-									 p_envelope_note_on_sustain_level,
-									 p_envelope_release_curve, p_envelope_release_duration_in_seconds,
-									 p_envelope_damper_sustain_level,
-									 p_envelope_damper_sustain_curve,
-									 p_envelope_damper_sustain_duration_in_seconds);
+	do
+	{
+		if(MIDI_PERCUSSION_CHANNEL == m_channel_index){
+			qDebug() << Q_FUNC_INFO << "WARNING :: ignore for MIDI_PERCUSSION_CHANNEL";
+			break;
+		}
+		m_p_melodic_timbre_frame->GetTimbre(p_waveform, p_envelope_attack_curve, p_envelope_attack_duration_in_seconds,
+										 p_envelope_decay_curve, p_envelope_decay_duration_in_seconds,
+										 p_envelope_note_on_sustain_level,
+										 p_envelope_release_curve, p_envelope_release_duration_in_seconds,
+										 p_envelope_damper_sustain_level,
+										 p_envelope_damper_sustain_curve,
+										 p_envelope_damper_sustain_duration_in_seconds);
+
+	}while(0);
 }
 
 /**********************************************************************************/

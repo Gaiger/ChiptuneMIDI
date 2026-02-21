@@ -18,7 +18,7 @@ public:
 							   QWidget *parent = nullptr);
 	~ChannelNodeWidget();
 
-	void GetTimbre(int *p_waveform,
+	void GetMelodicChannelTimbre(int *p_waveform,
 				   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,
 				   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
 				   int *p_envelope_note_on_sustain_level,
@@ -43,7 +43,15 @@ public :
 private slots:
 	void on_OutputEnabledCheckBox_stateChanged(int state);
 	void on_ExpandCollapsePushButton_clicked(bool checked);
-
+private slots:
+	void HandleMelodicTimbreFrameTimbreChanged(int waveform,
+											   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
+											   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
+											   int envelope_note_on_sustain_level,
+											   int envelope_release_curve, double envelope_release_duration_in_seconds,
+											   int envelope_damper_sustain_level,
+											   int envelope_damper_sustain_curve,
+											   double envelope_damper_sustain_duration_in_seconds);
 private:
 	int const m_channel_index;
 	QSize m_expanded_size;

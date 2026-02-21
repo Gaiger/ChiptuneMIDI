@@ -20,7 +20,7 @@ public :
 	void AddChannel(int channel_index, int instrument_index);
 	void SetAllOutputEnabled(bool is_enabled);
 
-	void GetTimbre(int channel_index, int *p_waveform,
+	void GetMelodicChannelTimbre(int channel_index, int *p_waveform,
 				   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,
 				   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
 				   int *p_envelope_note_on_sustain_level,

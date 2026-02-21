@@ -51,7 +51,7 @@ color: rgb(208, 208, 208);
     <bool>true</bool>
    </property>
   </widget>
-  <widget class="QWidget" name="PitchTimbreWidget" native="true">
+  <widget class="QWidget" name="MelodicTimbreWidget" native="true">
    <property name="geometry">
     <rect>
      <x>0</x>

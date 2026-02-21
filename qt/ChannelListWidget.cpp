@@ -58,7 +58,7 @@ void ChannelListWidget::SetAllOutputEnabled(bool is_enabled)
 
 /**********************************************************************************/
 
-void ChannelListWidget::GetTimbre(int channel_index, int *p_waveform,
+void ChannelListWidget::GetMelodicChannelTimbre(int channel_index, int *p_waveform,
 			   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,
 			   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
 			   int *p_envelope_note_on_sustain_level,
@@ -67,10 +67,10 @@ void ChannelListWidget::GetTimbre(int channel_index, int *p_waveform,
 			   int *p_envelope_damper_sustain_curve,
 			   double *p_envelope_damper_sustain_duration_in_seconds)
 {
-	ChannelNodeWidget *p_channelnode_widget
+	ChannelNodeWidget *p_channel_node_widget
 			= (ChannelNodeWidget*)m_p_vboxlayout->itemAt(m_channel_position_map.value(channel_index))->widget();
 
-	p_channelnode_widget->GetTimbre(p_waveform, p_envelope_attack_curve, p_envelope_attack_duration_in_seconds,
+	p_channel_node_widget->GetMelodicChannelTimbre(p_waveform, p_envelope_attack_curve, p_envelope_attack_duration_in_seconds,
 									p_envelope_decay_curve, p_envelope_decay_duration_in_seconds,
 									p_envelope_note_on_sustain_level,
 									p_envelope_release_curve, p_envelope_release_duration_in_seconds,

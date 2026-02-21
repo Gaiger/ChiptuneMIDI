@@ -11,7 +11,7 @@ class MelodicTimbreFrame : public QFrame
 {
 	Q_OBJECT
 public:
-	explicit MelodicTimbreFrame(int channel_index, QWidget *parent = nullptr);
+	explicit MelodicTimbreFrame(QWidget *parent = nullptr);
 	~MelodicTimbreFrame(void) Q_DECL_OVERRIDE;
 public:
 	enum WaveformType
@@ -36,8 +36,7 @@ public:
 
 public:
 	signals:
-	void MelodicChannelTimbreChanged(int channel_index,
-					   int waveform,
+	void TimbreChanged(int waveform,
 					   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
 					   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
 					   int envelope_note_on_sustain_level,
@@ -68,7 +67,6 @@ private :
 	WaveformType GetWaveform(void);
 	void EmitMelodicChannelTimbreChanged(void);
 private:
-	int const m_channel_index;
 	int m_previous_dutycycle;
 	int m_previous_sustain_level;
 private:
