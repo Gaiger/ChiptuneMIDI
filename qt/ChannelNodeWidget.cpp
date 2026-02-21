@@ -5,7 +5,7 @@
 #include "chiptune_midi_define.h"
 
 #include "GetInstrumentNameString.h"
-#include "PitchTimbreFrame.h"
+#include "MelodicTimbreFrame.h"
 
 #include "ChannelNodeWidget.h"
 #include "ui_ChannelNodeWidgetForm.h"
@@ -15,7 +15,7 @@
 ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QWidget *parent) :
 	QWidget(parent),
 	m_channel_index(channel_index),
-	m_p_pitchtimbre_frame(new PitchTimbreFrame(channel_index, this)),
+	m_p_melodic_timbre_frame(new MelodicTimbreFrame(channel_index, this)),
 	ui(new Ui::ChannelNodeWidget)
 {
 	ui->setupUi(this);
@@ -32,7 +32,7 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 
 	ui->ColorWidget->setStyleSheet(style_sheet_string);
 	m_expanded_size = QWidget::size();
-	m_collapsed_size = QSize(m_expanded_size.width(), m_expanded_size.height() - ui->PitchTimbreWidget->height());
+	m_collapsed_size = QSize(m_expanded_size.width(), m_expanded_size.height() - ui->MelodicTimbreWidget->height());
 	QWidget::setFixedSize(m_collapsed_size);
 	QString instrument_name;
 #define CHIPTUNE_INSTRUMENT_NOT_SPECIFIED			(-1)
@@ -57,12 +57,12 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 	ui->ExpandCollapsePushButton->setStyleSheet("text-align:left;");
 	ui->ExpandCollapsePushButton->setText(string);
 
-	QGridLayout *p_layout = new QGridLayout(ui->PitchTimbreWidget);
-	p_layout->addWidget(m_p_pitchtimbre_frame, 0, 0);
+	QGridLayout *p_layout = new QGridLayout(ui->MelodicTimbreWidget);
+	p_layout->addWidget(m_p_melodic_timbre_frame, 0, 0);
 	p_layout->setContentsMargins(0, 0, 0, 0);
 	p_layout->setSpacing(0);
 
-	QObject::connect(m_p_pitchtimbre_frame, &PitchTimbreFrame::MelodicChannelTimbreChanged, this,
+	QObject::connect(m_p_melodic_timbre_frame, &MelodicTimbreFrame::MelodicChannelTimbreChanged, this,
 					 &ChannelNodeWidget::MelodicChannelTimbreChanged);
 	if(MIDI_PERCUSSION_CHANNEL == channel_index){
 		ui->ExpandCollapsePushButton->setEnabled(false);
@@ -88,7 +88,7 @@ void ChannelNodeWidget::GetTimbre(int *p_waveform,
 			   int *p_envelope_damper_sustain_curve,
 			   double *p_envelope_damper_sustain_duration_in_seconds)
 {
-	m_p_pitchtimbre_frame->GetTimbre(p_waveform, p_envelope_attack_curve, p_envelope_attack_duration_in_seconds,
+	m_p_melodic_timbre_frame->GetTimbre(p_waveform, p_envelope_attack_curve, p_envelope_attack_duration_in_seconds,
 									 p_envelope_decay_curve, p_envelope_decay_duration_in_seconds,
 									 p_envelope_note_on_sustain_level,
 									 p_envelope_release_curve, p_envelope_release_duration_in_seconds,

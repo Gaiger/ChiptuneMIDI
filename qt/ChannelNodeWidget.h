@@ -7,7 +7,7 @@ namespace Ui {
 class ChannelNodeWidget;
 }
 
-class PitchTimbreFrame;
+class MelodicTimbreFrame;
 
 class ChannelNodeWidget : public QWidget
 {
@@ -49,7 +49,7 @@ private:
 	QSize m_expanded_size;
 	QSize m_collapsed_size;
 
-	PitchTimbreFrame *m_p_pitchtimbre_frame;
+	MelodicTimbreFrame *m_p_melodic_timbre_frame;
 private:
 	Ui::ChannelNodeWidget *ui;
 };

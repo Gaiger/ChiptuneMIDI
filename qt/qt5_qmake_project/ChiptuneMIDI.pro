@@ -41,7 +41,7 @@ SOURCES += \
     $${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp \
     $${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.cpp \
     $${CHIPTUNE_QT_DIR}/GetInstrumentNameString.cpp \
-    $${CHIPTUNE_QT_DIR}/PitchTimbreFrame.cpp \
+    $${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.cpp \
     $${CHIPTUNE_QT_DIR}/ProgressSlider.cpp \
     $${CHIPTUNE_QT_DIR}/SequencerWidget.cpp \
     $${CHIPTUNE_QT_DIR}/TuneManager.cpp \
@@ -67,7 +67,7 @@ HEADERS += \
     $${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.h \
     $${CHIPTUNE_QT_DIR}/GetInstrumentNameString.h \
     $${CHIPTUNE_QT_DIR}/MidiPlayer.h \
-    $${CHIPTUNE_QT_DIR}/PitchTimbreFrame.h \
+    $${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h \
     $${CHIPTUNE_QT_DIR}/ProgressSlider.h \
     $${CHIPTUNE_QT_DIR}/SequencerWidget.h \
     $${CHIPTUNE_QT_DIR}/TuneManager.h \
@@ -78,7 +78,7 @@ HEADERS += \
 FORMS += \
     $${CHIPTUNE_QT_DIR}/ChannelListWidgetForm.ui \
     $${CHIPTUNE_QT_DIR}/ChannelNodeWidgetForm.ui \
-    $${CHIPTUNE_QT_DIR}/PitchTimbreFrameForm.ui \
+    $${CHIPTUNE_QT_DIR}/MelodicTimbreFrameForm.ui \
     $${CHIPTUNE_QT_DIR}/ChiptuneMidiWidgetForm.ui
 
 

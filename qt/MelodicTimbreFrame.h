@@ -1,18 +1,18 @@
-#ifndef _PITCHTIMBREFRAME_H_
-#define _PITCHTIMBREFRAME_H_
+#ifndef _MELODICTIMBREFRAME_H_
+#define _MELODICTIMBREFRAME_H_
 
 namespace Ui {
-class PitchTimbreFrame;
+class MelodicTimbreFrame;
 }
 
 #include <QFrame>
 
-class PitchTimbreFrame : public QFrame
+class MelodicTimbreFrame : public QFrame
 {
 	Q_OBJECT
 public:
-	explicit PitchTimbreFrame(int channel_index, QWidget *parent = nullptr);
-	~PitchTimbreFrame(void) Q_DECL_OVERRIDE;
+	explicit MelodicTimbreFrame(int channel_index, QWidget *parent = nullptr);
+	~MelodicTimbreFrame(void) Q_DECL_OVERRIDE;
 public:
 	enum WaveformType
 	{
@@ -72,7 +72,7 @@ private:
 	int m_previous_dutycycle;
 	int m_previous_sustain_level;
 private:
-	Ui::PitchTimbreFrame *ui;
+	Ui::MelodicTimbreFrame *ui;
 };
 
-#endif // _PITCHTIMBREFRAME_H_
+#endif // _MELODICTIMBREFRAME_H_
