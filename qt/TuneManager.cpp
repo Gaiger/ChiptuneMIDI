@@ -98,11 +98,11 @@ extern "C" int get_midi_message(uint32_t const message_index, uint32_t * const p
 
 /**********************************************************************************/
 
-TuneManager::TuneManager(bool is_stereo,
+TuneManager::TuneManager(bool const is_stereo,
 						 int const sampling_rate, int const sampling_size, QObject *parent)
-	: QObject(parent)
+	: QObject(parent),
+	  m_p_private(new TuneManagerPrivate())
 {
-	m_p_private = new TuneManagerPrivate();
 	QMutexLocker locker(&m_p_private->m_mutex);
 
 	do
@@ -159,7 +159,6 @@ TuneManager::~TuneManager(void)
 		m_p_private->m_channel_instrument_pair_list.clear();
 	}
 	delete m_p_private;
-	m_p_private = nullptr;
 }
 
 /**********************************************************************************/
@@ -305,7 +304,7 @@ int TuneManager::GetAmplitudeGain(void)
 
 /**********************************************************************************/
 
-void TuneManager::SetAmplitudeGain(int amplitude_gain)
+void TuneManager::SetAmplitudeGain(int const amplitude_gain)
 {
 	chiptune_set_amplitude_gain(amplitude_gain);
 }
@@ -434,7 +433,7 @@ double TuneManager::GetPlayingEffectiveTempo(void)
 
 /**********************************************************************************/
 
-void TuneManager::SetPlayingSpeedRatio(double playing_speed_raio)
+void TuneManager::SetPlayingSpeedRatio(double const playing_speed_raio)
 {
 	QMutexLocker locker(&m_p_private->m_mutex);
 	qDebug() << Q_FUNC_INFO << playing_speed_raio;
@@ -443,7 +442,7 @@ void TuneManager::SetPlayingSpeedRatio(double playing_speed_raio)
 
 /**********************************************************************************/
 
-void TuneManager::SetPitchShift(int pitch_shift_in_semitones)
+void TuneManager::SetPitchShift(int const pitch_shift_in_semitones)
 {
 	QMutexLocker locker(&m_p_private->m_mutex);
 	chiptune_set_pitch_shift_in_semitones((int8_t)pitch_shift_in_semitones);
@@ -451,7 +450,7 @@ void TuneManager::SetPitchShift(int pitch_shift_in_semitones)
 
 /**********************************************************************************/
 
-int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
+int TuneManager::SetStartTimeInSeconds(float const target_start_time_in_seconds)
 {
 	QMutexLocker locker(&m_p_private->m_mutex);
 
@@ -459,47 +458,51 @@ int TuneManager::SetStartTimeInSeconds(float target_start_time_in_seconds)
 	QList<QMidiEvent *> const p_midi_event_list = m_p_private ->m_p_midi_file->events();
 
 	do {
+		if(target_start_time_in_seconds < 0){
+			break;
+		}
+
 		if(nullptr == m_p_private->m_p_midi_file){
 			break;
 		}
 
-		if(0.05 > qAbs(GetMidiFileDurationInSeconds() - target_start_time_in_seconds)){
-			set_index = m_p_private->m_p_midi_file->events().size() - 1;
-			break;
-		}
-
-		if(target_start_time_in_seconds < 0){
-			target_start_time_in_seconds = 0;
-		}
-
-
-		float current_event_time_in_seconds = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(0)->tick());
-		float next_event_time_in_seconds = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(0 + 1)->tick());
-
-		for(int i = 0; i < p_midi_event_list.size() - 1; i++){
-			if(0.05 > qAbs(current_event_time_in_seconds - target_start_time_in_seconds)){
-				set_index = i;
-				break;
-			}
-
-			if(current_event_time_in_seconds < target_start_time_in_seconds){
-				if(next_event_time_in_seconds > target_start_time_in_seconds){
-					set_index = i + 1;
+		int left_index = 0;
+		int right_index = p_midi_event_list.size() - 1;
+		while(left_index <= right_index){
+			int middle_index = (left_index + right_index) / 2;
+			do
+			{
+				float const middle_index_event_time_in_seconds
+						= m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(middle_index)->tick());
+				if(middle_index_event_time_in_seconds > target_start_time_in_seconds){
+					right_index = middle_index - 1;
 					break;
 				}
-			}
-
-			current_event_time_in_seconds = next_event_time_in_seconds;
-			next_event_time_in_seconds = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(i + 1)->tick());
+				left_index = middle_index + 1;
+			} while(0);
+		}
+		set_index = right_index;
+		if(-1 == set_index){
+			set_index = 0;
 		}
 	} while(0);
 
 	int ret = -1;
 	do
 	{
-		if(-1 == set_index){
-			qDebug() << Q_FUNC_INFO <<"ERROR :: could not find target_start_time_in_seconds = " << target_start_time_in_seconds;
-			break;
+		{
+			float set_index_time = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick());
+			float set_index_plus_one_time
+					= m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index + 1)->tick());
+			if(false == (set_index_time <= target_start_time_in_seconds &&
+					target_start_time_in_seconds < set_index_plus_one_time)){
+				qDebug() << Q_FUNC_INFO << "ERROR :: set_index_time = " << set_index_time
+						 << "target_start_time_in_seconds = " << target_start_time_in_seconds
+						 << "set_index_plus_one_time = " << set_index_plus_one_time;
+				qDebug() << "It voilates set_index_time <= target_start_time_in_seconds"
+						 << " and target_start_time_in_seconds < set_index_plus_one_time";
+				break;
+			}
 		}
 		qDebug() << Q_FUNC_INFO << "target_start_time_in_seconds = " << target_start_time_in_seconds
 				 << ", found time = " << m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick())
@@ -539,7 +542,7 @@ QList<QPair<int, int>> TuneManager::GetChannelInstrumentPairList(void)
 
 /**********************************************************************************/
 
-void TuneManager::SetChannelOutputEnabled(int channel_index, bool is_enabled)
+void TuneManager::SetChannelOutputEnabled(int const channel_index, bool const is_enabled)
 {
 	QMutexLocker locker(&m_p_private->m_mutex);
 	do

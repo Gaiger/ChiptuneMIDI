@@ -20,7 +20,7 @@ public:
 		SamplingSizeMax				= 255,
 	}; Q_ENUM(SamplingSize)
 
-	explicit TuneManager(bool is_stereo = true,
+	explicit TuneManager(bool const is_stereo = true,
 						 int const sampling_rate = 16000, int const sampling_size = SamplingSize8Bit,
 						 QObject * parent = nullptr);
 	~TuneManager(void);
@@ -33,7 +33,7 @@ public:
 	int GetSamplingRate(void);
 	int GetSamplingSize(void);
 	int GetAmplitudeGain(void);
-	void SetAmplitudeGain(int amplitude_gain);
+	void SetAmplitudeGain(int const amplitude_gain);
 
 	QByteArray FetchWave(int const size);
 	bool IsTuneEnding(void);
@@ -43,13 +43,13 @@ public:
 	int GetCurrentTick(void);
 	double GetTempo(void);
 	double GetPlayingEffectiveTempo(void);
-	void SetPlayingSpeedRatio(double playing_speed_raio);
-	void SetPitchShift(int pitch_shift_in_semitones);
+	void SetPlayingSpeedRatio(double const playing_speed_raio);
+	void SetPitchShift(int const pitch_shift_in_semitones);
 
-	int SetStartTimeInSeconds(float target_start_time_in_seconds);
+	int SetStartTimeInSeconds(float const target_start_time_in_seconds);
 
 	QList<QPair<int, int>> GetChannelInstrumentPairList(void);
-	void SetChannelOutputEnabled(int channel_index, bool is_enabled);
+	void SetChannelOutputEnabled(int const channel_index, bool is_enabled);
 	enum WaveformType
 	{
 		WaveformSquareDutyCycle50	= 0,
@@ -92,7 +92,7 @@ private slots:
 private:
 	void SubmitWaveGeneration(int const size, bool const is_synchronized = true);
 private:
-	TuneManagerPrivate *m_p_private;
+	TuneManagerPrivate * const m_p_private;
 };
 
 #endif // _TUNEMANAGER_H_
