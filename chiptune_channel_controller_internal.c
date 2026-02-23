@@ -36,8 +36,9 @@ channel_controller_t * get_channel_controller_pointer_from_index(int8_t const ch
 void reset_channel_controller_to_midi_defaults(int8_t const channel_index)
 {
 	if(MIDI_PERCUSSION_CHANNEL == channel_index){
-	CHIPTUNE_PRINTF(cMidiControlChange, "ignore channel MIDI_PERCUSSION_CHANNEL in %s\r\n",
-					__func__);
+		CHIPTUNE_PRINTF(cMidiControlChange, "ignore channel MIDI_PERCUSSION_CHANNEL in %s\r\n",
+						__func__);
+		return ;
 	}
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[channel_index];
 	p_channel_controller->coarse_tuning_value = (midi_value_t)MIDI_SEVEN_BITS_CENTER_VALUE;

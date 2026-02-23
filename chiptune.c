@@ -769,6 +769,9 @@ static void destroy_all_oscillators_and_events(void)
 static void chase_midi_messages(uint32_t const end_midi_message_index)
 {
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		if(MIDI_PERCUSSION_CHANNEL == voice){
+			continue;
+		}
 		reset_channel_controller_to_midi_defaults(voice);
 	}
 	clear_all_oscillators_and_events();

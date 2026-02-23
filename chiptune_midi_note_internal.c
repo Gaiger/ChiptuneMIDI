@@ -264,9 +264,9 @@ int process_note_message(uint32_t const tick, bool const is_note_on,
 			}
 			char pitch_wheel_bend_string[32] = "";
 #ifdef _PRINT_MIDI_PITCH_WHEEL
-			if(0.0f != p_channel_controller->pitch_wheel_bend_in_semitones){
+			if(0.0f != get_channel_controller_pointer_from_index(voice)->pitch_wheel_bend_in_semitones){
 				snprintf(&pitch_wheel_bend_string[0], sizeof(pitch_wheel_bend_string),
-					", pitch wheel bend in semitone = %+3.2f", p_channel_controller->pitch_wheel_bend_in_semitones);
+					", pitch wheel bend in semitone = %+3.2f", get_channel_controller_pointer_from_index(voice)->pitch_wheel_bend_in_semitones);
 			}
 #endif
 			CHIPTUNE_PRINTF(cMidiNote, "tick = %u, %s :: voice = %d, note = %d, velocity = %d%s\r\n",
