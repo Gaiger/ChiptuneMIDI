@@ -491,22 +491,49 @@ int TuneManager::SetStartTimeInSeconds(float const target_start_time_in_seconds)
 	do
 	{
 		{
-			float set_index_time = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick());
-			float set_index_plus_one_time
+			float found_timestamp_tail_index_time_in_seconds = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick());
+			float found_timestamp_tail_index_plus_one_time_in_seconds
 					= m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index + 1)->tick());
-			if(false == (set_index_time <= target_start_time_in_seconds &&
-					target_start_time_in_seconds < set_index_plus_one_time)){
-				qDebug() << Q_FUNC_INFO << "ERROR :: set_index_time = " << set_index_time
+			if(false == (found_timestamp_tail_index_time_in_seconds <= target_start_time_in_seconds &&
+					target_start_time_in_seconds < found_timestamp_tail_index_plus_one_time_in_seconds)){
+				qDebug() << Q_FUNC_INFO << "ERROR :: found_timestamp_tail_index_time_in_seconds = " << found_timestamp_tail_index_time_in_seconds
 						 << "target_start_time_in_seconds = " << target_start_time_in_seconds
-						 << "set_index_plus_one_time = " << set_index_plus_one_time;
-				qDebug() << "It voilates set_index_time <= target_start_time_in_seconds"
-						 << " and target_start_time_in_seconds < set_index_plus_one_time";
+						 << "found_timestamp_tail_index_plus_one_time_in_seconds = " << found_timestamp_tail_index_plus_one_time_in_seconds;
+				qDebug() << "It voilates found_timestamp_tail_index_time_in_seconds <= target_start_time_in_seconds"
+						 << " and target_start_time_in_seconds < found_timestamp_tail_index_plus_one_time_in_seconds";
 				break;
 			}
 		}
+
+		int const found_timestamp_tail_index = set_index;
+		do
+		{
+			if(0 == set_index){
+				break;
+			}
+			int left_index = 0;
+			int right_index = set_index;
+			qint32 const found_timestamp_in_ticks
+					= p_midi_event_list.at(set_index)->tick();
+			while(left_index <= right_index){
+				int middle_index = (left_index + right_index) / 2;
+				do
+				{
+					qint32 const middle_index_event_time_in_tick = p_midi_event_list.at(middle_index)->tick();
+					if(middle_index_event_time_in_tick >= found_timestamp_in_ticks){
+						set_index = right_index;
+						right_index = middle_index - 1;
+						break;
+					}
+					left_index = middle_index + 1;
+				} while(0);
+			}
+		} while(0);
+
 		qDebug() << Q_FUNC_INFO << "target_start_time_in_seconds = " << target_start_time_in_seconds
-				 << ", found time = " << m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick())
-				 << ", index = " << set_index
+				 << ", found time in seconds = " << m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick())
+				 << ", found_timestamp_tail_index = " << found_timestamp_tail_index
+				 << ", set_index = " << set_index
 				 << ", tick = " << p_midi_event_list.at(set_index)->tick();
 		chiptune_set_current_message_index(set_index);
 
