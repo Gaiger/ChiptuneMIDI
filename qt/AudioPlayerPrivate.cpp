@@ -56,7 +56,7 @@ public:
 		m_p_audio_sink = nullptr;
 	};
 
-	void Start(QIODevice *device){
+	void Start(QIODevice * const device){
 		m_p_audio_sink->start(device);
 	}
 	void Suspend(void){
@@ -71,13 +71,13 @@ public:
 	void Reset(void){
 		m_p_audio_sink->reset();
 	}
-	void SetBufferSize(qsizetype value){
+	void SetBufferSize(qsizetype const value){
 		m_p_audio_sink->setBufferSize(value);
 	}
 	qsizetype BufferSize() const{
 		return m_p_audio_sink->bufferSize();
 	}
-	void SetVolume(qreal volume){
+	void SetVolume(qreal const volume){
 		m_p_audio_sink->setVolume(volume);
 	}
 	qreal Volume(){
@@ -147,7 +147,7 @@ public:
 		m_p_audio_output = nullptr;
 	};
 
-	void Start(QIODevice *device){
+	void Start(QIODevice *const device){
 		m_p_audio_output->start(device);
 	}
 	void Suspend(void){
@@ -162,7 +162,7 @@ public:
 	void Reset(void){
 		m_p_audio_output->reset();
 	}
-	void SetBufferSize(qsizetype value){
+	void SetBufferSize(qsizetype const value){
 		m_p_audio_output->setBufferSize(value);
 	}
 	qsizetype BufferSize() const{
@@ -493,7 +493,7 @@ void AudioPlayerPrivate::Pause(void)
 
 /**********************************************************************************/
 
-void AudioPlayerPrivate::FeedData(const QByteArray& data)
+void AudioPlayerPrivate::FeedData(QByteArray const &data)
 {
 	do {
 		if(nullptr == m_p_audio_player_output){
@@ -540,7 +540,7 @@ void AudioPlayerPrivate::HandleRefillTimerTimeout(void)
 
 /**********************************************************************************/
 
-void AudioPlayerPrivate::HandleAudioStateChanged(QAudio::State state)
+void AudioPlayerPrivate::HandleAudioStateChanged(QAudio::State const state)
 {
 	//qDebug() <<Q_FUNC_INFO <<"QThread::currentThread() = " << QThread::currentThread();
 	qDebug() << Q_FUNC_INFO << state;

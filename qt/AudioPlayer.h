@@ -31,14 +31,14 @@ public:
 
 	PlaybackState GetState(void);
 public slots:
-	void FeedData(const QByteArray& data);
+	void FeedData(QByteArray const &data);
 public:
 	signals:
-	void DataRequested(int size);
-	void StateChanged(AudioPlayer::PlaybackState state);
+	void DataRequested(int const size);
+	void StateChanged(AudioPlayer::PlaybackState const state);
 
 private:
-	AudioPlayerPrivate *m_p_private;
+	AudioPlayerPrivate * const m_p_private;
 };
 
 #endif // _AUDIOPLAYER_H_

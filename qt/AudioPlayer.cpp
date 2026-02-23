@@ -41,7 +41,7 @@ AudioPlayer::~AudioPlayer(void)
 
 /**********************************************************************************/
 
-void AudioPlayer::FeedData(const QByteArray& data)
+void AudioPlayer::FeedData(QByteArray const &data)
 {
 	m_p_private->FeedData(data);
 }

@@ -26,11 +26,11 @@ public:
 	void Pause(void);
 
 	AudioPlayer::PlaybackState GetState(void);
-	void FeedData(const QByteArray& data);
+	void FeedData(QByteArray const &data);
 public:
 	signals:
-	void DataRequested(int size);
-	void StateChanged(AudioPlayer::PlaybackState state);
+	void DataRequested(int const size);
+	void StateChanged(AudioPlayer::PlaybackState const state);
 
 private:
 	signals:
@@ -47,7 +47,7 @@ private slots:
 
 private slots:
 	void HandleRefillTimerTimeout(void);
-	void HandleAudioStateChanged(QAudio::State state);
+	void HandleAudioStateChanged(QAudio::State const state);
 
 private:
 	void SetupAudioResources(void);
