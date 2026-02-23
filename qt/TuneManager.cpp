@@ -521,12 +521,19 @@ int TuneManager::SetStartTimeInSeconds(float const target_start_time_in_seconds)
 				{
 					qint32 const middle_index_event_time_in_tick = p_midi_event_list.at(middle_index)->tick();
 					if(middle_index_event_time_in_tick >= found_timestamp_in_ticks){
-						set_index = right_index;
 						right_index = middle_index - 1;
 						break;
 					}
 					left_index = middle_index + 1;
 				} while(0);
+			}
+			set_index = left_index;
+
+			if(0 == set_index){
+				break;
+			}
+			if(p_midi_event_list.at(set_index - 1)->tick() == p_midi_event_list.at(set_index)->tick()){
+				qDebug() << Q_FUNC_INFO << "WARNING :: set_index is not the head for the same tick";
 			}
 		} while(0);
 
