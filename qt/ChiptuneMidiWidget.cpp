@@ -327,18 +327,18 @@ int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 			break;
 		}
 
-		ChannelListWidget *p_channell_ist_widget = new ChannelListWidget(ui->TimbreListWidget);
-		QObject::connect(p_channell_ist_widget, &ChannelListWidget::OutputEnabled,
+		ChannelListWidget *p_channel_list_widget = new ChannelListWidget(ui->TimbreListWidget);
+		QObject::connect(p_channel_list_widget, &ChannelListWidget::OutputEnabled,
 						 this, &ChiptuneMidiWidget::HandleChannelOutputEnabled);
-		QObject::connect(p_channell_ist_widget, &ChannelListWidget::MelodicChannelTimbreChanged,
+		QObject::connect(p_channel_list_widget, &ChannelListWidget::MelodicChannelTimbreChanged,
 						 this, &ChiptuneMidiWidget::HandleMelodicChannelTimbreChanged);
-		FillWidget(p_channell_ist_widget, ui->TimbreListWidget);
+		FillWidget(p_channel_list_widget, ui->TimbreListWidget);
 
 		int channel_number = m_p_tune_manager->GetChannelInstrumentPairList().size();
 		for(int i = 0; i < channel_number; i++){
 			int channel_index = m_p_tune_manager->GetChannelInstrumentPairList().at(i).first;
 			int instrument = m_p_tune_manager->GetChannelInstrumentPairList().at(i).second;
-			p_channell_ist_widget->AddChannel(channel_index, instrument);
+			p_channel_list_widget->AddChannel(channel_index, instrument);
 
 			if(MIDI_PERCUSSION_CHANNEL == channel_index){
 				continue;
@@ -352,7 +352,7 @@ int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 			int envelope_damper_sustain_curve;
 			double envelope_damper_sustain_duration_in_seconds;
 
-			p_channell_ist_widget->GetMelodicChannelTimbre(channel_index,
+			p_channel_list_widget->GetMelodicChannelTimbre(channel_index,
 											&waveform, &envelope_attack_curve, &envelope_attack_duration_in_seconds,
 											&envelope_decay_curve, &envelope_decay_duration_in_seconds,
 											&envelope_note_on_sustain_level,
@@ -370,8 +370,8 @@ int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 													(float)envelope_damper_sustain_duration_in_seconds);
 		}
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-		SetFontSizeForWidgetSubtree(p_channellist_widget,
-										p_channellist_widget->QWidget::font().pointSize() + 3, false);
+		SetFontSizeForWidgetSubtree(p_channel_list_widget,
+										p_channel_list_widget->QWidget::font().pointSize() + 3, false);
 #endif
 		m_p_sequencer_widget = new SequencerWidget(m_p_tune_manager,
 											   m_audio_player_buffer_in_milliseconds/1000.0,

@@ -147,7 +147,7 @@ public:
 		m_p_audio_output = nullptr;
 	};
 
-	void Start(QIODevice *const device){
+	void Start(QIODevice * const device){
 		m_p_audio_output->start(device);
 	}
 	void Suspend(void){
