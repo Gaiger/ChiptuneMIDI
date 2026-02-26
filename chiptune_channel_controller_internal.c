@@ -35,11 +35,6 @@ channel_controller_t * get_channel_controller_pointer_from_index(int8_t const ch
 
 void reset_channel_controller_to_midi_defaults(int8_t const channel_index)
 {
-	if(MIDI_PERCUSSION_CHANNEL == channel_index){
-		CHIPTUNE_PRINTF(cMidiControlChange, "ignore channel MIDI_PERCUSSION_CHANNEL in %s\r\n",
-						__func__);
-		return ;
-	}
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[channel_index];
 	p_channel_controller->coarse_tuning_value = (midi_value_t)MIDI_SEVEN_BITS_CENTER_VALUE;
 	p_channel_controller->fine_tuning_value = MIDI_FOURTEEN_BITS_CENTER_VALUE;
@@ -254,15 +249,8 @@ static void reset_melodic_channel_to_defaults(int8_t const channel_index)
 
 void reset_percussion_timbre_from_index(int8_t const channel_index);
 
-void reset_all_channels_to_defaults()
+static void reset_percussion_channel_to_defaults(void)
 {
-	for(int8_t channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; channel_index++){
-		if(MIDI_PERCUSSION_CHANNEL == channel_index){
-			continue;
-		}
-		reset_melodic_channel_to_defaults(channel_index);
-	}
-
 #define DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS		(0.005f)
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[MIDI_PERCUSSION_CHANNEL];
 	int8_t const ** pp_phase_table = NULL;
@@ -277,6 +265,22 @@ void reset_all_channels_to_defaults()
 	for(int8_t i = MIDI_PERCUSSION_KEY_MAP_MIN; i <= MIDI_PERCUSSION_KEY_MAP_MAX; i++){
 		reset_percussion_timbre_from_index(i);
 	}
+
+	reset_channel_controller_to_midi_defaults(MIDI_PERCUSSION_CHANNEL);
+}
+
+/**********************************************************************************/
+
+void reset_all_channels_to_defaults()
+{
+	for(int8_t channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; channel_index++){
+		if(MIDI_PERCUSSION_CHANNEL == channel_index){
+			continue;
+		}
+		reset_melodic_channel_to_defaults(channel_index);
+	}
+
+	reset_percussion_channel_to_defaults();
 }
 
 /**********************************************************************************/
