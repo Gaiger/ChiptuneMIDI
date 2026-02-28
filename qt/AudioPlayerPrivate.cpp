@@ -189,9 +189,6 @@ private:
 
 class AudioIODevice: public QIODevice
 {
-public :
-	AudioIODevice(void){ }
-
 protected :
 	qint64 readData(char *data, qint64 maxlen) Q_DECL_OVERRIDE
 	{
@@ -217,6 +214,14 @@ protected :
 		QMutexLocker locker(&m_mutex);
 		return m_audio_data_bytearray.size() + QIODevice::bytesAvailable();
 	}
+
+public:
+	void clear(void)
+	{
+		QMutexLocker locker(&m_mutex);
+		m_audio_data_bytearray.clear();
+	}
+
 private:
 	QByteArray m_audio_data_bytearray;
 	mutable QMutex m_mutex;
@@ -260,11 +265,12 @@ void AudioPlayerPrivate::CleanupAudioResources(void)
 	}
 
 	if(nullptr != m_p_audio_player_output){
-		m_p_audio_player_output->Reset();
+		m_p_audio_player_output->Stop();
 		delete m_p_audio_player_output;
 	}
 
 	if(nullptr != m_p_audio_io_device){
+		((AudioIODevice*)m_p_audio_io_device)->clear();
 		delete m_p_audio_io_device;
 	}
 }
@@ -307,11 +313,6 @@ void AudioPlayerPrivate::OrganizeConnection(void)
 	}while(0);
 
 	if(true == is_to_reconnect){
-		QObject::disconnect(this, &AudioPlayerPrivate::PrimeRequested,
-							this, &AudioPlayerPrivate::HandlePrimeRequested);
-		QObject::connect(this, &AudioPlayerPrivate::PrimeRequested,
-						 this, &AudioPlayerPrivate::HandlePrimeRequested, m_connection_type);
-
 		QObject::disconnect(this, &AudioPlayerPrivate::PlayRequested,
 							this, &AudioPlayerPrivate::HandlePlayRequested);
 		QObject::connect(this, &AudioPlayerPrivate::PlayRequested,
@@ -331,14 +332,6 @@ void AudioPlayerPrivate::OrganizeConnection(void)
 
 /**********************************************************************************/
 
-void AudioPlayerPrivate::HandlePrimeRequested(void)
-{
-	m_p_audio_player_output->Reset();
-	emit DataRequested(m_p_audio_player_output->BufferSize());
-}
-
-/**********************************************************************************/
-
 void AudioPlayerPrivate::HandlePlayRequested(void)
 {
 	if(nullptr == m_p_audio_player_output){
@@ -346,40 +339,26 @@ void AudioPlayerPrivate::HandlePlayRequested(void)
 		return ;
 	}
 
+	if(nullptr == m_p_audio_io_device){
+		qDebug() << Q_FUNC_INFO << "ERROR :: m_p_audio_io_device is nullptr";
+		return ;
+	}
+
 	do
 	{
-		if(QAudio::ActiveState == m_p_audio_player_output->State()){
-			qDebug() << Q_FUNC_INFO << "Playing, ignore";
+		int requested_bytes = m_p_audio_player_output->BufferSize() - m_p_audio_io_device->bytesAvailable();
+		if(0  < m_p_audio_io_device->bytesAvailable()){
 			break;
 		}
+		emit DataRequested(requested_bytes);
+	}while(0);
+
+	do
+	{
 		if(QAudio::SuspendedState == m_p_audio_player_output->State()){
 			qDebug() << Q_FUNC_INFO << "Resume Play";
 			m_p_audio_player_output->Resume();
 			break;
-		}
-	}while(0);
-
-	do
-	{
-		if(0  < m_p_audio_io_device->bytesAvailable()){
-			break;
-		}
-		qDebug() << Q_FUNC_INFO << "WARNING::No Prime before Start Play";
-		emit DataRequested(m_p_audio_player_output->BufferSize());
-	}while(0);
-
-	do
-	{
-		if(QAudio::ActiveState == m_p_audio_player_output->State()){
-			break;
-		}
-
-		if(nullptr == m_p_audio_io_device){
-			qDebug() << Q_FUNC_INFO << "ERROR:: m_p_audio_io_device is nullptr, give up Start Play";
-			break;
-		}
-		if(0 == m_p_audio_io_device->bytesAvailable()){
-			emit DataRequested(m_p_audio_player_output->BufferSize());
 		}
 
 		qDebug() << Q_FUNC_INFO << "Start Play";
@@ -397,6 +376,7 @@ void AudioPlayerPrivate::HandleStopRequested(void)
 			break;
 		}
 		m_p_audio_player_output->Stop();
+		((AudioIODevice*)m_p_audio_io_device)->clear();
 	}while(0);
 }
 
@@ -415,20 +395,18 @@ void AudioPlayerPrivate::HandlePauseRequested(void)
 
 /**********************************************************************************/
 
-void AudioPlayerPrivate::Prime(void)
-{
-	QMutexLocker locker(&m_mutex);
-	OrganizeConnection();
-	emit PrimeRequested();
-}
-
-/**********************************************************************************/
-
 void AudioPlayerPrivate::Play(void)
 {
 	QMutexLocker locker(&m_mutex);
-	OrganizeConnection();
-	emit PlayRequested();
+	do
+	{
+		if(QAudio::ActiveState == m_p_audio_player_output->State()){
+			qDebug() << Q_FUNC_INFO << "Playing, ignore";
+			break;
+		}
+		OrganizeConnection();
+		emit PlayRequested();
+	}while(0);
 }
 
 /**********************************************************************************/
@@ -436,8 +414,15 @@ void AudioPlayerPrivate::Play(void)
 void AudioPlayerPrivate::Stop(void)
 {
 	QMutexLocker locker(&m_mutex);
-	OrganizeConnection();
-	emit StopRequested();
+	do
+	{
+		if(QAudio::StoppedState == m_p_audio_player_output->State()){
+			qDebug() << Q_FUNC_INFO << "Stopped, ignore";
+			break;
+		}
+		OrganizeConnection();
+		emit StopRequested();
+	}while(0);
 }
 
 /**********************************************************************************/
@@ -445,8 +430,15 @@ void AudioPlayerPrivate::Stop(void)
 void AudioPlayerPrivate::Pause(void)
 {
 	QMutexLocker locker(&m_mutex);
-	OrganizeConnection();
-	emit PauseRequested();
+	do
+	{
+		if(QAudio::SuspendedState == m_p_audio_player_output->State()){
+			qDebug() << Q_FUNC_INFO << "Paused, ignore";
+			break;
+		}
+		OrganizeConnection();
+		emit PauseRequested();
+	}while(0);
 }
 
 /**********************************************************************************/
@@ -457,22 +449,14 @@ void AudioPlayerPrivate::FeedData(QByteArray const &data)
 		if(nullptr == m_p_audio_player_output){
 			break;
 		}
+
 		int write_size_in_bytes = data.size();
-
-		do {
-			if(QAudio::StoppedState == m_p_audio_player_output->State()){
-				break;
-			}
-
-			if(QAudio::SuspendedState == m_p_audio_player_output->State()){
-				break;
-			}
-			if(m_p_audio_player_output->BytesFree() < data.size()){
-				write_size_in_bytes = m_p_audio_player_output->BytesFree();
-				qDebug() << Q_FUNC_INFO << "ERROR :: BytesFree is less then data size"<<
-							m_p_audio_player_output->BytesFree() << data.size();
-			}
-		} while(0);
+		int const free_size = m_p_audio_player_output->BufferSize() - m_p_audio_io_device->bytesAvailable();
+		if(free_size < data.size()){
+			write_size_in_bytes = free_size;
+			qDebug() << Q_FUNC_INFO << "WARNING :: free_size is less than feed data size"<<
+						free_size << data.size();
+		}
 		m_p_audio_io_device->write(data.mid(0, write_size_in_bytes));
 	} while(0);
 }

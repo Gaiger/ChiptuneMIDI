@@ -14,7 +14,6 @@ public:
 				QObject *parent = nullptr);
 	~AudioPlayer()  Q_DECL_OVERRIDE;
 
-	void Prime(void);
 	void Play(void);
 	void Stop(void);
 	void Pause(void);

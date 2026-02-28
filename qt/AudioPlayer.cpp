@@ -46,11 +46,6 @@ void AudioPlayer::FeedData(QByteArray const &data)
 	m_p_private->FeedData(data);
 }
 
-void AudioPlayer::Prime(void)
-{
-	m_p_private->Prime();
-}
-
 /**********************************************************************************/
 
 void AudioPlayer::Play(void)

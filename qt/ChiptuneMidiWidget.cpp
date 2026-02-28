@@ -396,7 +396,7 @@ int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 		SetPlayPauseButtonInPlayState(true);
 		ui->SaveFilePushButton->setEnabled(true);
 
-		SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(0, true);
+		SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(0);
 	}while(0);
 
 	message_string += QString::asprintf(" :: <b>%s</b>", m_opened_file_info.fileName().toUtf8().data());
@@ -479,8 +479,7 @@ void ChiptuneMidiWidget::UpdateTempoLabelText(void)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds,
-																			   bool is_to_prime_audio_player)
+void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds)
 {
 	if(true == m_defer_start_play_timer.isActive()){
 		m_defer_start_play_timer.stop();
@@ -489,9 +488,6 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 	ui->PlayPositionLabel->setText(FormatTimeString(start_time_in_milliseconds) + " / "
 							  + m_midi_file_duration_time_string);
 	m_p_tune_manager->SetStartTimeInSeconds(start_time_in_milliseconds/1000.0);
-	if(true == is_to_prime_audio_player){
-		m_p_audio_player->Prime();
-	}
 
 	do
 	{

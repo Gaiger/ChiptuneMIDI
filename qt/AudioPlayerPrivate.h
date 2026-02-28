@@ -20,7 +20,7 @@ public:
 								QObject *parent = nullptr);
 	~AudioPlayerPrivate()  Q_DECL_OVERRIDE;
 
-	void Prime(void);
+
 	void Play(void);
 	void Stop(void);
 	void Pause(void);
@@ -34,13 +34,11 @@ public:
 
 private:
 	signals:
-	void PrimeRequested(void);
 	void PlayRequested(void);
 	void StopRequested(void);
 	void PauseRequested(void);
 
 private slots:
-	void HandlePrimeRequested(void);
 	void HandlePlayRequested(void);
 	void HandleStopRequested(void);
 	void HandlePauseRequested(void);
