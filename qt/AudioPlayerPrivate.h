@@ -60,14 +60,13 @@ private:
 	int const m_sampling_size;
 	int const m_fetching_wave_interval_in_milliseconds;
 
-	QIODevice *m_p_audio_io_device;
-	QTimer *m_p_refill_timer;
-
 	Qt::ConnectionType m_connection_type;
 	QMutex m_mutex;
 
 private:
-	AudioPlayerOutput *m_p_audio_player_output;
+	QIODevice * const m_p_audio_io_device;
+	AudioPlayerOutput * const m_p_audio_player_output;
+	QTimer * const m_p_refill_timer;
 };
 
 #endif // _AUDIOPLAYERPRIVATE_H_

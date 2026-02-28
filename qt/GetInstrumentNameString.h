@@ -4,7 +4,7 @@
 #include <QString>
 #include <QColor>
 
-QString GetInstrumentNameString(int instrument_code);
-QColor GetChannelColor(int channel_index);
+QString GetInstrumentNameString(int const instrument_code);
+QColor GetChannelColor(int const channel_index);
 
 #endif // _GETINSTRUMENTNAMESTRING_H_

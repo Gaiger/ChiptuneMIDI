@@ -8,7 +8,7 @@
 
 /**********************************************************************************/
 
-QString GetRawInstrumentNameString(int instrument_code)
+QString GetRawInstrumentNameString(int const instrument_code)
 {
 	switch (instrument_code)
 	{
@@ -21,7 +21,7 @@ QString GetRawInstrumentNameString(int instrument_code)
 /**********************************************************************************/
 
 // clazy:excludeall=use-static-qregularexpression
-QString GetInstrumentNameString(int instrument_code)
+QString GetInstrumentNameString(int const instrument_code)
 {
 	QString name = GetRawInstrumentNameString(instrument_code);
 
@@ -83,7 +83,7 @@ QString GetInstrumentNameString(int instrument_code)
 
 /**********************************************************************************/
 
-QColor GetChannelColor(int channel_index)
+QColor GetChannelColor(int const channel_index)
 {
 	QColor color = QColor(Qt::GlobalColor::black);
 	switch(channel_index){

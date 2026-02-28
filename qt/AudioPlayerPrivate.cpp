@@ -232,13 +232,14 @@ AudioPlayerPrivate::AudioPlayerPrivate(int const number_of_channels, int const s
 	m_sampling_rate(sampling_rate),
 	m_sampling_size(sampling_size),
 	m_fetching_wave_interval_in_milliseconds(fetching_wave_interval_in_milliseconds),
-
-	m_p_audio_io_device(nullptr),
-	m_p_refill_timer(nullptr),
 	m_connection_type(Qt::AutoConnection),
-	m_p_audio_player_output(nullptr)
+	m_p_audio_io_device(new AudioIODevice()),
+	m_p_audio_player_output(new AudioPlayerOutput(m_number_of_channels, m_sampling_rate, m_sampling_size,
+													this, &AudioPlayerPrivate::HandleAudioStateChanged,
+													this)),
+	m_p_refill_timer(new QTimer(this))
 {
-
+	SetupAudioResources();
 }
 
 /**********************************************************************************/
@@ -246,6 +247,7 @@ AudioPlayerPrivate::AudioPlayerPrivate(int const number_of_channels, int const s
 AudioPlayerPrivate::~AudioPlayerPrivate(void)
 {
 	Stop();
+	CleanupAudioResources();
 }
 
 /**********************************************************************************/
@@ -256,40 +258,29 @@ void AudioPlayerPrivate::CleanupAudioResources(void)
 		m_p_refill_timer->stop();
 		delete m_p_refill_timer;
 	}
-	m_p_refill_timer = nullptr;
 
 	if(nullptr != m_p_audio_player_output){
-		m_p_audio_player_output->Stop();
+		m_p_audio_player_output->Reset();
 		delete m_p_audio_player_output;
 	}
-	m_p_audio_player_output = nullptr;
 
 	if(nullptr != m_p_audio_io_device){
 		delete m_p_audio_io_device;
 	}
-	m_p_audio_io_device = nullptr;
 }
 
 /**********************************************************************************/
 
 void AudioPlayerPrivate::SetupAudioResources(void)
 {
-	CleanupAudioResources();
-	m_p_audio_player_output = new AudioPlayerOutput(m_number_of_channels, m_sampling_rate, m_sampling_size,
-													this, &AudioPlayerPrivate::HandleAudioStateChanged,
-													this);
 	m_p_audio_player_output->SetVolume(1.00);
 
 	int audio_buffer_size = m_fetching_wave_interval_in_milliseconds
 			* m_number_of_channels * m_sampling_rate * m_sampling_size/8/1000;
-
 	m_p_audio_player_output->SetBufferSize(audio_buffer_size);
 	qDebug() <<" m_p_audio_player_output->BufferSize = " << m_p_audio_player_output->BufferSize();
-
-	m_p_audio_io_device = new AudioIODevice();
 	m_p_audio_io_device->open(QIODevice::ReadWrite);
 
-	m_p_refill_timer = new QTimer(this);
 	m_p_refill_timer->setInterval(m_fetching_wave_interval_in_milliseconds/2);
 	QObject::connect(m_p_refill_timer, &QTimer::timeout, this, &AudioPlayerPrivate::HandleRefillTimerTimeout);
 	m_p_refill_timer->start();
@@ -342,7 +333,7 @@ void AudioPlayerPrivate::OrganizeConnection(void)
 
 void AudioPlayerPrivate::HandlePrimeRequested(void)
 {
-	SetupAudioResources();
+	m_p_audio_player_output->Reset();
 	emit DataRequested(m_p_audio_player_output->BufferSize());
 }
 
@@ -350,13 +341,13 @@ void AudioPlayerPrivate::HandlePrimeRequested(void)
 
 void AudioPlayerPrivate::HandlePlayRequested(void)
 {
-#if 1
+	if(nullptr == m_p_audio_player_output){
+		qDebug() << Q_FUNC_INFO << "ERROR :: m_p_audio_player_output is nullptr";
+		return ;
+	}
+
 	do
 	{
-		if(nullptr == m_p_audio_player_output){
-			break;
-		}
-
 		if(QAudio::ActiveState == m_p_audio_player_output->State()){
 			qDebug() << Q_FUNC_INFO << "Playing, ignore";
 			break;
@@ -370,11 +361,10 @@ void AudioPlayerPrivate::HandlePlayRequested(void)
 
 	do
 	{
-		if(nullptr != m_p_audio_player_output){
+		if(0  < m_p_audio_io_device->bytesAvailable()){
 			break;
 		}
 		qDebug() << Q_FUNC_INFO << "WARNING::No Prime before Start Play";
-		SetupAudioResources();
 		emit DataRequested(m_p_audio_player_output->BufferSize());
 	}while(0);
 
@@ -395,38 +385,6 @@ void AudioPlayerPrivate::HandlePlayRequested(void)
 		qDebug() << Q_FUNC_INFO << "Start Play";
 		m_p_audio_player_output->Start(m_p_audio_io_device);
 	}while(0);
-#else
-	do {
-		if(nullptr != m_p_audio_player_output){
-			if(QAudio::ActiveState == m_p_audio_player_output->State()){
-				qDebug() << Q_FUNC_INFO << "Playing, ignore";
-				break;
-			}
-			if(QAudio::SuspendedState == m_p_audio_player_output->State()){
-				qDebug() << Q_FUNC_INFO << "Resume play";
-				m_p_audio_player_output->Resume();
-				break;
-			}
-		}
-
-		if(nullptr == m_p_audio_player_output){
-			qDebug() << Q_FUNC_INFO << "WARNING::No Initialize before Start Play";
-			SetupAudioResources();
-			emit DataRequested(m_p_audio_player_output->BufferSize());
-		}
-		if(nullptr == m_p_audio_io_device){
-			qDebug() << Q_FUNC_INFO << "ERROR:: m_p_audio_io_device is nullptr";
-			break;
-		}
-
-		if(0 == m_p_audio_io_device->bytesAvailable()){
-			emit DataRequested(m_p_audio_player_output->BufferSize());
-		}
-
-		qDebug() << Q_FUNC_INFO << "Start Play";
-		m_p_audio_player_output->Start(m_p_audio_io_device);
-	} while(0);
-#endif
 }
 
 /**********************************************************************************/
@@ -438,7 +396,7 @@ void AudioPlayerPrivate::HandleStopRequested(void)
 		if(nullptr == m_p_audio_player_output){
 			break;
 		}
-		AudioPlayerPrivate::CleanupAudioResources();
+		m_p_audio_player_output->Stop();
 	}while(0);
 }
 
