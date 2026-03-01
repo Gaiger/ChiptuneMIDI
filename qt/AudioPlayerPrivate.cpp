@@ -444,11 +444,21 @@ void AudioPlayerPrivate::FeedData(QByteArray const &data)
 
 		int write_size_in_bytes = data.size();
 		int free_size = m_p_audio_player_output->BytesFree();
-		if( false == (QAudio::ActiveState == m_p_audio_player_output->State()
-				|| QAudio::IdleState == m_p_audio_player_output->State()) ){
+		do
+		{
+			if(QAudio::ActiveState == m_p_audio_player_output->State()){
+				break;
+			}
+			if(QAudio::IdleState == m_p_audio_player_output->State()){
+				break;
+			}
+			if(0 != m_p_audio_io_device->bytesAvailable()){
+				qDebug() << Q_FUNC_INFO
+						 << "WARNING :: re-priming, bytesAvailable = " << m_p_audio_io_device->bytesAvailable();
 				((AudioIODevice*)m_p_audio_io_device)->clear();
+			}
 			free_size = m_p_audio_player_output->BufferSize();
-		}
+		}while(0);
 
 		if(free_size < data.size()){
 			write_size_in_bytes = free_size;
