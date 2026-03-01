@@ -289,7 +289,6 @@ void AudioPlayerPrivate::SetupAudioResources(void)
 
 	m_p_refill_timer->setInterval(m_fetching_wave_interval_in_milliseconds/2);
 	QObject::connect(m_p_refill_timer, &QTimer::timeout, this, &AudioPlayerPrivate::HandleRefillTimerTimeout);
-	m_p_refill_timer->start();
 }
 
 /**********************************************************************************/
@@ -346,23 +345,19 @@ void AudioPlayerPrivate::HandlePlayRequested(void)
 
 	do
 	{
-		int requested_bytes = m_p_audio_player_output->BufferSize() - m_p_audio_io_device->bytesAvailable();
-		if(0  < m_p_audio_io_device->bytesAvailable()){
-			break;
-		}
-		emit DataRequested(requested_bytes);
-	}while(0);
-
-	do
-	{
 		if(QAudio::SuspendedState == m_p_audio_player_output->State()){
 			qDebug() << Q_FUNC_INFO << "Resume Play";
 			m_p_audio_player_output->Resume();
 			break;
 		}
 
+		m_p_refill_timer->stop();
+		((AudioIODevice*)m_p_audio_io_device)->clear();
+		emit DataRequested(m_p_audio_player_output->BufferSize());
+
 		qDebug() << Q_FUNC_INFO << "Start Play";
 		m_p_audio_player_output->Start(m_p_audio_io_device);
+		m_p_refill_timer->start();
 	}while(0);
 }
 
@@ -401,7 +396,6 @@ void AudioPlayerPrivate::Play(void)
 	do
 	{
 		if(QAudio::ActiveState == m_p_audio_player_output->State()){
-			qDebug() << Q_FUNC_INFO << "Playing, ignore";
 			break;
 		}
 		OrganizeConnection();
@@ -417,7 +411,6 @@ void AudioPlayerPrivate::Stop(void)
 	do
 	{
 		if(QAudio::StoppedState == m_p_audio_player_output->State()){
-			qDebug() << Q_FUNC_INFO << "Stopped, ignore";
 			break;
 		}
 		OrganizeConnection();
@@ -433,7 +426,6 @@ void AudioPlayerPrivate::Pause(void)
 	do
 	{
 		if(QAudio::SuspendedState == m_p_audio_player_output->State()){
-			qDebug() << Q_FUNC_INFO << "Paused, ignore";
 			break;
 		}
 		OrganizeConnection();
@@ -451,7 +443,13 @@ void AudioPlayerPrivate::FeedData(QByteArray const &data)
 		}
 
 		int write_size_in_bytes = data.size();
-		int const free_size = m_p_audio_player_output->BufferSize() - m_p_audio_io_device->bytesAvailable();
+		int free_size = m_p_audio_player_output->BytesFree();
+		if( false == (QAudio::ActiveState == m_p_audio_player_output->State()
+				|| QAudio::IdleState == m_p_audio_player_output->State()) ){
+				((AudioIODevice*)m_p_audio_io_device)->clear();
+			free_size = m_p_audio_player_output->BufferSize();
+		}
+
 		if(free_size < data.size()){
 			write_size_in_bytes = free_size;
 			qDebug() << Q_FUNC_INFO << "WARNING :: free_size is less than feed data size"<<
@@ -476,7 +474,6 @@ void AudioPlayerPrivate::HandleRefillTimerTimeout(void)
 		}
 
 		emit DataRequested(remain_audio_buffer_size);
-		//qDebug() << "remain_audio_buffer_size =" << remain_audio_buffer_size;
 	} while(0);
 }
 
