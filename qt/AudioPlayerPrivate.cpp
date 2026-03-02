@@ -10,18 +10,18 @@
 #include <QAudioSink>
 #include <QMediaDevices>
 
-class AudioPlayerOutput
+class AudioPlayerOutput : public QObject
 {
 public:
 	template<typename Receiver, typename PointerToMemberFunction>
 	AudioPlayerOutput(int const number_of_channels, int const sampling_rate, int const sampling_size,
 					  Receiver *p_receiver, PointerToMemberFunction stateChanged_slot_method,
 					  QObject *parent)
-		: m_p_audio_sink(nullptr){
+		: QObject(parent), m_p_audio_sink(nullptr){
+
 		QAudioFormat format;
 		format.setChannelCount((int)number_of_channels);
 		format.setSampleRate(sampling_rate);
-
 		do {
 			if(16 == sampling_size){
 				format.setSampleFormat(QAudioFormat::Int16);
@@ -40,20 +40,13 @@ public:
 		}
 		qDebug() << format;
 
-		if(nullptr != m_p_audio_sink){
-			delete m_p_audio_sink;
-			m_p_audio_sink = nullptr;
-		}
 		m_p_audio_sink = new QAudioSink(info, format, parent);
 		QObject::connect(m_p_audio_sink, &QAudioSink::stateChanged,
 							 p_receiver, stateChanged_slot_method);
 	};
 
 	~AudioPlayerOutput(){
-		if(nullptr != m_p_audio_sink){
-			delete m_p_audio_sink;
-		}
-		m_p_audio_sink = nullptr;
+		//delete m_p_audio_sink; m_p_audio_sink = nullptr;
 	};
 
 	void Start(QIODevice * const device){
@@ -99,7 +92,7 @@ private:
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QAudioOutput>
 
-class AudioPlayerOutput
+class AudioPlayerOutput : public QObject
 {
 public:
 	template<typename Receiver, typename PointerToMemberFunction>
@@ -131,20 +124,13 @@ public:
 		qDebug() << info.deviceName();
 		qDebug() << format;
 
-		if(nullptr != m_p_audio_output){
-			delete m_p_audio_output;
-			m_p_audio_output = nullptr;
-		}
 		m_p_audio_output = new QAudioOutput(info, format, parent);
 		QObject::connect(m_p_audio_output, &QAudioOutput::stateChanged,
 						 p_receiver, stateChanged_slot_method);
 	};
 
 	~AudioPlayerOutput(){
-		if(nullptr != m_p_audio_output){
-			delete m_p_audio_output;
-		}
-		m_p_audio_output = nullptr;
+		//delete m_p_audio_output; m_p_audio_output = nullptr;
 	};
 
 	void Start(QIODevice * const device){
@@ -189,9 +175,14 @@ private:
 
 class AudioIODevice: public QIODevice
 {
+public :
+	AudioIODevice(QObject *parent = nullptr) : QIODevice(parent){ }
+	~AudioIODevice() Q_DECL_OVERRIDE {
+		clear();
+	}
+
 protected :
-	qint64 readData(char *data, qint64 maxlen) Q_DECL_OVERRIDE
-	{
+	qint64 readData(char *data, qint64 maxlen) Q_DECL_OVERRIDE{
 		QMutexLocker locker(&m_mutex);
 		int read_size = maxlen;
 		if(m_audio_data_bytearray.size() < read_size){
@@ -202,22 +193,19 @@ protected :
 		return read_size;
 	}
 
-	qint64 writeData(const char *data, qint64 len) Q_DECL_OVERRIDE
-	{
+	qint64 writeData(const char *data, qint64 len) Q_DECL_OVERRIDE{
 		QMutexLocker locker(&m_mutex);
 		m_audio_data_bytearray.append(QByteArray(data, len));
 		return len;
 	}
 
-	qint64 bytesAvailable() const Q_DECL_OVERRIDE
-	{
+	qint64 bytesAvailable() const Q_DECL_OVERRIDE{
 		QMutexLocker locker(&m_mutex);
 		return m_audio_data_bytearray.size() + QIODevice::bytesAvailable();
 	}
 
 public:
-	void clear(void)
-	{
+	void clear(void){
 		QMutexLocker locker(&m_mutex);
 		m_audio_data_bytearray.clear();
 	}
@@ -238,13 +226,25 @@ AudioPlayerPrivate::AudioPlayerPrivate(int const number_of_channels, int const s
 	m_sampling_size(sampling_size),
 	m_fetching_wave_interval_in_milliseconds(fetching_wave_interval_in_milliseconds),
 	m_connection_type(Qt::AutoConnection),
-	m_p_audio_io_device(new AudioIODevice()),
-	m_p_audio_player_output(new AudioPlayerOutput(m_number_of_channels, m_sampling_rate, m_sampling_size,
-													this, &AudioPlayerPrivate::HandleAudioStateChanged,
-													this)),
-	m_p_refill_timer(new QTimer(this))
+	m_p_audio_io_device(nullptr),
+	m_p_audio_player_output(nullptr),
+	m_p_refill_timer(nullptr)
 {
-	SetupAudioResources();
+	m_p_audio_io_device = new AudioIODevice(this);
+	m_p_audio_io_device->open(QIODevice::ReadWrite);
+
+	m_p_audio_player_output = new AudioPlayerOutput(m_number_of_channels, m_sampling_rate, m_sampling_size,
+													this, &AudioPlayerPrivate::HandleAudioStateChanged,
+													this);
+	int audio_buffer_size = m_fetching_wave_interval_in_milliseconds
+			* m_number_of_channels * m_sampling_rate * m_sampling_size/8/1000;
+	m_p_audio_player_output->SetBufferSize(audio_buffer_size);
+	qDebug() <<" m_p_audio_player_output->BufferSize = " << m_p_audio_player_output->BufferSize();
+	m_p_audio_player_output->SetVolume(1.00);
+
+	m_p_refill_timer = new QTimer(this);
+	m_p_refill_timer->setInterval(m_fetching_wave_interval_in_milliseconds/2);
+	QObject::connect(m_p_refill_timer, &QTimer::timeout, this, &AudioPlayerPrivate::HandleRefillTimerTimeout);
 }
 
 /**********************************************************************************/
@@ -252,43 +252,19 @@ AudioPlayerPrivate::AudioPlayerPrivate(int const number_of_channels, int const s
 AudioPlayerPrivate::~AudioPlayerPrivate(void)
 {
 	Stop();
-	CleanupAudioResources();
-}
 
-/**********************************************************************************/
-
-void AudioPlayerPrivate::CleanupAudioResources(void)
-{
 	if(nullptr != m_p_refill_timer){
 		m_p_refill_timer->stop();
-		delete m_p_refill_timer;
+		//delete m_p_refill_timer; m_p_refill_timer = nullptr;
 	}
-
 	if(nullptr != m_p_audio_player_output){
 		m_p_audio_player_output->Stop();
-		delete m_p_audio_player_output;
+		//delete m_p_audio_player_output; m_p_audio_player_output = nullptr;
 	}
-
 	if(nullptr != m_p_audio_io_device){
 		((AudioIODevice*)m_p_audio_io_device)->clear();
-		delete m_p_audio_io_device;
+		//delete m_p_audio_io_device; m_p_audio_io_device = nullptr;
 	}
-}
-
-/**********************************************************************************/
-
-void AudioPlayerPrivate::SetupAudioResources(void)
-{
-	m_p_audio_player_output->SetVolume(1.00);
-
-	int audio_buffer_size = m_fetching_wave_interval_in_milliseconds
-			* m_number_of_channels * m_sampling_rate * m_sampling_size/8/1000;
-	m_p_audio_player_output->SetBufferSize(audio_buffer_size);
-	qDebug() <<" m_p_audio_player_output->BufferSize = " << m_p_audio_player_output->BufferSize();
-	m_p_audio_io_device->open(QIODevice::ReadWrite);
-
-	m_p_refill_timer->setInterval(m_fetching_wave_interval_in_milliseconds/2);
-	QObject::connect(m_p_refill_timer, &QTimer::timeout, this, &AudioPlayerPrivate::HandleRefillTimerTimeout);
 }
 
 /**********************************************************************************/

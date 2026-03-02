@@ -48,8 +48,6 @@ private slots:
 	void HandleAudioStateChanged(QAudio::State const state);
 
 private:
-	void SetupAudioResources(void);
-	void CleanupAudioResources();
 	void OrganizeConnection(void);
 
 private:
@@ -62,9 +60,9 @@ private:
 	QMutex m_mutex;
 
 private:
-	QIODevice * const m_p_audio_io_device;
-	AudioPlayerOutput * const m_p_audio_player_output;
-	QTimer * const m_p_refill_timer;
+	QIODevice * m_p_audio_io_device;
+	AudioPlayerOutput * m_p_audio_player_output;
+	QTimer * m_p_refill_timer;
 };
 
 #endif // _AUDIOPLAYERPRIVATE_H_

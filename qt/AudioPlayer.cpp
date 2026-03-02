@@ -36,7 +36,7 @@ AudioPlayer::AudioPlayer(int const number_of_channels, int const sampling_rate, 
 
 AudioPlayer::~AudioPlayer(void)
 {
-	delete m_p_private;
+	//delete m_p_private;
 }
 
 /**********************************************************************************/
