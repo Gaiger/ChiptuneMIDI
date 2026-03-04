@@ -448,7 +448,7 @@ void ChiptuneMidiWidget::EjectMidiFile(void)
 
 /**********************************************************************************/
 
-#define UNICODE_QUARTER_NOTE_ICON						u8"\u2669"
+#define UNICODE_QUARTER_NOTE_ICON						u8"\u2669" //♩
 
 void ChiptuneMidiWidget::UpdateTempoLabelText(void)
 {
@@ -878,15 +878,27 @@ void ChiptuneMidiWidget::on_EjectPushButton_released(void)
 
 /**********************************************************************************/
 
-#define UNICODE_PLAY_ICON						u8"▶️"
-#define UNICODE_PAUSE_ICON						u8"⏸️"
+#define UNICODE_PLAY_ICON							(u8"▶️")
+#define UNICODE_PAUSE_ICON							(u8"⏸️")
+#define UNICODE_BLACK_RIGHT_POINTING_TRANGLE		(u8"\u25B6") // ▷
+#define UNICAODE_DOUBLE_VERTICAL_LINE				(u8"\u2016") // ‖
+
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#define PLAY_ICON									(UNICODE_PLAY_ICON)
+#define PAUSE_ICON									(UNICODE_PAUSE_ICON)
+#endif
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#define PLAY_ICON									(UNICODE_BLACK_RIGHT_POINTING_TRANGLE)
+#define PAUSE_ICON									(UNICAODE_DOUBLE_VERTICAL_LINE)
+#endif
 
 bool ChiptuneMidiWidget::IsPlayPauseButtonInPlayState(void)
 {
 	bool is_play_state = false;
 	do
 	{
-		if(ui->PlayPausePushButton->text() == QString(UNICODE_PLAY_ICON)){
+		if(ui->PlayPausePushButton->text() == QString(PLAY_ICON)){
 				break;
 		}
 		is_play_state = true;
@@ -900,10 +912,10 @@ void ChiptuneMidiWidget::SetPlayPauseButtonInPlayState(bool is_play_state)
 {
 	do {
 		if(true == is_play_state){
-			ui->PlayPausePushButton->setText(UNICODE_PAUSE_ICON);
+			ui->PlayPausePushButton->setText(PAUSE_ICON);
 			break;
 		}
-		ui->PlayPausePushButton->setText(UNICODE_PLAY_ICON);
+		ui->PlayPausePushButton->setText(PLAY_ICON);
 	} while(0);
 }
 
