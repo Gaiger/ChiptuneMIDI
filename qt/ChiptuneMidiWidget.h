@@ -20,7 +20,7 @@ class ChiptuneMidiWidget : public QWidget
 {
 	Q_OBJECT
 public:
-	explicit ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidget *parent = nullptr);
+	explicit ChiptuneMidiWidget(TuneManager * p_tune_manager, QWidget *parent = nullptr);
 	~ChiptuneMidiWidget()  Q_DECL_OVERRIDE;
 signals:
 
@@ -73,7 +73,7 @@ private:
 	void SetPlayPauseButtonInPlayState(bool is_play_state);
 
 private :
-	TuneManager *		m_p_tune_manager;
+	TuneManager * const	m_p_tune_manager;
 	AudioPlayer *		m_p_audio_player;
 
 	QFileInfo			m_opened_file_info;

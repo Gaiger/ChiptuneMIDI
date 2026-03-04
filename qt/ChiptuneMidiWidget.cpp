@@ -28,7 +28,7 @@
 
 #include "ChiptuneMidiWidget.h"
 
-struct wav_header_t
+typedef struct
 {
 	char chunk_id[4];							// RIFF string
 	unsigned int chunk_size;					// overall size of file in bytes
@@ -43,52 +43,51 @@ struct wav_header_t
 	unsigned short bits_per_sample;				// bits per sample, 8- 8bits, 16- 16 bits etc
 	char subchunk2_id[4];						// DATA string or FLLR string
 	unsigned int subchunk2_size;				// NumSamples * NumChannels * BitsPerSample/8 - size of the next chunk that will be read
-};
+} wav_header_t;
 
-static struct wav_header_t s_wave_header;
+#define WAV_HEADER_SIZE							(sizeof(wav_header_t))
 
-unsigned char const * const wav_file_header(unsigned int const number_of_channels, unsigned int const sampling_rate,
-											unsigned int bits_per_sample, unsigned int wave_data_length,
-											int * const p_this_header_size)
+void fill_wav_header(unsigned int const number_of_channels, unsigned int const sampling_rate,
+					 unsigned int const bits_per_sample, unsigned int const wave_data_size_in_bytes,
+						  unsigned char const wav_header_array[WAV_HEADER_SIZE])
 {
-	s_wave_header.chunk_id[0] = 'R';
-	s_wave_header.chunk_id[1] = 'I';
-	s_wave_header.chunk_id[2] = 'F';
-	s_wave_header.chunk_id[3] = 'F';
+	wav_header_t *p_wav_header = (wav_header_t*)wav_header_array;
+	p_wav_header->chunk_id[0] = 'R';
+	p_wav_header->chunk_id[1] = 'I';
+	p_wav_header->chunk_id[2] = 'F';
+	p_wav_header->chunk_id[3] = 'F';
 
-	s_wave_header.format[0] = 'W';
-	s_wave_header.format[1] = 'A';
-	s_wave_header.format[2] = 'V';
-	s_wave_header.format[3] = 'E';
+	p_wav_header->format[0] = 'W';
+	p_wav_header->format[1] = 'A';
+	p_wav_header->format[2] = 'V';
+	p_wav_header->format[3] = 'E';
 
-	s_wave_header.subchunk1_id[0] = 'f';
-	s_wave_header.subchunk1_id[1] = 'm';
-	s_wave_header.subchunk1_id[2] = 't';
-	s_wave_header.subchunk1_id[3] = ' ';
+	p_wav_header->subchunk1_id[0] = 'f';
+	p_wav_header->subchunk1_id[1] = 'm';
+	p_wav_header->subchunk1_id[2] = 't';
+	p_wav_header->subchunk1_id[3] = ' ';
 
-	s_wave_header.subchunk2_id[0] = 'd';
-	s_wave_header.subchunk2_id[1] = 'a';
-	s_wave_header.subchunk2_id[2] = 't';
-	s_wave_header.subchunk2_id[3] = 'a';
+	p_wav_header->subchunk2_id[0] = 'd';
+	p_wav_header->subchunk2_id[1] = 'a';
+	p_wav_header->subchunk2_id[2] = 't';
+	p_wav_header->subchunk2_id[3] = 'a';
 
-	s_wave_header.subchunk1_size = 16;
-	s_wave_header.audio_format = 1;
-	s_wave_header.number_of_channels = number_of_channels;
-	s_wave_header.sampling_rate = sampling_rate;
-	s_wave_header.byte_rate = number_of_channels * sampling_rate * bits_per_sample / 8;
-	s_wave_header.block_align = number_of_channels * bits_per_sample / 8;
-	s_wave_header.bits_per_sample = bits_per_sample;
+	p_wav_header->subchunk1_size = 16;
+	p_wav_header->audio_format = 1;
+	p_wav_header->number_of_channels = number_of_channels;
+	p_wav_header->sampling_rate = sampling_rate;
+	p_wav_header->byte_rate = number_of_channels * sampling_rate * bits_per_sample / 8;
+	p_wav_header->block_align = number_of_channels * bits_per_sample / 8;
+	p_wav_header->bits_per_sample = bits_per_sample;
 
-	s_wave_header.subchunk2_size = wave_data_length;
-	s_wave_header.chunk_size = wave_data_length + (sizeof(struct wav_header_t) - 8);
-
-	*p_this_header_size = sizeof(struct wav_header_t);
-	return (unsigned char const * const)&s_wave_header;
+	p_wav_header->subchunk2_size = wave_data_size_in_bytes;
+	p_wav_header->chunk_size = wave_data_size_in_bytes + (WAV_HEADER_SIZE - 8);
+	return ;
 }
 
 /**********************************************************************************/
 
-int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
+int SaveAsWavFile(TuneManager * p_tune_manager, QString filename)
 {
 	if(false == filename.endsWith(".wav", Qt::CaseInsensitive)){
 		filename.append(".wav");
@@ -96,7 +95,6 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 	qDebug() << "saving as wav file " << filename;
 
 	QElapsedTimer elasped_timer;
-
 	elasped_timer.start();
 	p_tune_manager->SetStartTimeInSeconds(0);
 	int data_buffer_size = p_tune_manager->GetNumberOfChannels()
@@ -110,10 +108,9 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 		}
 	}
 	qDebug() << "Generate wave data elpased" << elasped_timer.elapsed() << "ms";
-	int header_size = 0;
-	char *p_wav_header = (char*)wav_file_header(
-				p_tune_manager->GetNumberOfChannels(), p_tune_manager->GetSamplingRate(),
-				p_tune_manager->GetSamplingSize(), wave_bytearray.size(), &header_size);
+	unsigned char wav_header[WAV_HEADER_SIZE];
+	fill_wav_header(p_tune_manager->GetNumberOfChannels(), p_tune_manager->GetSamplingRate(),
+				p_tune_manager->GetSamplingSize(), wave_bytearray.size(), &wav_header[0]);
 
 	QFile file(filename);
 	if(false == file.open(QIODevice::ReadWrite | QIODevice::Truncate)){
@@ -121,12 +118,14 @@ int SaveAsWavFile(TuneManager *p_tune_manager, QString filename)
 		return -2;
 	}
 
-	int file_size = file.write(QByteArray(p_wav_header, header_size) + wave_bytearray);
+	int file_size = file.write(QByteArray((char*)&wav_header, WAV_HEADER_SIZE) + wave_bytearray);
 	file.close();
 
 	qDebug() << "file saved, size = " << file_size << " bytes";
 	return 0;
 }
+
+/**********************************************************************************/
 
 class SaveAsWavFileThread: public QThread {
 public :
@@ -135,8 +134,8 @@ public :
 protected:
 	void run(void) Q_DECL_OVERRIDE { SaveAsWavFile(m_p_tune_manager, m_filename); }
 private:
-	TuneManager *m_p_tune_manager;
-	QString m_filename;
+	TuneManager * const m_p_tune_manager;
+	QString const m_filename;
 };
 
 /**********************************************************************************/
@@ -206,7 +205,7 @@ void SetFontSizeForWidgetSubtree(QWidget * const p_root_widget, int const target
 #define AUDIO_PLAYER_BUFFER_IN_MILLISECONDS						\
 	(AUDIO_BUFFER_TIME_FACTOR * PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS)
 
-ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager *const p_tune_manager, QWidget *parent)
+ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager * p_tune_manager, QWidget *parent)
 	: QWidget(parent),
 	m_p_tune_manager(p_tune_manager),
 
@@ -834,7 +833,7 @@ void ChiptuneMidiWidget::on_OpenMidiFilePushButton_released(void)
 void ChiptuneMidiWidget::on_SaveFilePushButton_released(void)
 {
 	m_p_audio_player->Stop();
-	int playing_value = ui->PlayProgressSlider->value();
+	int current_playing_position = ui->PlayProgressSlider->value();
 
 	do {
 		QString suggested_filename_string = QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss");
@@ -867,7 +866,7 @@ void ChiptuneMidiWidget::on_SaveFilePushButton_released(void)
 		QWidget::setEnabled(true);
 	} while(0);
 
-	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(playing_value);
+	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(current_playing_position);
 }
 
 /**********************************************************************************/
