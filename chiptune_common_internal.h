@@ -81,12 +81,15 @@ typedef uint8_t		normalized_midi_level_t;
 
 #if defined(_MSC_VER)
 	#if defined(_DEBUG)
+	#include <assert.h>
+	#define STACK_ARRAY_COUNT						(128)
 	#define STACK_ARRAY(type, name, count) \
-		type name[128];
+		do { assert(STACK_ARRAY_COUNT >= count); } while(0); \
+		type name[STACK_ARRAY_COUNT]
 	#else
 	#include <malloc.h>
 	#define STACK_ARRAY(type, name, count) \
-		type *name = (type*)_alloca(sizeof(type)*(count))
+		type * const name = (type*)_alloca(sizeof(type)*(count))
 #endif
 #else
 	#define STACK_ARRAY(type, name, count) \
