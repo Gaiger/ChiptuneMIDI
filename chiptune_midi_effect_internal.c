@@ -10,7 +10,7 @@
 
 /**********************************************************************************/
 
-#define	DEFAULT_MAX_DETUNE_DETUNE_IN_SEMITONE	(0.6f)
+#define	DEFAULT_MAX_DETUNE_DETUNE_IN_SEMITONE	(0.5f)
 static float s_max_detune_detune_in_semitones = DEFAULT_MAX_DETUNE_DETUNE_IN_SEMITONE;
 
 static normalized_midi_level_t get_effective_detune_depth(midi_value_t const note,
@@ -23,14 +23,14 @@ static normalized_midi_level_t get_effective_detune_depth(midi_value_t const not
 	int32_t scale_detune_note_multiply_128 = 0;
 	do
 	{
-#define MIDEI_NOTE_C3									(48)//130.81
-		if(note <= MIDEI_NOTE_C3){
+#define MIDI_NOTE_C3									(48)//130.81
+		if(MIDI_NOTE_C3 >= note){
 			break;
 		}
-#define MIDEI_NOTE_C4									(60)//261.63
-		if(note < MIDEI_NOTE_C3){
+#define MIDI_NOTE_C4									(60)//261.63
+		if(MIDI_NOTE_C4 > note){
 			scale_detune_note_multiply_128
-					= ((note - MIDEI_NOTE_C3)*INT8_MAX_PLUS_1)/(MIDEI_NOTE_C4 - MIDEI_NOTE_C3);
+					= ((note - MIDI_NOTE_C3) * INT8_MAX_PLUS_1)/(MIDI_NOTE_C4 - MIDI_NOTE_C3);
 			break;
 		}
 		scale_detune_note_multiply_128 = INT8_MAX_PLUS_1;
