@@ -322,9 +322,10 @@ QByteArray TuneManager::FetchWave(int const size)
 		int submit_size = 0;
 		{
 			QMutexLocker lock(&m_p_private->m_mutex);
-			if(m_p_private->m_wave_bytearray.size() > size){
+			if(m_p_private->m_wave_bytearray.size() >= size){
 				break;
 			}
+			//qDebug() << Q_FUNC_INFO << "WARNING :: m_p_private->m_wave_bytearray.size() < size";
 			submit_size = size - m_p_private->m_wave_bytearray.size();
 		}
 		SubmitWaveGeneration(submit_size, true);
