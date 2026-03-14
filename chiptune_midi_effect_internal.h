@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include "chiptune_common_internal.h"
 
+#define DETUNE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER		(3)
+#define CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER		(3)
+#define REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER		(3)
+
 void update_effect_tick(void);
 
 int process_effects(uint32_t const tick, int8_t const event_type, int8_t const voice, midi_value_t const note,

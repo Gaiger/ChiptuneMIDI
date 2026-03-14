@@ -105,7 +105,7 @@ union{
 	( ( (true == IS_PERCUSSION_OSCILLATOR(OSCILLATOR_POINTER)) \
 	|| (MidiEffectNone == (OSCILLATOR_POINTER)->midi_effect_association)) ? true : false)
 
-#define SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER	(4 - 1)
+#define SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER	(4 - 1)
 
 void set_pitch_shift_in_semitones(int16_t const pitch_shift_in_semitones);
 int16_t get_pitch_shift_in_semitones(void);
@@ -130,8 +130,8 @@ oscillator_t * get_oscillator_pointer_from_index(int16_t const oscillator_index)
 
 int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const primary_oscillator_index,
 									  int16_t const * const p_associate_oscillator_indexes);
-int16_t count_all_subordinate_oscillators(uint8_t const midi_effect_type, int16_t const root_oscillator_index);
-int get_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_oscillator_index,
+int16_t calculate_all_subordinate_oscillator_number(uint8_t const midi_effect_type, int16_t const root_oscillator_index);
+int collect_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_oscillator_index,
 										   int16_t * const p_subordinate_indexes);
 
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_

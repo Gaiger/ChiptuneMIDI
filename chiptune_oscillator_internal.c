@@ -278,7 +278,7 @@ static int check_occupied_oscillator_list(void)
 typedef struct _midi_effect_associate_link_t
 {
 	uint8_t midi_effect_type;
-	int16_t associate_oscillator_indexes[SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER];
+	int16_t associate_oscillator_indexes[SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER];
 	int16_t next_link_index;
 } midi_effect_associate_link_t;
 
@@ -688,7 +688,7 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 					= get_midi_effect_associate_link_from_index(new_link_index);
 			p_new_link->midi_effect_type = midi_effect_type;
 			p_new_link->next_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
-			for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+			for(int16_t i = 0; i < SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
 				p_new_link->associate_oscillator_indexes[i] = p_associate_oscillator_indexes[i];
 			}
 		}
@@ -718,14 +718,14 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 
 /**********************************************************************************/
 
-int16_t count_all_subordinate_oscillators(uint8_t const midi_effect_type, int16_t const root_oscillator_index)
+int16_t calculate_all_subordinate_oscillator_number(uint8_t const midi_effect_type, int16_t const root_oscillator_index)
 {
-	return get_subordinate_oscillator_indexes(midi_effect_type, root_oscillator_index, NULL);
+	return collect_subordinate_oscillator_indexes(midi_effect_type, root_oscillator_index, NULL);
 }
 
 /**********************************************************************************/
 
-int get_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_oscillator_index,
+int collect_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_oscillator_index,
 										   int16_t * const p_subordinate_indexes)
 {
 	oscillator_t * const p_root_oscillator
@@ -752,20 +752,20 @@ int get_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 				if(true == IS_MIDI_EFFECT_TYPE_MATCHED(midi_effect_type,
 													   p_midi_effect_associate_link->midi_effect_type)){
 					if(NULL != p_subordinate_indexes){
-						for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+						for(int16_t i = 0; i < SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
 							p_subordinate_indexes[subordinate_number + i]
 									= p_midi_effect_associate_link->associate_oscillator_indexes[i];
 						}
 					}
-					subordinate_number += SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER;
+					subordinate_number += SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER;
 					break;
 				}
 
-				for(int16_t i = 0; i < SINGLE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+				for(int16_t i = 0; i < SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
 					int16_t * p_moving_subordinate_indexes
 							= p_subordinate_indexes + subordinate_number * ( NULL != p_subordinate_indexes);
 					subordinate_number +=
-							get_subordinate_oscillator_indexes(midi_effect_type,
+							collect_subordinate_oscillator_indexes(midi_effect_type,
 																   p_midi_effect_associate_link->associate_oscillator_indexes[i],
 																   p_moving_subordinate_indexes);
 				}
