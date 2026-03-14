@@ -98,7 +98,7 @@ static int process_detune_effect(uint32_t const tick, int8_t const event_type,
 						effective_detune, s_max_detune_detune_in_semitones);
 
 			float detunes_in_semitones[DETUNE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER]
-					= { 0.0f, oscillator_detune_in_semitones, -oscillator_detune_in_semitones};
+					= {oscillator_detune_in_semitones, -oscillator_detune_in_semitones, 0};
 
 			for(int k = 0; k < cooperative_oscillator_number; k++){
 				oscillator_t  * const p_cooperative_oscillator
