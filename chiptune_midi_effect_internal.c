@@ -87,16 +87,16 @@ static int process_detune_effect(uint32_t const tick, int8_t const event_type,
 		if(EventTypeActivate == event_type){
 			int cooperative_oscillator_number = 0;
 			cooperative_oscillator_number += 1;
-			cooperative_oscillator_number += calculate_all_subordinate_oscillator_number(WITHOUT_EFFECT(MidiEffectDetune),
-																					 primary_oscillator_index);
+			cooperative_oscillator_number += calculate_all_subordinate_oscillator_number(
+						WITHOUT_EFFECT(MidiEffectDetune), primary_oscillator_index);
 			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
 			cooperative_oscillator_indexes[0] = primary_oscillator_index;
-			collect_subordinate_oscillator_indexes(WITHOUT_EFFECT(MidiEffectDetune),
-												   primary_oscillator_index,
-												   &cooperative_oscillator_indexes[1]);
+			collect_subordinate_oscillator_indexes(
+						WITHOUT_EFFECT(MidiEffectDetune),
+						primary_oscillator_index, &cooperative_oscillator_indexes[1]);
+
 			float oscillator_detune_in_semitones = calculate_detune_detune_in_semitones(
 						effective_detune, s_max_detune_detune_in_semitones);
-
 			float detunes_in_semitones[DETUNE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER]
 					= {oscillator_detune_in_semitones, -oscillator_detune_in_semitones};
 
@@ -247,13 +247,13 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 		if(EventTypeActivate == event_type){
 			int cooperative_oscillator_number = 0;
 			cooperative_oscillator_number += 1;
-			cooperative_oscillator_number += calculate_all_subordinate_oscillator_number(WITHOUT_EFFECT(MidiEffectChorus),
-																					 primary_oscillator_index);
+			cooperative_oscillator_number += calculate_all_subordinate_oscillator_number(
+						WITHOUT_EFFECT(MidiEffectChorus|MidiEffectDetune), primary_oscillator_index);
 			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
 			cooperative_oscillator_indexes[0] = primary_oscillator_index;
-			collect_subordinate_oscillator_indexes(WITHOUT_EFFECT(MidiEffectChorus),
-												   primary_oscillator_index,
-												   &cooperative_oscillator_indexes[1]);
+			collect_subordinate_oscillator_indexes(
+						WITHOUT_EFFECT(MidiEffectChorus|MidiEffectDetune),
+						primary_oscillator_index, &cooperative_oscillator_indexes[1]);
 
 			uint8_t const chorus_effect_profile = ChorusEffectProfileLeadDominant;
 			for(int k = 0; k < cooperative_oscillator_number; k++){
@@ -384,13 +384,13 @@ static int process_reverb_effect(uint32_t const tick, int8_t const event_type,
 		if(EventTypeActivate == event_type){
 			int cooperative_oscillator_number = 0;
 			cooperative_oscillator_number += 1;
-			cooperative_oscillator_number += calculate_all_subordinate_oscillator_number(WITHOUT_EFFECT(MidiEffectReverb),
-																					 primary_oscillator_index);
+			cooperative_oscillator_number += calculate_all_subordinate_oscillator_number(
+						WITHOUT_EFFECT(MidiEffectReverb), primary_oscillator_index);
 			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
 			cooperative_oscillator_indexes[0] = primary_oscillator_index;
-			collect_subordinate_oscillator_indexes(WITHOUT_EFFECT(MidiEffectReverb),
-												   primary_oscillator_index,
-												   &cooperative_oscillator_indexes[1]);
+			collect_subordinate_oscillator_indexes(
+						WITHOUT_EFFECT(MidiEffectReverb),
+						primary_oscillator_index, &cooperative_oscillator_indexes[1]);
 
 			uint8_t const reverb_effect_profile = ReverbEffectProfileAudioRoom;
 			for(int k = 0; k < cooperative_oscillator_number; k++){
