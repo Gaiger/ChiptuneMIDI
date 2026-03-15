@@ -88,11 +88,11 @@ static int process_detune_effect(uint32_t const tick, int8_t const event_type,
 			int cooperative_oscillator_number = 0;
 			cooperative_oscillator_number += 1;
 			cooperative_oscillator_number += calculate_all_subordinate_oscillator_number(
-						WITHOUT_EFFECT(MidiEffectDetune), primary_oscillator_index);
+						WITHOUT_EFFECT(MidiEffectDetune | MidiEffectChorus), primary_oscillator_index);
 			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
 			cooperative_oscillator_indexes[0] = primary_oscillator_index;
 			collect_subordinate_oscillator_indexes(
-						WITHOUT_EFFECT(MidiEffectDetune),
+						WITHOUT_EFFECT(MidiEffectDetune | MidiEffectChorus),
 						primary_oscillator_index, &cooperative_oscillator_indexes[1]);
 
 			float oscillator_detune_in_semitones = calculate_detune_detune_in_semitones(
