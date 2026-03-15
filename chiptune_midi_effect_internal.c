@@ -98,7 +98,7 @@ static int process_detune_effect(uint32_t const tick, int8_t const event_type,
 						effective_detune, s_max_detune_detune_in_semitones);
 
 			float detunes_in_semitones[DETUNE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER]
-					= {oscillator_detune_in_semitones, -oscillator_detune_in_semitones, 0};
+					= {oscillator_detune_in_semitones, -oscillator_detune_in_semitones};
 
 			for(int k = 0; k < cooperative_oscillator_number; k++){
 				oscillator_t  * const p_cooperative_oscillator
@@ -108,8 +108,8 @@ static int process_detune_effect(uint32_t const tick, int8_t const event_type,
 																		  effective_detune);
 				int16_t const enhanced_loudness_over_64 = DIVIDE_BY_64(enhanced_loudness);
 				int16_t bucket = enhanced_loudness_over_64 * (1 + DIVIDE_BY_8(effective_detune - 1));
-				int16_t loudnesses[1 + DETUNE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER] = { 0, bucket, bucket, 0};
-				loudnesses[0] = enhanced_loudness - (loudnesses[1] + loudnesses[2] + loudnesses[3]);
+				int16_t loudnesses[1 + DETUNE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER] = { 0, bucket, bucket};
+				loudnesses[0] = enhanced_loudness - (loudnesses[1] + loudnesses[2]);
 				p_cooperative_oscillator->loudness = loudnesses[0];
 
 				int16_t associate_oscillator_indexes[DETUNE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER];

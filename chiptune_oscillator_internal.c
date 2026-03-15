@@ -5,6 +5,8 @@
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
 #include "chiptune_channel_controller_internal.h"
+#include "chiptune_midi_effect_internal.h"
+
 #include "chiptune_oscillator_internal.h"
 
 static int16_t s_pitch_shift_in_semitones = 0;
@@ -383,6 +385,7 @@ static inline bool is_to_midi_effect_associate_link_pool_successfully(void)
 }
 #endif
 
+/**********************************************************************************/
 
 static bool is_unused_midi_effect_associate_link_available()
 {
@@ -651,6 +654,30 @@ int destroy_all_oscillators(void)
 
 /**********************************************************************************/
 
+static inline int16_t get_single_effect_associate_number(uint8_t const midi_effect_type)
+{
+	int16_t associate_number = SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER;
+	do
+	{
+		if(MidiEffectReverb == midi_effect_type){
+			associate_number = REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER;
+			break;
+		}
+		if(MidiEffectChorus == midi_effect_type){
+			associate_number = CHORUS_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER;
+			break;
+		}
+		if(MidiEffectDetune == midi_effect_type){
+			associate_number = DETUNE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER;
+			break;
+		}
+	}while(0);
+
+	return associate_number;
+}
+
+/**********************************************************************************/
+
 int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const primary_oscillator_index,
 									  int16_t const * const p_associate_oscillator_indexes)
 {
@@ -688,7 +715,8 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 					= get_midi_effect_associate_link_from_index(new_link_index);
 			p_new_link->midi_effect_type = midi_effect_type;
 			p_new_link->next_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
-			for(int16_t i = 0; i < SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+			int16_t const associate_oscillator_number = get_single_effect_associate_number(midi_effect_type);
+			for(int16_t i = 0; i < associate_oscillator_number; i++){
 				p_new_link->associate_oscillator_indexes[i] = p_associate_oscillator_indexes[i];
 			}
 		}
@@ -747,29 +775,32 @@ int collect_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16
 				break;
 			}
 
+			int16_t const associate_oscillator_number
+					= get_single_effect_associate_number(p_midi_effect_associate_link->midi_effect_type);
 			do
 			{
-				if(true == IS_MIDI_EFFECT_TYPE_MATCHED(midi_effect_type,
+				if(false == IS_MIDI_EFFECT_TYPE_MATCHED(midi_effect_type,
 													   p_midi_effect_associate_link->midi_effect_type)){
-					if(NULL != p_subordinate_indexes){
-						for(int16_t i = 0; i < SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-							p_subordinate_indexes[subordinate_number + i]
-									= p_midi_effect_associate_link->associate_oscillator_indexes[i];
-						}
-					}
-					subordinate_number += SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER;
 					break;
 				}
 
-				for(int16_t i = 0; i < SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER; i++){
-					int16_t * p_moving_subordinate_indexes
-							= p_subordinate_indexes + subordinate_number * ( NULL != p_subordinate_indexes);
-					subordinate_number +=
-							collect_subordinate_oscillator_indexes(midi_effect_type,
-																   p_midi_effect_associate_link->associate_oscillator_indexes[i],
-																   p_moving_subordinate_indexes);
+				if(NULL != p_subordinate_indexes){
+					for(int16_t i = 0; i < associate_oscillator_number; i++){
+						p_subordinate_indexes[subordinate_number + i]
+								= p_midi_effect_associate_link->associate_oscillator_indexes[i];
+					}
 				}
-			}while(0);
+				subordinate_number += associate_oscillator_number;
+			} while(0);
+			for(int16_t i = 0; i < associate_oscillator_number; i++){
+				int16_t * p_moving_subordinate_indexes
+						= p_subordinate_indexes + subordinate_number * ( NULL != p_subordinate_indexes);
+				subordinate_number +=
+						collect_subordinate_oscillator_indexes(midi_effect_type,
+															   p_midi_effect_associate_link->associate_oscillator_indexes[i],
+															   p_moving_subordinate_indexes);
+			}
+
 			if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_midi_effect_associate_link->next_link_index){
 				break;
 			}
