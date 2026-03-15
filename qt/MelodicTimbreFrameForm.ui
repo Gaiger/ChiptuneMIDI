@@ -458,9 +458,9 @@ QSpinBox:disabled {
    <widget class="QSpinBox" name="DamperSustainLevelSpinBox">
     <property name="geometry">
      <rect>
-      <x>84</x>
+      <x>90</x>
       <y>20</y>
-      <width>52</width>
+      <width>48</width>
       <height>24</height>
      </rect>
     </property>
