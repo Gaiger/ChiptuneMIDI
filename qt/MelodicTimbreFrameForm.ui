@@ -376,7 +376,7 @@ QSpinBox:disabled {
     <rect>
      <x>80</x>
      <y>100</y>
-     <width>41</width>
+     <width>44</width>
      <height>24</height>
     </rect>
    </property>
@@ -420,16 +420,11 @@ QSpinBox:disabled {
    <widget class="QDoubleSpinBox" name="DamperSustainTimeDoubleSpinBox">
     <property name="geometry">
      <rect>
-      <x>212</x>
+      <x>216</x>
       <y>20</y>
-      <width>60</width>
+      <width>56</width>
       <height>24</height>
      </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>14</pointsize>
-     </font>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -456,11 +451,6 @@ QSpinBox:disabled {
       <height>24</height>
      </rect>
     </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
     <property name="text">
      <string>sec</string>
     </property>
@@ -468,16 +458,11 @@ QSpinBox:disabled {
    <widget class="QSpinBox" name="DamperSustainLevelSpinBox">
     <property name="geometry">
      <rect>
-      <x>80</x>
+      <x>84</x>
       <y>20</y>
       <width>52</width>
       <height>24</height>
      </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>14</pointsize>
-     </font>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -500,23 +485,18 @@ QSpinBox:disabled {
      <rect>
       <x>4</x>
       <y>20</y>
-      <width>72</width>
+      <width>84</width>
       <height>24</height>
      </rect>
     </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
     <property name="text">
-     <string>Start Level</string>
+     <string>StartLevel</string>
     </property>
    </widget>
    <widget class="QComboBox" name="DamperSustainCurveComboBox">
     <property name="geometry">
      <rect>
-      <x>52</x>
+      <x>64</x>
       <y>52</y>
       <width>128</width>
       <height>24</height>
@@ -546,16 +526,11 @@ QSpinBox:disabled {
    <widget class="QLabel" name="DurationLabel">
     <property name="geometry">
      <rect>
-      <x>148</x>
+      <x>140</x>
       <y>20</y>
-      <width>60</width>
+      <width>76</width>
       <height>24</height>
      </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
     </property>
     <property name="text">
      <string>Duration</string>
@@ -566,14 +541,9 @@ QSpinBox:disabled {
      <rect>
       <x>4</x>
       <y>52</y>
-      <width>44</width>
+      <width>56</width>
       <height>24</height>
      </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
     </property>
     <property name="text">
      <string>Falloff</string>
