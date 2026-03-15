@@ -1,3 +1,5 @@
+TEMPLATE = app
+
 QT += widgets
 QT += charts
 QT += multimedia
@@ -7,6 +9,9 @@ QT += winextras
 
 CONFIG += c++11 #console
 CONFIG -= app_bundle
+win32 {
+CONFIG += windows
+}
 
 CONFIG(debug, release|debug) {
     DEFINES += _DEBUG
