@@ -345,6 +345,31 @@ static void process_cc_detune_effect(uint32_t const tick, int8_t const voice, mi
 
 /**********************************************************************************/
 
+static void process_cc_all_sound_off(uint32_t const tick, int8_t const voice, midi_value_t const value)
+{
+	(void)value;
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_ALL_SOUND_OFF(%d) :: voices = %d\r\n",
+					tick, MIDI_CC_ALL_SOUND_OFF, voice);
+
+	int16_t oscillator_index = get_occupied_oscillator_head_index();
+	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
+	for(int16_t i = 0; i < occupied_oscillator_number; i++){
+		oscillator_t const * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+		do {
+			if(voice != p_oscillator->voice){
+				break;
+			}
+			if(false == IS_ACTIVATED(p_oscillator->state_bits)){
+				break;
+			}
+			put_event(EventTypeDeactivate, oscillator_index, tick);
+		} while(0);
+		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
+	}
+}
+
+/**********************************************************************************/
+
 static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	(void)value;
@@ -396,19 +421,11 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 	case MIDI_CC_REVERB_EFFECT:
 		process_cc_reverb_effect(tick, voice, value);
 		break;
-	case MIDI_CC_EFFECT_2:
-		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EFFECT_2(%d) :: voice = %d, depth = %d %s\r\n",
-						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
-		break;
 	case MIDI_CC_CHORUS_EFFECT:
 		process_cc_chorus_effect(tick, voice, value);
 		break;
 	case MIDI_CC_DETUNE_EFFECT:
 		process_cc_detune_effect(tick, voice, value);
-		break;
-	case MIDI_CC_EFFECT_5:
-		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EFFECT_5(%d) :: voice = %d, depth = %d %s\r\n",
-						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_NRPN_LSB:
 		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_NRPN_LSB(%d) :: voice = %d, value = %d %s\r\n",
@@ -430,12 +447,29 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 		p_channel_controller->registered_parameter_number
 				= ((value & 0xFF) << 8) | (p_channel_controller->registered_parameter_number & (0xFF << 0));
 		break;
+	case MIDI_CC_ALL_SOUND_OFF:
+		process_cc_all_sound_off(tick, voice, value);
+		break;
 	case MIDI_CC_RESET_ALL_CONTROLLERS:
 		process_cc_reset_all_controllers(tick, voice, value);
 		break;
 	default:
-		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC code = %d :: voice = %d, value = %d %s\r\n",
-						tick, number, voice, value, "(NOT IMPLEMENTED YET)");
+		do
+		{
+			if(MIDI_CC_EFFECT_2 == number){
+				CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EFFECT_2(%d) :: voice = %d, depth = %d %s\r\n",
+								tick, number, voice, value, "(NOT IMPLEMENTED YET)");
+				break;
+			}
+
+			if(MIDI_CC_EFFECT_5 == number){
+				CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EFFECT_5(%d) :: voice = %d, depth = %d %s\r\n",
+								tick, number, voice, value, "(NOT IMPLEMENTED YET)");
+				break;
+			}
+			CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC code = %d :: voice = %d, value = %d %s\r\n",
+							tick, number, voice, value, "(NOT IMPLEMENTED YET)");
+		} while(0);
 		break;
 	}
 

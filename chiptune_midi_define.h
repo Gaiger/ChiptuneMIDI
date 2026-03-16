@@ -47,6 +47,7 @@
 #define MIDI_CC_RPN_LSB								(100)
 #define MIDI_CC_RPN_MSB								(101)
 
+#define MIDI_CC_ALL_SOUND_OFF						(120)
 #define MIDI_CC_RESET_ALL_CONTROLLERS				(121)
 
 //http://www.philrees.co.uk/nrpnq.htm
