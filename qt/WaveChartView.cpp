@@ -4,8 +4,8 @@
 
 /**********************************************************************************/
 
-WaveChartView::WaveChartView(int const number_of_channels,
-							 int const sampling_rate, int const sampling_size, QWidget *parent)
+WaveChartView::WaveChartView(int number_of_channels,
+							 int sampling_rate, int sampling_size, QWidget *parent)
 	: QChartView(new QChart(), parent),
 	  m_sample_size_in_bytes(sampling_size/8)
 {
