@@ -118,7 +118,7 @@ static int process_note_on_message(uint32_t const tick, int8_t const voice,
 	p_oscillator->velocity = velocity;
 	p_oscillator->loudness = calculate_loudness(velocity, p_channel_controller->volume,
 											  p_channel_controller->pressure, p_channel_controller->expression,
-											  p_channel_controller->breath);
+											  p_channel_controller->breath, p_channel_controller->is_soft_pedal_on);
 	p_oscillator->current_phase = 0;
 	do {
 		if(MIDI_PERCUSSION_CHANNEL == voice){

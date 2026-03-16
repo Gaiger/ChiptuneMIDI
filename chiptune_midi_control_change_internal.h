@@ -6,7 +6,8 @@
 
 uint16_t calculate_loudness(normalized_midi_level_t const velocity,
 						  normalized_midi_level_t const volume, normalized_midi_level_t const pressure,
-						  normalized_midi_level_t const expression, normalized_midi_level_t const breath);
+						  normalized_midi_level_t const expression, normalized_midi_level_t const breath,
+							bool is_soft_pedal_on);
 
 int process_control_change_message(uint32_t const tick, int8_t const voice,
 								   midi_value_t const number, midi_value_t const value);

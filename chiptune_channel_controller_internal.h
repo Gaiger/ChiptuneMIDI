@@ -88,6 +88,7 @@ typedef struct _channel_controller
 	uint16_t					envelope_release_tick_number;
 
 	bool						is_damper_pedal_on;
+	bool						is_soft_pedal_on;
 
 	normalized_midi_level_t 	envelop_damper_sustain_level;
 	int8_t const *				p_envelope_damper_sustain_table;

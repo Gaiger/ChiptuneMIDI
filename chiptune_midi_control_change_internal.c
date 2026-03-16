@@ -24,9 +24,14 @@
 #define EFFECTIVE_BREATH_LEVEL(NORMALIZED_BREATH_LEVEL) \
 	(NORMALIZED_BREATH_LEVEL)
 
+#define SOFT_PEDAL_LOUDNESS_RATIO					(0.75)
+#define SOFT_PEDAL_LOUDNESS(LOUDNESS)				\
+	MULTIPLY_THEN_DIVIDE_BY_128((uint8_t)(INT8_MAX_PLUS_1 * SOFT_PEDAL_LOUDNESS_RATIO + 0.5) , (LOUDNESS))
+
 uint16_t calculate_loudness(normalized_midi_level_t const velocity,
 						  normalized_midi_level_t const volume, normalized_midi_level_t const pressure,
-						  normalized_midi_level_t const expression, normalized_midi_level_t const breath)
+						  normalized_midi_level_t const expression, normalized_midi_level_t const breath,
+							bool is_soft_pedal_on)
 {
 	int16_t expression_pressure_breath_sum = expression + EFFECTIVE_PRESSURE_LEVEL(pressure)
 			+ EFFECTIVE_BREATH_LEVEL(breath);
@@ -37,6 +42,9 @@ uint16_t calculate_loudness(normalized_midi_level_t const velocity,
 		temp = INT16_MAX_PLUS_1;
 	}
 
+	if(true == is_soft_pedal_on){
+		temp = SOFT_PEDAL_LOUDNESS(temp);
+	}
 	return (uint16_t)temp;
 }
 
@@ -183,10 +191,12 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, mid
 					break;
 				}
 
-				uint16_t updated_loudness = calculate_loudness(p_oscillator->velocity, volume, pressure, expression, breath);
-				uint16_t original_pre_effect_loudness
-						= calculate_loudness(p_oscillator->velocity, p_channel_controller->volume, p_channel_controller->pressure,
-										   p_channel_controller->expression, p_channel_controller->breath);
+				bool is_soft_pedal_on = get_channel_controller_pointer_from_index(p_oscillator->voice);
+				uint16_t updated_loudness = calculate_loudness(p_oscillator->velocity, volume,
+															   pressure, expression, breath, is_soft_pedal_on);
+				uint16_t original_pre_effect_loudness = calculate_loudness(
+							p_oscillator->velocity, p_channel_controller->volume, p_channel_controller->pressure,
+							p_channel_controller->expression, p_channel_controller->breath, is_soft_pedal_on);
 
 				updated_loudness = (updated_loudness * p_oscillator->loudness + original_pre_effect_loudness/2)
 						/ ZERO_AS_ONE(original_pre_effect_loudness);
@@ -315,6 +325,16 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, mid
 
 /**********************************************************************************/
 
+static void process_cc_soft_pedal(uint32_t const tick, int8_t const voice, midi_value_t const value)
+{
+	bool is_soft_pedal_on = (value < MIDI_SEVEN_BITS_CENTER_VALUE) ? false : true;
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_SOFT_PEDAL(%d) :: voice = %d, %s\r\n",
+					tick, MIDI_CC_SOFT_PEDAL, voice, is_soft_pedal_on? "on" : "off");
+	get_channel_controller_pointer_from_index(voice)->is_soft_pedal_on = is_soft_pedal_on;
+}
+
+/**********************************************************************************/
+
 static void process_cc_reverb_effect(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_REVERB_EFFECT(%d) :: voice = %d, depth = %d\r\n",
@@ -417,6 +437,9 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 		break;
 	case MIDI_CC_DAMPER_PEDAL:
 		process_cc_damper_pedal(tick, voice, value);
+		break;
+	case MIDI_CC_SOFT_PEDAL:
+		process_cc_soft_pedal(tick, voice, value);
 		break;
 	case MIDI_CC_REVERB_EFFECT:
 		process_cc_reverb_effect(tick, voice, value);

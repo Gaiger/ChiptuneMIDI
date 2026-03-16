@@ -58,6 +58,7 @@ void reset_channel_controller_to_midi_defaults(int8_t const channel_index)
 	p_channel_controller->chorus = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
 	p_channel_controller->detune = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
 	p_channel_controller->is_damper_pedal_on = false;
+	p_channel_controller->is_soft_pedal_on = false;
 }
 
 /**********************************************************************************/
