@@ -403,7 +403,7 @@ static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const v
 static void print_cc_unsupported_message(uint32_t const tick, int8_t const voice,
 										   midi_value_t const number, midi_value_t const value)
 {
-	int const print_type = cDeveloping;
+	int const print_type = cMidiControlChange;
 	CHIPTUNE_PRINTF(print_type, "tick = %u, ", tick);
 	do
 	{
@@ -500,27 +500,28 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 	default:
 		do
 		{
+			int const print_type = cMidiControlChange;
 			if(MIDI_CC_EFFECT_2 == number){
-				CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EFFECT_2(%d) :: voice = %d, depth = %d %s\r\n",
+				CHIPTUNE_PRINTF(print_type, "tick = %u, MIDI_CC_EFFECT_2(%d) :: voice = %d, depth = %d %s\r\n",
 								tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 				break;
 			}
 			if(MIDI_CC_EFFECT_5 == number){
-				CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EFFECT_5(%d) :: voice = %d, depth = %d %s\r\n",
+				CHIPTUNE_PRINTF(print_type, "tick = %u, MIDI_CC_EFFECT_5(%d) :: voice = %d, depth = %d %s\r\n",
 								tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 				break;
 			}
 			if(MIDI_CC_NRPN_LSB == number){
-				CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_NRPN_LSB(%d) :: voice = %d, value = %d %s\r\n",
+				CHIPTUNE_PRINTF(print_type, "tick = %u, MIDI_CC_NRPN_LSB(%d) :: voice = %d, value = %d %s\r\n",
 								tick, voice, number, value, "(NOT IMPLEMENTED YET)");
 				break;
 			}
 			if(MIDI_CC_NRPN_MSB == number){
-				CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_NRPN_MSB(%d) :: voice = %d, value = %d %s\r\n",
+				CHIPTUNE_PRINTF(print_type, "tick = %u, MIDI_CC_NRPN_MSB(%d) :: voice = %d, value = %d %s\r\n",
 								tick, voice, number, value, "(NOT IMPLEMENTED YET)");
 				break;
 			}
-			CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC code = %d :: voice = %d, value = %d %s\r\n",
+			CHIPTUNE_PRINTF(print_type, "tick = %u, MIDI_CC code = %d :: voice = %d, value = %d %s\r\n",
 							tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		} while(0);
 		break;
