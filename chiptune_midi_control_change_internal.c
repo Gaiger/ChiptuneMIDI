@@ -368,7 +368,7 @@ static void process_cc_detune_effect(uint32_t const tick, int8_t const voice, mi
 static void process_cc_all_sound_off(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	(void)value;
-	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_ALL_SOUND_OFF(%d) :: voices = %d\r\n",
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_ALL_SOUND_OFF(%d) :: voice = %d\r\n",
 					tick, MIDI_CC_ALL_SOUND_OFF, voice);
 
 	int16_t oscillator_index = get_occupied_oscillator_head_index();
@@ -393,9 +393,32 @@ static void process_cc_all_sound_off(uint32_t const tick, int8_t const voice, mi
 static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	(void)value;
-	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_RESET_ALL_CONTROLLERS(%d) :: voices = %d\r\n",
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_RESET_ALL_CONTROLLERS(%d) :: voice = %d\r\n",
 					tick, MIDI_CC_RESET_ALL_CONTROLLERS, voice);
 	reset_channel_controller_to_midi_defaults(voice);
+}
+
+/**********************************************************************************/
+
+static void print_cc_unsupported_message(uint32_t const tick, int8_t const voice,
+										   midi_value_t const number, midi_value_t const value)
+{
+	int const print_type = cDeveloping;
+	CHIPTUNE_PRINTF(print_type, "tick = %u, ", tick);
+	do
+	{
+		if(MIDI_CC_BANK_SELECT_MSB == number){
+			CHIPTUNE_PRINTF(print_type, "MIDI_CC_BANK_SELECT_MSB(%d)", number);
+			break;
+		}
+		if(MIDI_CC_BANK_SELECT_LSB == number){
+			CHIPTUNE_PRINTF(print_type, "MIDI_CC_BANK_SELECT_LSB(%d)", number);
+			break;
+		}
+		CHIPTUNE_PRINTF(print_type, "MIDI_CC code = %d",
+							tick, number, voice);
+	} while(0);
+	CHIPTUNE_PRINTF(print_type, " :: voices = %d %s\r\n", voice, "(NOT SUPPORTED)");
 }
 
 /**********************************************************************************/
@@ -406,6 +429,9 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	switch(number)
 	{
+	case MIDI_CC_BANK_SELECT_MSB:
+		print_cc_unsupported_message(tick, voice, number, value);
+		break;
 	case MIDI_CC_MODULATION_WHEEL:
 		process_modulation_wheel(tick, voice, value);
 		break;
@@ -428,6 +454,9 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 	case MIDI_CC_EXPRESSION:
 		process_cc_expression(tick, voice, value);
 		break;
+	case MIDI_CC_BANK_SELECT_LSB:
+		print_cc_unsupported_message(tick, voice, number, value);
+		break;
 	case MIDI_CC_DATA_ENTRY_LSB:
 		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_DATA_ENTRY_LSB(%d) :: voice = %d, value = %d\r\n",
 						tick, number, voice, value);
@@ -449,14 +478,6 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 		break;
 	case MIDI_CC_DETUNE_EFFECT:
 		process_cc_detune_effect(tick, voice, value);
-		break;
-	case MIDI_CC_NRPN_LSB:
-		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_NRPN_LSB(%d) :: voice = %d, value = %d %s\r\n",
-						tick, voice, number, value, "(NOT IMPLEMENTED YET)");
-		break;
-	case MIDI_CC_NRPN_MSB:
-		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_NRPN_MSB(%d) :: voice = %d, value = %d %s\r\n",
-						tick, voice, number, value, "(NOT IMPLEMENTED YET)");
 		break;
 	case MIDI_CC_RPN_LSB:
 		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_RPN_LSB(%d) :: voice = %d, value = %d\r\n",
@@ -484,13 +505,22 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 								tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 				break;
 			}
-
 			if(MIDI_CC_EFFECT_5 == number){
 				CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_EFFECT_5(%d) :: voice = %d, depth = %d %s\r\n",
 								tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 				break;
 			}
-			CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC code = %d :: voice = %d, value = %d %s\r\n",
+			if(MIDI_CC_NRPN_LSB == number){
+				CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_NRPN_LSB(%d) :: voice = %d, value = %d %s\r\n",
+								tick, voice, number, value, "(NOT IMPLEMENTED YET)");
+				break;
+			}
+			if(MIDI_CC_NRPN_MSB == number){
+				CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_NRPN_MSB(%d) :: voice = %d, value = %d %s\r\n",
+								tick, voice, number, value, "(NOT IMPLEMENTED YET)");
+				break;
+			}
+			CHIPTUNE_PRINTF(cDeveloping, "tick = %u, MIDI_CC code = %d :: voice = %d, value = %d %s\r\n",
 							tick, number, voice, value, "(NOT IMPLEMENTED YET)");
 		} while(0);
 		break;

@@ -20,6 +20,8 @@
 #define MIDI_MESSAGE_PITCH_WHEEL					(0xE0)
 /**********************************************************************************/
 //https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
+#define MIDI_CC_BANK_SELECT_MSB						(0)
+
 #define MIDI_CC_MODULATION_WHEEL					(1)
 #define MIDI_CC_BREATH_CONTROLLER					(2)
 #define MIDI_CC_DATA_ENTRY_MSB						(6)
@@ -27,6 +29,7 @@
 #define MIDI_CC_PAN									(10)
 #define MIDI_CC_EXPRESSION							(11)
 
+#define MIDI_CC_BANK_SELECT_LSB						(32 + MIDI_CC_BANK_SELECT_MSB)
 #define MIDI_CC_DATA_ENTRY_LSB						(32 + MIDI_CC_DATA_ENTRY_MSB)
 
 #define MIDI_CC_DAMPER_PEDAL						(64)
