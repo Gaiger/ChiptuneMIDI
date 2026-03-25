@@ -703,7 +703,7 @@ int32_t generate_panned_wave_amplitude(oscillator_t const * const p_oscillator)
 }
 
 /**********************************************************************************/
-static bool s_is_channels_output_enabled_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
+static bool s_is_channels_output_enabled_array[MIDI_MAX_CHANNEL_NUMBER];
 
 static int64_t chiptune_fetch_64bit_wave(void)
 {
@@ -779,8 +779,8 @@ static void chase_midi_messages(uint32_t const end_midi_message_index)
 
 	SET_CHIPTUNE_PRINTF_ENABLED(false);
 #ifndef _KEEP_NOTELESS_CHANNELS
-	bool is_has_note[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
-	memset(&is_has_note[0], false, sizeof(bool)*CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER);
+	bool is_has_note[MIDI_MAX_CHANNEL_NUMBER];
+	memset(&is_has_note[0], false, sizeof(bool) * MIDI_MAX_CHANNEL_NUMBER);
 #endif
 	int16_t max_occupied_oscillator_number = 0;
 
@@ -891,7 +891,7 @@ static void chase_midi_messages(uint32_t const end_midi_message_index)
 	}
 
 #ifndef _KEEP_NOTELESS_CHANNELS
-	for(int8_t voice = 0; voice < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; voice++){
+	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		if(false == is_has_note[voice]){
 			get_channel_controller_pointer_from_index(voice)->instrument
 					= CHANNEL_CONTROLLER_INSTRUMENT_UNUSED_CHANNEL;
@@ -965,7 +965,7 @@ static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMB
 	s_is_chase_to_last_done = false;
 #endif
 	chase_midi_messages(TO_LAST_MESSAGE_INDEX);
-	for(int8_t voice = 0; voice < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; voice++){
+	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		instrument_array[voice] = get_channel_controller_pointer_from_index(voice)->instrument;
 	}
 #ifndef _KEEP_NOTELESS_CHANNELS
@@ -1070,9 +1070,9 @@ float chiptune_get_playing_effective_tempo(void)
 
 /**********************************************************************************/
 
-int chiptune_get_ending_instruments(int8_t instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER])
+int chiptune_get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER])
 {
-	memcpy(&instrument_array[0], &s_ending_instrument_array[0], CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER * sizeof(int8_t));
+	memcpy(&instrument_array[0], &s_ending_instrument_array[0], MIDI_MAX_CHANNEL_NUMBER * sizeof(int8_t));
 	return 0;
 }
 

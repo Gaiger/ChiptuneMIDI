@@ -563,10 +563,10 @@ QList<QPair<int, int>> TuneManager::GetChannelInstrumentPairList(void)
 			break;
 		}
 
-		int8_t instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER];
+		int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER];
 		chiptune_get_ending_instruments(&instrument_array[0]);
 		m_p_private->m_channel_instrument_pair_list.clear();
-		for(int voice = 0; voice < CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER; voice++){
+		for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL != instrument_array[voice]){
 				m_p_private->m_channel_instrument_pair_list.append(QPair<int, int>(voice, instrument_array[voice]));
 			}
@@ -582,7 +582,7 @@ void TuneManager::SetChannelOutputEnabled(int const channel_index, bool const is
 	QMutexLocker locker(&m_p_private->m_mutex);
 	do
 	{
-		if(channel_index < 0 || channel_index >= CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER){
+		if(channel_index < 0 || channel_index >= MIDI_MAX_CHANNEL_NUMBER){
 			break;
 		}
 

@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "chiptune_midi_define.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -27,10 +29,9 @@ float chiptune_get_tempo(void);
 void chiptune_set_playing_speed_ratio(float const playing_speed_ratio);
 float chiptune_get_playing_effective_tempo(void);
 
-#define CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER			(16)
 #define CHIPTUNE_INSTRUMENT_NOT_SPECIFIED			(-1)
 #define CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL			(-2)
-int chiptune_get_ending_instruments(int8_t instrument_array[CHIPTUNE_MIDI_MAX_CHANNEL_NUMBER]);
+int chiptune_get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER]);
 
 void chiptune_set_current_message_index(uint32_t const message_index);
 uint32_t chiptune_get_current_tick(void);
