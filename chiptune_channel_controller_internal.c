@@ -242,7 +242,7 @@ static void reset_melodic_channel_to_defaults(int8_t const channel_index)
 
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[channel_index];
 	p_channel_controller->instrument = CHANNEL_CONTROLLER_INSTRUMENT_UNUSED_CHANNEL;
-
+	p_channel_controller->is_output_enabled = true;
 	reset_channel_controller_to_midi_defaults(channel_index);
 }
 
@@ -262,7 +262,7 @@ static void reset_percussion_channel_to_defaults(void)
 		= (uint16_t)((get_sampling_rate() * DEFAULT_PERCUSSION_RELEASE_TIME_SECONDS)
 					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 	update_channel_controller_envelope_timing_for_playing_tempo(MIDI_PERCUSSION_CHANNEL);
-
+	p_channel_controller->is_output_enabled = true;
 	for(int8_t i = MIDI_PERCUSSION_KEY_MAP_MIN; i <= MIDI_PERCUSSION_KEY_MAP_MAX; i++){
 		reset_percussion_timbre_from_index(i);
 	}

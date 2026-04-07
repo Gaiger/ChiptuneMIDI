@@ -96,6 +96,8 @@ typedef struct _channel_controller
 
 	uint16_t					registered_parameter_number;
 	uint16_t					registered_parameter_value;
+
+	bool						is_output_enabled;
 } channel_controller_t;
 
 #define CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED		(-1)

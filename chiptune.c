@@ -703,7 +703,6 @@ int32_t generate_panned_wave_amplitude(oscillator_t const * const p_oscillator)
 }
 
 /**********************************************************************************/
-static bool s_is_channels_output_enabled_array[MIDI_MAX_CHANNEL_NUMBER];
 
 static int64_t chiptune_fetch_64bit_wave(void)
 {
@@ -717,7 +716,7 @@ static int64_t chiptune_fetch_64bit_wave(void)
 	for(int16_t k = 0; k < occupied_oscillator_number; k++){
 		oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
 		do {
-			if(false == s_is_channels_output_enabled_array[p_oscillator->voice]){
+			if(false == get_channel_controller_pointer_from_index(p_oscillator->voice)->is_output_enabled){
 				break;
 			}
 			if(false == IS_ACTIVATED(p_oscillator->state_bits)){
@@ -1006,9 +1005,6 @@ void chiptune_finalize(void)
 void chiptune_prepare_song(uint32_t const resolution)
 {
 	UPDATE_RESOLUTION(resolution);
-	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-		s_is_channels_output_enabled_array[voice] = true;
-	}
 	clear_all_oscillators_and_events();
 	reset_all_channels_to_defaults();
 	get_ending_instruments(&s_ending_instrument_array[0]);
@@ -1132,13 +1128,13 @@ bool chiptune_is_tune_ending(void)
 
 void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const is_enabled)
 {
-	if( 0 > channel_index  || MIDI_MAX_CHANNEL_NUMBER <= channel_index ){
+	if( 0 > channel_index || MIDI_MAX_CHANNEL_NUMBER <= channel_index){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: channel_index = %d is not acceptable for %s\r\n",
 						channel_index, __func__);
 		return ;
 	}
 
-	s_is_channels_output_enabled_array[channel_index] = is_enabled;
+	get_channel_controller_pointer_from_index(channel_index)->is_output_enabled = is_enabled;
 }
 
 /**********************************************************************************/
