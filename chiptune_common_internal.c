@@ -27,7 +27,12 @@ uint16_t calculate_phase_increment_from_pitch(float const pitch_in_semitones)
 	frequency = roundf(frequency * 100.0f)/100.0f;
 
 	/*
-	 * sampling_rate/frequency = samples_per_cycle  = (UINT16_MAX + 1)/delta_phase
+	 * ONE_WHOLE_CYCLE_PHASE = (UINT16_MAX + 1)
+	 *
+	 * phase_increment_per_sample * sampling_rate = frequency * ONE_WHOLE_CYCLE_PHASE
+	 *  or
+	 * sampling_rate/frequency = samples_per_cycle
+	 * samples_per_cycle * phase_increment_per_sample = ONE_WHOLE_CYCLE_PHASE
 	*/
 	uint16_t phase_increment = (uint16_t)((UINT16_MAX + 1) * frequency / get_sampling_rate());
 
