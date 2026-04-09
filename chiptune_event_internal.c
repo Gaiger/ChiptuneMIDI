@@ -520,6 +520,9 @@ int process_events(uint32_t const tick)
 				if(false == is_amplitude_to_loudness_percentage_over_threshold(p_oscillator, 1.0f)){
 					break;
 				}
+				if(false == get_channel_controller_pointer_from_index(p_oscillator->voice)->is_output_enabled){
+					break;
+				}
 				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: amplitude = %1.2f%% of loudness as discard\r\n",
 								100.0f * p_oscillator->amplitude/(float)p_oscillator->loudness);
 				CHIPTUNE_PRINTF(cDeveloping, "voice = %d, note = %d, envelope_table_index = %d\r\n",
