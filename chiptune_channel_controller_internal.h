@@ -101,7 +101,6 @@ typedef struct _channel_controller
 } channel_controller_t;
 
 #define CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED		(-1)
-#define CHANNEL_CONTROLLER_INSTRUMENT_UNUSED_CHANNEL	(-2)
 
 #define MAX_PERCUSSION_WAVEFORM_SEGMENT_NUMBER		(4)
 

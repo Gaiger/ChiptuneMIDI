@@ -191,8 +191,7 @@ static inline void swap_processing_channel() { s_is_processing_left_channel = !s
 static int process_program_change_message(uint32_t const tick, int8_t const voice, midi_value_t const number)
 {
 	do {
-		if(CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED != get_channel_controller_pointer_from_index(voice)->instrument
-				&& CHANNEL_CONTROLLER_INSTRUMENT_UNUSED_CHANNEL != get_channel_controller_pointer_from_index(voice)->instrument){
+		if(CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED != get_channel_controller_pointer_from_index(voice)->instrument){
 			if(number != get_channel_controller_pointer_from_index(voice)->instrument){
 				CHIPTUNE_PRINTF(cMidiProgramChange, "tick = %u, voice = %d, MIDI_MESSAGE_PROGRAM_CHANGE: from %s(%d) to %s(%d)\r\n",
 								tick, voice,
@@ -857,10 +856,6 @@ static void chase_midi_messages(uint32_t const end_midi_message_index)
 			for(int16_t i = 0; i < occupied_oscillator_number; i++,
 				oscillator_index = get_occupied_oscillator_next_index(oscillator_index)){
 				oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
-				if(CHANNEL_CONTROLLER_INSTRUMENT_UNUSED_CHANNEL
-						== get_channel_controller_pointer_from_index(p_oscillator->voice)->instrument){
-					get_channel_controller_pointer_from_index(p_oscillator->voice)->instrument = CHIPTUNE_INSTRUMENT_NOT_SPECIFIED;
-				}
 #ifndef _KEEP_NOTELESS_CHANNELS
 				is_has_note[p_oscillator->voice] = true;
 #endif
@@ -889,14 +884,16 @@ static void chase_midi_messages(uint32_t const end_midi_message_index)
 						max_occupied_oscillator_number);
 	}
 
-#ifndef _KEEP_NOTELESS_CHANNELS
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-		if(false == is_has_note[voice]){
-			get_channel_controller_pointer_from_index(voice)->instrument
-					= CHANNEL_CONTROLLER_INSTRUMENT_UNUSED_CHANNEL;
+		s_ending_instrument_array[voice] = get_channel_controller_pointer_from_index(voice)->instrument;
+#ifndef _KEEP_NOTELESS_CHANNELS
+		if(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED == s_ending_instrument_array[voice]){
+			if(false == is_has_note[voice]){
+				s_ending_instrument_array[voice] = CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL;
+			}
 		}
-	}
 #endif
+	}
 	SET_CHIPTUNE_PRINTF_ENABLED(true);
 }
 
@@ -964,9 +961,6 @@ static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMB
 	s_is_chase_to_last_done = false;
 #endif
 	chase_midi_messages(TO_LAST_MESSAGE_INDEX);
-	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-		instrument_array[voice] = get_channel_controller_pointer_from_index(voice)->instrument;
-	}
 #ifndef _KEEP_NOTELESS_CHANNELS
 	s_is_chase_to_last_done = true;
 #endif
