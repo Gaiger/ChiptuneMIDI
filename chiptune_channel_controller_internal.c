@@ -248,7 +248,7 @@ static void reset_melodic_channel_to_defaults(int8_t const channel_index)
 
 /**********************************************************************************/
 
-void reset_percussion_timbre_from_index(int8_t const channel_index);
+static void reset_percussion_timbre_from_index(int8_t const channel_index);
 
 static void reset_percussion_channel_to_defaults(void)
 {

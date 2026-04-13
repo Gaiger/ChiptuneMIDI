@@ -101,6 +101,7 @@ add_executable(ChiptuneMIDI WIN32
     ${ENGINE} ${APPILCATION} ${FORMS})
 
 target_include_directories(ChiptuneMIDI PRIVATE
+    ${CHIPTUNE_QT_DIR}
     ${CHIPTUNE_QT_DIR}/QMidi/src
     ${CHIPTUNE_ROOT_DIR})
 

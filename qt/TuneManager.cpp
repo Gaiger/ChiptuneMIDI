@@ -2,6 +2,8 @@
 #include <QFileInfo>
 #include <QTimer>
 
+#include <cfloat>
+
 #include <QDebug>
 
 #include "QMidiFile.h"
