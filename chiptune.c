@@ -263,9 +263,6 @@ struct _tick_message
 #define SEVEN_BITS_VALID(VALUE)						((0x7F) & (VALUE))
 
 int8_t s_ending_instrument_array[MIDI_MAX_CHANNEL_NUMBER];
-#ifndef _KEEP_NOTELESS_CHANNELS
-bool s_is_chase_to_last_done = false;
-#endif
 
 static int process_midi_message(struct _tick_message const tick_message)
 {
@@ -286,14 +283,6 @@ static int process_midi_message(struct _tick_message const tick_message)
 
 		uint8_t const type = u.data_as_bytes[0] & 0xF0;
 		int8_t const voice = u.data_as_bytes[0] & 0x0F;
-#ifndef _KEEP_NOTELESS_CHANNELS
-		if(true == s_is_chase_to_last_done){
-			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL == s_ending_instrument_array[voice]){
-				ret = 1;
-				break;
-			}
-		}
-#endif
 		switch(type)
 		{
 		case MIDI_MESSAGE_NOTE_OFF:
@@ -776,10 +765,10 @@ static void chase_midi_messages(uint32_t const end_midi_message_index)
 	}
 
 	SET_CHIPTUNE_PRINTF_ENABLED(false);
-#ifndef _KEEP_NOTELESS_CHANNELS
+
 	bool is_has_note[MIDI_MAX_CHANNEL_NUMBER];
 	memset(&is_has_note[0], false, sizeof(bool) * MIDI_MAX_CHANNEL_NUMBER);
-#endif
+
 	int16_t max_occupied_oscillator_number = 0;
 
 	fetch_midi_tick_message(s_midi_messge_index, &s_fetched_tick_message);
@@ -856,9 +845,7 @@ static void chase_midi_messages(uint32_t const end_midi_message_index)
 			for(int16_t i = 0; i < occupied_oscillator_number; i++,
 				oscillator_index = get_occupied_oscillator_next_index(oscillator_index)){
 				oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
-#ifndef _KEEP_NOTELESS_CHANNELS
 				is_has_note[p_oscillator->voice] = true;
-#endif
 			}
 		}while(0);
 
@@ -955,21 +942,6 @@ static int32_t s_amplitude_normalization_gain = DEFAULT_AMPLITUDE_NORMALIZATION_
 #define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE)/(int32_t)s_amplitude_normalization_gain))
 #endif
 
-static void get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER])
-{
-#ifndef _KEEP_NOTELESS_CHANNELS
-	s_is_chase_to_last_done = false;
-#endif
-	chase_midi_messages(TO_LAST_MESSAGE_INDEX);
-#ifndef _KEEP_NOTELESS_CHANNELS
-	s_is_chase_to_last_done = true;
-#endif
-	reset_all_channels_to_defaults();
-	clear_all_oscillators_and_events();
-	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
-	RESET_AMPLITUDE_NORMALIZATION_GAIN();
-}
-
 /**********************************************************************************/
 
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
@@ -1001,7 +973,10 @@ void chiptune_prepare_song(uint32_t const resolution)
 	UPDATE_RESOLUTION(resolution);
 	clear_all_oscillators_and_events();
 	reset_all_channels_to_defaults();
-	get_ending_instruments(&s_ending_instrument_array[0]);
+#define TO_DETERMINE_ENDING_INSTRUMENTS_INDEX				(TO_LAST_MESSAGE_INDEX)
+	chase_midi_messages(TO_DETERMINE_ENDING_INSTRUMENTS_INDEX);
+	reset_all_channels_to_defaults();
+	clear_all_oscillators_and_events();
 
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
