@@ -1,6 +1,7 @@
 #ifndef _CHIPTUNE_COMMON_INTERNAL_H_
 #define _CHIPTUNE_COMMON_INTERNAL_H_
 
+#include <stddef.h>
 #include <stdint.h>
 #ifdef _MSC_VER
 #include <malloc.h>
