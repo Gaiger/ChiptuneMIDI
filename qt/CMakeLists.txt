@@ -20,8 +20,6 @@ if (QT_VERSION_MAJOR EQUAL 5)
     endif()
 endif()
 
-add_subdirectory(${CHIPTUNE_QT_DIR}/QMidi ${CMAKE_CURRENT_BINARY_DIR}/QMidi-build)
-
 set(ENGINE
     ${CHIPTUNE_ROOT_DIR}/chiptune.c
     ${CHIPTUNE_ROOT_DIR}/chiptune_midi_note_internal.c
@@ -85,6 +83,24 @@ set(FORMS
     ${CHIPTUNE_QT_DIR}/ChiptuneMidiWidgetForm.ui
 )
 
+
+set(QMIDI_HEADERS
+    ${CHIPTUNE_QT_DIR}/QMidi/src/QMidiFile.h
+    ${CHIPTUNE_QT_DIR}/QMidi/src/QMidiIn.h
+    ${CHIPTUNE_QT_DIR}/QMidi/src/QMidiOut.h
+)
+
+if(APPLE)
+    list(APPEND QMIDI_HEADERS ${CHIPTUNE_QT_DIR}/QMidi/src/OS/QMidi_CoreMidi.h)
+endif()
+if(UNIX)
+    list(APPEND QMIDI_HEADERS ${CHIPTUNE_QT_DIR}/QMidi/src/OS/QMidi_ALSA.h)
+endif()
+if(HAIKU)
+    list(APPEND QMIDI_HEADERS ${CHIPTUNE_QT_DIR}/QMidi/src/OS/QMidi_Haiku.h)
+endif()
+
+
 if(WIN32)
     set(RESOURCES ${CHIPTUNE_QT_DIR}/ChiptuneMIDI.rc)
 endif()
@@ -93,12 +109,20 @@ endif()
 source_group("Engine" FILES ${ENGINE})
 source_group("Application" FILES ${APPILCATION})
 source_group("Forms" FILES ${FORMS})
+source_group("QMidi" FILES ${QMIDI_HEADERS})
 if(WIN32)
     source_group("Resources" FILES ${RESOURCES})
 endif()
 
+add_subdirectory(${CHIPTUNE_QT_DIR}/QMidi ${CMAKE_CURRENT_BINARY_DIR}/QMidi-build)
+
 add_executable(ChiptuneMIDI WIN32
     ${ENGINE} ${APPILCATION} ${FORMS})
+
+target_sources(QMidi PRIVATE ${QMIDI_HEADERS})
+if(WIN32)
+    target_sources(ChiptuneMIDI PRIVATE ${RESOURCES})
+endif()
 
 target_include_directories(ChiptuneMIDI PRIVATE
     ${CHIPTUNE_QT_DIR}
@@ -107,15 +131,10 @@ target_include_directories(ChiptuneMIDI PRIVATE
 
 target_link_libraries(ChiptuneMIDI
     PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts Qt${QT_VERSION_MAJOR}::Multimedia  QMidi)
-
 if (QT_VERSION_MAJOR EQUAL 5)
     if(WIN32)
         target_link_libraries(ChiptuneMIDI PRIVATE Qt5::WinExtras)
     endif()
-endif()
-
-if(WIN32)
-    target_sources(ChiptuneMIDI PRIVATE ${RESOURCES})
 endif()
 
 add_custom_command(TARGET ChiptuneMIDI POST_BUILD
