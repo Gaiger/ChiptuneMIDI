@@ -90,9 +90,6 @@ set(QMIDI_HEADERS
     ${CHIPTUNE_QT_DIR}/QMidi/src/QMidiOut.h
 )
 
-if(APPLE)
-    list(APPEND QMIDI_HEADERS ${CHIPTUNE_QT_DIR}/QMidi/src/OS/QMidi_CoreMidi.h)
-endif()
 if(UNIX)
     list(APPEND QMIDI_HEADERS ${CHIPTUNE_QT_DIR}/QMidi/src/OS/QMidi_ALSA.h)
 endif()
