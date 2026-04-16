@@ -28,7 +28,6 @@ win32 {
 CHIPTUNE_ROOT_DIR = ../..
 CHIPTUNE_QT_DIR = $${CHIPTUNE_ROOT_DIR}/qt
 
-include($${CHIPTUNE_QT_DIR}/QMidi/src/QMidi.pri)
 INCLUDEPATH += $${CHIPTUNE_ROOT_DIR}
 
 SOURCES += \
@@ -42,6 +41,7 @@ SOURCES += \
     $${CHIPTUNE_ROOT_DIR}/chiptune_channel_controller_internal.c \
     $${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.c \
     $${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/mid_reader/mid_reader.c \
     $${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp \
     $${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp \
     $${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.cpp \
@@ -53,6 +53,7 @@ SOURCES += \
     $${CHIPTUNE_QT_DIR}/AudioPlayer.cpp \
     $${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp \
     $${CHIPTUNE_QT_DIR}/WaveChartView.cpp \
+    $${CHIPTUNE_ROOT_DIR}/mid_reader/qt/MidSong.cpp \
     $${CHIPTUNE_QT_DIR}/main.cpp \
 
 HEADERS += \
@@ -67,18 +68,19 @@ HEADERS += \
     $${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.h \
     $${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.h \
     $${CHIPTUNE_ROOT_DIR}/chiptune_midi_define.h \
+    $${CHIPTUNE_ROOT_DIR}/mid_reader/mid_reader.h \
     $${CHIPTUNE_QT_DIR}/ChannelListWidget.h \
     $${CHIPTUNE_QT_DIR}/ChannelNodeWidget.h \
     $${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.h \
     $${CHIPTUNE_QT_DIR}/GetInstrumentNameString.h \
-    $${CHIPTUNE_QT_DIR}/MidiPlayer.h \
     $${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h \
     $${CHIPTUNE_QT_DIR}/ProgressSlider.h \
     $${CHIPTUNE_QT_DIR}/SequencerWidget.h \
     $${CHIPTUNE_QT_DIR}/TuneManager.h \
     $${CHIPTUNE_QT_DIR}/AudioPlayer.h \
     $${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.h \
-    $${CHIPTUNE_QT_DIR}/WaveChartView.h  \
+    $${CHIPTUNE_QT_DIR}/WaveChartView.h \
+    $${CHIPTUNE_ROOT_DIR}/mid_reader/qt/MidSong.h \
 
 FORMS += \
     $${CHIPTUNE_QT_DIR}/ChannelListWidgetForm.ui \

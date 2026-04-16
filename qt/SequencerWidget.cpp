@@ -140,7 +140,7 @@ private:
 
 	int m_last_sought_index;
 	int m_last_tick_in_center;
-	QList<QMidiEvent *> m_ignored_midi_event_ptr_list;
+	QList<int> m_ignored_midi_event_index_list;
 	QMutex m_mutex;
 };
 
@@ -171,7 +171,7 @@ NoteDurationWidget::NoteDurationWidget(TuneManager *p_tune_manager, int drawn_hi
 		m_is_channel_draw_as_enabled[voice] = true;
 	}
 	m_drawing_channel_rectangle_list_index = 0;
-	m_ignored_midi_event_ptr_list.clear();
+	m_ignored_midi_event_index_list.clear();
 }
 
 /**********************************************************************************/
@@ -182,7 +182,7 @@ NoteDurationWidget::~NoteDurationWidget(){ }
 
 int NoteDurationWidget::tickToX(int tick, int const tick_in_center)
 {
-	int x = ONE_BEAT_WIDTH * (tick - tick_in_center)/(double)m_p_tune_manager->GetMidiFilePointer()->resolution();
+	int x = ONE_BEAT_WIDTH * (tick - tick_in_center)/(double)m_p_tune_manager->GetMidSongPointer()->GetResolution();
 	x += QWidget::width()/2;
 	return x;
 }
@@ -193,7 +193,7 @@ int NoteDurationWidget::XtoTick(int x, int tick_in_center)
 {
 	int tick  = tick_in_center;
 	x -= QWidget::width()/2;
-	tick += ( x / (double) ONE_BEAT_WIDTH) * m_p_tune_manager->GetMidiFilePointer()->resolution();
+	tick += ( x / (double) ONE_BEAT_WIDTH) * m_p_tune_manager->GetMidSongPointer()->GetResolution();
 	return tick;
 }
 
@@ -272,7 +272,7 @@ void NoteDurationWidget::Prepare(int const tick_in_center)
 		m_channel_rectangle_list[preparing_channel_rectangle_list_index][voice].clear();
 	}
 
-	QList<QMidiEvent*> midievent_list = m_p_tune_manager->GetMidiFilePointer()->events();
+	MidSong *p_mid_song = m_p_tune_manager->GetMidSongPointer();
 
 	typedef struct
 	{
@@ -292,10 +292,14 @@ void NoteDurationWidget::Prepare(int const tick_in_center)
 	//start_index = 0;
 	//qDebug() << "start_index " << start_index;
 	int sought_index = INT32_MAX;
-	for(int i = start_index; i < midievent_list.size(); i++){
-		QMidiEvent * const p_event = midievent_list.at(i);
+	for(int i = start_index; i < (int)p_mid_song->GetEventCount(); i++){
+		MidEvent const midi_event = p_mid_song->GetEvent(i);
 
-		if(true == IsTickOutOfRightBound(p_event->tick(), tick_in_center)){
+		if(false == midi_event.IsValid()){
+			continue;
+		}
+
+		if(true == IsTickOutOfRightBound((int)midi_event.GetTick(), tick_in_center)){
 			bool is_all_closed = true;
 			for(int j = 0; j < draw_note_list.size(); j++){
 				if(-1 == draw_note_list.at(j).start_tick
@@ -311,23 +315,23 @@ void NoteDurationWidget::Prepare(int const tick_in_center)
 		}
 
 		do {
-			if(QMidiEvent::NoteOn == p_event->type()){
+			if(MidEvent::NoteOn == midi_event.GetType()){
 				draw_note_t draw_note;
 				draw_note.note_on_midievent_index = i;
-				draw_note.start_tick = p_event->tick();
+				draw_note.start_tick = (int)midi_event.GetTick();
 				draw_note.end_tick = -1;
-				draw_note.note = p_event->note();
-				draw_note.voice = p_event->voice();
+				draw_note.note = midi_event.GetNote();
+				draw_note.voice = midi_event.GetVoice();
 				draw_note_list.append(draw_note);
 				break;
 			}
 
-			if(QMidiEvent::NoteOff == p_event->type()){
+			if(MidEvent::NoteOff == midi_event.GetType()){
 
 				bool is_ignored = false;
-				QListIterator<QMidiEvent*> ignored_midi_event_ptr_list_interator(m_ignored_midi_event_ptr_list);
-				while(ignored_midi_event_ptr_list_interator.hasNext()){
-					if(ignored_midi_event_ptr_list_interator.next() == p_event){
+				QListIterator<int> ignored_midi_event_index_list_iterator(m_ignored_midi_event_index_list);
+				while(ignored_midi_event_index_list_iterator.hasNext()){
+					if(ignored_midi_event_index_list_iterator.next() == i){
 						is_ignored = true;
 						break;
 					}
@@ -343,20 +347,20 @@ void NoteDurationWidget::Prepare(int const tick_in_center)
 					if(-1 != p_draw_note->end_tick){
 						continue;
 					}
-					if(p_draw_note->voice != p_event->voice()){
+					if(p_draw_note->voice != midi_event.GetVoice()){
 						continue;
 					}
-					if(p_draw_note->note != p_event->note()){
+					if(p_draw_note->note != midi_event.GetNote()){
 						continue;
 					}
-					if(p_draw_note->start_tick > p_event->tick()){
+					if(p_draw_note->start_tick > (int)midi_event.GetTick()){
 						continue;
 					}
 
 					is_matched = true;
 					do
 					{
-						p_draw_note->end_tick = p_event->tick();
+						p_draw_note->end_tick = (int)midi_event.GetTick();
 						m_channel_rectangle_list[preparing_channel_rectangle_list_index][p_draw_note->voice].append(
 									NoteToQRect(p_draw_note->start_tick, p_draw_note->end_tick, tick_in_center, p_draw_note->note)
 									);
@@ -374,11 +378,11 @@ void NoteDurationWidget::Prepare(int const tick_in_center)
 					}
 					qDebug() << "WARNING ::"<< Q_FUNC_INFO
 							 << ":: dangling off note :"
-							 << "tick =" << p_event->tick()
-							 << ", voice ="<< p_event->voice()
-							 << ", note =" << p_event->note()
+							 << "tick =" << midi_event.GetTick()
+							 << ", voice ="<< midi_event.GetVoice()
+							 << ", note =" << midi_event.GetNote()
 							 << "(might be double off)";
-					m_ignored_midi_event_ptr_list.append(p_event);
+					m_ignored_midi_event_index_list.append(i);
 				} while(0);
 			}
 		}while(0);
@@ -467,22 +471,22 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, double audio_out_l
 	p_layout->setContentsMargins(0, 0, 0, 0);
 	p_layout->setSpacing(0);
 
-	QList<QMidiEvent*> midievent_list = p_tune_manager->GetMidiFilePointer()->events();
+	MidSong *p_mid_song = p_tune_manager->GetMidSongPointer();
 	int highest_pitch = A0;
 	int lowest_pitch = G9;
 	int first_note_pitch = 0;
-	for(int i = 0; i < midievent_list.size(); i++){
-		QMidiEvent * const p_event = midievent_list.at(i);
-		if(QMidiEvent::NoteOn == p_event->type()){
+	for(int i = 0; i < (int)p_mid_song->GetEventCount(); i++){
+		MidEvent const midi_event = p_mid_song->GetEvent(i);
+		if(MidEvent::NoteOn == midi_event.GetType()){
 
 			if(0 == first_note_pitch){
-				first_note_pitch = p_event->note();
+				first_note_pitch = midi_event.GetNote();
 			}
-			if(p_event->note() > highest_pitch){
-				highest_pitch = p_event->note();
+			if(midi_event.GetNote() > highest_pitch){
+				highest_pitch = midi_event.GetNote();
 			}
-			if(p_event->note() < lowest_pitch){
-				lowest_pitch = p_event->note();
+			if(midi_event.GetNote() < lowest_pitch){
+				lowest_pitch = midi_event.GetNote();
 			}
 		}
 	}

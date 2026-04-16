@@ -63,7 +63,6 @@ set(APPILCATION
     ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.h
     ${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.h
     ${CHIPTUNE_QT_DIR}/GetInstrumentNameString.h
-    ${CHIPTUNE_QT_DIR}/MidiPlayer.h
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h
     ${CHIPTUNE_QT_DIR}/ProgressSlider.h
     ${CHIPTUNE_QT_DIR}/SequencerWidget.h
@@ -75,6 +74,13 @@ set(APPILCATION
     ${CHIPTUNE_QT_DIR}/main.cpp
 )
 
+set(MID_SONG
+    ${CHIPTUNE_ROOT_DIR}/mid_reader/mid_reader.c
+    ${CHIPTUNE_ROOT_DIR}/mid_reader/mid_reader.h
+    ${CHIPTUNE_ROOT_DIR}/mid_reader/qt/MidSong.cpp
+    ${CHIPTUNE_ROOT_DIR}/mid_reader/qt/MidSong.h
+)
+
 
 set(FORMS
     ${CHIPTUNE_QT_DIR}/ChannelListWidgetForm.ui
@@ -84,20 +90,6 @@ set(FORMS
 )
 
 
-set(QMIDI_HEADERS
-    ${CHIPTUNE_QT_DIR}/QMidi/src/QMidiFile.h
-    ${CHIPTUNE_QT_DIR}/QMidi/src/QMidiIn.h
-    ${CHIPTUNE_QT_DIR}/QMidi/src/QMidiOut.h
-)
-
-if(UNIX)
-    list(APPEND QMIDI_HEADERS ${CHIPTUNE_QT_DIR}/QMidi/src/OS/QMidi_ALSA.h)
-endif()
-if(HAIKU)
-    list(APPEND QMIDI_HEADERS ${CHIPTUNE_QT_DIR}/QMidi/src/OS/QMidi_Haiku.h)
-endif()
-
-
 if(WIN32)
     set(RESOURCES ${CHIPTUNE_QT_DIR}/ChiptuneMIDI.rc)
 endif()
@@ -105,29 +97,25 @@ endif()
 
 source_group("Engine" FILES ${ENGINE})
 source_group("Application" FILES ${APPILCATION})
+source_group("MidSong" FILES ${MID_SONG})
 source_group("Forms" FILES ${FORMS})
-source_group("QMidi" FILES ${QMIDI_HEADERS})
 if(WIN32)
     source_group("Resources" FILES ${RESOURCES})
 endif()
 
-add_subdirectory(${CHIPTUNE_QT_DIR}/QMidi)
-
 add_executable(ChiptuneMIDI WIN32
-    ${ENGINE} ${APPILCATION} ${FORMS})
+    ${ENGINE} ${APPILCATION} ${MID_SONG} ${FORMS})
 
-target_sources(QMidi PRIVATE ${QMIDI_HEADERS})
 if(WIN32)
     target_sources(ChiptuneMIDI PRIVATE ${RESOURCES})
 endif()
 
 target_include_directories(ChiptuneMIDI PRIVATE
     ${CHIPTUNE_QT_DIR}
-    ${CHIPTUNE_QT_DIR}/QMidi/src
     ${CHIPTUNE_ROOT_DIR})
 
 target_link_libraries(ChiptuneMIDI
-    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts Qt${QT_VERSION_MAJOR}::Multimedia  QMidi)
+    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts Qt${QT_VERSION_MAJOR}::Multimedia)
 if (QT_VERSION_MAJOR EQUAL 5)
     if(WIN32)
         target_link_libraries(ChiptuneMIDI PRIVATE Qt5::WinExtras)

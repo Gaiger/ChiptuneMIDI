@@ -707,7 +707,7 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 	if(event->timerId() == m_playback_tick_inquiry_timer_id){
 		m_p_sequencer_widget->Update();
 		m_p_sequencer_widget->Prepare(
-					m_p_tune_manager->GetMidiFilePointer()->tickFromTime(PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS /1000.0f)
+					(int)m_p_tune_manager->GetMidSongPointer()->TickFromTime(PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS /1000.0f)
 					+ m_p_tune_manager->GetCurrentTick());
 	}
 }

@@ -6,8 +6,6 @@
 
 #include <QDebug>
 
-#include "QMidiFile.h"
-
 #include "chiptune_midi_define.h"
 #include "chiptune.h"
 
@@ -19,21 +17,29 @@ public:
 	int GetMidiMessage(int const index, uint32_t * const p_tick, uint32_t * const p_message)
 	{
 		int ret = -1;
+		MidEvent midi_event;
 		do
 		{
-			if(m_p_midi_file->events().size() <= index){
+			if((nullptr == m_p_mid_song) || (index < 0)){
+				break;
+			}
+			if(m_p_mid_song->GetEventCount() <= index){
 				break;
 			}
 
-			QMidiEvent *p_midi_event = m_p_midi_file->events().at(index);
-			if(QMidiEvent::Meta == p_midi_event->type()){
-				if(QMidiEvent::Tempo == p_midi_event->number()){
-					chiptune_set_tempo(p_midi_event->tempo());
+			midi_event = m_p_mid_song->GetEvent(index);
+			if(false == midi_event.IsValid()){
+				break;
+			}
+
+			if(MidEvent::Tempo == midi_event.GetType()){
+				if(0.0f < midi_event.GetTempo()){
+					chiptune_set_tempo(midi_event.GetTempo());
 				}
 			}
 
-			*p_tick = (uint32_t)p_midi_event->tick();
-			*p_message = p_midi_event->message();
+			*p_tick = midi_event.GetTick();
+			*p_message = midi_event.GetMessage();
 			ret = 0;
 		} while(0);
 
@@ -75,7 +81,7 @@ public:
 	}
 
 public:
-	QMidiFile *m_p_midi_file;
+	MidSong *m_p_mid_song;
 	int m_number_of_channels;
 	int m_sampling_rate;
 	int m_sampling_size;
@@ -137,7 +143,7 @@ TuneManager::TuneManager(bool const is_stereo,
 		}
 		m_p_private->m_number_of_channels = 1;
 	} while(0);
-	m_p_private->m_p_midi_file = nullptr;
+	m_p_private->m_p_mid_song = nullptr;
 	m_p_private->m_channel_instrument_pair_list.clear();
 	m_p_private->m_connection_type = Qt::AutoConnection;
 
@@ -154,9 +160,9 @@ TuneManager::~TuneManager(void)
 		QMutexLocker locker(&m_p_private->m_mutex);
 
 		chiptune_finalize();
-		if(nullptr != m_p_private->m_p_midi_file){
-			delete m_p_private->m_p_midi_file;
-			m_p_private->m_p_midi_file = nullptr;
+		if(nullptr != m_p_private->m_p_mid_song){
+			delete m_p_private->m_p_mid_song;
+			m_p_private->m_p_mid_song = nullptr;
 		}
 		m_p_private->m_channel_instrument_pair_list.clear();
 	}
@@ -178,22 +184,22 @@ int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 			break;
 		}
 
-		QMidiFile *p_midi_file = new QMidiFile();
-		if(false == p_midi_file->load(midi_file_name_string))
+		MidSong *p_mid_song = new MidSong();
+		if(false == p_mid_song->Load(midi_file_name_string))
 		{
-			delete p_midi_file; p_midi_file = nullptr;
+			delete p_mid_song; p_mid_song = nullptr;
 			ret = -2;
 			break;
 		}
 
-		if(nullptr != m_p_private->m_p_midi_file){
-			delete m_p_private->m_p_midi_file;
+		if(nullptr != m_p_private->m_p_mid_song){
+			delete m_p_private->m_p_mid_song;
 		}
-		m_p_private->m_p_midi_file = p_midi_file;
+		m_p_private->m_p_mid_song = p_mid_song;
 
 		qDebug()  << "Music time length = " << GetMidiFileDurationInSeconds() << "seconds";
 		m_p_private->ResetSongResources();
-		chiptune_prepare_song(m_p_private->m_p_midi_file->resolution());
+		chiptune_prepare_song((uint32_t)m_p_private->m_p_mid_song->GetResolution());
 	} while(0);
 	return ret;
 }
@@ -206,29 +212,25 @@ void TuneManager::ClearOutMidiFile(void)
 	m_p_private->m_wave_bytearray.clear();
 	m_p_private->m_wave_prebuffer_size = 0;
 
-	if(nullptr != m_p_private->m_p_midi_file){
-		delete m_p_private->m_p_midi_file;
-		m_p_private->m_p_midi_file = nullptr;
+	if(nullptr != m_p_private->m_p_mid_song){
+		delete m_p_private->m_p_mid_song;	
+		m_p_private->m_p_mid_song = nullptr;
 	}
 	m_p_private->m_channel_instrument_pair_list.clear();
 }
 
 /**********************************************************************************/
 
-QMidiFile * TuneManager::GetMidiFilePointer(void)
+MidSong *TuneManager::GetMidSongPointer(void) const
 {
-	if(false == IsFileLoaded()){
-		return nullptr;
-	}
-
-	return m_p_private->m_p_midi_file;
+	return m_p_private->m_p_mid_song;
 }
 
 /**********************************************************************************/
 
 bool TuneManager::IsFileLoaded(void)
 {
-	if(nullptr == m_p_private->m_p_midi_file){
+	if(nullptr == m_p_private->m_p_mid_song){
 		return false;
 	}
 	return true;
@@ -298,7 +300,7 @@ int TuneManager::GetSamplingSize(void){ return m_p_private->m_sampling_size; }
 
 int TuneManager::GetAmplitudeGain(void)
 {
-	if(nullptr == m_p_private->m_p_midi_file){
+	if(nullptr == m_p_private->m_p_mid_song){
 		return -1;
 	}
 	return chiptune_get_amplitude_gain();
@@ -383,31 +385,35 @@ bool TuneManager::IsTuneEnding(void)
 
 float TuneManager::GetMidiFileDurationInSeconds(void)
 {
-	if(nullptr == m_p_private->m_p_midi_file){
+	MidEvent midi_event;
+
+	if(nullptr == m_p_private->m_p_mid_song){
 		return -1.0;
 	}
+	if(0 == m_p_private->m_p_mid_song->GetEventCount()){
+		return 0.0f;
+	}
 
-	QMidiEvent *p_midi_event = m_p_private->m_p_midi_file->events().at(
-				m_p_private->m_p_midi_file->events().size() -1);
-	return m_p_private->m_p_midi_file->timeFromTick(p_midi_event->tick());
+	midi_event = m_p_private->m_p_mid_song->GetEvent(m_p_private->m_p_mid_song->GetEventCount() - 1);
+	return m_p_private->m_p_mid_song->TimeFromTick(midi_event.GetTick());
 }
 
 /**********************************************************************************/
 
 float TuneManager::GetCurrentElapsedTimeInSeconds(void)
 {
-	if(nullptr == m_p_private->m_p_midi_file){
+	if(nullptr == m_p_private->m_p_mid_song){
 		return -1.0;
 	}
 
-	return m_p_private->m_p_midi_file->timeFromTick(chiptune_get_current_tick());
+	return m_p_private->m_p_mid_song->TimeFromTick((uint32_t)chiptune_get_current_tick());
 }
 
 /**********************************************************************************/
 
 int TuneManager::GetCurrentTick(void)
 {
-	if(nullptr == m_p_private->m_p_midi_file){
+	if(nullptr == m_p_private->m_p_mid_song){
 		return -1;
 	}
 
@@ -418,7 +424,7 @@ int TuneManager::GetCurrentTick(void)
 
 double TuneManager::GetTempo(void)
 {
-	if(nullptr == m_p_private->m_p_midi_file){
+	if(nullptr == m_p_private->m_p_mid_song){
 		return FLT_MAX;
 	}
 	return chiptune_get_tempo();
@@ -428,7 +434,7 @@ double TuneManager::GetTempo(void)
 
 double TuneManager::GetPlayingEffectiveTempo(void)
 {
-	if(nullptr == m_p_private->m_p_midi_file){
+	if(nullptr == m_p_private->m_p_mid_song){
 		return FLT_MAX;
 	}
 	return chiptune_get_playing_effective_tempo();
@@ -458,25 +464,28 @@ int TuneManager::SetStartTimeInSeconds(float const target_start_time_in_seconds)
 	QMutexLocker locker(&m_p_private->m_mutex);
 
 	int set_index = -1;
-	QList<QMidiEvent *> const p_midi_event_list = m_p_private ->m_p_midi_file->events();
+	int const event_count = (nullptr == m_p_private->m_p_mid_song) ? 0 : m_p_private->m_p_mid_song->GetEventCount();
 
 	do {
 		if(target_start_time_in_seconds < 0){
 			break;
 		}
 
-		if(nullptr == m_p_private->m_p_midi_file){
+		if(nullptr == m_p_private->m_p_mid_song){
+			break;
+		}
+		if(0 == event_count){
 			break;
 		}
 
 		int left_index = 0;
-		int right_index = p_midi_event_list.size() - 1;
+		int right_index = event_count - 1;
 		while(left_index <= right_index){
 			int middle_index = (left_index + right_index) / 2;
 			do
 			{
 				float const middle_index_event_time_in_seconds
-						= m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(middle_index)->tick());
+						= m_p_private->m_p_mid_song->TimeFromTick(m_p_private->m_p_mid_song->GetEvent(middle_index).GetTick());
 				if(middle_index_event_time_in_seconds > target_start_time_in_seconds){
 					right_index = middle_index - 1;
 					break;
@@ -494,9 +503,9 @@ int TuneManager::SetStartTimeInSeconds(float const target_start_time_in_seconds)
 	do
 	{
 		{
-			float found_timestamp_tail_index_time_in_seconds = m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick());
+			float found_timestamp_tail_index_time_in_seconds = m_p_private->m_p_mid_song->TimeFromTick(m_p_private->m_p_mid_song->GetEvent(set_index).GetTick());
 			float found_timestamp_tail_index_plus_one_time_in_seconds
-					= m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index + 1)->tick());
+					= m_p_private->m_p_mid_song->TimeFromTick(m_p_private->m_p_mid_song->GetEvent(set_index + 1).GetTick());
 			if(false == (found_timestamp_tail_index_time_in_seconds <= target_start_time_in_seconds &&
 					target_start_time_in_seconds < found_timestamp_tail_index_plus_one_time_in_seconds)){
 				qDebug() << Q_FUNC_INFO << "ERROR :: found_timestamp_tail_index_time_in_seconds = " << found_timestamp_tail_index_time_in_seconds
@@ -516,13 +525,12 @@ int TuneManager::SetStartTimeInSeconds(float const target_start_time_in_seconds)
 			}
 			int left_index = 0;
 			int right_index = set_index;
-			qint32 const found_timestamp_in_ticks
-					= p_midi_event_list.at(set_index)->tick();
+			uint32_t const found_timestamp_in_ticks = m_p_private->m_p_mid_song->GetEvent(set_index).GetTick();
 			while(left_index <= right_index){
 				int middle_index = (left_index + right_index) / 2;
 				do
 				{
-					qint32 const middle_index_event_time_in_tick = p_midi_event_list.at(middle_index)->tick();
+					uint32_t const middle_index_event_time_in_tick = m_p_private->m_p_mid_song->GetEvent(middle_index).GetTick();
 					if(middle_index_event_time_in_tick >= found_timestamp_in_ticks){
 						right_index = middle_index - 1;
 						break;
@@ -535,16 +543,16 @@ int TuneManager::SetStartTimeInSeconds(float const target_start_time_in_seconds)
 			if(0 == set_index){
 				break;
 			}
-			if(p_midi_event_list.at(set_index - 1)->tick() == p_midi_event_list.at(set_index)->tick()){
+			if(m_p_private->m_p_mid_song->GetEvent(set_index - 1).GetTick() == m_p_private->m_p_mid_song->GetEvent(set_index).GetTick()){
 				qDebug() << Q_FUNC_INFO << "WARNING :: set_index is not the head for the same tick";
 			}
 		} while(0);
 
 		qDebug() << Q_FUNC_INFO << "target_start_time_in_seconds = " << target_start_time_in_seconds
-				 << ", found time in seconds = " << m_p_private->m_p_midi_file->timeFromTick(p_midi_event_list.at(set_index)->tick())
+				 << ", found time in seconds = " << m_p_private->m_p_mid_song->TimeFromTick(m_p_private->m_p_mid_song->GetEvent(set_index).GetTick())
 				 << ", found_timestamp_tail_index = " << found_timestamp_tail_index
 				 << ", set_index = " << set_index
-				 << ", tick = " << p_midi_event_list.at(set_index)->tick();
+				 << ", tick = " << m_p_private->m_p_mid_song->GetEvent(set_index).GetTick();
 		chiptune_set_current_message_index(set_index);
 
 		m_p_private->m_wave_bytearray.clear();
@@ -609,7 +617,7 @@ int TuneManager::SetMelodicChannelTimbre(int8_t const channel_index,
 	int ret = -1;
 	do
 	{
-		if(nullptr == m_p_private->m_p_midi_file){
+		if(nullptr == m_p_private->m_p_mid_song){
 			break;
 		}
 		if(MIDI_PERCUSSION_CHANNEL == channel_index){

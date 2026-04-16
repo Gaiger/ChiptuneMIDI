@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QMutex>
 
-#include "QMidiFile.h"
+#include "mid_reader/qt/MidSong.h"
 
 class TuneManagerPrivate;
 
@@ -27,8 +27,8 @@ public:
 
 	int LoadMidiFile(QString const midi_file_name_string);
 	void ClearOutMidiFile(void);
-	QMidiFile* GetMidiFilePointer(void);
 	bool IsFileLoaded(void);
+	MidSong *GetMidSongPointer(void) const;
 	int GetNumberOfChannels(void);
 	int GetSamplingRate(void);
 	int GetSamplingSize(void);
