@@ -760,7 +760,9 @@ static void chase_midi_messages(uint32_t const end_midi_message_index,
 		memset(&is_channel_has_note_array[0], false, sizeof(bool) * MIDI_MAX_CHANNEL_NUMBER);
 	}
 	clear_all_oscillators_and_events();
-	reset_all_channels_to_defaults();
+	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+		reset_channel_controller_to_midi_defaults(voice);
+	}
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	if(0 == end_midi_message_index){
 		return ;
