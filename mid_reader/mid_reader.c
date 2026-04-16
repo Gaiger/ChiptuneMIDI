@@ -110,7 +110,7 @@ static int append_meta_event(
 	memset(&event, 0, sizeof(event));
 	event.tick = tick;
 	event.track = track;
-	event.type = MID_EVENT_META;
+	event.type = MidEventTypeMeta;
 	event.meta.number = number;
 	event.meta.data_length = data_length;
 	if(0 != data_length){
@@ -140,7 +140,7 @@ static int append_sysex_event(
 	memset(&event, 0, sizeof(event));
 	event.tick = tick;
 	event.track = track;
-	event.type = MID_EVENT_SYSEX;
+	event.type = MidEventTypeSysex;
 	event.sysex.data_length = data_length;
 	if(0 != data_length){
 		event.sysex.p_data = malloc(data_length);
@@ -168,7 +168,7 @@ static int append_tempo_event(
 	memset(&event, 0, sizeof(event));
 	event.tick = tick;
 	event.track = track;
-	event.type = MID_EVENT_TEMPO;
+	event.type = MidEventTypeTempo;
 	event.microseconds_per_quarter_note = us_per_quarter;
 	return append_event(p_song, &event);
 }
@@ -186,7 +186,7 @@ static int append_timesig_event(
 	memset(&event, 0, sizeof(event));
 	event.tick = tick;
 	event.track = track;
-	event.type = MID_EVENT_TIME_SIGNATURE;
+	event.type = MidEventTypeTimeSignature;
 	event.time_signature.numerator = p_data[0];
 	event.time_signature.denominator = denominator;
 	event.time_signature.clocks_per_click = p_data[2];
@@ -367,7 +367,7 @@ static int load_track(
 				memset(&event, 0, sizeof(event));
 				event.tick = tick;
 				event.track = track_index;
-				event.type = MID_EVENT_MESSAGE;
+				event.type = MidEventTypeMessage;
 				event.message =
 					make_channel_message((uint8_t)(0x80 | (status & 0x0F)), data1, 64);
 				if(0 != append_event(p_song,
@@ -382,7 +382,7 @@ static int load_track(
 				memset(&event, 0, sizeof(event));
 				event.tick = tick;
 				event.track = track_index;
-				event.type = MID_EVENT_MESSAGE;
+				event.type = MidEventTypeMessage;
 				event.message = make_pitch_wheel_message(status, data1, data2);
 				if(0 != append_event(p_song,
 										 &event)){
@@ -396,7 +396,7 @@ static int load_track(
 				memset(&event, 0, sizeof(event));
 				event.tick = tick;
 				event.track = track_index;
-				event.type = MID_EVENT_MESSAGE;
+				event.type = MidEventTypeMessage;
 				event.message = make_channel_message(status, data1, data2);
 				if(0 != append_event(p_song,
 										 &event)){
@@ -416,7 +416,7 @@ static int load_track(
 			memset(&event, 0, sizeof(event));
 			event.tick = tick;
 			event.track = track_index;
-			event.type = MID_EVENT_MESSAGE;
+			event.type = MidEventTypeMessage;
 			event.message = make_channel_message(status, data1, 0);
 			if(0 != append_event(p_song,
 									 &event)){
@@ -543,7 +543,7 @@ static int load_track(
 static void mid_song_reset(mid_song_t * const p_song)
 {
 	memset(p_song, 0, sizeof(*p_song));
-	p_song->division_type = MID_DIVISION_PPQ;
+	p_song->division_type = MidDivisionTypePpq;
 	p_song->file_format = 1;
 }
 
@@ -559,10 +559,10 @@ void mid_song_close(mid_song_t * const p_song)
 	size_t i;
 
 	for(i = 0; i < p_song->event_count; i++){
-		if(MID_EVENT_META == p_song->event_array[i].type){
+		if(MidEventTypeMeta == p_song->event_array[i].type){
 			free(p_song->event_array[i].meta.p_data);
 		}
-		if(MID_EVENT_SYSEX == p_song->event_array[i].type){
+		if(MidEventTypeSysex == p_song->event_array[i].type){
 			free(p_song->event_array[i].sysex.p_data);
 		}
 	}
@@ -625,23 +625,23 @@ int mid_song_load(mid_song_t * const p_song, char const * const p_path)
 	p_song->track_count = (int)track_count;
 	switch((int8_t)division[0]){
 	case -24:
-		p_song->division_type = MID_DIVISION_SMPTE24;
+		p_song->division_type = MidDivisionTypeSmpte24;
 		p_song->resolution = division[1];
 		break;
 	case -25:
-		p_song->division_type = MID_DIVISION_SMPTE25;
+		p_song->division_type = MidDivisionTypeSmpte25;
 		p_song->resolution = division[1];
 		break;
 	case -29:
-		p_song->division_type = MID_DIVISION_SMPTE30DROP;
+		p_song->division_type = MidDivisionTypeSmpte30Drop;
 		p_song->resolution = division[1];
 		break;
 	case -30:
-		p_song->division_type = MID_DIVISION_SMPTE30;
+		p_song->division_type = MidDivisionTypeSmpte30;
 		p_song->resolution = division[1];
 		break;
 	default:
-		p_song->division_type = MID_DIVISION_PPQ;
+		p_song->division_type = MidDivisionTypePpq;
 		p_song->resolution = ((int)division[0] << 8) | (int)division[1];
 		break;
 	}
@@ -689,4 +689,108 @@ int mid_song_load(mid_song_t * const p_song, char const * const p_path)
 		return MID_RESULT_ERROR_MEMORY;
 	}
 	return MID_RESULT_OK;
+}
+
+/******************************************************************************/
+float mid_song_time_from_tick(mid_song_t const * const p_song, uint32_t const tick)
+{
+	size_t i;
+
+	if((NULL == p_song) || (p_song->resolution <= 0)){
+		return -1.0f;
+	}
+
+	switch(p_song->division_type){
+	case MidDivisionTypePpq: {
+		float tempo_event_time = 0.0f;
+		uint32_t tempo_event_tick = 0;
+		float tempo = 120.0f;
+
+		for(i = 0; i < p_song->event_count; i++){
+			mid_event_t const * const p_event = &p_song->event_array[i];
+
+			if((MidEventTypeTempo != p_event->type) || (0 != p_event->track)){
+				continue;
+			}
+			if(p_event->tick >= tick){
+				break;
+			}
+
+			tempo_event_time +=
+				((float)(p_event->tick - tempo_event_tick))
+				/ (float)p_song->resolution
+				/ (tempo / 60.0f);
+			tempo_event_tick = p_event->tick;
+			tempo = 60000000.0f / (float)p_event->microseconds_per_quarter_note;
+		}
+
+		return tempo_event_time
+			+ ((float)(tick - tempo_event_tick))
+			/ (float)p_song->resolution
+			/ (tempo / 60.0f);
+	}
+	case MidDivisionTypeSmpte24:
+		return (float)tick / ((float)p_song->resolution * 24.0f);
+	case MidDivisionTypeSmpte25:
+		return (float)tick / ((float)p_song->resolution * 25.0f);
+	case MidDivisionTypeSmpte30Drop:
+		return (float)tick / ((float)p_song->resolution * 29.97f);
+	case MidDivisionTypeSmpte30:
+		return (float)tick / ((float)p_song->resolution * 30.0f);
+	default:
+		return -1.0f;
+	}
+}
+
+/******************************************************************************/
+uint32_t mid_song_tick_from_time(mid_song_t const * const p_song, float const time_in_seconds)
+{
+	size_t i;
+
+	if((NULL == p_song) || (p_song->resolution <= 0) || (time_in_seconds < 0.0f)){
+		return 0;
+	}
+
+	switch(p_song->division_type){
+	case MidDivisionTypePpq: {
+		float tempo_event_time = 0.0f;
+		uint32_t tempo_event_tick = 0;
+		float tempo = 120.0f;
+
+		for(i = 0; i < p_song->event_count; i++){
+			mid_event_t const * const p_event = &p_song->event_array[i];
+			float next_tempo_event_time;
+
+			if((MidEventTypeTempo != p_event->type) || (0 != p_event->track)){
+				continue;
+			}
+
+			next_tempo_event_time =
+				tempo_event_time
+				+ ((float)(p_event->tick - tempo_event_tick))
+				/ (float)p_song->resolution
+				/ (tempo / 60.0f);
+			if(next_tempo_event_time >= time_in_seconds){
+				break;
+			}
+
+			tempo_event_time = next_tempo_event_time;
+			tempo_event_tick = p_event->tick;
+			tempo = 60000000.0f / (float)p_event->microseconds_per_quarter_note;
+		}
+
+		return tempo_event_tick
+			+ (uint32_t)((time_in_seconds - tempo_event_time) * (tempo / 60.0f) * (float)p_song->resolution);
+	}
+	case MidDivisionTypeSmpte24:
+		return (uint32_t)(time_in_seconds * (float)p_song->resolution * 24.0f);
+	case MidDivisionTypeSmpte25:
+		return (uint32_t)(time_in_seconds * (float)p_song->resolution * 25.0f);
+	case MidDivisionTypeSmpte30Drop:
+		return (uint32_t)(time_in_seconds * (float)p_song->resolution * 29.97f);
+	case MidDivisionTypeSmpte30:
+		return (uint32_t)(time_in_seconds * (float)p_song->resolution * 30.0f);
+	default:
+		return 0;
+	}
 }

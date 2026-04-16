@@ -17,21 +17,21 @@ extern "C" {
 #define MID_RESULT_ERROR_EVENT     (-5)
 
 typedef enum mid_division_type_t {
-	MID_DIVISION_INVALID = 0,
-	MID_DIVISION_PPQ,
-	MID_DIVISION_SMPTE24,
-	MID_DIVISION_SMPTE25,
-	MID_DIVISION_SMPTE30DROP,
-	MID_DIVISION_SMPTE30
+	MidDivisionTypeInvalid = 0,
+	MidDivisionTypePpq,
+	MidDivisionTypeSmpte24,
+	MidDivisionTypeSmpte25,
+	MidDivisionTypeSmpte30Drop,
+	MidDivisionTypeSmpte30
 } mid_division_type_t;
 
 typedef enum mid_event_type_t {
-	MID_EVENT_INVALID = 0,
-	MID_EVENT_MESSAGE,
-	MID_EVENT_TEMPO,
-	MID_EVENT_TIME_SIGNATURE,
-	MID_EVENT_META,
-	MID_EVENT_SYSEX
+	MidEventTypeInvalid = 0,
+	MidEventTypeMessage,
+	MidEventTypeTempo,
+	MidEventTypeTimeSignature,
+	MidEventTypeMeta,
+	MidEventTypeSysex
 } mid_event_type_t;
 
 typedef struct mid_time_signature_t {
@@ -82,6 +82,9 @@ typedef struct mid_song_t {
 void mid_song_init(mid_song_t * const p_song);
 void mid_song_close(mid_song_t * const p_song);
 int mid_song_load(mid_song_t * const p_song, char const * const p_path);
+
+float mid_song_time_from_tick(mid_song_t const * const p_song, uint32_t const tick);
+uint32_t mid_song_tick_from_time(mid_song_t const * const p_song, float const time_in_seconds);
 
 #ifdef __cplusplus
 }

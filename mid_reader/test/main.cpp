@@ -14,17 +14,17 @@ static mid_division_type_t to_mid_division_type(QMidiFile::DivisionType const ty
 {
 	switch(type){
 	case QMidiFile::PPQ:
-		return MID_DIVISION_PPQ;
+		return MidDivisionTypePpq;
 	case QMidiFile::SMPTE24:
-		return MID_DIVISION_SMPTE24;
+		return MidDivisionTypeSmpte24;
 	case QMidiFile::SMPTE25:
-		return MID_DIVISION_SMPTE25;
+		return MidDivisionTypeSmpte25;
 	case QMidiFile::SMPTE30DROP:
-		return MID_DIVISION_SMPTE30DROP;
+		return MidDivisionTypeSmpte30Drop;
 	case QMidiFile::SMPTE30:
-		return MID_DIVISION_SMPTE30;
+		return MidDivisionTypeSmpte30;
 	default:
-		return MID_DIVISION_INVALID;
+		return MidDivisionTypeInvalid;
 	}
 }
 
@@ -36,7 +36,7 @@ static int compare_qmidi_event_to_mid_event(
 	uint32_t const message = p_midi_event->message();
 
 	if(0 != message){
-		if(MID_EVENT_MESSAGE != p_event->type){
+		if(MidEventTypeMessage != p_event->type){
 			return MID_RESULT_ERROR_EVENT;
 		}
 		return (message == p_event->message) ? MID_RESULT_OK : MID_RESULT_ERROR_EVENT;
@@ -46,7 +46,7 @@ static int compare_qmidi_event_to_mid_event(
 		QByteArray const data = p_midi_event->data();
 		uint32_t us_per_quarter;
 
-		if((MID_EVENT_TEMPO != p_event->type) || (3 != data.size())){
+		if((MidEventTypeTempo != p_event->type) || (3 != data.size())){
 			return MID_RESULT_ERROR_EVENT;
 		}
 		us_per_quarter =
@@ -59,7 +59,7 @@ static int compare_qmidi_event_to_mid_event(
 	if((QMidiEvent::Meta == p_midi_event->type()) && (QMidiEvent::TimeSignature == p_midi_event->number())){
 		QByteArray const data = p_midi_event->data();
 
-		if((MID_EVENT_TIME_SIGNATURE != p_event->type) || (4 != data.size())){
+		if((MidEventTypeTimeSignature != p_event->type) || (4 != data.size())){
 			return MID_RESULT_ERROR_EVENT;
 		}
 		return (((uint8_t)data[0] == p_event->time_signature.numerator)
@@ -73,7 +73,7 @@ static int compare_qmidi_event_to_mid_event(
 	if((QMidiEvent::Meta == p_midi_event->type())){
 		QByteArray const data = p_midi_event->data();
 
-		if(MID_EVENT_META != p_event->type){
+		if(MidEventTypeMeta != p_event->type){
 			return MID_RESULT_ERROR_EVENT;
 		}
 		if(((uint8_t)p_midi_event->number() != p_event->meta.number)
@@ -90,7 +90,7 @@ static int compare_qmidi_event_to_mid_event(
 	if(QMidiEvent::SysEx == p_midi_event->type()){
 		QByteArray const data = p_midi_event->data();
 
-		if(MID_EVENT_SYSEX != p_event->type){
+		if(MidEventTypeSysex != p_event->type){
 			return MID_RESULT_ERROR_EVENT;
 		}
 		if((uint32_t)data.size() != p_event->sysex.data_length){
