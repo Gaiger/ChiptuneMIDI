@@ -111,7 +111,7 @@ if(WIN32)
     source_group("Resources" FILES ${RESOURCES})
 endif()
 
-add_subdirectory(${CHIPTUNE_QT_DIR}/QMidi ${CMAKE_CURRENT_BINARY_DIR}/QMidi-build)
+add_subdirectory(${CHIPTUNE_QT_DIR}/QMidi)
 
 add_executable(ChiptuneMIDI WIN32
     ${ENGINE} ${APPILCATION} ${FORMS})
