@@ -52,6 +52,7 @@ def main() -> int:
 
 	if not midi_paths:
 		print(f"no .mid files found in {base_dir}")
+		print("please specify <mid_dir> as the argument")
 		return 0
 
 	print(f"{len(midi_paths)} .mid file(s) found", flush=True)
