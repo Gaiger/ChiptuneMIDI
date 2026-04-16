@@ -12,9 +12,8 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core REQUIRED)
 
 set(MID_READER_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
 set(CHIPTUNE_ROOT_DIR "${MID_READER_DIR}/..")
-set(CHIPTUNE_QT_DIR "${CHIPTUNE_ROOT_DIR}/qt")
 
-add_subdirectory("${CHIPTUNE_QT_DIR}/QMidi" QMidi)
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/QMidi" QMidi)
 
 add_executable(mid_reader_test
     main.cpp
@@ -23,7 +22,7 @@ add_executable(mid_reader_test
 target_include_directories(mid_reader_test PRIVATE
     "${CMAKE_CURRENT_LIST_DIR}"
     "${MID_READER_DIR}"
-    "${CHIPTUNE_QT_DIR}/QMidi/src")
+    "${CMAKE_CURRENT_LIST_DIR}/QMidi/src")
 
 target_link_libraries(mid_reader_test PRIVATE
     Qt${QT_VERSION_MAJOR}::Core

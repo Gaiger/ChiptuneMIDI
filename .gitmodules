@@ -1,3 +1,3 @@
-[submodule "qt/QMidi"]
-	path = qt/QMidi
+[submodule "mid_reader/test/QMidi"]
+	path = mid_reader/test/QMidi
 	url = https://github.com/waddlesplash/QMidi
