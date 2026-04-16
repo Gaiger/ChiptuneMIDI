@@ -1,4 +1,9 @@
 /* Written by Codex. */
+#if defined(_MSC_VER)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+// NOLINTBEGIN(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
 #include "mid_reader.h"
 
 #include <stdio.h>
@@ -794,3 +799,4 @@ uint32_t mid_song_tick_from_time(mid_song_t const * const p_song, float const ti
 		return 0;
 	}
 }
+// NOLINTEND(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
