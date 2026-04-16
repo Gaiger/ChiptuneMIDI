@@ -336,7 +336,7 @@ static inline char const * get_event_additional_string(int16_t const event_index
 		= get_oscillator_pointer_from_index(get_event_pointer_from_index(event_index)->oscillator_index);
 	channel_controller_t const * const p_channel_controller =
 			get_channel_controller_pointer_from_index(p_oscillator->voice);
-	snprintf(&s_event_additional_string[0], sizeof(s_event_additional_string), "");
+	memset(s_event_additional_string, 0, sizeof(s_event_additional_string));
 	bool is_empty_string = false;
 	do {
 		if(false == IS_PRIMARY_OSCILLATOR(p_oscillator)){
