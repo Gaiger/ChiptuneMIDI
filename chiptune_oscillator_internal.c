@@ -25,7 +25,7 @@ int16_t get_pitch_shift_in_semitones(void)
 
 /**********************************************************************************/
 
-int update_oscillator_phase_increment(oscillator_t * const p_oscillator)
+void update_oscillator_phase_increment(oscillator_t * const p_oscillator)
 {
 	channel_controller_t const * const p_channel_controller
 			= get_channel_controller_pointer_from_index(p_oscillator->voice);
@@ -40,7 +40,6 @@ int update_oscillator_phase_increment(oscillator_t * const p_oscillator)
 	corrected_pitch += p_channel_controller->vibrato_depth_in_semitones;
 	p_oscillator->max_vibrato_phase_increment =
 			calculate_phase_increment_from_pitch(corrected_pitch) - p_oscillator->base_phase_increment;
-	return 0;
 }
 
 /**********************************************************************************/
@@ -169,7 +168,7 @@ static bool is_unoccupied_oscillator_available()
 
 /**********************************************************************************/
 
-static int mark_all_oscillators_and_links_unused(void)
+static void mark_all_oscillators_and_links_unused(void)
 {
 	for(int j = 0; j < s_number_of_oscillator_pool; j++){
 		oscillator_pool_t *p_oscillator_pool = s_oscillator_pool_pointer_table[j];
@@ -183,15 +182,14 @@ static int mark_all_oscillators_and_links_unused(void)
 	s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number = 0;
-	return 0;
 }
 
 /**********************************************************************************/
 
-static int release_all_oscillators_and_links(void)
+static void release_all_oscillators_and_links(void)
 {
 #ifdef _USE_STATIC_RESOURCE_ALLOCATION
-	return mark_all_oscillators_and_links_unused();
+	mark_all_oscillators_and_links_unused();
 #else
 	for(int j = 0; j < s_number_of_oscillator_pool; j++){
 		chiptune_free(s_oscillator_pool_pointer_table[j]);
@@ -202,7 +200,6 @@ static int release_all_oscillators_and_links(void)
 	s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number = 0;
-	return 0;
 #endif
 }
 
@@ -430,6 +427,10 @@ static void release_all_midi_effect_associate_links(void)
 
 static int occupy_oscillator(int16_t const oscillator_index)
 {
+	if(UNOCCUPIED_OSCILLATOR != get_oscillator_address_from_index(oscillator_index)->voice){
+		return -1;
+	}
+
 	do {
 		oscillator_link_t * const p_this_link
 				= get_oscillator_link_address_from_index(oscillator_index);
@@ -475,7 +476,10 @@ oscillator_t * acquire_oscillator(int16_t * const p_oscillator_index)
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: available oscillator is not found\r\n");
 			break;
 		}
-		occupy_oscillator(i);
+		if(0 != occupy_oscillator(i)){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: occupy oscillator %d fail\r\n", i);
+			break;
+		}
 		*p_oscillator_index = i;
 		p_oscillator = get_oscillator_address_from_index(i);
 		memset(p_oscillator, 0, sizeof(oscillator_t));
@@ -636,20 +640,18 @@ oscillator_t * get_oscillator_pointer_from_index(int16_t const oscillator_index)
 
 /**********************************************************************************/
 
-int clear_all_oscillators(void)
+void clear_all_oscillators(void)
 {
 	mark_all_midi_effect_associate_links_unused();
 	mark_all_oscillators_and_links_unused();
-	return 0;
 }
 
 /**********************************************************************************/
 
-int destroy_all_oscillators(void)
+void destroy_all_oscillators(void)
 {
 	release_all_midi_effect_associate_links();
 	release_all_oscillators_and_links();
-	return 0;
 }
 
 /**********************************************************************************/
