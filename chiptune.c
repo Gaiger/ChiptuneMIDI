@@ -1034,10 +1034,9 @@ float chiptune_get_playing_effective_tempo(void)
 
 /**********************************************************************************/
 
-int chiptune_get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER])
+void chiptune_get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER])
 {
 	memcpy(&instrument_array[0], &s_ending_instrument_array[0], MIDI_MAX_CHANNEL_NUMBER * sizeof(int8_t));
-	return 0;
 }
 
 /**********************************************************************************/
