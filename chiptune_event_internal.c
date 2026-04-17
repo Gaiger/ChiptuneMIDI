@@ -135,7 +135,7 @@ static bool is_unqueued_event_available()
 
 /**********************************************************************************/
 
-static int mark_all_events_unused(void)
+static void mark_all_events_unused(void)
 {
 	for(int16_t j = 0; j < s_number_of_event_pool; j++){
 		event_pool_t * const p_event_pool = s_event_pool_pointer_table[j];
@@ -144,15 +144,14 @@ static int mark_all_events_unused(void)
 		}
 	}
 	s_queued_event_number = 0;
-	return 0;
 }
 
 /**********************************************************************************/
 
-static int release_all_events(void)
+static void release_all_events(void)
 {
 #ifdef _USE_STATIC_RESOURCE_ALLOCATION
-	return mark_all_events_unused();
+	mark_all_events_unused();
 #else
 	for(int16_t j = 0; j < s_number_of_event_pool; j++){
 		chiptune_free(s_event_pool_pointer_table[j]);
@@ -160,7 +159,6 @@ static int release_all_events(void)
 	}
 	s_number_of_event_pool = 0;
 	s_queued_event_number = 0;
-	return 0;
 #endif
 }
 
@@ -604,10 +602,10 @@ int adjust_event_triggering_tick_by_playing_tempo(uint32_t const tick, float con
 
 /**********************************************************************************/
 
-int clear_all_events(void) { return mark_all_events_unused(); }
+void clear_all_events(void) { mark_all_events_unused(); }
 
 /**********************************************************************************/
 
-int destroy_all_events(void) { return release_all_events(); }
+void destroy_all_events(void) { release_all_events(); }
 
 // NOLINTEND(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
