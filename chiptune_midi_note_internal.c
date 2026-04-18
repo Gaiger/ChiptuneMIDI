@@ -23,21 +23,24 @@ static void finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const 
 											  oscillator_t * const p_oscillator)
 {
 	(void)tick; (void)voice; (void)note; (void)velocity;
-	if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
-		return;
-	}
+	do
+	{
+		if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
+			break;
+		}
 
-	update_oscillator_phase_increment(p_oscillator);
-	p_oscillator->amplitude = 0;
-	p_oscillator->pitch_detune_in_semitones = 0.0;
-	p_oscillator->vibrato_table_index = 0;
-	p_oscillator->vibrato_same_index_count = 0;
+		update_oscillator_phase_increment(p_oscillator);
+		p_oscillator->amplitude = 0;
+		p_oscillator->pitch_detune_in_semitones = 0.0;
+		p_oscillator->vibrato_table_index = 0;
+		p_oscillator->vibrato_same_index_count = 0;
 
-	p_oscillator->envelope_state = EnvelopeStateAttack;
-	p_oscillator->envelope_same_index_count = 0;
-	p_oscillator->envelope_table_index = 0;
-	p_oscillator->envelope_reference_amplitude = 0;
-	p_oscillator->midi_effect_association = MidiEffectNone;
+		p_oscillator->envelope_state = EnvelopeStateAttack;
+		p_oscillator->envelope_same_index_count = 0;
+		p_oscillator->envelope_table_index = 0;
+		p_oscillator->envelope_reference_amplitude = 0;
+		p_oscillator->midi_effect_association = MidiEffectNone;
+	} while(0);
 }
 
 /**********************************************************************************/
@@ -47,19 +50,22 @@ static void finalize_percussion_oscillator_setup(uint32_t const tick, int8_t con
 												 oscillator_t * const p_oscillator)
 {
 	(void)tick; (void)voice; (void)note; (void)velocity;
-	if(false == (true == IS_PERCUSSION_OSCILLATOR(p_oscillator))){
-		return;
-	}
+	do
+	{
+		if(false == (true == IS_PERCUSSION_OSCILLATOR(p_oscillator))){
+			break;
+		}
 
-	p_oscillator->percussion_waveform_segment_index = 0;
-	p_oscillator->percussion_waveform_segment_duration_sample_count = 0;
-	p_oscillator->percussion_envelope_same_index_count = 0;
-	p_oscillator->percussion_envelope_table_index = 0;
+		p_oscillator->percussion_waveform_segment_index = 0;
+		p_oscillator->percussion_waveform_segment_duration_sample_count = 0;
+		p_oscillator->percussion_envelope_same_index_count = 0;
+		p_oscillator->percussion_envelope_table_index = 0;
 
-	percussion_t const * const p_percussion = get_percussion_pointer_from_key(note);
-	p_oscillator->base_phase_increment = p_percussion->base_phase_increment;
-	//p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
-	//				p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_envelope_table_index]);
+		percussion_t const * const p_percussion = get_percussion_pointer_from_key(note);
+		p_oscillator->base_phase_increment = p_percussion->base_phase_increment;
+		//p_oscillator->amplitude = PERCUSSION_ENVELOPE(p_oscillator->loudness,
+		//				p_percussion->p_amplitude_envelope_table[p_oscillator->percussion_envelope_table_index]);
+	} while(0);
 }
 
 /**********************************************************************************/
