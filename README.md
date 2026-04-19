@@ -65,13 +65,14 @@ You can build ChiptuneMIDI in two ways:
 
 ## Project Structure
 <!--- Overview of folders and files. -->
-```
+```text
 ChiptuneMIDI/
-├─ (root) # Core engine (C99, no dependencies)
+├─ (root) # Core chiptune engine in portable C99
+├─ mid_reader/ # MIDI parsing module
+│ ├─ qt/ # Qt integration layer
+│ └─ test/ # Tests and reference materials
 ├─ qt/ # Qt GUI application
 │ ├─ qt5_qmake_project/ # qmake project (Qt5 only)
-│ ├─ test/
-│ │ ├─ QMidi/ # External MIDI library for mid_reader comparison tests (imported, read-only)
 │ └─ icons/ # Application icons
 ```
 
@@ -104,5 +105,5 @@ This project is licensed under the MIT License — see the [LICENSE](https://rem
 
 ## Acknowledgements
 <!--- Credits, references, inspirations. -->
-- Uses [QMidi](https://github.com/waddlesplash/QMidi) only under `mid_reader/test/QMidi` for comparison testing  
+- [QMidi](https://github.com/waddlesplash/QMidi), used here as a MIDI parsing reference  
 - Inspired by Dragon Guardian's [*暗黒舞踏会 8bit ver.*](https://www.youtube.com/watch?v=RFkPC6qlFmo) — thanks to composer [勇者アーサー](https://x.com/dragonguardiana)
