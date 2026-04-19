@@ -2,7 +2,6 @@
 
 .gitattributes text eol=lf
 *.py text eol=lf
-*.rc text eol=lf
 *.mid binary
 
 *.png binary
