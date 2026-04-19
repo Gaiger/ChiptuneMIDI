@@ -32,6 +32,7 @@ public:
 	explicit MidEvent(mid_event_t const *p_event = nullptr);
 
 	bool IsValid(void) const;
+	bool IsMessage(void) const;
 	Type GetType(void) const;
 
 	uint32_t GetTick(void) const;

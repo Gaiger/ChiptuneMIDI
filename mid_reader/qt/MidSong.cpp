@@ -39,6 +39,20 @@ bool MidEvent::IsValid(void) const
 }
 
 /******************************************************************************/
+bool MidEvent::IsMessage(void) const
+{
+	if(nullptr == m_p_event){
+		return false;
+	}
+
+	if(MidEventTypeMessage != m_p_event->type){
+		return false;
+	}
+
+	return true;
+}
+
+/******************************************************************************/
 MidEvent::Type MidEvent::GetType(void) const
 {
 	uint8_t status;
@@ -84,19 +98,29 @@ MidEvent::Type MidEvent::GetType(void) const
 /******************************************************************************/
 uint32_t MidEvent::GetTick(void) const
 {
-	return (nullptr != m_p_event) ? m_p_event->tick : 0;
+	if(nullptr == m_p_event){
+		return 0;
+	}
+	return m_p_event->tick;
 }
 
 /******************************************************************************/
 uint16_t MidEvent::GetTrack(void) const
 {
-	return (nullptr != m_p_event) ? m_p_event->track : 0;
+	if(nullptr == m_p_event){
+		return 0;
+	}
+	return m_p_event->track;
 }
 
 /******************************************************************************/
 uint32_t MidEvent::GetMessage(void) const
 {
-	if((nullptr == m_p_event) || (MidEventTypeMessage != m_p_event->type)){
+	if(nullptr == m_p_event){
+		return 0;
+	}
+
+	if(false == IsMessage()){
 		return 0;
 	}
 	return m_p_event->message;
@@ -105,7 +129,11 @@ uint32_t MidEvent::GetMessage(void) const
 /******************************************************************************/
 int MidEvent::GetVoice(void) const
 {
-	if(GetType() > PitchWheel){
+	if(nullptr == m_p_event){
+		return -1;
+	}
+
+	if(false == IsMessage()){
 		return -1;
 	}
 	return (int)(get_status_byte(m_p_event->message) & 0x0F);
@@ -114,79 +142,102 @@ int MidEvent::GetVoice(void) const
 /******************************************************************************/
 int MidEvent::GetNote(void) const
 {
-	Type const type = GetType();
-
-	if((NoteOn != type) && (NoteOff != type) && (KeyPressure != type)){
+	if(nullptr == m_p_event){
 		return -1;
 	}
-	return (int)get_data1_byte(m_p_event->message);
+
+	switch(GetType()){
+	case NoteOn:
+	case NoteOff:
+	case KeyPressure:
+		return (int)get_data1_byte(m_p_event->message);
+	default:
+		return -1;
+	}
 }
 
 /******************************************************************************/
 int MidEvent::GetVelocity(void) const
 {
-	Type const type = GetType();
-
-	if((NoteOn != type) && (NoteOff != type)){
+	if(nullptr == m_p_event){
 		return -1;
 	}
-	return (int)get_data2_byte(m_p_event->message);
+
+	switch(GetType()){
+	case NoteOn:
+	case NoteOff:
+		return (int)get_data2_byte(m_p_event->message);
+	default:
+		return -1;
+	}
 }
 
 /******************************************************************************/
 int MidEvent::GetNumber(void) const
 {
-	Type const type = GetType();
+	if(nullptr == m_p_event){
+		return -1;
+	}
 
-	if(ControlChange == type){
+	switch(GetType()){
+	case ControlChange:
+	case ProgramChange:
 		return (int)get_data1_byte(m_p_event->message);
-	}
-	if(ProgramChange == type){
-		return (int)get_data1_byte(m_p_event->message);
-	}
-	if(Meta == type){
+	case Meta:
 		return (int)m_p_event->meta.number;
+	default:
+		return -1;
 	}
-	return -1;
 }
 
 /******************************************************************************/
 int MidEvent::GetValue(void) const
 {
-	Type const type = GetType();
+	if(nullptr == m_p_event){
+		return -1;
+	}
 
-	if(ControlChange == type){
+	switch(GetType()){
+	case ControlChange:
 		return (int)get_data2_byte(m_p_event->message);
-	}
-	if(PitchWheel == type){
+	case PitchWheel:
 		return (int)(((uint16_t)get_data2_byte(m_p_event->message) << 7) | (uint16_t)get_data1_byte(m_p_event->message));
+	default:
+		return -1;
 	}
-	return -1;
 }
 
 /******************************************************************************/
 int MidEvent::GetAmount(void) const
 {
-	Type const type = GetType();
-
-	if((KeyPressure != type) && (ChannelPressure != type)){
+	if(nullptr == m_p_event){
 		return -1;
 	}
-	if(KeyPressure == type){
+
+	switch(GetType()){
+	case KeyPressure:
 		return (int)get_data2_byte(m_p_event->message);
+	case ChannelPressure:
+		return (int)get_data1_byte(m_p_event->message);
+	default:
+		return -1;
 	}
-	return (int)get_data1_byte(m_p_event->message);
 }
 
 /******************************************************************************/
 float MidEvent::GetTempo(void) const
 {
-	if((nullptr == m_p_event) || (MidEventTypeTempo != m_p_event->type)){
+	if(nullptr == m_p_event){
+		return -1.0f;
+	}
+
+	if(Tempo != GetType()){
 		return -1.0f;
 	}
 	return 60000000.0f / (float)m_p_event->microseconds_per_quarter_note;
 }
 
+/******************************************************************************/
 MidSong::MidSong(void)
 	: m_p_song((mid_song_t*)malloc(sizeof(mid_song_t))),
 	  m_is_loaded(false)

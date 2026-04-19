@@ -298,6 +298,9 @@ void NoteDurationWidget::Prepare(int const tick_in_center)
 		if(false == midi_event.IsValid()){
 			continue;
 		}
+		if(false == midi_event.IsMessage()){
+			continue;
+		}
 
 		if(true == IsTickOutOfRightBound((int)midi_event.GetTick(), tick_in_center)){
 			bool is_all_closed = true;
@@ -477,6 +480,9 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, double audio_out_l
 	int first_note_pitch = 0;
 	for(int i = 0; i < (int)p_mid_song->GetEventCount(); i++){
 		MidEvent const midi_event = p_mid_song->GetEvent(i);
+		if(false == midi_event.IsMessage()){
+			continue;
+		}
 		if(MidEvent::NoteOn == midi_event.GetType()){
 
 			if(0 == first_note_pitch){
