@@ -105,5 +105,5 @@ This project is licensed under the MIT License — see the [LICENSE](https://rem
 
 ## Acknowledgements
 <!--- Credits, references, inspirations. -->
-- [QMidi](https://github.com/waddlesplash/QMidi), used here as a MIDI parsing reference
+- [QMidi](https://github.com/waddlesplash/QMidi), referenced here for MIDI file parsing
 - Inspired by Dragon Guardian's [*暗黒舞踏会 8bit ver.*](https://www.youtube.com/watch?v=RFkPC6qlFmo) — thanks to composer [勇者アーサー](https://x.com/dragonguardiana)
