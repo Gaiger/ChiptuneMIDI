@@ -42,7 +42,7 @@ typedef struct mid_time_signature_t {
 } mid_time_signature_t;
 
 typedef struct mid_meta_t {
-	uint8_t number;
+	uint8_t meta_type;
 	uint8_t *p_data;
 	uint32_t data_length;
 } mid_meta_t;
@@ -55,7 +55,7 @@ typedef struct mid_sysex_t {
 typedef struct mid_event_t {
 	uint32_t tick;
 	uint16_t track;
-	mid_event_type_t type;
+	mid_event_type_t event_type;
 	union {
 		uint32_t message;
 		uint32_t microseconds_per_quarter_note;

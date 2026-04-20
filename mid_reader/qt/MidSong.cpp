@@ -45,7 +45,7 @@ bool MidEvent::IsMessage(void) const
 		return false;
 	}
 
-	if(MidEventTypeMessage != m_p_event->type){
+	if(MidEventTypeMessage != m_p_event->event_type){
 		return false;
 	}
 
@@ -61,7 +61,7 @@ MidEvent::Type MidEvent::GetType(void) const
 		return Invalid;
 	}
 
-	switch(m_p_event->type){
+	switch(m_p_event->event_type){
 	case MidEventTypeTempo:
 		return Tempo;
 	case MidEventTypeTimeSignature:
@@ -184,7 +184,7 @@ int MidEvent::GetNumber(void) const
 	case ProgramChange:
 		return (int)get_data1_byte(m_p_event->message);
 	case Meta:
-		return (int)m_p_event->meta.number;
+		return (int)m_p_event->meta.meta_type;
 	default:
 		return -1;
 	}

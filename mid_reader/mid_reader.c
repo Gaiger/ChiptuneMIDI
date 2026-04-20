@@ -115,8 +115,8 @@ static int append_meta_event(
 	memset(&event, 0, sizeof(event));
 	event.tick = tick;
 	event.track = track;
-	event.type = MidEventTypeMeta;
-	event.meta.number = number;
+	event.event_type = MidEventTypeMeta;
+	event.meta.meta_type = number;
 	event.meta.data_length = data_length;
 	if(0 != data_length){
 		event.meta.p_data = malloc(data_length);
@@ -145,7 +145,7 @@ static int append_sysex_event(
 	memset(&event, 0, sizeof(event));
 	event.tick = tick;
 	event.track = track;
-	event.type = MidEventTypeSysex;
+	event.event_type = MidEventTypeSysex;
 	event.sysex.data_length = data_length;
 	if(0 != data_length){
 		event.sysex.p_data = malloc(data_length);
@@ -173,7 +173,7 @@ static int append_tempo_event(
 	memset(&event, 0, sizeof(event));
 	event.tick = tick;
 	event.track = track;
-	event.type = MidEventTypeTempo;
+	event.event_type = MidEventTypeTempo;
 	event.microseconds_per_quarter_note = us_per_quarter;
 	return append_event(p_song, &event);
 }
@@ -191,7 +191,7 @@ static int append_timesig_event(
 	memset(&event, 0, sizeof(event));
 	event.tick = tick;
 	event.track = track;
-	event.type = MidEventTypeTimeSignature;
+	event.event_type = MidEventTypeTimeSignature;
 	event.time_signature.numerator = p_data[0];
 	event.time_signature.denominator = denominator;
 	event.time_signature.clocks_per_click = p_data[2];
@@ -372,7 +372,7 @@ static int load_track(
 				memset(&event, 0, sizeof(event));
 				event.tick = tick;
 				event.track = track_index;
-				event.type = MidEventTypeMessage;
+				event.event_type = MidEventTypeMessage;
 				event.message =
 					make_channel_message((uint8_t)(0x80 | (status & 0x0F)), data1, 64);
 				if(0 != append_event(p_song,
@@ -387,7 +387,7 @@ static int load_track(
 				memset(&event, 0, sizeof(event));
 				event.tick = tick;
 				event.track = track_index;
-				event.type = MidEventTypeMessage;
+				event.event_type = MidEventTypeMessage;
 				event.message = make_pitch_wheel_message(status, data1, data2);
 				if(0 != append_event(p_song,
 										 &event)){
@@ -401,7 +401,7 @@ static int load_track(
 				memset(&event, 0, sizeof(event));
 				event.tick = tick;
 				event.track = track_index;
-				event.type = MidEventTypeMessage;
+				event.event_type = MidEventTypeMessage;
 				event.message = make_channel_message(status, data1, data2);
 				if(0 != append_event(p_song,
 										 &event)){
@@ -421,7 +421,7 @@ static int load_track(
 			memset(&event, 0, sizeof(event));
 			event.tick = tick;
 			event.track = track_index;
-			event.type = MidEventTypeMessage;
+			event.event_type = MidEventTypeMessage;
 			event.message = make_channel_message(status, data1, 0);
 			if(0 != append_event(p_song,
 									 &event)){
@@ -564,10 +564,10 @@ void mid_song_close(mid_song_t * const p_song)
 	size_t i;
 
 	for(i = 0; i < p_song->event_count; i++){
-		if(MidEventTypeMeta == p_song->event_array[i].type){
+		if(MidEventTypeMeta == p_song->event_array[i].event_type){
 			free(p_song->event_array[i].meta.p_data);
 		}
-		if(MidEventTypeSysex == p_song->event_array[i].type){
+		if(MidEventTypeSysex == p_song->event_array[i].event_type){
 			free(p_song->event_array[i].sysex.p_data);
 		}
 	}
@@ -714,7 +714,7 @@ float mid_song_time_from_tick(mid_song_t const * const p_song, uint32_t const ti
 		for(i = 0; i < p_song->event_count; i++){
 			mid_event_t const * const p_event = &p_song->event_array[i];
 
-			if((MidEventTypeTempo != p_event->type) || (0 != p_event->track)){
+			if((MidEventTypeTempo != p_event->event_type) || (0 != p_event->track)){
 				continue;
 			}
 			if(p_event->tick >= tick){
@@ -766,7 +766,7 @@ uint32_t mid_song_tick_from_time(mid_song_t const * const p_song, float const ti
 			mid_event_t const * const p_event = &p_song->event_array[i];
 			float next_tempo_event_time;
 
-			if((MidEventTypeTempo != p_event->type) || (0 != p_event->track)){
+			if((MidEventTypeTempo != p_event->event_type) || (0 != p_event->track)){
 				continue;
 			}
 
