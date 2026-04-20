@@ -190,7 +190,7 @@ int main(int const argc, char **p_argv)
 				(long long)i,
 				(int)p_midi_event->type(),
 				(int)p_midi_event->number(),
-				(int)p_event->type);
+				(int)p_event->event_type);
 			mid_song_close(&song);
 			return -10;
 		}
