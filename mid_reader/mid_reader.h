@@ -17,12 +17,12 @@ extern "C" {
 #define MID_RESULT_ERROR_EVENT     (-5)
 
 typedef enum mid_division_type_t {
-	MidDivisionTypeInvalid = 0,
-	MidDivisionTypePpq,
-	MidDivisionTypeSmpte24,
-	MidDivisionTypeSmpte25,
-	MidDivisionTypeSmpte30Drop,
-	MidDivisionTypeSmpte30
+	MidDivisionTypeInvalid = -1,
+	MidDivisionTypePpq = 0,
+	MidDivisionTypeSmpte24 = -24,
+	MidDivisionTypeSmpte25 = -25,
+	MidDivisionTypeSmpte30Drop = -29,
+	MidDivisionTypeSmpte30 = -30
 } mid_division_type_t;
 
 typedef enum mid_event_type_t {

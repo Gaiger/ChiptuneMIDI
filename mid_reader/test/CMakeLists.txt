@@ -17,10 +17,12 @@ add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/QMidi" QMidi)
 
 add_executable(mid_reader_test
     main.cpp
-    "${MID_READER_DIR}/mid_reader.c")
+    "${MID_READER_DIR}/mid_reader.c"
+    "${MID_READER_DIR}/qt/MidSong.cpp")
 
 target_include_directories(mid_reader_test PRIVATE
     "${CMAKE_CURRENT_LIST_DIR}"
+    "${CHIPTUNE_ROOT_DIR}"
     "${MID_READER_DIR}"
     "${CMAKE_CURRENT_LIST_DIR}/QMidi/src")
 

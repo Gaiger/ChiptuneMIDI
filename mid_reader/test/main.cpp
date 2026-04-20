@@ -8,6 +8,7 @@
 
 #include "QMidiFile.h"
 #include "mid_reader.h"
+#include "qt/MidSong.h"
 
 /******************************************************************************/
 static mid_division_type_t to_mid_division_type(QMidiFile::DivisionType const type)
@@ -107,6 +108,220 @@ static int compare_qmidi_event_to_mid_event(
 }
 
 /******************************************************************************/
+static int compare_qmidi_event_to_mid_wrapped_event(
+	QMidiEvent *p_midi_event,
+	MidEvent const &event)
+{
+	uint32_t const message = p_midi_event->message();
+
+	if(false == event.IsValid()){
+		return MID_RESULT_ERROR_EVENT;
+	}
+
+	if(0 != message){
+		if(false == event.IsMessage()){
+			return MID_RESULT_ERROR_EVENT;
+		}
+		return (message == event.GetMessage()) ? MID_RESULT_OK : MID_RESULT_ERROR_EVENT;
+	}
+
+	if((QMidiEvent::Meta == p_midi_event->type()) && (QMidiEvent::Tempo == p_midi_event->number())){
+		QByteArray const data = p_midi_event->data();
+		uint32_t us_per_quarter;
+
+		if((MidEvent::Tempo != event.GetType()) || (3 != data.size())){
+			return MID_RESULT_ERROR_EVENT;
+		}
+		us_per_quarter =
+			((uint32_t)(unsigned char)data[0] << 16)
+		  | ((uint32_t)(unsigned char)data[1] << 8)
+		  | (uint32_t)(unsigned char)data[2];
+		return (60000000.0f / (float)us_per_quarter == event.GetTempo()) ? MID_RESULT_OK : MID_RESULT_ERROR_EVENT;
+	}
+
+	if((QMidiEvent::Meta == p_midi_event->type()) && (QMidiEvent::TimeSignature == p_midi_event->number())){
+		if(MidEvent::TimeSignature != event.GetType()){
+			return MID_RESULT_ERROR_EVENT;
+		}
+		return MID_RESULT_OK;
+	}
+
+	if(QMidiEvent::Meta == p_midi_event->type()){
+		if(MidEvent::Meta != event.GetType()){
+			return MID_RESULT_ERROR_EVENT;
+		}
+		return ((uint8_t)p_midi_event->number() == (uint8_t)event.GetNumber()) ? MID_RESULT_OK : MID_RESULT_ERROR_EVENT;
+	}
+
+	if(QMidiEvent::SysEx == p_midi_event->type()){
+		return (MidEvent::SysEx == event.GetType()) ? MID_RESULT_OK : MID_RESULT_ERROR_EVENT;
+	}
+
+	return MID_RESULT_OK;
+}
+
+/******************************************************************************/
+static int test_raw_mid_song(char const * const p_file_path)
+{
+	QString const file_path_string = QString::fromLocal8Bit(p_file_path);
+
+	QMidiFile qmidi_file;
+	if(false == qmidi_file.load(file_path_string)){
+		std::printf("raw: QMidiFile load failed\r\n");
+		return -2;
+	}
+
+	QList<QMidiEvent*> const midi_events = qmidi_file.events();
+
+	mid_song_t raw_song;
+	mid_song_init(&raw_song);
+	if(0 != mid_song_load(&raw_song, p_file_path)){
+		std::printf("raw: mid_song_load failed\r\n");
+		mid_song_close(&raw_song);
+		return -3;
+	}
+
+	if(qmidi_file.fileFormat() != raw_song.file_format){
+		std::printf("raw file_format DIFF q=%d c=%d\r\n", qmidi_file.fileFormat(), raw_song.file_format);
+		mid_song_close(&raw_song);
+		return -4;
+	}
+
+	if(qmidi_file.tracks().size() != raw_song.track_count){
+		std::printf("raw track_count DIFF q=%lld c=%d\r\n", (long long)qmidi_file.tracks().size(), raw_song.track_count);
+		mid_song_close(&raw_song);
+		return -5;
+	}
+
+	if(qmidi_file.resolution() != raw_song.resolution){
+		std::printf("raw resolution DIFF q=%d c=%d\r\n", qmidi_file.resolution(), raw_song.resolution);
+		mid_song_close(&raw_song);
+		return -6;
+	}
+
+	if(to_mid_division_type(qmidi_file.divisionType()) != raw_song.division_type){
+		std::printf(
+			"raw division_type DIFF q=%d c=%d\r\n",
+			(int)to_mid_division_type(qmidi_file.divisionType()),
+			(int)raw_song.division_type);
+		mid_song_close(&raw_song);
+		return -7;
+	}
+
+	if(midi_events.size() != (int)raw_song.event_count){
+		std::printf("raw qmidi_event_count = %lld\r\n", (long long)midi_events.size());
+		std::printf("raw event_count = %lld\r\n", (long long)raw_song.event_count);
+		mid_song_close(&raw_song);
+		return -8;
+	}
+
+	std::printf("raw event_count = %lld\r\n", (long long)raw_song.event_count);
+
+	for(size_t i = 0; i < raw_song.event_count; i++){
+		QMidiEvent * const p_midi_event = midi_events.at((int)i);
+		mid_event_t * const p_event = &raw_song.event_array[i];
+
+		if(((uint32_t)p_midi_event->tick() != p_event->tick)
+		|| ((uint16_t)p_midi_event->track() != p_event->track)){
+			std::printf("raw event[%05lld] header DIFF\r\n", (long long)i);
+			mid_song_close(&raw_song);
+			return -9;
+		}
+
+		if(0 != compare_qmidi_event_to_mid_event(p_midi_event, p_event)){
+			std::printf(
+				"raw event[%05lld] payload DIFF q_type=%d q_number=%d c_type=%d\r\n",
+				(long long)i,
+				(int)p_midi_event->type(),
+				(int)p_midi_event->number(),
+				(int)p_event->event_type);
+			mid_song_close(&raw_song);
+			return -10;
+		}
+	}
+
+	std::printf("raw mid_song_t is identical to QMidiFile result\r\n");
+
+	mid_song_close(&raw_song);
+
+	return 0;
+}
+
+/******************************************************************************/
+static int test_wrapped_mid_song(char const * const p_file_path)
+{
+	QString const file_path_string = QString::fromLocal8Bit(p_file_path);
+
+	QMidiFile qmidi_file;
+	if(false == qmidi_file.load(file_path_string)){
+		std::printf("wrapped: QMidiFile load failed\r\n");
+		return -11;
+	}
+
+	QList<QMidiEvent*> const midi_events = qmidi_file.events();
+
+	MidSong wrapped_song;
+	if(false == wrapped_song.Load(file_path_string)){
+		std::printf("wrapped: MidSong::Load failed\r\n");
+		return -12;
+	}
+
+	if(qmidi_file.fileFormat() != wrapped_song.GetFileFormat()){
+		std::printf("wrapped file_format DIFF q=%d cpp=%d\r\n", qmidi_file.fileFormat(), wrapped_song.GetFileFormat());
+		return -13;
+	}
+
+	if(qmidi_file.tracks().size() != wrapped_song.GetTrackCount()){
+		std::printf("wrapped track_count DIFF q=%lld cpp=%d\r\n", (long long)qmidi_file.tracks().size(), wrapped_song.GetTrackCount());
+		return -14;
+	}
+
+	if(qmidi_file.resolution() != wrapped_song.GetResolution()){
+		std::printf("wrapped resolution DIFF q=%d cpp=%d\r\n", qmidi_file.resolution(), wrapped_song.GetResolution());
+		return -15;
+	}
+
+	if((int)to_mid_division_type(qmidi_file.divisionType()) != (int)wrapped_song.GetDivisionType()){
+		std::printf(
+			"wrapped division_type DIFF q=%d cpp=%d\r\n",
+			(int)to_mid_division_type(qmidi_file.divisionType()),
+			(int)wrapped_song.GetDivisionType());
+		return -16;
+	}
+
+	if(midi_events.size() != wrapped_song.GetEventCount()){
+		std::printf("wrapped qmidi_event_count = %lld\r\n", (long long)midi_events.size());
+		std::printf("wrapped_event_count = %d\r\n", wrapped_song.GetEventCount());
+		return -17;
+	}
+
+	for(int i = 0; i < wrapped_song.GetEventCount(); i++){
+		QMidiEvent * const p_midi_event = midi_events.at(i);
+		MidEvent const event = wrapped_song.GetEvent(i);
+
+		if(((uint32_t)p_midi_event->tick() != event.GetTick())
+		|| ((uint16_t)p_midi_event->track() != event.GetTrack())){
+			std::printf("wrapped event[%05d] header DIFF\r\n", i);
+			return -18;
+		}
+
+		if(0 != compare_qmidi_event_to_mid_wrapped_event(p_midi_event, event)){
+			std::printf(
+				"wrapped event[%05d] payload DIFF q_type=%d q_number=%d cpp_type=%d\r\n",
+				i,
+				(int)p_midi_event->type(),
+				(int)p_midi_event->number(),
+				(int)event.GetType());
+			return -19;
+		}
+	}
+
+	std::printf("MidSong is identical to QMidiFile result\r\n");
+
+	return 0;
+}
+
+/******************************************************************************/
 int main(int const argc, char **p_argv)
 {
 	if(1 >= argc){
@@ -114,91 +329,21 @@ int main(int const argc, char **p_argv)
 		return -1;
 	}
 
-	char const * const p_file_name = p_argv[1];
-	QString const file_path = QString::fromLocal8Bit(p_file_name);
-	QFileInfo const file_info(file_path);
+	char const * const p_file_path = p_argv[1];
+	QFileInfo const file_info(QString::fromLocal8Bit(p_file_path));
 	QByteArray const display_file_name = file_info.fileName().toLocal8Bit();
 
 	std::printf("file_name = %s\r\n", display_file_name.constData());
 
-	QMidiFile midi_file;
-	if(false == midi_file.load(file_path)){
-		std::printf("QMidiFile load failed\r\n");
-		return -2;
+	int ret = test_raw_mid_song(p_file_path);
+	if(0 != ret){
+		return ret;
 	}
 
-	QList<QMidiEvent*> const midi_events = midi_file.events();
-
-	mid_song_t song;
-	mid_song_init(&song);
-	if(0 != mid_song_load(&song, p_file_name)){
-		std::printf("mid_song_load failed\r\n");
-		mid_song_close(&song);
-		return -3;
+	ret = test_wrapped_mid_song(p_file_path);
+	if(0 != ret){
+		return ret;
 	}
-
-	if(midi_file.fileFormat() != song.file_format){
-		std::printf("file_format DIFF q=%d c=%d\r\n", midi_file.fileFormat(), song.file_format);
-		mid_song_close(&song);
-		return -4;
-	}
-
-	if(midi_file.tracks().size() != song.track_count){
-		std::printf("track_count DIFF q=%lld c=%d\r\n", (long long)midi_file.tracks().size(), song.track_count);
-		mid_song_close(&song);
-		return -5;
-	}
-
-	if(midi_file.resolution() != song.resolution){
-		std::printf("resolution DIFF q=%d c=%d\r\n", midi_file.resolution(), song.resolution);
-		mid_song_close(&song);
-		return -6;
-	}
-
-	if(to_mid_division_type(midi_file.divisionType()) != song.division_type){
-		std::printf(
-			"division_type DIFF q=%d c=%d\r\n",
-			(int)to_mid_division_type(midi_file.divisionType()),
-			(int)song.division_type);
-		mid_song_close(&song);
-		return -7;
-	}
-
-	if(midi_events.size() != (int)song.event_count){
-		std::printf("qmidi_event_count = %lld\r\n", (long long)midi_events.size());
-		std::printf("draft_event_count = %lld\r\n", (long long)song.event_count);
-		mid_song_close(&song);
-		return -8;
-	}
-
-	std::printf("event_count = %lld\r\n", (long long)song.event_count);
-
-	for(size_t i = 0; i < song.event_count; i++){
-		QMidiEvent * const p_midi_event = midi_events.at((int)i);
-		mid_event_t * const p_event = &song.event_array[i];
-
-		if(((uint32_t)p_midi_event->tick() != p_event->tick)
-		|| ((uint16_t)p_midi_event->track() != p_event->track)){
-			std::printf("event[%05lld] header DIFF\r\n", (long long)i);
-			mid_song_close(&song);
-			return -9;
-		}
-
-		if(0 != compare_qmidi_event_to_mid_event(p_midi_event, p_event)){
-			std::printf(
-				"event[%05lld] payload DIFF q_type=%d q_number=%d c_type=%d\r\n",
-				(long long)i,
-				(int)p_midi_event->type(),
-				(int)p_midi_event->number(),
-				(int)p_event->event_type);
-			mid_song_close(&song);
-			return -10;
-		}
-	}
-
-	std::printf("identical to QMidiFile result\r\n");
-
-	mid_song_close(&song);
 
 	return 0;
 }
