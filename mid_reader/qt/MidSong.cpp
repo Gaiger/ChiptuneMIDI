@@ -260,7 +260,7 @@ MidSong::~MidSong(void)
 /******************************************************************************/
 bool MidSong::Load(QString const &file_name)
 {
-	QByteArray const encoded_name = file_name.toLocal8Bit();
+	QByteArray const encoded_name = file_name.toUtf8();
 
 	Clear();
 	if(nullptr == m_p_song){

@@ -6,6 +6,10 @@
 // NOLINTBEGIN(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
 #include "mid_reader.h"
 
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -589,7 +593,32 @@ int mid_song_load(mid_song_t * const p_song, char const * const p_path)
 	mid_song_close(p_song);
 	mid_song_reset(p_song);
 
+#if defined(_WIN32)
+	{
+		int wide_length;
+		wchar_t *p_wide_path;
+
+		wide_length = MultiByteToWideChar(CP_UTF8, 0, p_path, -1, NULL, 0);
+		if(0 >= wide_length){
+			return MID_RESULT_ERROR_IO;
+		}
+
+		p_wide_path = malloc((size_t)wide_length * sizeof(wchar_t));
+		if(NULL == p_wide_path){
+			return MID_RESULT_ERROR_MEMORY;
+		}
+
+		if(0 == MultiByteToWideChar(CP_UTF8, 0, p_path, -1, p_wide_path, wide_length)){
+			free(p_wide_path);
+			return MID_RESULT_ERROR_IO;
+		}
+
+		p_fp = _wfopen(p_wide_path, L"rb");
+		free(p_wide_path);
+	}
+#else
 	p_fp = fopen(p_path, "rb");
+#endif
 	if(NULL == p_fp){
 		return MID_RESULT_ERROR_IO;
 	}
