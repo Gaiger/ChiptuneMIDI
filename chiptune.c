@@ -2,6 +2,7 @@
 #include <string.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <stdlib.h>
 
 #include "chiptune_common_internal.h"
 #include "chiptune_printf_internal.h"
@@ -15,6 +16,8 @@
 #include "chiptune_midi_effect_internal.h"
 
 #include "chiptune.h"
+
+#define _REDUCE_GAIN
 
 #ifdef _USE_SAMPLE_INDEX_AS_TIMEBASE
 typedef float chiptune_float;
@@ -876,9 +879,7 @@ static void chase_midi_messages(uint32_t const end_midi_message_index,
 }
 
 /**********************************************************************************/
-#ifdef _AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
-
-uint32_t number_of_roundup_to_power2_left_shift_bits(uint32_t const value)
+uint32_t number_of_roundup_to_power2(uint32_t const value)
 {
 	uint32_t v = value; // compute the next highest power of 2 of 32-bit v
 
@@ -889,6 +890,15 @@ uint32_t number_of_roundup_to_power2_left_shift_bits(uint32_t const value)
 	v |= v >> 8;
 	v |= v >> 16;
 	v++;
+	return v;
+}
+
+#ifdef _AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
+
+/**********************************************************************************/
+uint32_t number_of_roundup_to_power2_left_shift_bits(uint32_t const value)
+{
+	uint32_t v = number_of_roundup_to_power2(value);
 
 	uint32_t i = 0;
 	for(i = 0; i < sizeof(uint32_t) * 8; i++){
@@ -933,6 +943,39 @@ static int32_t s_amplitude_normalization_gain = DEFAULT_AMPLITUDE_NORMALIZATION_
 #define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE)/(int32_t)s_amplitude_normalization_gain))
 #endif
 
+#ifdef _REDUCE_GAIN
+#define AMPLITUDE_NORMALIZATION_GAIN_INCREMENT		(256)
+#define AMPLITUDE_NORMALIZATION_GAIN_DECREMENT		(1024)
+#define REDUCE_AMPLITUDE_NORMALIZATION_GAIN_OUTPUT_AMPLITUDE_THRESHOLD	((INT16_MAX * 3) / 4)
+static uint32_t s_reduce_amplitude_normalization_gain_sample_count = 0;
+#define RESET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_COUNT() \
+													do { \
+														s_reduce_amplitude_normalization_gain_sample_count = 0; \
+													}while(0)
+#define ADVANCE_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_COUNT() \
+													do { \
+														s_reduce_amplitude_normalization_gain_sample_count += 1; \
+													}while(0)
+#define IS_TO_REDUCE_AMPLITUDE_NORMALIZATION_GAIN() \
+													(((AMPLITUDE_NORMALIZATION_GAIN() > DEFAULT_AMPLITUDE_NORMALIZATION_GAIN) \
+														&& (REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_NUMBER() <= s_reduce_amplitude_normalization_gain_sample_count)) \
+														? true : false)
+#define IS_OUTPUT_AMPLITUDE_BELOW_THRESHOLD(WAVE_AMPLITUDE) \
+													((REDUCE_AMPLITUDE_NORMALIZATION_GAIN_OUTPUT_AMPLITUDE_THRESHOLD > abs(WAVE_AMPLITUDE)) \
+														? true : false)
+
+static uint32_t s_reduce_amplitude_normalization_gain_sample_number = (UINT16_MAX + 1);
+#define SET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_NUMBER(SAMPLE_NUMBER) \
+													do { \
+														s_reduce_amplitude_normalization_gain_sample_number =\
+															number_of_roundup_to_power2(SAMPLE_NUMBER); \
+													}while(0)
+#define REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_NUMBER() \
+													((uint32_t const)s_reduce_amplitude_normalization_gain_sample_number)
+#else
+#define RESET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_COUNT() do { }while(0)
+#endif
+
 /**********************************************************************************/
 
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
@@ -944,6 +987,7 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
 	UPDATE_SAMPLING_RATE(sampling_rate);
 	UPDATE_RESOLUTION(MIDI_DEFAULT_RESOLUTION);
 	UPDATE_TEMPO(MIDI_DEFAULT_TEMPO);
+	SET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_NUMBER(sampling_rate);
 	for(int16_t i = 0; i < SINE_TABLE_LENGTH; i++){
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
 	}
@@ -979,6 +1023,7 @@ void chiptune_prepare_song(uint32_t const resolution)
 
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
+	RESET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_COUNT();
 }
 
 /**********************************************************************************/
@@ -987,7 +1032,11 @@ int32_t chiptune_get_amplitude_gain(void){ return AMPLITUDE_NORMALIZATION_GAIN()
 
 /**********************************************************************************/
 
-void chiptune_set_amplitude_gain(int32_t const amplitude_gain) { UPDATE_AMPLITUDE_NORMALIZATION_GAIN(amplitude_gain); }
+void chiptune_set_amplitude_gain(int32_t const amplitude_gain)
+{
+	UPDATE_AMPLITUDE_NORMALIZATION_GAIN(amplitude_gain);
+	RESET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_COUNT();
+}
 
 /**********************************************************************************/
 
@@ -995,6 +1044,7 @@ void chiptune_set_current_message_index(uint32_t const message_index)
 {
 	chase_midi_messages(message_index, NULL);
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
+	RESET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_COUNT();
 }
 
 /**********************************************************************************/
@@ -1044,7 +1094,7 @@ void chiptune_get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NU
 int16_t chiptune_fetch_16bit_wave(void)
 {
 	int64_t wave_64bit = chiptune_fetch_64bit_wave();
-	int32_t original_amplitude_normaliztion_gain = AMPLITUDE_NORMALIZATION_GAIN();
+	int32_t const original_amplitude_normaliztion_gain = AMPLITUDE_NORMALIZATION_GAIN();
 	while(1)
 	{
 		int32_t wave_32bit;
@@ -1058,12 +1108,37 @@ int16_t chiptune_fetch_16bit_wave(void)
 			}
 
 			if(AMPLITUDE_NORMALIZATION_GAIN() != original_amplitude_normaliztion_gain){
-				CHIPTUNE_PRINTF(cDeveloping, "change NORMALIZE_WAVE_AMPLITUDE as %d\r\n", AMPLITUDE_NORMALIZATION_GAIN());
+				CHIPTUNE_PRINTF(cDeveloping, "raise AMPLITUDE_NORMALIZATION_GAIN to %d\r\n", AMPLITUDE_NORMALIZATION_GAIN());
 			}
+#ifdef _REDUCE_GAIN
+			do
+			{
+				if(true == IS_OUTPUT_AMPLITUDE_BELOW_THRESHOLD(wave_32bit)){
+					if(true == IS_TO_REDUCE_AMPLITUDE_NORMALIZATION_GAIN()){
+						int32_t updated_amplitude_normalization_gain
+								= AMPLITUDE_NORMALIZATION_GAIN() - AMPLITUDE_NORMALIZATION_GAIN_DECREMENT;
+						if(DEFAULT_AMPLITUDE_NORMALIZATION_GAIN > updated_amplitude_normalization_gain){
+							updated_amplitude_normalization_gain = DEFAULT_AMPLITUDE_NORMALIZATION_GAIN;
+						}
+						UPDATE_AMPLITUDE_NORMALIZATION_GAIN(updated_amplitude_normalization_gain);
+						CHIPTUNE_PRINTF(cDeveloping, "reduce AMPLITUDE_NORMALIZATION_GAIN to %d\r\n", AMPLITUDE_NORMALIZATION_GAIN());
+						RESET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_COUNT();
+						break;
+					}
+
+					if(false == is_stereo()
+							|| false == is_processing_left_channel()){
+						ADVANCE_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_COUNT();
+					}
+					break;
+				}
+				RESET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_COUNT();
+			}while(0);
+#endif
 			return (int16_t)wave_32bit;
 		}while(0);
 
-		UPDATE_AMPLITUDE_NORMALIZATION_GAIN(AMPLITUDE_NORMALIZATION_GAIN() + 256);
+		UPDATE_AMPLITUDE_NORMALIZATION_GAIN(AMPLITUDE_NORMALIZATION_GAIN() + AMPLITUDE_NORMALIZATION_GAIN_INCREMENT);
 	} while(1);
 
 	return 0;
