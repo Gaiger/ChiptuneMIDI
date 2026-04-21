@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cstdio>
+#include <cmath>
 
 #include <QByteArray>
 #include <QFileInfo>
@@ -161,6 +162,147 @@ static int compare_qmidi_event_to_mid_wrapped_event(
 }
 
 /******************************************************************************/
+static uint32_t tick_distance(uint32_t const tick_a, uint32_t const tick_b)
+{
+	return (tick_a > tick_b) ? (tick_a - tick_b) : (tick_b - tick_a);
+}
+
+/******************************************************************************/
+static int compare_time_conversion_result(
+	char const * const p_test_name,
+	size_t const event_index,
+	uint32_t const tick,
+	float const qmidi_time_in_seconds,
+	float const tested_time_in_seconds,
+	uint32_t const qmidi_tick,
+	uint32_t const tested_tick)
+{
+	if(0.0001f < fabsf(qmidi_time_in_seconds - tested_time_in_seconds)){
+		std::printf(
+			"%s timeFromTick DIFF event[%05lld] tick=%u q=%f tested=%f\r\n",
+			p_test_name,
+			(long long)event_index,
+			tick,
+			(double)qmidi_time_in_seconds,
+			(double)tested_time_in_seconds);
+		return MID_RESULT_ERROR_EVENT;
+	}
+
+	if(1 < tick_distance(qmidi_tick, tested_tick)){
+		std::printf(
+			"%s tickFromTime DIFF event[%05lld] time=%f q=%u tested=%u\r\n",
+			p_test_name,
+			(long long)event_index,
+			(double)qmidi_time_in_seconds,
+			qmidi_tick,
+			tested_tick);
+		return MID_RESULT_ERROR_EVENT;
+	}
+
+	return MID_RESULT_OK;
+}
+
+/******************************************************************************/
+static int compare_qmidi_time_conversion_to_mid_song(
+	QMidiFile * const p_qmidi_file,
+	mid_song_t const * const p_song)
+{
+	size_t const event_count = p_song->event_count;
+	size_t const event_indexes[] = {
+		0,
+		1,
+		event_count / 4,
+		event_count / 2,
+		(event_count * 3) / 4,
+		(event_count >= 2) ? (event_count - 2) : event_count,
+		(event_count >= 1) ? (event_count - 1) : event_count
+	};
+
+	for(size_t i = 0; i < (sizeof(event_indexes) / sizeof(event_indexes[0])); i++){
+		size_t const event_index = event_indexes[i];
+		uint32_t tick;
+		float qmidi_time_in_seconds;
+		float mid_song_time_in_seconds;
+		uint32_t qmidi_tick;
+		uint32_t mid_song_tick;
+
+		if(event_count <= event_index){
+			continue;
+		}
+
+		tick = p_song->event_array[event_index].tick;
+		qmidi_time_in_seconds = p_qmidi_file->timeFromTick((qint32)tick);
+		mid_song_time_in_seconds = mid_song_time_from_tick(p_song, tick);
+		qmidi_tick = (uint32_t)p_qmidi_file->tickFromTime(qmidi_time_in_seconds);
+		mid_song_tick = mid_song_tick_from_time(p_song, qmidi_time_in_seconds);
+
+		if(0 != compare_time_conversion_result(
+				"raw",
+				event_index,
+				tick,
+				qmidi_time_in_seconds,
+				mid_song_time_in_seconds,
+				qmidi_tick,
+				mid_song_tick)){
+			return MID_RESULT_ERROR_EVENT;
+		}
+	}
+
+	return MID_RESULT_OK;
+}
+
+/******************************************************************************/
+static int compare_qmidi_time_conversion_to_wrapped_mid_song(
+	QMidiFile * const p_qmidi_file,
+	MidSong const * const p_song)
+{
+	int const event_count = p_song->GetEventCount();
+	int const event_indexes[] = {
+		0,
+		1,
+		event_count / 4,
+		event_count / 2,
+		(event_count * 3) / 4,
+		(event_count >= 2) ? (event_count - 2) : event_count,
+		(event_count >= 1) ? (event_count - 1) : event_count
+	};
+
+	for(size_t i = 0; i < (sizeof(event_indexes) / sizeof(event_indexes[0])); i++){
+		int const event_index = event_indexes[i];
+		MidEvent event;
+		uint32_t tick;
+		float qmidi_time_in_seconds;
+		float mid_song_time_in_seconds;
+		uint32_t qmidi_tick;
+		uint32_t mid_song_tick;
+
+		if((event_index < 0) || (event_count <= event_index)){
+			continue;
+		}
+
+		event = p_song->GetEvent(event_index);
+		tick = event.GetTick();
+		qmidi_time_in_seconds = p_qmidi_file->timeFromTick((qint32)tick);
+		mid_song_time_in_seconds = p_song->TimeFromTick(tick);
+		qmidi_tick = (uint32_t)p_qmidi_file->tickFromTime(qmidi_time_in_seconds);
+		mid_song_tick = p_song->TickFromTime(qmidi_time_in_seconds);
+
+		if(0 != compare_time_conversion_result(
+				"wrapped",
+				(size_t)event_index,
+				tick,
+				qmidi_time_in_seconds,
+				mid_song_time_in_seconds,
+				qmidi_tick,
+				mid_song_tick)){
+			return MID_RESULT_ERROR_EVENT;
+		}
+	}
+
+	return MID_RESULT_OK;
+}
+
+/******************************************************************************/
 static int test_raw_mid_song(char const * const p_file_path)
 {
 	QString const file_path_string = QString::fromLocal8Bit(p_file_path);
@@ -240,6 +382,11 @@ static int test_raw_mid_song(char const * const p_file_path)
 		}
 	}
 
+	if(0 != compare_qmidi_time_conversion_to_mid_song(&qmidi_file, &raw_song)){
+		mid_song_close(&raw_song);
+		return -11;
+	}
+
 	std::printf("raw mid_song_t is identical to QMidiFile result\r\n");
 
 	mid_song_close(&raw_song);
@@ -255,7 +402,7 @@ static int test_wrapped_mid_song(char const * const p_file_path)
 	QMidiFile qmidi_file;
 	if(false == qmidi_file.load(file_path_string)){
 		std::printf("wrapped: QMidiFile load failed\r\n");
-		return -11;
+		return -12;
 	}
 
 	QList<QMidiEvent*> const midi_events = qmidi_file.events();
@@ -263,22 +410,22 @@ static int test_wrapped_mid_song(char const * const p_file_path)
 	MidSong wrapped_song;
 	if(false == wrapped_song.Load(file_path_string)){
 		std::printf("wrapped: MidSong::Load failed\r\n");
-		return -12;
+		return -13;
 	}
 
 	if(qmidi_file.fileFormat() != wrapped_song.GetFileFormat()){
 		std::printf("wrapped file_format DIFF q=%d cpp=%d\r\n", qmidi_file.fileFormat(), wrapped_song.GetFileFormat());
-		return -13;
+		return -14;
 	}
 
 	if(qmidi_file.tracks().size() != wrapped_song.GetTrackCount()){
 		std::printf("wrapped track_count DIFF q=%lld cpp=%d\r\n", (long long)qmidi_file.tracks().size(), wrapped_song.GetTrackCount());
-		return -14;
+		return -15;
 	}
 
 	if(qmidi_file.resolution() != wrapped_song.GetResolution()){
 		std::printf("wrapped resolution DIFF q=%d cpp=%d\r\n", qmidi_file.resolution(), wrapped_song.GetResolution());
-		return -15;
+		return -16;
 	}
 
 	if((int)to_mid_division_type(qmidi_file.divisionType()) != (int)wrapped_song.GetDivisionType()){
@@ -286,13 +433,13 @@ static int test_wrapped_mid_song(char const * const p_file_path)
 			"wrapped division_type DIFF q=%d cpp=%d\r\n",
 			(int)to_mid_division_type(qmidi_file.divisionType()),
 			(int)wrapped_song.GetDivisionType());
-		return -16;
+		return -17;
 	}
 
 	if(midi_events.size() != wrapped_song.GetEventCount()){
 		std::printf("wrapped qmidi_event_count = %lld\r\n", (long long)midi_events.size());
 		std::printf("wrapped_event_count = %d\r\n", wrapped_song.GetEventCount());
-		return -17;
+		return -18;
 	}
 
 	for(int i = 0; i < wrapped_song.GetEventCount(); i++){
@@ -302,7 +449,7 @@ static int test_wrapped_mid_song(char const * const p_file_path)
 		if(((uint32_t)p_midi_event->tick() != event.GetTick())
 		|| ((uint16_t)p_midi_event->track() != event.GetTrack())){
 			std::printf("wrapped event[%05d] header DIFF\r\n", i);
-			return -18;
+			return -19;
 		}
 
 		if(0 != compare_qmidi_event_to_mid_wrapped_event(p_midi_event, event)){
@@ -312,8 +459,12 @@ static int test_wrapped_mid_song(char const * const p_file_path)
 				(int)p_midi_event->type(),
 				(int)p_midi_event->number(),
 				(int)event.GetType());
-			return -19;
+			return -20;
 		}
+	}
+
+	if(0 != compare_qmidi_time_conversion_to_wrapped_mid_song(&qmidi_file, &wrapped_song)){
+		return -21;
 	}
 
 	std::printf("MidSong is identical to QMidiFile result\r\n");
