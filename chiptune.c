@@ -1110,6 +1110,7 @@ void chiptune_prepare_song(uint32_t const resolution)
 	UPDATE_RESOLUTION(resolution);
 
 	bool is_channel_has_note_array[MIDI_MAX_CHANNEL_NUMBER];
+	reset_all_channels_to_defaults();
 	chase_midi_messages(TO_LAST_MESSAGE_INDEX, &is_channel_has_note_array[0]);
 	for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		s_ending_instrument_array[voice] = get_channel_controller_pointer_from_index(voice)->instrument;
