@@ -893,58 +893,160 @@ uint32_t number_of_roundup_to_power2(uint32_t const value)
 	return v;
 }
 
-#ifdef _AMPLITUDE_NORMALIZATION_BY_RIGHT_SHIFT
+#define DEFAULT_AMPLITUDE_NORMALIZATION_GAIN		(1024)
+static int32_t s_amplitude_normalization_gain = DEFAULT_AMPLITUDE_NORMALIZATION_GAIN;
+#define AMPLITUDE_NORMALIZATION_GAIN()				(s_amplitude_normalization_gain)
+
+#ifdef _USE_SCALED_RECIPROCAL_MULTIPLIER_FOR_WAVE_AMPLITUDE_NORMALIZATION
+//#define _DEBUG_COMPARE_WAVE_AMPLITUDE_NORMALIZATION_WITH_DIVISION
+/*
+  * product = wave_amplitude * multiplier
+  * multiplier ~= 2 ** shift / gain
+  *
+  * To keep product inside int64_t:
+  * |wave_amplitude| * 2 ** shift / gain < 2 ** 63
+  * => |wave_amplitude| < gain * 2 ** (63 - shift)
+  *
+  * If each oscillator contributes up to int32_t amplitude:
+  * |wave_amplitude| <= oscillator_count * 2 ** 31
+  *
+  * Therefore:
+  * oscillator_count * 2 ** 31 < gain * 2 ** (63 - shift)
+  * => oscillator_count < gain * 2 ** (32 - shift)
+  *
+  * With DEFAULT_AMPLITUDE_NORMALIZATION_GAIN = 2 ** 10 and shift = 30:
+  * oscillator_count < 2 ** 10 * 2 ** (32 - 30) = 2 ** 12 = 4096.
+  *
+  * Therefore, 4096 is the extreme worst-case same-phase int32_t full-scale
+  * oscillator bound for shift = 30.
+  */
+#define AMPLITUDE_NORMALIZATION_GAIN_RECIPROCAL_MULTIPLIER_SHIFT_BIT_NUMBER (30)
 
 /**********************************************************************************/
-uint32_t number_of_roundup_to_power2_left_shift_bits(uint32_t const value)
+static inline int64_t calculate_amplitude_normalization_gain_multiplier(
+	int32_t const amplitude_normalization_gain)
 {
-	uint32_t v = number_of_roundup_to_power2(value);
+	int64_t const scale = (int64_t)1 << AMPLITUDE_NORMALIZATION_GAIN_RECIPROCAL_MULTIPLIER_SHIFT_BIT_NUMBER;
+	return (scale + (amplitude_normalization_gain / 2)) / amplitude_normalization_gain;
+}
 
-	uint32_t i = 0;
-	for(i = 0; i < sizeof(uint32_t) * 8; i++){
-		if(0x01 & (v >> i)){
-			break;
-		}
-	}
+static int64_t s_amplitude_normalization_gain_multiplier =
+	(((int64_t)1 << AMPLITUDE_NORMALIZATION_GAIN_RECIPROCAL_MULTIPLIER_SHIFT_BIT_NUMBER)
+		+ (DEFAULT_AMPLITUDE_NORMALIZATION_GAIN / 2)) / DEFAULT_AMPLITUDE_NORMALIZATION_GAIN;
+#define RESET_AMPLITUDE_NORMALIZATION_GAIN()		\
+													do { \
+														s_amplitude_normalization_gain = DEFAULT_AMPLITUDE_NORMALIZATION_GAIN; \
+														s_amplitude_normalization_gain_multiplier \
+															= calculate_amplitude_normalization_gain_multiplier(DEFAULT_AMPLITUDE_NORMALIZATION_GAIN); \
+													}while(0)
+#define AMPLITUDE_NORMALIZATION_GAIN_MULTIPLIER()	(s_amplitude_normalization_gain_multiplier)
 
-	return i;
+#define UPDATE_AMPLITUDE_NORMALIZATION_GAIN_MULTIPLIER(AMPLITUDE_NORMALIZATION_GAIN) \
+													do { \
+														s_amplitude_normalization_gain_multiplier \
+															= calculate_amplitude_normalization_gain_multiplier(AMPLITUDE_NORMALIZATION_GAIN); \
+													}while(0)
+#define UPDATE_AMPLITUDE_NORMALIZATION_GAIN(AMPLITUDE_NORMALIZATION_GAIN)	\
+													do { \
+														int32_t const amplitude_normalization_gain_to_update = (AMPLITUDE_NORMALIZATION_GAIN); \
+														s_amplitude_normalization_gain = amplitude_normalization_gain_to_update; \
+														UPDATE_AMPLITUDE_NORMALIZATION_GAIN_MULTIPLIER(amplitude_normalization_gain_to_update); \
+													}while(0)
+#define WAVE_AMPLITUDE_NORMALIZATION_BY_DIVISION(WAVE_AMPLITUDE) \
+													((int32_t)((WAVE_AMPLITUDE)/(int32_t)s_amplitude_normalization_gain))
+
+/**********************************************************************************/
+static inline int64_t right_shift_divide_toward_zero(int64_t const value)
+{
+	uint64_t const divisor_minus_one = ((uint64_t)1 << AMPLITUDE_NORMALIZATION_GAIN_RECIPROCAL_MULTIPLIER_SHIFT_BIT_NUMBER) - 1;
+	uint64_t const toward_zero_bias = ((uint64_t)value >> 63) * divisor_minus_one;
+	return (value + (int64_t)toward_zero_bias) >> AMPLITUDE_NORMALIZATION_GAIN_RECIPROCAL_MULTIPLIER_SHIFT_BIT_NUMBER;
 }
 
 /**********************************************************************************/
-#define DEFAULT_AMPLITUDE_NORMALIZATION_RIGHT_SHIFT_BIT_NUMBER	(13)
-int32_t s_loudness_nomalization_right_shift = DEFAULT_AMPLITUDE_NORMALIZATION_RIGHT_SHIFT_BIT_NUMBER;
-#define RESET_AMPLITUDE_NORMALIZATION_GAIN()		\
-													do { \
-														s_loudness_nomalization_right_shift \
-															= DEFAULT_AMPLITUDE_NORMALIZATION_RIGHT_SHIFT_BIT_NUMBER; \
-													}while(0)
+static inline int32_t compute_wave_amplitude_normalization_by_scaled_reciprocal_multiplier(
+	int64_t const wave_amplitude,
+	int64_t const amplitude_normalization_gain_multiplier)
+{
+	int64_t const product = wave_amplitude
+		* amplitude_normalization_gain_multiplier;
+	return (int32_t)right_shift_divide_toward_zero(product);
+}
 
-#define AMPLITUDE_NORMALIZATION_GAIN()				(1 << s_loudness_nomalization_right_shift)
-#define UPDATE_AMPLITUDE_NORMALIZATION_GAIN(AMPLITUDE_NORMALIZATION_GAIN)	\
-													do { \
-														s_loudness_nomalization_right_shift \
-															= number_of_roundup_to_power2_left_shift_bits(AMPLITUDE_NORMALIZATION_GAIN); \
-													}while(0)
-#define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE) >> s_loudness_nomalization_right_shift))
+#ifdef _DEBUG_COMPARE_WAVE_AMPLITUDE_NORMALIZATION_WITH_DIVISION
+/**********************************************************************************/
+static inline void print_if_wave_amplitude_normalization_differs_from_division(
+	int64_t const wave_amplitude,
+	int32_t const normalized_wave_amplitude,
+	int32_t const amplitude_normalization_gain,
+	int64_t const amplitude_normalization_gain_multiplier)
+{
+	int32_t const division_normalized_wave_amplitude =
+		WAVE_AMPLITUDE_NORMALIZATION_BY_DIVISION(wave_amplitude);
+	int64_t const calculated_amplitude_normalization_gain_multiplier =
+		calculate_amplitude_normalization_gain_multiplier(amplitude_normalization_gain);
+	int32_t const reciprocal_normalized_wave_amplitude =
+		compute_wave_amplitude_normalization_by_scaled_reciprocal_multiplier(
+			wave_amplitude,
+			amplitude_normalization_gain_multiplier);
+	int32_t const calculated_reciprocal_normalized_wave_amplitude =
+		compute_wave_amplitude_normalization_by_scaled_reciprocal_multiplier(
+			wave_amplitude,
+			calculated_amplitude_normalization_gain_multiplier);
+
+	if(1 < abs(division_normalized_wave_amplitude - normalized_wave_amplitude)){
+		CHIPTUNE_PRINTF(
+			cDeveloping,
+			"WAVE_AMPLITUDE_NORMALIZATION differs: division=%d normalized=%d reciprocal=%d calculated_reciprocal=%d gain=%d multiplier=%lld calculated_multiplier=%lld\r\n",
+			division_normalized_wave_amplitude,
+			normalized_wave_amplitude,
+			reciprocal_normalized_wave_amplitude,
+			calculated_reciprocal_normalized_wave_amplitude,
+			amplitude_normalization_gain,
+			(long long)amplitude_normalization_gain_multiplier,
+			(long long)calculated_amplitude_normalization_gain_multiplier);
+	}
+}
+
+#define PRINT_IF_WAVE_AMPLITUDE_NORMALIZATION_DIFFERS_FROM_DIVISION(WAVE_AMPLITUDE, NORMALIZED_WAVE_AMPLITUDE, AMPLITUDE_NORMALIZATION_GAIN, AMPLITUDE_NORMALIZATION_GAIN_MULTIPLIER) \
+													(print_if_wave_amplitude_normalization_differs_from_division((WAVE_AMPLITUDE), (NORMALIZED_WAVE_AMPLITUDE), (AMPLITUDE_NORMALIZATION_GAIN), (AMPLITUDE_NORMALIZATION_GAIN_MULTIPLIER)))
+#endif
+
+/**********************************************************************************/
+static inline int32_t normalize_wave_amplitude(
+	int64_t const wave_amplitude)
+{
+	int64_t const amplitude_normalization_gain_multiplier = AMPLITUDE_NORMALIZATION_GAIN_MULTIPLIER();
+	int32_t const normalized_wave_amplitude =
+		compute_wave_amplitude_normalization_by_scaled_reciprocal_multiplier(
+			wave_amplitude,
+			amplitude_normalization_gain_multiplier);
+#ifdef _DEBUG_COMPARE_WAVE_AMPLITUDE_NORMALIZATION_WITH_DIVISION
+	int32_t const amplitude_normalization_gain = AMPLITUDE_NORMALIZATION_GAIN();
+	print_if_wave_amplitude_normalization_differs_from_division(wave_amplitude, normalized_wave_amplitude,
+																amplitude_normalization_gain,
+																amplitude_normalization_gain_multiplier);
+#endif
+	return normalized_wave_amplitude;
+}
+
+#define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE) \
+													(normalize_wave_amplitude(WAVE_AMPLITUDE))
 #else
-#define DEFAULT_AMPLITUDE_NORMALIZATION_GAIN		(1024)
-static int32_t s_amplitude_normalization_gain = DEFAULT_AMPLITUDE_NORMALIZATION_GAIN;
 #define RESET_AMPLITUDE_NORMALIZATION_GAIN()		\
 													do { \
 														s_amplitude_normalization_gain = DEFAULT_AMPLITUDE_NORMALIZATION_GAIN; \
 													}while(0)
 
-#define AMPLITUDE_NORMALIZATION_GAIN()				(s_amplitude_normalization_gain)
 #define UPDATE_AMPLITUDE_NORMALIZATION_GAIN(AMPLITUDE_NORMALIZATION_GAIN)	\
 													do { \
 														s_amplitude_normalization_gain = (AMPLITUDE_NORMALIZATION_GAIN); \
 													}while(0)
-
 #define NORMALIZE_WAVE_AMPLITUDE(WAVE_AMPLITUDE)		((int32_t)((WAVE_AMPLITUDE)/(int32_t)s_amplitude_normalization_gain))
 #endif
 
-#ifdef _REDUCE_GAIN
 #define AMPLITUDE_NORMALIZATION_GAIN_INCREMENT		(256)
+#ifdef _REDUCE_GAIN
 #define AMPLITUDE_NORMALIZATION_GAIN_DECREMENT		(1024)
 #define REDUCE_AMPLITUDE_NORMALIZATION_GAIN_OUTPUT_AMPLITUDE_THRESHOLD	((INT16_MAX * 3) / 4)
 static uint32_t s_reduce_amplitude_normalization_gain_sample_count = 0;
@@ -972,8 +1074,6 @@ static uint32_t s_reduce_amplitude_normalization_gain_sample_number = (UINT16_MA
 													}while(0)
 #define REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_NUMBER() \
 													((uint32_t const)s_reduce_amplitude_normalization_gain_sample_number)
-#else
-#define RESET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_COUNT() do { }while(0)
 #endif
 
 /**********************************************************************************/
@@ -987,7 +1087,9 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
 	UPDATE_SAMPLING_RATE(sampling_rate);
 	UPDATE_RESOLUTION(MIDI_DEFAULT_RESOLUTION);
 	UPDATE_TEMPO(MIDI_DEFAULT_TEMPO);
+#ifdef _REDUCE_GAIN
 	SET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_NUMBER(sampling_rate);
+#endif
 	for(int16_t i = 0; i < SINE_TABLE_LENGTH; i++){
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
 	}
@@ -1023,7 +1125,9 @@ void chiptune_prepare_song(uint32_t const resolution)
 
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
+#ifdef _REDUCE_GAIN
 	RESET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_COUNT();
+#endif
 }
 
 /**********************************************************************************/
@@ -1035,7 +1139,9 @@ int32_t chiptune_get_amplitude_gain(void){ return AMPLITUDE_NORMALIZATION_GAIN()
 void chiptune_set_amplitude_gain(int32_t const amplitude_gain)
 {
 	UPDATE_AMPLITUDE_NORMALIZATION_GAIN(amplitude_gain);
+#ifdef _REDUCE_GAIN
 	RESET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_COUNT();
+#endif
 }
 
 /**********************************************************************************/
@@ -1044,7 +1150,9 @@ void chiptune_set_current_message_index(uint32_t const message_index)
 {
 	chase_midi_messages(message_index, NULL);
 	RESET_AMPLITUDE_NORMALIZATION_GAIN();
+#ifdef _REDUCE_GAIN
 	RESET_REDUCE_AMPLITUDE_NORMALIZATION_GAIN_SAMPLE_COUNT();
+#endif
 }
 
 /**********************************************************************************/
