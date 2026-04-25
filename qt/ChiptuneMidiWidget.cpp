@@ -376,7 +376,7 @@ int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 											   m_audio_player_buffer_in_milliseconds/1000.0,
 											   ui->SequencerScrollArea);
 
-		ui->AmplitudeGainSlider->setValue(UINT16_MAX - m_p_tune_manager->GetAmplitudeGain());
+		ui->AmplitudeGainSlider->setValue(m_p_tune_manager->GetAmplitudeGain());
 		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
 		m_midi_file_duration_time_string = FormatTimeString(m_midi_file_duration_in_milliseconds);
 		ui->PlayPositionLabel->setText(FormatTimeString(0) + " / " + m_midi_file_duration_time_string);
@@ -697,7 +697,7 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 									  + m_midi_file_duration_time_string);
 			ui->PlayProgressSlider->setValue(elapsed_time_in_milliseconds);
 
-			int const amplitude_gain = UINT16_MAX - m_p_tune_manager->GetAmplitudeGain();
+			int const amplitude_gain = m_p_tune_manager->GetAmplitudeGain();
 			if(ui->AmplitudeGainSlider->value() != amplitude_gain){
 				ui->AmplitudeGainSlider->setValue(amplitude_gain);
 			}
@@ -941,7 +941,7 @@ void ChiptuneMidiWidget::on_PlayPausePushButton_released(void)
 
 void ChiptuneMidiWidget::on_AmplitudeGainSlider_sliderMoved(int value)
 {
-	m_p_tune_manager->SetAmplitudeGain(UINT16_MAX - value);
+	m_p_tune_manager->SetAmplitudeGain(value);
 }
 
 /**********************************************************************************/

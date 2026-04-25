@@ -224,10 +224,10 @@ color: rgb(208, 208, 208);
     <number>1</number>
    </property>
    <property name="maximum">
-    <number>65534</number>
+    <number>255</number>
    </property>
    <property name="singleStep">
-    <number>256</number>
+    <number>1</number>
    </property>
    <property name="orientation">
     <enum>Qt::Vertical</enum>

@@ -71,8 +71,8 @@ int chiptune_set_melodic_channel_timbre(int8_t const channel_index, int8_t const
 									  float const envelope_damper_sustain_duration_in_seconds);
 
 
-int32_t chiptune_get_amplitude_gain(void);
-void chiptune_set_amplitude_gain(int32_t const amplitude_gain);
+uint8_t chiptune_get_amplitude_gain(void);
+void chiptune_set_amplitude_gain(uint8_t const amplitude_gain);
 #ifdef __cplusplus
 }
 #endif
