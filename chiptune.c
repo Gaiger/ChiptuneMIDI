@@ -17,8 +17,6 @@
 
 #include "chiptune.h"
 
-#define _REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR
-
 #ifdef _USE_SAMPLE_INDEX_AS_TIMEBASE
 typedef float chiptune_float;
 #else
@@ -1025,7 +1023,20 @@ static inline int32_t normalize_wave_amplitude_by_scaled_reciprocal_multiplier(
 #endif
 
 #define AMPLITUDE_NORMALIZATION_DIVISOR_INCREMENT	(1)
-#ifdef _REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR
+/*
+ * Recovery step in dB:
+ *   20 * log10(divisor / (divisor - decrement))
+ *
+ * Per-window loudness change guideline:
+ *   < 0.25 dB  usually imperceptible
+ *   0.25-0.5 dB subtle, mostly smooth
+ *   0.5-1 dB   may be audible on sustained/simple tones
+ *   > 1 dB     likely pumping or level jump
+ *   > 3 dB     obvious level change
+ *
+ * Typical divisor is around 40-120. decrement = 2 keeps recovery
+ * mostly around 0.15-0.45 dB/window in that range.
+ */
 #define AMPLITUDE_NORMALIZATION_DIVISOR_DECREMENT	(2)
 #define REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_OUTPUT_AMPLITUDE_THRESHOLD	((INT16_MAX * 3) / 4)
 static uint32_t s_reduce_amplitude_normalization_divisor_sample_count = 0;
@@ -1053,7 +1064,6 @@ static uint32_t s_reduce_amplitude_normalization_divisor_sample_number = (UINT16
 													}while(0)
 #define REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_NUMBER() \
 													((uint32_t const)s_reduce_amplitude_normalization_divisor_sample_number)
-#endif
 
 /**********************************************************************************/
 
@@ -1066,9 +1076,7 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
 	UPDATE_SAMPLING_RATE(sampling_rate);
 	UPDATE_RESOLUTION(MIDI_DEFAULT_RESOLUTION);
 	UPDATE_TEMPO(MIDI_DEFAULT_TEMPO);
-#ifdef _REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR
 	SET_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_NUMBER(sampling_rate);
-#endif
 	for(int16_t i = 0; i < SINE_TABLE_LENGTH; i++){
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
 	}
@@ -1105,9 +1113,7 @@ void chiptune_prepare_song(uint32_t const resolution)
 
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_DIVISOR();
-#ifdef _REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR
 	RESET_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_COUNT();
-#endif
 }
 
 /**********************************************************************************/
@@ -1120,9 +1126,7 @@ void chiptune_set_amplitude_gain(uint8_t const amplitude_gain)
 {
 
 	UPDATE_AMPLITUDE_NORMALIZATION_DIVISOR((UINT8_MAX + 1) - amplitude_gain);
-#ifdef _REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR
 	RESET_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_COUNT();
-#endif
 }
 
 /**********************************************************************************/
@@ -1131,9 +1135,7 @@ void chiptune_set_current_message_index(uint32_t const message_index)
 {
 	chase_midi_messages(message_index, NULL);
 	RESET_AMPLITUDE_NORMALIZATION_DIVISOR();
-#ifdef _REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR
 	RESET_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_COUNT();
-#endif
 }
 
 /**********************************************************************************/
@@ -1195,12 +1197,17 @@ int16_t chiptune_fetch_16bit_wave(void)
 				break;
 			}
 
-			if(AMPLITUDE_NORMALIZATION_DIVISOR() != original_amplitude_normalization_divisor){
-				CHIPTUNE_PRINTF(cDeveloping, "raise AMPLITUDE_NORMALIZATION_DIVISOR to %d\r\n", AMPLITUDE_NORMALIZATION_DIVISOR());
-			}
-#ifdef _REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR
 			do
 			{
+
+				if(AMPLITUDE_NORMALIZATION_DIVISOR() != original_amplitude_normalization_divisor){
+#ifdef _DEBUG
+					CHIPTUNE_PRINTF(cDeveloping, "raise AMPLITUDE_NORMALIZATION_DIVISOR to %d\r\n",
+									AMPLITUDE_NORMALIZATION_DIVISOR());
+#endif
+					break;
+				}
+
 				if(true == IS_OUTPUT_AMPLITUDE_BELOW_THRESHOLD(output_wave)){
 					if(true == IS_TO_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR()){
 						int32_t updated_amplitude_normalization_divisor
@@ -1208,9 +1215,17 @@ int16_t chiptune_fetch_16bit_wave(void)
 						if(DEFAULT_AMPLITUDE_NORMALIZATION_DIVISOR > updated_amplitude_normalization_divisor){
 							updated_amplitude_normalization_divisor = DEFAULT_AMPLITUDE_NORMALIZATION_DIVISOR;
 						}
+
 						UPDATE_AMPLITUDE_NORMALIZATION_DIVISOR(updated_amplitude_normalization_divisor);
-						CHIPTUNE_PRINTF(cDeveloping, "reduce AMPLITUDE_NORMALIZATION_DIVISOR to %d\r\n", AMPLITUDE_NORMALIZATION_DIVISOR());
 						RESET_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_COUNT();
+#ifdef _DEBUG
+						float const recovery_step_in_db = 20.0f
+								* log10f((float)original_amplitude_normalization_divisor
+										/ (float)updated_amplitude_normalization_divisor);
+						CHIPTUNE_PRINTF(cDeveloping,
+										"reduce AMPLITUDE_NORMALIZATION_DIVISOR to %d (%+1.2f dB)\r\n",
+										AMPLITUDE_NORMALIZATION_DIVISOR(), recovery_step_in_db);
+#endif
 						break;
 					}
 
@@ -1222,7 +1237,6 @@ int16_t chiptune_fetch_16bit_wave(void)
 				}
 				RESET_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_COUNT();
 			}while(0);
-#endif
 			return (int16_t)output_wave;
 		}while(0);
 
