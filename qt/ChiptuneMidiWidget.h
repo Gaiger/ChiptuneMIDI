@@ -41,7 +41,6 @@ private slots:
 
 	void on_EjectPushButton_released(void);
 	void on_PlayPausePushButton_released(void);
-	void on_AmplitudeGainSlider_sliderMoved(int value);
 	void on_AllOutputDisabledPushButton_released(void);
 	void on_AllOutputEnabledPushButton_released(void);
 	void on_PitchShiftSpinBox_valueChanged(int i);
