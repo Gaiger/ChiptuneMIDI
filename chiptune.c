@@ -1118,19 +1118,6 @@ void chiptune_prepare_song(uint32_t const resolution)
 
 /**********************************************************************************/
 
-uint8_t chiptune_get_amplitude_gain(void){ return ((UINT8_MAX + 1) - (uint16_t)AMPLITUDE_NORMALIZATION_DIVISOR()); }
-
-/**********************************************************************************/
-
-void chiptune_set_amplitude_gain(uint8_t const amplitude_gain)
-{
-
-	UPDATE_AMPLITUDE_NORMALIZATION_DIVISOR((UINT8_MAX + 1) - amplitude_gain);
-	RESET_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_COUNT();
-}
-
-/**********************************************************************************/
-
 void chiptune_set_current_message_index(uint32_t const message_index)
 {
 	chase_midi_messages(message_index, NULL);
