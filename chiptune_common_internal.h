@@ -28,9 +28,6 @@
 //#define _PRINT_MIDI_PITCH_WHEEL
 //#define _PRINT_EVENT_TRIGGERING
 
-#define _CHECK_OCCUPIED_OSCILLATOR_LIST
-#define _CHECK_EVENT_LIST
-
 #define INT8_MAX_PLUS_1								(INT8_MAX + 1)
 #define INT16_MAX_PLUS_1							(INT16_MAX + 1)
 

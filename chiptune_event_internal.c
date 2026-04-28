@@ -10,6 +10,10 @@
 
 #include "chiptune_event_internal.h"
 
+#ifdef _DEBUG
+#define _ENABLE_CHECK_EVENT_LIST
+#endif
+
 /**********************************************************************************/
 /**********************************************************************************/
 
@@ -162,10 +166,10 @@ static void release_all_events(void)
 #endif
 }
 
-#ifdef _CHECK_EVENT_LIST
+#ifdef _ENABLE_CHECK_EVENT_LIST
 /**********************************************************************************/
 
-static int check_queued_events(uint32_t const tick)
+static int check_queued_event_list(uint32_t const tick)
 {
 	int ret = 0;
 	int16_t event_index = s_queued_event_head_index;
@@ -235,16 +239,6 @@ static int check_queued_events(uint32_t const tick)
 
 	return ret;
 }
-#define CHECK_QUEUED_EVENTS(TICK)					\
-													do { \
-														check_queued_events((TICK)); \
-													} while(0)
-
-#else
-#define CHECK_QUEUED_EVENTS(TICK)					\
-													do { \
-														(void)0; \
-													} while(0)
 #endif
 
 /**********************************************************************************/
@@ -320,7 +314,9 @@ int put_event(int8_t const type, int16_t const oscillator_index, uint32_t const 
 		break;
 	}
 
-	CHECK_QUEUED_EVENTS(get_event_pointer_from_index(s_queued_event_head_index)->triggering_tick);
+#ifdef _ENABLE_CHECK_EVENT_LIST
+	check_queued_event_list(get_event_pointer_from_index(s_queued_event_head_index)->triggering_tick);
+#endif
 	return 0;
 }
 
@@ -536,7 +532,9 @@ int process_events(uint32_t const tick)
 		s_queued_event_head_index = p_head_event->next_event_index;
 		s_queued_event_number -= 1;
 	}
-	CHECK_QUEUED_EVENTS(tick);
+#ifdef _ENABLE_CHECK_EVENT_LIST
+	check_queued_event_list(tick);
+#endif
 	return 0;
 }
 

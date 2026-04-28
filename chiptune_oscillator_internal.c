@@ -9,6 +9,10 @@
 
 #include "chiptune_oscillator_internal.h"
 
+#ifdef _DEBUG
+#define _ENABLE_CHECK_OCCUPIED_OSCILLATOR_LIST
+#endif
+
 static int16_t s_pitch_shift_in_semitones = 0;
 
 void set_pitch_shift_in_semitones(int16_t const pitch_shift_in_semitones)
@@ -203,7 +207,7 @@ static void release_all_oscillators_and_links(void)
 #endif
 }
 
-#ifdef _CHECK_OCCUPIED_OSCILLATOR_LIST
+#ifdef _ENABLE_CHECK_OCCUPIED_OSCILLATOR_LIST
 /**********************************************************************************/
 
 static int check_occupied_oscillator_list(void)
@@ -261,15 +265,6 @@ static int check_occupied_oscillator_list(void)
 	} while(0);
 	return ret;
 }
-#define CHECK_OCCUPIED_OSCILLATOR_LIST()			\
-													do { \
-														check_occupied_oscillator_list(); \
-													} while(0)
-#else
-#define CHECK_OCCUPIED_OSCILLATOR_LIST()			\
-													do { \
-														(void)0; \
-													} while(0)
 #endif
 
 /**********************************************************************************/
@@ -448,7 +443,9 @@ static int occupy_oscillator(int16_t const oscillator_index)
 	} while(0);
 	s_occupied_oscillator_last_index = oscillator_index;
 	s_occupied_oscillator_number += 1;
-	CHECK_OCCUPIED_OSCILLATOR_LIST();
+#ifdef _ENABLE_CHECK_OCCUPIED_OSCILLATOR_LIST
+	check_occupied_oscillator_list();
+#endif
 	return 0;
 }
 
@@ -573,7 +570,9 @@ int discard_oscillator(int16_t const oscillator_index)
 	}
 	p_oscillator->voice = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number -= 1;
-	CHECK_OCCUPIED_OSCILLATOR_LIST();
+#ifdef _ENABLE_CHECK_OCCUPIED_OSCILLATOR_LIST
+	check_occupied_oscillator_list();
+#endif
 	return 0;
 }
 
