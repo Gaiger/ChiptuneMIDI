@@ -1,6 +1,7 @@
 #ifndef _CHANNELNODEWIDGET_H_
 #define _CHANNELNODEWIDGET_H_
 
+#include <QString>
 #include <QWidget>
 
 namespace Ui {
@@ -26,6 +27,14 @@ public:
 				   int *p_envelope_damper_sustain_level,
 				   int *p_envelope_damper_sustain_curve,
 				   double *p_envelope_damper_sustain_duration_in_seconds);
+	void SetMelodicChannelTimbre(int waveform,
+				   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
+				   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
+				   int envelope_note_on_sustain_level,
+				   int envelope_release_curve, double envelope_release_duration_in_seconds,
+				   int envelope_damper_sustain_level,
+				   int envelope_damper_sustain_curve,
+				   double envelope_damper_sustain_duration_in_seconds);
 public :
 	signals:
 void OutputEnabled(int channel_index, bool is_enabled);
@@ -56,6 +65,7 @@ private:
 	int const m_channel_index;
 	QSize m_expanded_size;
 	QSize m_collapsed_size;
+	QString m_expand_collapse_push_button_original_style_sheet;
 
 	MelodicTimbreFrame *m_p_melodic_timbre_frame;
 private:

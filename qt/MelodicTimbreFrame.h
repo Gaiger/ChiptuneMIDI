@@ -33,6 +33,14 @@ public:
 				   int *p_envelope_damper_sustain_level,
 				   int *p_envelope_damper_sustain_curve,
 				   double *p_envelope_damper_sustain_duration_in_seconds);
+	void SetTimbre(int waveform,
+				   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
+				   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
+				   int envelope_note_on_sustain_level,
+				   int envelope_release_curve, double envelope_release_duration_in_seconds,
+				   int envelope_damper_sustain_level,
+				   int envelope_damper_sustain_curve,
+				   double envelope_damper_sustain_duration_in_seconds);
 
 public:
 	signals:

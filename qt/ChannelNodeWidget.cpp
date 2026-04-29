@@ -1,6 +1,7 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QDebug>
+#include <QTimer>
 
 #include "chiptune_midi_define.h"
 
@@ -73,6 +74,7 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 	QString string = "#"+ QString::number(channel_index) +" " + instrument_name;
 	ui->ExpandCollapsePushButton->setStyleSheet("text-align:left;");
 	ui->ExpandCollapsePushButton->setText(string);
+	m_expand_collapse_push_button_original_style_sheet = ui->ExpandCollapsePushButton->styleSheet();
 }
 
 /**********************************************************************************/
@@ -130,6 +132,44 @@ void ChannelNodeWidget::GetMelodicChannelTimbre(int *p_waveform,
 										 p_envelope_damper_sustain_curve,
 										 p_envelope_damper_sustain_duration_in_seconds);
 
+	}while(0);
+}
+
+/**********************************************************************************/
+
+void ChannelNodeWidget::SetMelodicChannelTimbre(int waveform,
+			   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
+			   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
+			   int envelope_note_on_sustain_level,
+			   int envelope_release_curve, double envelope_release_duration_in_seconds,
+			   int envelope_damper_sustain_level,
+			   int envelope_damper_sustain_curve,
+			   double envelope_damper_sustain_duration_in_seconds)
+{
+	do
+	{
+		if(MIDI_PERCUSSION_CHANNEL == m_channel_index){
+			qDebug() << Q_FUNC_INFO << "WARNING :: ignore for MIDI_PERCUSSION_CHANNEL";
+			break;
+		}
+		m_p_melodic_timbre_frame->SetTimbre(waveform,
+											envelope_attack_curve, envelope_attack_duration_in_seconds,
+											envelope_decay_curve, envelope_decay_duration_in_seconds,
+											envelope_note_on_sustain_level,
+											envelope_release_curve, envelope_release_duration_in_seconds,
+											envelope_damper_sustain_level,
+											envelope_damper_sustain_curve,
+											envelope_damper_sustain_duration_in_seconds);
+
+		QColor const dark24_color = QColor(24, 24, 24);
+		ui->ExpandCollapsePushButton->setStyleSheet(m_expand_collapse_push_button_original_style_sheet
+				+ QString::asprintf("background-color: rgb(%d, %d, %d);",
+									dark24_color.red(),
+									dark24_color.green(),
+									dark24_color.blue()));
+		QTimer::singleShot(2500, this, [this]() {
+			ui->ExpandCollapsePushButton->setStyleSheet(m_expand_collapse_push_button_original_style_sheet);
+		});
 	}while(0);
 }
 

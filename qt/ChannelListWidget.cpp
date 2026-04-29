@@ -78,3 +78,27 @@ void ChannelListWidget::GetMelodicChannelTimbre(int channel_index, int *p_wavefo
 									p_envelope_damper_sustain_curve,
 									p_envelope_damper_sustain_duration_in_seconds);
 }
+
+/**********************************************************************************/
+
+void ChannelListWidget::SetMelodicChannelTimbre(int channel_index, int waveform,
+			   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
+			   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
+			   int envelope_note_on_sustain_level,
+			   int envelope_release_curve, double envelope_release_duration_in_seconds,
+			   int envelope_damper_sustain_level,
+			   int envelope_damper_sustain_curve,
+			   double envelope_damper_sustain_duration_in_seconds)
+{
+	ChannelNodeWidget *p_channel_node_widget
+			= (ChannelNodeWidget*)m_p_vboxlayout->itemAt(m_channel_position_map.value(channel_index))->widget();
+
+	p_channel_node_widget->SetMelodicChannelTimbre(waveform,
+									envelope_attack_curve, envelope_attack_duration_in_seconds,
+									envelope_decay_curve, envelope_decay_duration_in_seconds,
+									envelope_note_on_sustain_level,
+									envelope_release_curve, envelope_release_duration_in_seconds,
+									envelope_damper_sustain_level,
+									envelope_damper_sustain_curve,
+									envelope_damper_sustain_duration_in_seconds);
+}

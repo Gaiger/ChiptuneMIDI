@@ -4,9 +4,11 @@
 #include <QWidget>
 #include <QToolBox>
 #include <QFileInfo>
+#include <QMap>
 
 #include "TuneManager.h"
 #include "AudioPlayer.h"
+#include "InstrumentTimbreIniFile.h"
 
 
 namespace Ui {
@@ -38,6 +40,8 @@ private:
 private slots:
 	void on_OpenMidiFilePushButton_released(void);
 	void on_SaveFilePushButton_released(void);
+	void on_LoadTimbresPushButton_released(void);
+	void on_StoreTimbresPushButton_released(void);
 
 	void on_EjectPushButton_released(void);
 	void on_PlayPausePushButton_released(void);
@@ -66,6 +70,16 @@ private:
 	void SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds);
 	void EjectMidiFile(void);
 	void UpdateTempoLabelText(void);
+	void SetTimbresFileButtonsEnabled(bool is_enabled);
+	void UpdateMelodicTimbreMap(int instrument_code,
+								   int waveform,
+								   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
+								   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
+								   int envelope_note_on_sustain_level,
+								   int envelope_release_curve, double envelope_release_duration_in_seconds,
+								   int envelope_damper_sustain_level,
+								   int envelope_damper_sustain_curve,
+								   double envelope_damper_sustain_duration_in_seconds);
 
 private:
 	bool IsPlayPauseButtonInPlayState(void);
@@ -84,6 +98,7 @@ private :
 	QTimer				m_defer_start_play_timer;
 
 	int					m_audio_player_buffer_in_milliseconds;
+	QMap<int, instrument_timbre_t> m_melodic_timbre_map;
 private:
 	WaveChartView *		m_p_wave_chartview;
 	SequencerWidget *	m_p_sequencer_widget;

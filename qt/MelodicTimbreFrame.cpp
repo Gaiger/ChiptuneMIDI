@@ -125,6 +125,74 @@ void MelodicTimbreFrame::GetTimbre(int *p_waveform,
 
 /**********************************************************************************/
 
+void MelodicTimbreFrame::SetTimbre(int waveform,
+			   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
+			   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
+			   int envelope_note_on_sustain_level,
+			   int envelope_release_curve, double envelope_release_duration_in_seconds,
+			   int envelope_damper_sustain_level,
+			   int envelope_damper_sustain_curve,
+			   double envelope_damper_sustain_duration_in_seconds)
+{
+	switch(waveform)
+	{
+	case TuneManager::WaveformSquareDutyCycle50:
+		ui->WaveFormComboBox->setCurrentIndex(0);
+		ui->DutyCycleComboBox->setCurrentIndex(0);
+		m_previous_dutycycle = 0;
+		ui->DutyCycleComboBox->setEnabled(true);
+		break;
+	case TuneManager::WaveformSquareDutyCycle25:
+		ui->WaveFormComboBox->setCurrentIndex(0);
+		ui->DutyCycleComboBox->setCurrentIndex(1);
+		m_previous_dutycycle = 1;
+		ui->DutyCycleComboBox->setEnabled(true);
+		break;
+	case TuneManager::WaveformSquareDutyCycle12_5:
+		ui->WaveFormComboBox->setCurrentIndex(0);
+		ui->DutyCycleComboBox->setCurrentIndex(2);
+		m_previous_dutycycle = 2;
+		ui->DutyCycleComboBox->setEnabled(true);
+		break;
+	case TuneManager::WaveformSquareDutyCycle75:
+		ui->WaveFormComboBox->setCurrentIndex(0);
+		ui->DutyCycleComboBox->setCurrentIndex(3);
+		m_previous_dutycycle = 3;
+		ui->DutyCycleComboBox->setEnabled(true);
+		break;
+	case TuneManager::WaveformTriangle:
+		ui->WaveFormComboBox->setCurrentIndex(1);
+		ui->DutyCycleComboBox->setCurrentIndex(4);
+		ui->DutyCycleComboBox->setEnabled(false);
+		break;
+	case TuneManager::WaveformSaw:
+	default:
+		ui->WaveFormComboBox->setCurrentIndex(2);
+		ui->DutyCycleComboBox->setCurrentIndex(4);
+		ui->DutyCycleComboBox->setEnabled(false);
+		break;
+	}
+
+	ui->AttackCurveComboBox->setCurrentIndex(envelope_attack_curve);
+	ui->AttackTimeSpinBox->setValue((int)(1000.0 * envelope_attack_duration_in_seconds));
+	ui->DecayCurveComboBox->setCurrentIndex(envelope_decay_curve);
+	ui->DecayTimeSpinBox->setValue((int)(1000.0 * envelope_decay_duration_in_seconds));
+	if(0 != ui->DecayTimeSpinBox->value()){
+		ui->SustainLevelSpinBox->setValue(envelope_note_on_sustain_level);
+	}
+	ui->ReleaseCurveComboBox->setCurrentIndex(envelope_release_curve);
+	ui->ReleaseTimeSpinBox->setValue((int)(1000.0 * envelope_release_duration_in_seconds));
+	int damper_sustain_level = envelope_damper_sustain_level;
+	if(damper_sustain_level > ui->SustainLevelSpinBox->value()){
+		damper_sustain_level = ui->SustainLevelSpinBox->value();
+	}
+	ui->DamperSustainLevelSpinBox->setValue(damper_sustain_level);
+	ui->DamperSustainCurveComboBox->setCurrentIndex(envelope_damper_sustain_curve);
+	ui->DamperSustainTimeDoubleSpinBox->setValue(envelope_damper_sustain_duration_in_seconds);
+}
+
+/**********************************************************************************/
+
 void MelodicTimbreFrame::on_WaveFormComboBox_currentIndexChanged(int index)
 {
 	Q_UNUSED(index);
@@ -188,7 +256,7 @@ void MelodicTimbreFrame::on_DecayTimeSpinBox_valueChanged(int value)
 		if(0 == value){
 			QObject::blockSignals(true);
 			m_previous_sustain_level = ui->SustainLevelSpinBox->value();
-			ui->SustainLevelSpinBox->setValue(128);
+			ui->SustainLevelSpinBox->setValue(127);
 			ui->SustainLevelSpinBox->setEnabled(false);
 			QObject::blockSignals(false);
 			break;

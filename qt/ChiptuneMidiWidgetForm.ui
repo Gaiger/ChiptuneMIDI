@@ -241,10 +241,36 @@ color: rgb(208, 208, 208);
    <property name="geometry">
     <rect>
      <x>888</x>
-     <y>8</y>
+     <y>40</y>
      <width>348</width>
-     <height>716</height>
+     <height>684</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="LoadTimbresPushButton">
+   <property name="geometry">
+    <rect>
+     <x>888</x>
+     <y>8</y>
+     <width>168</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Load Timbres</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="StoreTimbresPushButton">
+   <property name="geometry">
+    <rect>
+     <x>1068</x>
+     <y>8</y>
+     <width>168</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Store Timbres</string>
    </property>
   </widget>
   <widget class="QScrollArea" name="SequencerScrollArea">
