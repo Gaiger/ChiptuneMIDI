@@ -34,7 +34,8 @@ public:
 				   int envelope_release_curve, double envelope_release_duration_in_seconds,
 				   int envelope_damper_sustain_level,
 				   int envelope_damper_sustain_curve,
-				   double envelope_damper_sustain_duration_in_seconds);
+				   double envelope_damper_sustain_duration_in_seconds,
+				   bool is_to_darker_title_for_a_while);
 public :
 	signals:
 void OutputEnabled(int channel_index, bool is_enabled);
@@ -48,7 +49,8 @@ void MelodicChannelTimbreChanged(int channel_index,
 				   int envelope_damper_sustain_curve,
 				   double envelope_damper_sustain_duration_in_seconds);
 public :
-	void setOutputEnabled(bool is_to_enabled);
+	void SetOutputEnabled(bool is_to_enabled);
+	bool IsOutputEnabled(void);
 private slots:
 	void on_OutputEnabledCheckBox_stateChanged(int state);
 	void on_ExpandCollapsePushButton_clicked(bool checked);

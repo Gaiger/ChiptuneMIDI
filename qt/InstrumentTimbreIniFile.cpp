@@ -169,11 +169,12 @@ int InstrumentTimbreIniFile::ReadTimbre(int8_t const instrument_code, int8_t * c
 	}
 
 	m_settings.beginGroup(instrument_name_string);
+	instrument_timbre_t const default_instrument_timbre = GetDefaultInstrumentTimbre();
 	int ret = 0;
 	if(false == m_settings.contains("waveform")){
 		qWarning() << "Instrument timbre missing key:" << instrument_name_string << "waveform";
 		ret = 1;
-		*p_waveform = ChiptuneWaveformTriangle;
+		*p_waveform = default_instrument_timbre.waveform;
 	}else{
 		QString const waveform_name_string = m_settings.value("waveform").toString();
 		QString dutycycle_name_string = QStringLiteral("50");
@@ -190,28 +191,28 @@ int InstrumentTimbreIniFile::ReadTimbre(int8_t const instrument_code, int8_t * c
 			qWarning() << "Instrument timbre invalid waveform:"
 					   << instrument_name_string << waveform_name_string << dutycycle_name_string;
 			ret = 1;
-			*p_waveform = ChiptuneWaveformTriangle;
+			*p_waveform = default_instrument_timbre.waveform;
 		}
 	}
 
 	if(false == m_settings.contains("attack_curve")){
 		qWarning() << "Instrument timbre missing key:" << instrument_name_string << "attack_curve";
 		ret = 1;
-		*p_envelope_attack_curve = ChiptuneEnvelopeCurveLinear;
+		*p_envelope_attack_curve = default_instrument_timbre.envelope_attack_curve;
 	}else{
 		*p_envelope_attack_curve = GetEnvelopeCurveCode(m_settings.value("attack_curve").toString());
 		if(0 > *p_envelope_attack_curve){
 			qWarning() << "Instrument timbre invalid key:"
 					   << instrument_name_string << "attack_curve";
 			ret = 1;
-			*p_envelope_attack_curve = ChiptuneEnvelopeCurveLinear;
+			*p_envelope_attack_curve = default_instrument_timbre.envelope_attack_curve;
 		}
 	}
 	if(false == m_settings.contains("attack_duration_ms")){
 		qWarning() << "Instrument timbre missing key:"
 				   << instrument_name_string << "attack_duration_ms";
 		ret = 1;
-		*p_envelope_attack_duration_in_seconds = 0.02f;
+		*p_envelope_attack_duration_in_seconds = default_instrument_timbre.envelope_attack_duration_in_seconds;
 	}else{
 		*p_envelope_attack_duration_in_seconds =
 				m_settings.value("attack_duration_ms").toFloat() / 1000.0f;
@@ -220,21 +221,21 @@ int InstrumentTimbreIniFile::ReadTimbre(int8_t const instrument_code, int8_t * c
 	if(false == m_settings.contains("decay_curve")){
 		qWarning() << "Instrument timbre missing key:" << instrument_name_string << "decay_curve";
 		ret = 1;
-		*p_envelope_decay_curve = ChiptuneEnvelopeCurveFermi;
+		*p_envelope_decay_curve = default_instrument_timbre.envelope_decay_curve;
 	}else{
 		*p_envelope_decay_curve = GetEnvelopeCurveCode(m_settings.value("decay_curve").toString());
 		if(0 > *p_envelope_decay_curve){
 			qWarning() << "Instrument timbre invalid key:"
 					   << instrument_name_string << "decay_curve";
 			ret = 1;
-			*p_envelope_decay_curve = ChiptuneEnvelopeCurveFermi;
+			*p_envelope_decay_curve = default_instrument_timbre.envelope_decay_curve;
 		}
 	}
 	if(false == m_settings.contains("decay_duration_ms")){
 		qWarning() << "Instrument timbre missing key:"
 				   << instrument_name_string << "decay_duration_ms";
 		ret = 1;
-		*p_envelope_decay_duration_in_seconds = 0.01f;
+		*p_envelope_decay_duration_in_seconds = default_instrument_timbre.envelope_decay_duration_in_seconds;
 	}else{
 		*p_envelope_decay_duration_in_seconds =
 				m_settings.value("decay_duration_ms").toFloat() / 1000.0f;
@@ -243,7 +244,7 @@ int InstrumentTimbreIniFile::ReadTimbre(int8_t const instrument_code, int8_t * c
 		qWarning() << "Instrument timbre missing key:" << instrument_name_string
 				   << "note_on_sustain_level";
 		ret = 1;
-		*p_envelope_note_on_sustain_level = 96;
+		*p_envelope_note_on_sustain_level = default_instrument_timbre.envelope_note_on_sustain_level;
 	}else{
 		*p_envelope_note_on_sustain_level =
 				(uint8_t)m_settings.value("note_on_sustain_level").toUInt();
@@ -252,21 +253,21 @@ int InstrumentTimbreIniFile::ReadTimbre(int8_t const instrument_code, int8_t * c
 	if(false == m_settings.contains("release_curve")){
 		qWarning() << "Instrument timbre missing key:" << instrument_name_string << "release_curve";
 		ret = 1;
-		*p_envelope_release_curve = ChiptuneEnvelopeCurveExponential;
+		*p_envelope_release_curve = default_instrument_timbre.envelope_release_curve;
 	}else{
 		*p_envelope_release_curve = GetEnvelopeCurveCode(m_settings.value("release_curve").toString());
 		if(0 > *p_envelope_release_curve){
 			qWarning() << "Instrument timbre invalid key:"
 					   << instrument_name_string << "release_curve";
 			ret = 1;
-			*p_envelope_release_curve = ChiptuneEnvelopeCurveExponential;
+			*p_envelope_release_curve = default_instrument_timbre.envelope_release_curve;
 		}
 	}
 	if(false == m_settings.contains("release_duration_ms")){
 		qWarning() << "Instrument timbre missing key:"
 				   << instrument_name_string << "release_duration_ms";
 		ret = 1;
-		*p_envelope_release_duration_in_seconds = 0.03f;
+		*p_envelope_release_duration_in_seconds = default_instrument_timbre.envelope_release_duration_in_seconds;
 	}else{
 		*p_envelope_release_duration_in_seconds =
 				m_settings.value("release_duration_ms").toFloat() / 1000.0f;
@@ -276,7 +277,7 @@ int InstrumentTimbreIniFile::ReadTimbre(int8_t const instrument_code, int8_t * c
 		qWarning() << "Instrument timbre missing key:"
 				   << instrument_name_string << "damper_sustain_level";
 		ret = 1;
-		*p_envelope_damper_sustain_level = 72;
+		*p_envelope_damper_sustain_level = default_instrument_timbre.envelope_damper_sustain_level;
 	}else{
 		*p_envelope_damper_sustain_level =
 				(uint8_t)m_settings.value("damper_sustain_level").toUInt();
@@ -285,7 +286,7 @@ int InstrumentTimbreIniFile::ReadTimbre(int8_t const instrument_code, int8_t * c
 		qWarning() << "Instrument timbre missing key:"
 				   << instrument_name_string << "damper_sustain_curve";
 		ret = 1;
-		*p_envelope_damper_sustain_curve = ChiptuneEnvelopeCurveLinear;
+		*p_envelope_damper_sustain_curve = default_instrument_timbre.envelope_damper_sustain_curve;
 	}else{
 		*p_envelope_damper_sustain_curve =
 				GetEnvelopeCurveCode(m_settings.value("damper_sustain_curve").toString());
@@ -293,14 +294,15 @@ int InstrumentTimbreIniFile::ReadTimbre(int8_t const instrument_code, int8_t * c
 			qWarning() << "Instrument timbre invalid key:"
 					   << instrument_name_string << "damper_sustain_curve";
 			ret = 1;
-			*p_envelope_damper_sustain_curve = ChiptuneEnvelopeCurveLinear;
+			*p_envelope_damper_sustain_curve = default_instrument_timbre.envelope_damper_sustain_curve;
 		}
 	}
 	if(false == m_settings.contains("damper_sustain_duration_ms")){
 		qWarning() << "Instrument timbre missing key:"
 				   << instrument_name_string << "damper_sustain_duration_ms";
 		ret = 1;
-		*p_envelope_damper_sustain_duration_in_seconds = 8.0f;
+		*p_envelope_damper_sustain_duration_in_seconds =
+				default_instrument_timbre.envelope_damper_sustain_duration_in_seconds;
 	}else{
 		*p_envelope_damper_sustain_duration_in_seconds =
 				m_settings.value("damper_sustain_duration_ms").toFloat() / 1000.0f;
@@ -311,13 +313,13 @@ int InstrumentTimbreIniFile::ReadTimbre(int8_t const instrument_code, int8_t * c
 }
 
 /******************************************************************************/
-int InstrumentTimbreIniFile::ReadTimbres(QMap<int8_t, instrument_timbre_t> * const p_timbres)
+int InstrumentTimbreIniFile::ReadTimbres(QMap<int8_t, instrument_timbre_t> * const p_instrument_timbres)
 {
 	if(false == QFileInfo::exists(m_settings.fileName())){
 		return -1;
 	}
 
-	p_timbres->clear();
+	p_instrument_timbres->clear();
 
 	int ret = 0;
 	QStringList const instrument_name_strings = m_settings.childGroups();
@@ -329,25 +331,25 @@ int InstrumentTimbreIniFile::ReadTimbres(QMap<int8_t, instrument_timbre_t> * con
 			continue;
 		}
 
-		instrument_timbre_t timbre = {};
+		instrument_timbre_t read_instrument_timbre = {};
 		int const read_ret = ReadTimbre(instrument_code,
-										&timbre.waveform,
-										&timbre.envelope_attack_curve,
-										&timbre.envelope_attack_duration_in_seconds,
-										&timbre.envelope_decay_curve,
-										&timbre.envelope_decay_duration_in_seconds,
-										&timbre.envelope_note_on_sustain_level,
-										&timbre.envelope_release_curve,
-										&timbre.envelope_release_duration_in_seconds,
-										&timbre.envelope_damper_sustain_level,
-										&timbre.envelope_damper_sustain_curve,
-										&timbre.envelope_damper_sustain_duration_in_seconds);
+										&read_instrument_timbre.waveform,
+										&read_instrument_timbre.envelope_attack_curve,
+										&read_instrument_timbre.envelope_attack_duration_in_seconds,
+										&read_instrument_timbre.envelope_decay_curve,
+										&read_instrument_timbre.envelope_decay_duration_in_seconds,
+										&read_instrument_timbre.envelope_note_on_sustain_level,
+										&read_instrument_timbre.envelope_release_curve,
+										&read_instrument_timbre.envelope_release_duration_in_seconds,
+										&read_instrument_timbre.envelope_damper_sustain_level,
+										&read_instrument_timbre.envelope_damper_sustain_curve,
+										&read_instrument_timbre.envelope_damper_sustain_duration_in_seconds);
 		if(1 == read_ret){
 			ret = 1;
 		}else if(0 > read_ret){
 			return read_ret;
 		}
-		p_timbres->insert(instrument_code, timbre);
+		p_instrument_timbres->insert(instrument_code, read_instrument_timbre);
 	}
 
 	return ret;
@@ -372,17 +374,17 @@ void InstrumentTimbreIniFile::WriteTimbre(int8_t const instrument_code, int8_t c
 		m_settings.setValue("dutycycle", GetDutycycleNameString(waveform));
 	}
 	m_settings.setValue("attack_curve", GetEnvelopeCurveNameString(envelope_attack_curve));
-	m_settings.setValue("attack_duration_ms", 1000.0f * envelope_attack_duration_in_seconds);
+	m_settings.setValue("attack_duration_ms", qRound(1000.0f * envelope_attack_duration_in_seconds));
 	m_settings.setValue("decay_curve", GetEnvelopeCurveNameString(envelope_decay_curve));
-	m_settings.setValue("decay_duration_ms", 1000.0f * envelope_decay_duration_in_seconds);
+	m_settings.setValue("decay_duration_ms", qRound(1000.0f * envelope_decay_duration_in_seconds));
 	m_settings.setValue("note_on_sustain_level", (uint)envelope_note_on_sustain_level);
 	m_settings.setValue("release_curve", GetEnvelopeCurveNameString(envelope_release_curve));
-	m_settings.setValue("release_duration_ms", 1000.0f * envelope_release_duration_in_seconds);
+	m_settings.setValue("release_duration_ms", qRound(1000.0f * envelope_release_duration_in_seconds));
 	m_settings.setValue("damper_sustain_level", (uint)envelope_damper_sustain_level);
 	m_settings.setValue("damper_sustain_curve",
 						GetEnvelopeCurveNameString(envelope_damper_sustain_curve));
 	m_settings.setValue("damper_sustain_duration_ms",
-						1000.0f * envelope_damper_sustain_duration_in_seconds);
+						qRound(1000.0f * envelope_damper_sustain_duration_in_seconds));
 	m_settings.endGroup();
 	m_settings.sync();
 }

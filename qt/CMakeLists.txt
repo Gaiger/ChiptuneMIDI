@@ -50,7 +50,7 @@ set(APPILCATION
     ${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp
     ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp
     ${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.cpp
-    ${CHIPTUNE_QT_DIR}/GetInstrumentNameString.cpp
+    ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.cpp
     ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.cpp
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.cpp
     ${CHIPTUNE_QT_DIR}/ProgressSlider.cpp
@@ -63,7 +63,7 @@ set(APPILCATION
     ${CHIPTUNE_QT_DIR}/ChannelListWidget.h
     ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.h
     ${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.h
-    ${CHIPTUNE_QT_DIR}/GetInstrumentNameString.h
+    ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.h
     ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.h
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h
     ${CHIPTUNE_QT_DIR}/ProgressSlider.h

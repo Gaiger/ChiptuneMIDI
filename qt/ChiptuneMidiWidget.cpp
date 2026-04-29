@@ -9,6 +9,7 @@
 #include <QFileDialog>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QMap>
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #ifdef Q_OS_WIN
@@ -28,6 +29,8 @@
 #include "ChannelListWidget.h"
 
 #include "ChiptuneMidiWidget.h"
+#include "ChiptuneMidiValues.h"
+#include "InstrumentTimbreIniFile.h"
 
 typedef struct
 {
@@ -218,7 +221,6 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager * p_tune_manager, QWidget *pa
 {
 	ui->setupUi(this);
 
-	m_melodic_timbre_map.clear();
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 	SetFontSizeForWidgetSubtree(this, QWidget::font().pointSize() + 2, true);
 #endif
@@ -267,6 +269,8 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager * p_tune_manager, QWidget *pa
 
 	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
 	ui->SaveFilePushButton->setToolTip(tr("Save as .wav file"));
+	ui->LoadTimbresPushButton->setToolTip(tr("Load instrument timbre parameters from istrument_timbres.ini"));
+	ui->StoreTimbresPushButton->setToolTip(tr("Store instrument timbre parameters for output-enabled channels to istrument_timbres.ini"));
 
 	ui->PitchShiftSpinBox->setToolTip(tr("Shift the pitch in the unit of semitone"));
 	QLineEdit *p_lineEdit = ui->PitchShiftSpinBox->findChild<QLineEdit *>();
@@ -330,12 +334,14 @@ int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 			break;
 		}
 
-		ChannelListWidget *p_channel_list_widget = new ChannelListWidget(ui->TimbreListWidget);
+		ChannelListWidget * const p_channel_list_widget = new ChannelListWidget(ui->TimbreListWidget);
 		QObject::connect(p_channel_list_widget, &ChannelListWidget::OutputEnabled,
 						 this, &ChiptuneMidiWidget::HandleChannelOutputEnabled);
 		QObject::connect(p_channel_list_widget, &ChannelListWidget::MelodicChannelTimbreChanged,
 						 this, &ChiptuneMidiWidget::HandleMelodicChannelTimbreChanged);
 		FillWidget(p_channel_list_widget, ui->TimbreListWidget);
+
+		instrument_timbre_t const default_instrument_timbre = GetDefaultInstrumentTimbre();
 
 		int channel_number = m_p_tune_manager->GetChannelInstrumentPairList().size();
 		for(int i = 0; i < channel_number; i++){
@@ -346,39 +352,30 @@ int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 			if(MIDI_PERCUSSION_CHANNEL == channel_index){
 				continue;
 			}
-			int waveform;
-			int envelope_attack_curve; double envelope_attack_duration_in_seconds;
-			int envelope_decay_curve; double envelope_decay_duration_in_seconds;
-			int envelope_note_on_sustain_level;
-			int envelope_release_curve; double envelope_release_duration_in_seconds;
-			int envelope_damper_sustain_level;
-			int envelope_damper_sustain_curve;
-			double envelope_damper_sustain_duration_in_seconds;
-
-			p_channel_list_widget->GetMelodicChannelTimbre(channel_index,
-											&waveform, &envelope_attack_curve, &envelope_attack_duration_in_seconds,
-											&envelope_decay_curve, &envelope_decay_duration_in_seconds,
-											&envelope_note_on_sustain_level,
-											&envelope_release_curve, &envelope_release_duration_in_seconds,
-											&envelope_damper_sustain_level,
-											&envelope_damper_sustain_curve,
-											&envelope_damper_sustain_duration_in_seconds);
-			UpdateMelodicTimbreMap(instrument, waveform,
-									   envelope_attack_curve, envelope_attack_duration_in_seconds,
-									   envelope_decay_curve, envelope_decay_duration_in_seconds,
-									   envelope_note_on_sustain_level,
-									   envelope_release_curve, envelope_release_duration_in_seconds,
-									   envelope_damper_sustain_level,
-									   envelope_damper_sustain_curve,
-									   envelope_damper_sustain_duration_in_seconds);
-			m_p_tune_manager->SetMelodicChannelTimbre((int8_t)channel_index, (int8_t)waveform,
-													(int8_t)envelope_attack_curve, (float)envelope_attack_duration_in_seconds,
-													(int8_t)envelope_decay_curve, (float)envelope_decay_duration_in_seconds,
-													(uint8_t)envelope_note_on_sustain_level,
-													(int8_t)envelope_release_curve, (float)envelope_release_duration_in_seconds,
-													(uint8_t)envelope_damper_sustain_level,
-													(int8_t)envelope_damper_sustain_curve,
-													(float)envelope_damper_sustain_duration_in_seconds);
+			p_channel_list_widget->SetMelodicChannelTimbre(channel_index,
+														   default_instrument_timbre.waveform,
+														   default_instrument_timbre.envelope_attack_curve,
+														   default_instrument_timbre.envelope_attack_duration_in_seconds,
+														   default_instrument_timbre.envelope_decay_curve,
+														   default_instrument_timbre.envelope_decay_duration_in_seconds,
+														   default_instrument_timbre.envelope_note_on_sustain_level,
+														   default_instrument_timbre.envelope_release_curve,
+														   default_instrument_timbre.envelope_release_duration_in_seconds,
+														   default_instrument_timbre.envelope_damper_sustain_level,
+														   default_instrument_timbre.envelope_damper_sustain_curve,
+														   default_instrument_timbre.envelope_damper_sustain_duration_in_seconds,
+														   false);
+			m_p_tune_manager->SetMelodicChannelTimbre((int8_t)channel_index, default_instrument_timbre.waveform,
+													default_instrument_timbre.envelope_attack_curve,
+													default_instrument_timbre.envelope_attack_duration_in_seconds,
+													default_instrument_timbre.envelope_decay_curve,
+													default_instrument_timbre.envelope_decay_duration_in_seconds,
+													default_instrument_timbre.envelope_note_on_sustain_level,
+													default_instrument_timbre.envelope_release_curve,
+													default_instrument_timbre.envelope_release_duration_in_seconds,
+													default_instrument_timbre.envelope_damper_sustain_level,
+													default_instrument_timbre.envelope_damper_sustain_curve,
+													default_instrument_timbre.envelope_damper_sustain_duration_in_seconds);
 		}
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 		SetFontSizeForWidgetSubtree(p_channel_list_widget,
@@ -449,7 +446,7 @@ void ChiptuneMidiWidget::EjectMidiFile(void)
 	SetPlayPauseButtonInPlayState(false);
 
 	m_p_wave_chartview->Reset();
-	ChannelListWidget* p_channel_list_widget
+	ChannelListWidget * const p_channel_list_widget
 			= ui->TimbreListWidget->findChild<ChannelListWidget*>();
 	if(nullptr != p_channel_list_widget){
 		delete ui->TimbreListWidget->findChild<ChannelListWidget*>();
@@ -595,35 +592,6 @@ void ChiptuneMidiWidget::HandleChannelOutputEnabled(int channel_index, bool is_e
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::UpdateMelodicTimbreMap(int instrument_code,
-										int waveform,
-										int envelope_attack_curve, double envelope_attack_duration_in_seconds,
-										int envelope_decay_curve, double envelope_decay_duration_in_seconds,
-										int envelope_note_on_sustain_level,
-										int envelope_release_curve, double envelope_release_duration_in_seconds,
-										int envelope_damper_sustain_level,
-										int envelope_damper_sustain_curve,
-										double envelope_damper_sustain_duration_in_seconds)
-{
-	instrument_timbre_t timbre = {};
-
-	timbre.waveform = (int8_t)waveform;
-	timbre.envelope_attack_curve = (int8_t)envelope_attack_curve;
-	timbre.envelope_attack_duration_in_seconds = (float)envelope_attack_duration_in_seconds;
-	timbre.envelope_decay_curve = (int8_t)envelope_decay_curve;
-	timbre.envelope_decay_duration_in_seconds = (float)envelope_decay_duration_in_seconds;
-	timbre.envelope_note_on_sustain_level = (uint8_t)envelope_note_on_sustain_level;
-	timbre.envelope_release_curve = (int8_t)envelope_release_curve;
-	timbre.envelope_release_duration_in_seconds = (float)envelope_release_duration_in_seconds;
-	timbre.envelope_damper_sustain_level = (uint8_t)envelope_damper_sustain_level;
-	timbre.envelope_damper_sustain_curve = (int8_t)envelope_damper_sustain_curve;
-	timbre.envelope_damper_sustain_duration_in_seconds = (float)envelope_damper_sustain_duration_in_seconds;
-
-	m_melodic_timbre_map.insert(instrument_code, timbre);
-}
-
-/**********************************************************************************/
-
 void ChiptuneMidiWidget::HandleMelodicChannelTimbreChanged(int channel_index,
 										int waveform,
 										int envelope_attack_curve, double envelope_attack_duration_in_seconds,
@@ -634,21 +602,6 @@ void ChiptuneMidiWidget::HandleMelodicChannelTimbreChanged(int channel_index,
 										int envelope_damper_sustain_curve,
 										double envelope_damper_sustain_duration_in_seconds)
 {
-	QList<QPair<int, int>> const channel_instrument_pair_list = m_p_tune_manager->GetChannelInstrumentPairList();
-	for(int i = 0; i < channel_instrument_pair_list.size(); i++){
-		if(channel_index != channel_instrument_pair_list.at(i).first){
-			continue;
-		}
-		UpdateMelodicTimbreMap(channel_instrument_pair_list.at(i).second, waveform,
-							   envelope_attack_curve, envelope_attack_duration_in_seconds,
-							   envelope_decay_curve, envelope_decay_duration_in_seconds,
-							   envelope_note_on_sustain_level,
-							   envelope_release_curve, envelope_release_duration_in_seconds,
-							   envelope_damper_sustain_level,
-							   envelope_damper_sustain_curve,
-							   envelope_damper_sustain_duration_in_seconds);
-		break;
-	}
 	m_p_tune_manager->SetMelodicChannelTimbre((int8_t)channel_index, (int8_t)waveform,
 											(int8_t)envelope_attack_curve, (float)envelope_attack_duration_in_seconds,
 											(int8_t)envelope_decay_curve, (float)envelope_decay_duration_in_seconds,
@@ -935,8 +888,8 @@ void ChiptuneMidiWidget::on_SaveFilePushButton_released(void)
 void ChiptuneMidiWidget::on_LoadTimbresPushButton_released(void)
 {
 	InstrumentTimbreIniFile timbre_ini_file(QStringLiteral("istrument_timbres.ini"));
-	QMap<int8_t, instrument_timbre_t> timbre_map;
-	int const ret = timbre_ini_file.ReadTimbres(&timbre_map);
+	QMap<int8_t, instrument_timbre_t> instrument_timbre_map;
+	int const ret = timbre_ini_file.ReadTimbres(&instrument_timbre_map);
 
 	do {
 		if(-1 == ret){
@@ -945,77 +898,165 @@ void ChiptuneMidiWidget::on_LoadTimbresPushButton_released(void)
 			break;
 		}
 
-		m_melodic_timbre_map.clear();
-		QMap<int8_t, instrument_timbre_t>::const_iterator iterator = timbre_map.constBegin();
-		while(timbre_map.constEnd() != iterator){
-			m_melodic_timbre_map.insert(iterator.key(), iterator.value());
-			iterator++;
-		}
-
-		ChannelListWidget *p_channel_list_widget = ui->TimbreListWidget->findChild<ChannelListWidget*>();
-		if(nullptr != p_channel_list_widget){
+		ChannelListWidget * const p_channel_list_widget = ui->TimbreListWidget->findChild<ChannelListWidget*>();
+		do{
+			if(nullptr == p_channel_list_widget){
+				break;
+			}
 			QList<QPair<int, int>> const channel_instrument_pair_list =
 					m_p_tune_manager->GetChannelInstrumentPairList();
 			for(int i = 0; i < channel_instrument_pair_list.size(); i++){
 				int const channel_index = channel_instrument_pair_list.at(i).first;
-				int const instrument_code = channel_instrument_pair_list.at(i).second;
-				if(MIDI_PERCUSSION_CHANNEL == channel_index){
-					continue;
-				}
-				if(false == m_melodic_timbre_map.contains(instrument_code)){
-					continue;
-				}
+				int const channel_instrument_code = channel_instrument_pair_list.at(i).second;
+				do
+				{
+					if(MIDI_PERCUSSION_CHANNEL == channel_index){
+						break;
+					}
+					if(false == instrument_timbre_map.contains((int8_t)channel_instrument_code)){
+						break;
+					}
 
-				instrument_timbre_t const timbre = m_melodic_timbre_map.value(instrument_code);
-				p_channel_list_widget->SetMelodicChannelTimbre(channel_index,
-															   timbre.waveform,
-															   timbre.envelope_attack_curve,
-															   timbre.envelope_attack_duration_in_seconds,
-															   timbre.envelope_decay_curve,
-															   timbre.envelope_decay_duration_in_seconds,
-															   timbre.envelope_note_on_sustain_level,
-															   timbre.envelope_release_curve,
-															   timbre.envelope_release_duration_in_seconds,
-															   timbre.envelope_damper_sustain_level,
-															   timbre.envelope_damper_sustain_curve,
-															   timbre.envelope_damper_sustain_duration_in_seconds);
+					instrument_timbre_t const loaded_instrument_timbre
+							= instrument_timbre_map.value((int8_t)channel_instrument_code);
+					p_channel_list_widget->SetMelodicChannelTimbre(channel_index,
+																   loaded_instrument_timbre.waveform,
+																   loaded_instrument_timbre.envelope_attack_curve,
+																   loaded_instrument_timbre.envelope_attack_duration_in_seconds,
+																   loaded_instrument_timbre.envelope_decay_curve,
+																   loaded_instrument_timbre.envelope_decay_duration_in_seconds,
+																   loaded_instrument_timbre.envelope_note_on_sustain_level,
+																   loaded_instrument_timbre.envelope_release_curve,
+																   loaded_instrument_timbre.envelope_release_duration_in_seconds,
+																   loaded_instrument_timbre.envelope_damper_sustain_level,
+																   loaded_instrument_timbre.envelope_damper_sustain_curve,
+																   loaded_instrument_timbre.envelope_damper_sustain_duration_in_seconds,
+																   true);
+					m_p_tune_manager->SetMelodicChannelTimbre((int8_t)channel_index, loaded_instrument_timbre.waveform,
+															loaded_instrument_timbre.envelope_attack_curve,
+															loaded_instrument_timbre.envelope_attack_duration_in_seconds,
+															loaded_instrument_timbre.envelope_decay_curve,
+															loaded_instrument_timbre.envelope_decay_duration_in_seconds,
+															loaded_instrument_timbre.envelope_note_on_sustain_level,
+															loaded_instrument_timbre.envelope_release_curve,
+															loaded_instrument_timbre.envelope_release_duration_in_seconds,
+															loaded_instrument_timbre.envelope_damper_sustain_level,
+															loaded_instrument_timbre.envelope_damper_sustain_curve,
+															loaded_instrument_timbre.envelope_damper_sustain_duration_in_seconds);
+				}while(0);
 			}
-		}
+		}while(0);
 
 	} while(0);
 }
 
 /**********************************************************************************/
+static inline bool IsInstrumentTimbreIdentical(instrument_timbre_t const * const p_original_timbre,
+											   instrument_timbre_t const * const p_compared_timbre)
+{
+	return p_original_timbre->waveform == p_compared_timbre->waveform
+			&& p_original_timbre->envelope_attack_curve == p_compared_timbre->envelope_attack_curve
+			&& qRound(1000.0f * p_original_timbre->envelope_attack_duration_in_seconds)
+				== qRound(1000.0f * p_compared_timbre->envelope_attack_duration_in_seconds)
+			&& p_original_timbre->envelope_decay_curve == p_compared_timbre->envelope_decay_curve
+			&& qRound(1000.0f * p_original_timbre->envelope_decay_duration_in_seconds)
+				== qRound(1000.0f * p_compared_timbre->envelope_decay_duration_in_seconds)
+			&& p_original_timbre->envelope_note_on_sustain_level
+				== p_compared_timbre->envelope_note_on_sustain_level
+			&& p_original_timbre->envelope_release_curve == p_compared_timbre->envelope_release_curve
+			&& qRound(1000.0f * p_original_timbre->envelope_release_duration_in_seconds)
+				== qRound(1000.0f * p_compared_timbre->envelope_release_duration_in_seconds)
+			&& p_original_timbre->envelope_damper_sustain_level
+				== p_compared_timbre->envelope_damper_sustain_level
+			&& p_original_timbre->envelope_damper_sustain_curve
+				== p_compared_timbre->envelope_damper_sustain_curve
+			&& qRound(1000.0f * p_original_timbre->envelope_damper_sustain_duration_in_seconds)
+				== qRound(1000.0f * p_compared_timbre->envelope_damper_sustain_duration_in_seconds);
+}
 
 void ChiptuneMidiWidget::on_StoreTimbresPushButton_released(void)
 {
 	InstrumentTimbreIniFile timbre_ini_file(QStringLiteral("istrument_timbres.ini"));
 
+	instrument_timbre_t const default_instrument_timbre = GetDefaultInstrumentTimbre();
 	QList<QPair<int, int>> const channel_instrument_pair_list = m_p_tune_manager->GetChannelInstrumentPairList();
-	for(int i = 0; i < channel_instrument_pair_list.size(); i++){
-		int const channel_index = channel_instrument_pair_list.at(i).first;
-		int const instrument_code = channel_instrument_pair_list.at(i).second;
-		if(MIDI_PERCUSSION_CHANNEL == channel_index){
-			continue;
+	ChannelListWidget * const p_channel_list_widget = ui->TimbreListWidget->findChild<ChannelListWidget*>();
+	do
+	{
+		if(nullptr == p_channel_list_widget){
+			break;
 		}
-		if(false == m_melodic_timbre_map.contains(instrument_code)){
-			continue;
-		}
+		for(int i = 0; i < channel_instrument_pair_list.size(); i++){
+			int const channel_index = channel_instrument_pair_list.at(i).first;
+			int const channel_instrument_code = channel_instrument_pair_list.at(i).second;
+			do
+			{
+				if(MIDI_PERCUSSION_CHANNEL == channel_index){
+					break;
+				}
+				if(false == p_channel_list_widget->IsOutputEnabled(channel_index)){
+					break;
+				}
 
-		instrument_timbre_t const timbre = m_melodic_timbre_map.value(instrument_code);
-		timbre_ini_file.WriteTimbre((int8_t)instrument_code,
-									timbre.waveform,
-									timbre.envelope_attack_curve,
-									timbre.envelope_attack_duration_in_seconds,
-									timbre.envelope_decay_curve,
-									timbre.envelope_decay_duration_in_seconds,
-									timbre.envelope_note_on_sustain_level,
-									timbre.envelope_release_curve,
-									timbre.envelope_release_duration_in_seconds,
-									timbre.envelope_damper_sustain_level,
-									timbre.envelope_damper_sustain_curve,
-									timbre.envelope_damper_sustain_duration_in_seconds);
-	}
+				int waveform;
+				int envelope_attack_curve; double envelope_attack_duration_in_seconds;
+				int envelope_decay_curve; double envelope_decay_duration_in_seconds;
+				int envelope_note_on_sustain_level;
+				int envelope_release_curve; double envelope_release_duration_in_seconds;
+				int envelope_damper_sustain_level;
+				int envelope_damper_sustain_curve;
+				double envelope_damper_sustain_duration_in_seconds;
+
+				p_channel_list_widget->GetMelodicChannelTimbre(channel_index,
+										&waveform, &envelope_attack_curve, &envelope_attack_duration_in_seconds,
+										&envelope_decay_curve, &envelope_decay_duration_in_seconds,
+										&envelope_note_on_sustain_level,
+										&envelope_release_curve, &envelope_release_duration_in_seconds,
+										&envelope_damper_sustain_level,
+										&envelope_damper_sustain_curve,
+										&envelope_damper_sustain_duration_in_seconds);
+
+				instrument_timbre_t const channel_instrument_timbre =
+				{
+					(int8_t)waveform, //waveform
+
+					(int8_t)envelope_attack_curve, //envelope_attack_curve
+					{0, 0}, //attack_padding[2]
+					(float)envelope_attack_duration_in_seconds, //envelope_attack_duration_in_seconds
+
+					(int8_t)envelope_decay_curve, //envelope_decay_curve
+					{0, 0, 0}, //decay_padding[3]
+					(float)envelope_decay_duration_in_seconds, //envelope_decay_duration_in_seconds
+
+					(uint8_t)envelope_note_on_sustain_level, //envelope_note_on_sustain_level
+
+					(int8_t)envelope_release_curve, //envelope_release_curve
+					{0, 0}, //release_padding[2]
+					(float)envelope_release_duration_in_seconds, //envelope_release_duration_in_seconds
+
+					(uint8_t)envelope_damper_sustain_level, //envelope_damper_sustain_level
+					(int8_t)envelope_damper_sustain_curve, //envelope_damper_sustain_curve
+					{0, 0}, //damper_sustain_padding[2]
+					(float)envelope_damper_sustain_duration_in_seconds //envelope_damper_sustain_duration_in_seconds
+				};
+				if(true == IsInstrumentTimbreIdentical(&default_instrument_timbre, &channel_instrument_timbre)){
+					break;
+				}
+				timbre_ini_file.WriteTimbre((int8_t)channel_instrument_code,
+											channel_instrument_timbre.waveform,
+											channel_instrument_timbre.envelope_attack_curve,
+											channel_instrument_timbre.envelope_attack_duration_in_seconds,
+											channel_instrument_timbre.envelope_decay_curve,
+											channel_instrument_timbre.envelope_decay_duration_in_seconds,
+											channel_instrument_timbre.envelope_note_on_sustain_level,
+											channel_instrument_timbre.envelope_release_curve,
+											channel_instrument_timbre.envelope_release_duration_in_seconds,
+											channel_instrument_timbre.envelope_damper_sustain_level,
+											channel_instrument_timbre.envelope_damper_sustain_curve,
+											channel_instrument_timbre.envelope_damper_sustain_duration_in_seconds);
+			}while(0);
+		}
+	} while(0);
 }
 
 /**********************************************************************************/

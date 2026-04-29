@@ -4,11 +4,9 @@
 #include <QWidget>
 #include <QToolBox>
 #include <QFileInfo>
-#include <QMap>
 
 #include "TuneManager.h"
 #include "AudioPlayer.h"
-#include "InstrumentTimbreIniFile.h"
 
 
 namespace Ui {
@@ -71,15 +69,6 @@ private:
 	void EjectMidiFile(void);
 	void UpdateTempoLabelText(void);
 	void SetTimbresFileButtonsEnabled(bool is_enabled);
-	void UpdateMelodicTimbreMap(int instrument_code,
-								   int waveform,
-								   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
-								   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
-								   int envelope_note_on_sustain_level,
-								   int envelope_release_curve, double envelope_release_duration_in_seconds,
-								   int envelope_damper_sustain_level,
-								   int envelope_damper_sustain_curve,
-								   double envelope_damper_sustain_duration_in_seconds);
 
 private:
 	bool IsPlayPauseButtonInPlayState(void);
@@ -98,7 +87,6 @@ private :
 	QTimer				m_defer_start_play_timer;
 
 	int					m_audio_player_buffer_in_milliseconds;
-	QMap<int, instrument_timbre_t> m_melodic_timbre_map;
 private:
 	WaveChartView *		m_p_wave_chartview;
 	SequencerWidget *	m_p_sequencer_widget;

@@ -5,7 +5,7 @@
 
 #include "chiptune_midi_define.h"
 
-#include "GetInstrumentNameString.h"
+#include "ChiptuneMidiValues.h"
 #include "MelodicTimbreFrame.h"
 
 #include "ChannelNodeWidget.h"
@@ -144,7 +144,8 @@ void ChannelNodeWidget::SetMelodicChannelTimbre(int waveform,
 			   int envelope_release_curve, double envelope_release_duration_in_seconds,
 			   int envelope_damper_sustain_level,
 			   int envelope_damper_sustain_curve,
-			   double envelope_damper_sustain_duration_in_seconds)
+			   double envelope_damper_sustain_duration_in_seconds,
+			   bool is_to_darker_title_for_a_while)
 {
 	do
 	{
@@ -161,13 +162,17 @@ void ChannelNodeWidget::SetMelodicChannelTimbre(int waveform,
 											envelope_damper_sustain_curve,
 											envelope_damper_sustain_duration_in_seconds);
 
+		if(false == is_to_darker_title_for_a_while){
+			break;
+		}
+
 		QColor const dark24_color = QColor(24, 24, 24);
 		ui->ExpandCollapsePushButton->setStyleSheet(m_expand_collapse_push_button_original_style_sheet
 				+ QString::asprintf("background-color: rgb(%d, %d, %d);",
 									dark24_color.red(),
 									dark24_color.green(),
 									dark24_color.blue()));
-		QTimer::singleShot(2500, this, [this]() {
+		QTimer::singleShot(5000, this, [this]() {
 			ui->ExpandCollapsePushButton->setStyleSheet(m_expand_collapse_push_button_original_style_sheet);
 		});
 	}while(0);
@@ -175,9 +180,16 @@ void ChannelNodeWidget::SetMelodicChannelTimbre(int waveform,
 
 /**********************************************************************************/
 
-void ChannelNodeWidget::setOutputEnabled(bool is_to_enabled)
+void ChannelNodeWidget::SetOutputEnabled(bool is_to_enabled)
 {
 	ui->OutputEnabledCheckBox->setChecked(is_to_enabled);
+}
+
+/**********************************************************************************/
+
+bool ChannelNodeWidget::IsOutputEnabled(void)
+{
+	return ui->OutputEnabledCheckBox->isChecked();
 }
 
 /**********************************************************************************/

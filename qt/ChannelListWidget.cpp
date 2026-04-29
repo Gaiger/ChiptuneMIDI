@@ -50,10 +50,19 @@ void ChannelListWidget::SetAllOutputEnabled(bool is_enabled)
 	for (int i = 0; i < m_p_vboxlayout->count(); i++) {
 		ChannelNodeWidget *p_channelnode_widget = (ChannelNodeWidget*)m_p_vboxlayout->itemAt(i)->widget();
 		if(nullptr != p_channelnode_widget){
-			p_channelnode_widget->setOutputEnabled(is_enabled);
+			p_channelnode_widget->SetOutputEnabled(is_enabled);
 		}
 	}
 
+}
+
+/**********************************************************************************/
+
+bool ChannelListWidget::IsOutputEnabled(int channel_index)
+{
+	ChannelNodeWidget *p_channel_node_widget
+			= (ChannelNodeWidget*)m_p_vboxlayout->itemAt(m_channel_position_map.value(channel_index))->widget();
+	return p_channel_node_widget->IsOutputEnabled();
 }
 
 /**********************************************************************************/
@@ -88,7 +97,8 @@ void ChannelListWidget::SetMelodicChannelTimbre(int channel_index, int waveform,
 			   int envelope_release_curve, double envelope_release_duration_in_seconds,
 			   int envelope_damper_sustain_level,
 			   int envelope_damper_sustain_curve,
-			   double envelope_damper_sustain_duration_in_seconds)
+			   double envelope_damper_sustain_duration_in_seconds,
+			   bool is_to_darker_title_for_a_while)
 {
 	ChannelNodeWidget *p_channel_node_widget
 			= (ChannelNodeWidget*)m_p_vboxlayout->itemAt(m_channel_position_map.value(channel_index))->widget();
@@ -100,5 +110,6 @@ void ChannelListWidget::SetMelodicChannelTimbre(int channel_index, int waveform,
 									envelope_release_curve, envelope_release_duration_in_seconds,
 									envelope_damper_sustain_level,
 									envelope_damper_sustain_curve,
-									envelope_damper_sustain_duration_in_seconds);
+									envelope_damper_sustain_duration_in_seconds,
+									is_to_darker_title_for_a_while);
 }

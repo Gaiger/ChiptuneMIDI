@@ -2,7 +2,8 @@
 
 #include "chiptune_midi_define.h"
 
-#include "GetInstrumentNameString.h"
+#include "ChiptuneMidiValues.h"
+#include "TuneManager.h"
 
 #define EXPAND_CASE(name, code) case code: return QStringLiteral(#name);
 
@@ -144,4 +145,46 @@ QColor GetChannelColor(int const channel_index)
 	}
 	color.setAlpha(0xC0);
 	return color;
+}
+
+#define DEFAULT_WAVEFORM							(TuneManager::WaveformTriangle)
+//#define DEFAULT_WAVEFORM_DUTYCYCLE					(WaveformDutyCycle50)
+#define DEFAULT_ENVELOPE_ATTACK_CURVE				(TuneManager::EnvelopeCurveLinear)
+#define DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND	(0.02f)
+#define DEFAULT_ENVELOPE_DECAY_CURVE				(TuneManager::EnvelopeCurveFermi)
+#define DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND	(0.01f)
+#define DEFAULT_ENVELOPE_NOTE_ON_SUSTAIN_LEVEL		(96)
+#define DEFAULT_ENVELOPE_RELEASE_CURVE				(TuneManager::EnvelopeCurveExponential)
+#define DEFAULT_ENVELOPE_RELEASE_DURATION_IN_SECOND	(0.03f)
+#define DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_LEVEL	(72)
+#define DEFAULT_ENVELOPE_DAMPER_ON_CURVE			(TuneManager::EnvelopeCurveLinear)
+#define DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_DURATION_IN_SECOND (8.0f)
+
+/**********************************************************************************/
+
+instrument_timbre_t GetDefaultInstrumentTimbre(void)
+{
+	return
+	{
+		(int8_t)DEFAULT_WAVEFORM, //waveform
+
+		(int8_t)DEFAULT_ENVELOPE_ATTACK_CURVE, //envelope_attack_curve
+		{0, 0}, //attack_padding
+		DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND,
+
+		(int8_t)DEFAULT_ENVELOPE_DECAY_CURVE, //envelope_decay_curve
+		{0, 0, 0}, //decay_padding[3]
+		DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND, //envelope_decay_duration_in_seconds
+
+		(uint8_t)DEFAULT_ENVELOPE_NOTE_ON_SUSTAIN_LEVEL, //envelope_note_on_sustain_level
+
+		(int8_t)DEFAULT_ENVELOPE_RELEASE_CURVE, //envelope_release_curve
+		{0, 0}, //release_padding[2]
+		DEFAULT_ENVELOPE_RELEASE_DURATION_IN_SECOND, //envelope_release_duration_in_seconds
+
+		(uint8_t)DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_LEVEL, //envelope_damper_sustain_level
+		(int8_t)DEFAULT_ENVELOPE_DAMPER_ON_CURVE, //envelope_damper_sustain_curve
+		{0, 0}, //damper_sustain_padding[2]
+		DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_DURATION_IN_SECOND //envelope_damper_sustain_duration_in_seconds
+	};
 }

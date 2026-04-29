@@ -5,7 +5,7 @@
 #include <QScrollBar>
 
 #include "chiptune_midi_define.h"
-#include "GetInstrumentNameString.h"
+#include "ChiptuneMidiValues.h"
 
 #include "SequencerWidget.h"
 

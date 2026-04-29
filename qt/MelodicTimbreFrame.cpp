@@ -174,14 +174,14 @@ void MelodicTimbreFrame::SetTimbre(int waveform,
 	}
 
 	ui->AttackCurveComboBox->setCurrentIndex(envelope_attack_curve);
-	ui->AttackTimeSpinBox->setValue((int)(1000.0 * envelope_attack_duration_in_seconds));
+	ui->AttackTimeSpinBox->setValue(qRound(1000.0 * envelope_attack_duration_in_seconds));
 	ui->DecayCurveComboBox->setCurrentIndex(envelope_decay_curve);
-	ui->DecayTimeSpinBox->setValue((int)(1000.0 * envelope_decay_duration_in_seconds));
+	ui->DecayTimeSpinBox->setValue(qRound(1000.0 * envelope_decay_duration_in_seconds));
 	if(0 != ui->DecayTimeSpinBox->value()){
 		ui->SustainLevelSpinBox->setValue(envelope_note_on_sustain_level);
 	}
 	ui->ReleaseCurveComboBox->setCurrentIndex(envelope_release_curve);
-	ui->ReleaseTimeSpinBox->setValue((int)(1000.0 * envelope_release_duration_in_seconds));
+	ui->ReleaseTimeSpinBox->setValue(qRound(1000.0 * envelope_release_duration_in_seconds));
 	int damper_sustain_level = envelope_damper_sustain_level;
 	if(damper_sustain_level > ui->SustainLevelSpinBox->value()){
 		damper_sustain_level = ui->SustainLevelSpinBox->value();
