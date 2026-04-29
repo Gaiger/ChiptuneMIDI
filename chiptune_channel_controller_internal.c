@@ -170,10 +170,11 @@ int set_melodic_channel_timbre(int8_t const channel_index, int8_t const waveform
 
 	if(0 == p_channel_controller->envelope_decay_same_index_number){
 		if(INT8_MAX_PLUS_1 != p_channel_controller->envelope_note_on_sustain_level){
-			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_decay_same_index_number is zero"
-										 " but envelope_note_on_sustain_level is not INT8_MAX_PLUS_1\r\n");
+			CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_decay_same_index_number is zero; "
+										 "force envelope_note_on_sustain_level to INT8_MAX_PLUS_1\r\n");
+			p_channel_controller->envelope_note_on_sustain_level = INT8_MAX_PLUS_1;
+			ret |= 0x01 << 1;
 		}
-		ret |= 0x01 << 1;
 	}
 
 	pp_phase_table = &p_channel_controller->p_envelope_release_table;
@@ -191,6 +192,15 @@ int set_melodic_channel_timbre(int8_t const channel_index, int8_t const waveform
 	set_decline_curve(pp_phase_table, envelope_damper_sustain_curve);
 	p_channel_controller->envelop_damper_sustain_level
 			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(envelope_damper_sustain_level);
+	if(p_channel_controller->envelop_damper_sustain_level
+			> p_channel_controller->envelope_note_on_sustain_level){
+		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_sustain_level is greater than "
+									 "envelope_note_on_sustain_level; clamp to envelope_note_on_sustain_level\r\n");
+		p_channel_controller->envelop_damper_sustain_level
+				= p_channel_controller->envelope_note_on_sustain_level;
+		ret |= 0x01 << 3;
+	}
+
 	do {
 		if(FLT_MAX == envelope_damper_sustain_duration_in_seconds){
 			p_channel_controller->envelope_damper_sustain_same_index_number = UINT16_MAX;
