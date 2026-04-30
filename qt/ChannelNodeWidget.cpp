@@ -44,22 +44,7 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 			ui->ExpandCollapsePushButton->setEnabled(false);
 			break;
 		}
-
-#define CHIPTUNE_INSTRUMENT_NOT_SPECIFIED			(-1)
-#define CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL			(-2)
-		do
-		{
-			if(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED == instrument_index){
-				instrument_name = QString("Not Specified");
-				break;
-			}
-			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL == instrument_index){
-				instrument_name = QString("Unused channel");
-				break;
-			}
-
-			instrument_name = GetInstrumentNameString(instrument_index);
-		}while(0);
+		instrument_name = GetInstrumentNameString(instrument_index);
 
 		m_p_melodic_timbre_frame = new MelodicTimbreFrame(this);
 		QGridLayout *p_layout = new QGridLayout(ui->MelodicTimbreWidget);

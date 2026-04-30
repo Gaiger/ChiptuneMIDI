@@ -1,5 +1,6 @@
 #include <QRegularExpression>
 
+#include "chiptune.h"
 #include "chiptune_midi_define.h"
 
 #include "ChiptuneMidiValues.h"
@@ -24,6 +25,13 @@ QString GetRawInstrumentNameString(int const instrument_code)
 // clazy:excludeall=use-static-qregularexpression
 QString GetInstrumentNameString(int const instrument_code)
 {
+	if(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED == instrument_code){
+		return QStringLiteral("Not Specified");
+	}
+	if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL == instrument_code){
+		return QStringLiteral("Unused channel");
+	}
+
 	QString name = GetRawInstrumentNameString(instrument_code);
 
 	// Step 1: CamelCase 拆開：...aB... -> ...a B...

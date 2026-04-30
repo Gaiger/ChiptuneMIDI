@@ -1,38 +1,41 @@
-#include "InstrumentTimbreIniFile.h"
-
-#include "../chiptune.h"
-#include "../chiptune_midi_define.h"
-
 #include <QDebug>
 #include <QFileInfo>
 #include <QString>
 #include <QStringList>
 
-#define EXPAND_CASE_TO_STR(ENUMS_ELEMENT, VAL)					case VAL:	return #ENUMS_ELEMENT;
+#include "chiptune.h"
+#include "chiptune_midi_define.h"
+
+#include "InstrumentTimbreIniFile.h"
+
+#define INSTRUMENT_CODE_UNKNOWN								(-128)
+
 #define EXPAND_IF_STR_TO_CODE(ENUMS_ELEMENT, VAL)				\
-																if(name_string == QStringLiteral(#ENUMS_ELEMENT)){ \
+																if(name_string == QStringLiteral(#ENUMS_ELEMENT) \
+																	|| name_string == GetInstrumentNameString(VAL)){ \
 																	return VAL; \
 																}
 
 /******************************************************************************/
-static char const * const GetInstrumentNameString(int8_t const instrument_code)
+static int GetInstrumentCode(QString const& name_string)
 {
-	switch (instrument_code)
-	{
-		MIDI_INSTRUMENT_CODE_LIST(EXPAND_CASE_TO_STR)
+	if(name_string == GetInstrumentNameString(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED)){
+		return CHIPTUNE_INSTRUMENT_NOT_SPECIFIED;
+	}
+	if(name_string == GetInstrumentNameString(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL)){
+		return CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL;
 	}
 
-	return "UnknownInstrument";
+	MIDI_INSTRUMENT_CODE_LIST(EXPAND_IF_STR_TO_CODE)
+	return INSTRUMENT_CODE_UNKNOWN;
 }
 
 /******************************************************************************/
-static int8_t GetInstrumentCode(QString const& name_string)
+static QString GetInstrumentTimbreGroupName(int8_t const instrument_code)
 {
-	MIDI_INSTRUMENT_CODE_LIST(EXPAND_IF_STR_TO_CODE)
-	return -1;
+	return GetInstrumentNameString(instrument_code);
 }
 
-#undef EXPAND_CASE_TO_STR
 #undef EXPAND_IF_STR_TO_CODE
 
 /******************************************************************************/
@@ -163,7 +166,7 @@ int InstrumentTimbreIniFile::ReadTimbre(int8_t const instrument_code, int8_t * c
 		return -1;
 	}
 
-	QString const instrument_name_string = QString::fromLatin1(GetInstrumentNameString(instrument_code));
+	QString const instrument_name_string = GetInstrumentTimbreGroupName(instrument_code);
 	if(false == m_settings.childGroups().contains(instrument_name_string)){
 		return -2;
 	}
@@ -324,15 +327,15 @@ int InstrumentTimbreIniFile::ReadTimbres(QMap<int8_t, instrument_timbre_t> * con
 	int ret = 0;
 	QStringList const instrument_name_strings = m_settings.childGroups();
 	for(QString const& instrument_name_string : instrument_name_strings){
-		int8_t const instrument_code = GetInstrumentCode(instrument_name_string);
-		if(0 > instrument_code){
+		int const instrument_code = GetInstrumentCode(instrument_name_string);
+		if(INSTRUMENT_CODE_UNKNOWN == instrument_code){
 			qWarning() << "Instrument timbre unknown instrument:" << instrument_name_string;
 			ret = 1;
 			continue;
 		}
 
 		instrument_timbre_t read_instrument_timbre = {};
-		int const read_ret = ReadTimbre(instrument_code,
+		int const read_ret = ReadTimbre((int8_t)instrument_code,
 										&read_instrument_timbre.waveform,
 										&read_instrument_timbre.envelope_attack_curve,
 										&read_instrument_timbre.envelope_attack_duration_in_seconds,
@@ -349,7 +352,7 @@ int InstrumentTimbreIniFile::ReadTimbres(QMap<int8_t, instrument_timbre_t> * con
 		}else if(0 > read_ret){
 			return read_ret;
 		}
-		p_instrument_timbres->insert(instrument_code, read_instrument_timbre);
+		p_instrument_timbres->insert((int8_t)instrument_code, read_instrument_timbre);
 	}
 
 	return ret;
@@ -368,7 +371,7 @@ void InstrumentTimbreIniFile::WriteTimbre(int8_t const instrument_code, int8_t c
 										  int8_t const envelope_damper_sustain_curve,
 										  float const envelope_damper_sustain_duration_in_seconds)
 {
-	m_settings.beginGroup(QString::fromLatin1(GetInstrumentNameString(instrument_code)));
+	m_settings.beginGroup(GetInstrumentTimbreGroupName(instrument_code));
 	m_settings.setValue("waveform", GetWaveformNameString(waveform));
 	if(QStringLiteral("square") == GetWaveformNameString(waveform)){
 		m_settings.setValue("dutycycle", GetDutycycleNameString(waveform));
