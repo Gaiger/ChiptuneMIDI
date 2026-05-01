@@ -155,6 +155,46 @@ QColor GetChannelColor(int const channel_index)
 	return color;
 }
 
+/**********************************************************************************/
+
+instrument_timbre_t GetInstrumentTimbre(int waveform,
+										int envelope_attack_curve,
+										float envelope_attack_duration_in_seconds,
+										int envelope_decay_curve,
+										float envelope_decay_duration_in_seconds,
+										int envelope_note_on_sustain_level,
+										int envelope_release_curve,
+										float envelope_release_duration_in_seconds,
+										int envelope_damper_sustain_level,
+										int envelope_damper_sustain_curve,
+										float envelope_damper_sustain_duration_in_seconds)
+{
+	return
+	{
+		(int8_t)waveform, //waveform
+
+		(int8_t)envelope_attack_curve, //envelope_attack_curve
+		{0, 0}, //attack_padding
+		envelope_attack_duration_in_seconds,
+
+		(int8_t)envelope_decay_curve, //envelope_decay_curve
+		{0, 0, 0}, //decay_padding[3]
+		envelope_decay_duration_in_seconds, //envelope_decay_duration_in_seconds
+
+		(uint8_t)envelope_note_on_sustain_level, //envelope_note_on_sustain_level
+
+		(int8_t)envelope_release_curve, //envelope_release_curve
+		{0, 0}, //release_padding[2]
+		envelope_release_duration_in_seconds, //envelope_release_duration_in_seconds
+
+		(uint8_t)envelope_damper_sustain_level, //envelope_damper_sustain_level
+		(int8_t)envelope_damper_sustain_curve, //envelope_damper_sustain_curve
+		{0, 0}, //damper_sustain_padding[2]
+		envelope_damper_sustain_duration_in_seconds //envelope_damper_sustain_duration_in_seconds
+	};
+}
+
+/**********************************************************************************/
 #define DEFAULT_WAVEFORM							(TuneManager::WaveformTriangle)
 //#define DEFAULT_WAVEFORM_DUTYCYCLE					(WaveformDutyCycle50)
 #define DEFAULT_ENVELOPE_ATTACK_CURVE				(TuneManager::EnvelopeCurveLinear)
@@ -168,31 +208,17 @@ QColor GetChannelColor(int const channel_index)
 #define DEFAULT_ENVELOPE_DAMPER_ON_CURVE			(TuneManager::EnvelopeCurveLinear)
 #define DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_DURATION_IN_SECOND (8.0f)
 
-/**********************************************************************************/
-
 instrument_timbre_t GetDefaultInstrumentTimbre(void)
 {
-	return
-	{
-		(int8_t)DEFAULT_WAVEFORM, //waveform
-
-		(int8_t)DEFAULT_ENVELOPE_ATTACK_CURVE, //envelope_attack_curve
-		{0, 0}, //attack_padding
-		DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND,
-
-		(int8_t)DEFAULT_ENVELOPE_DECAY_CURVE, //envelope_decay_curve
-		{0, 0, 0}, //decay_padding[3]
-		DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND, //envelope_decay_duration_in_seconds
-
-		(uint8_t)DEFAULT_ENVELOPE_NOTE_ON_SUSTAIN_LEVEL, //envelope_note_on_sustain_level
-
-		(int8_t)DEFAULT_ENVELOPE_RELEASE_CURVE, //envelope_release_curve
-		{0, 0}, //release_padding[2]
-		DEFAULT_ENVELOPE_RELEASE_DURATION_IN_SECOND, //envelope_release_duration_in_seconds
-
-		(uint8_t)DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_LEVEL, //envelope_damper_sustain_level
-		(int8_t)DEFAULT_ENVELOPE_DAMPER_ON_CURVE, //envelope_damper_sustain_curve
-		{0, 0}, //damper_sustain_padding[2]
-		DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_DURATION_IN_SECOND //envelope_damper_sustain_duration_in_seconds
-	};
+	return GetInstrumentTimbre(DEFAULT_WAVEFORM,
+							   DEFAULT_ENVELOPE_ATTACK_CURVE,
+							   DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND,
+							   DEFAULT_ENVELOPE_DECAY_CURVE,
+							   DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND,
+							   DEFAULT_ENVELOPE_NOTE_ON_SUSTAIN_LEVEL,
+							   DEFAULT_ENVELOPE_RELEASE_CURVE,
+							   DEFAULT_ENVELOPE_RELEASE_DURATION_IN_SECOND,
+							   DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_LEVEL,
+							   DEFAULT_ENVELOPE_DAMPER_ON_CURVE,
+							   DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_DURATION_IN_SECOND);
 }

@@ -51,6 +51,7 @@ typedef struct
 
 #define WAV_HEADER_SIZE							(sizeof(wav_header_t))
 
+/**********************************************************************************/
 void fill_wav_header(unsigned int const number_of_channels, unsigned int const sampling_rate,
 					 unsigned int const bits_per_sample, unsigned int const wave_data_size_in_bytes,
 						  unsigned char const wav_header_array[WAV_HEADER_SIZE])
@@ -198,6 +199,9 @@ void SetFontSizeForWidgetSubtree(QWidget * const p_root_widget, int const target
 #endif
 
 /**********************************************************************************/
+#define INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING	QStringLiteral("instrument_timbres.ini")
+
+
 #define PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS 		(35)
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -269,8 +273,10 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager * p_tune_manager, QWidget *pa
 
 	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
 	ui->SaveFilePushButton->setToolTip(tr("Save as .wav file"));
-	ui->LoadTimbresPushButton->setToolTip(tr("Load instrument timbre parameters from istrument_timbres.ini"));
-	ui->StoreTimbresPushButton->setToolTip(tr("Store instrument timbre parameters for output-enabled channels to istrument_timbres.ini"));
+	ui->LoadTimbresPushButton->setToolTip(tr("Load instrument timbre parameters from %1")
+										  .arg(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING));
+	ui->StoreTimbresPushButton->setToolTip(tr("Store instrument timbre parameters for output-enabled channels to %1")
+										   .arg(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING));
 
 	ui->PitchShiftSpinBox->setToolTip(tr("Shift the pitch in the unit of semitone"));
 	QLineEdit *p_lineEdit = ui->PitchShiftSpinBox->findChild<QLineEdit *>();
@@ -884,17 +890,40 @@ void ChiptuneMidiWidget::on_SaveFilePushButton_released(void)
 }
 
 /**********************************************************************************/
+static inline bool IsInstrumentTimbreIdentical(instrument_timbre_t const * const p_original_timbre,
+											   instrument_timbre_t const * const p_compared_timbre)
+{
+	return p_original_timbre->waveform == p_compared_timbre->waveform
+			&& p_original_timbre->envelope_attack_curve == p_compared_timbre->envelope_attack_curve
+			&& qRound(1000.0f * p_original_timbre->envelope_attack_duration_in_seconds)
+				== qRound(1000.0f * p_compared_timbre->envelope_attack_duration_in_seconds)
+			&& p_original_timbre->envelope_decay_curve == p_compared_timbre->envelope_decay_curve
+			&& qRound(1000.0f * p_original_timbre->envelope_decay_duration_in_seconds)
+				== qRound(1000.0f * p_compared_timbre->envelope_decay_duration_in_seconds)
+			&& p_original_timbre->envelope_note_on_sustain_level
+				== p_compared_timbre->envelope_note_on_sustain_level
+			&& p_original_timbre->envelope_release_curve == p_compared_timbre->envelope_release_curve
+			&& qRound(1000.0f * p_original_timbre->envelope_release_duration_in_seconds)
+				== qRound(1000.0f * p_compared_timbre->envelope_release_duration_in_seconds)
+			&& p_original_timbre->envelope_damper_sustain_level
+				== p_compared_timbre->envelope_damper_sustain_level
+			&& p_original_timbre->envelope_damper_sustain_curve
+				== p_compared_timbre->envelope_damper_sustain_curve
+			&& qRound(1000.0f * p_original_timbre->envelope_damper_sustain_duration_in_seconds)
+				== qRound(1000.0f * p_compared_timbre->envelope_damper_sustain_duration_in_seconds);
+}
 
+/**********************************************************************************/
 void ChiptuneMidiWidget::on_LoadTimbresPushButton_released(void)
 {
-	InstrumentTimbreIniFile timbre_ini_file(QStringLiteral("istrument_timbres.ini"));
+	InstrumentTimbreIniFile timbre_ini_file(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING);
 	QMap<int8_t, instrument_timbre_t> instrument_timbre_map;
 	int const ret = timbre_ini_file.ReadTimbres(&instrument_timbre_map);
 
 	do {
 		if(-1 == ret){
 			QMessageBox::warning(this, QStringLiteral("Load Timbres"),
-								 QStringLiteral("istrument_timbres.ini not found."));
+								 tr("%1 not found.").arg(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING));
 			break;
 		}
 
@@ -919,30 +948,69 @@ void ChiptuneMidiWidget::on_LoadTimbresPushButton_released(void)
 
 					instrument_timbre_t const loaded_instrument_timbre
 							= instrument_timbre_map.value((int8_t)channel_instrument_code);
-					p_channel_list_widget->SetMelodicChannelTimbre(channel_index,
-																   loaded_instrument_timbre.waveform,
-																   loaded_instrument_timbre.envelope_attack_curve,
-																   loaded_instrument_timbre.envelope_attack_duration_in_seconds,
-																   loaded_instrument_timbre.envelope_decay_curve,
-																   loaded_instrument_timbre.envelope_decay_duration_in_seconds,
-																   loaded_instrument_timbre.envelope_note_on_sustain_level,
-																   loaded_instrument_timbre.envelope_release_curve,
-																   loaded_instrument_timbre.envelope_release_duration_in_seconds,
-																   loaded_instrument_timbre.envelope_damper_sustain_level,
-																   loaded_instrument_timbre.envelope_damper_sustain_curve,
-																   loaded_instrument_timbre.envelope_damper_sustain_duration_in_seconds,
-																   true);
-					m_p_tune_manager->SetMelodicChannelTimbre((int8_t)channel_index, loaded_instrument_timbre.waveform,
-															loaded_instrument_timbre.envelope_attack_curve,
-															loaded_instrument_timbre.envelope_attack_duration_in_seconds,
-															loaded_instrument_timbre.envelope_decay_curve,
-															loaded_instrument_timbre.envelope_decay_duration_in_seconds,
-															loaded_instrument_timbre.envelope_note_on_sustain_level,
-															loaded_instrument_timbre.envelope_release_curve,
-															loaded_instrument_timbre.envelope_release_duration_in_seconds,
-															loaded_instrument_timbre.envelope_damper_sustain_level,
-															loaded_instrument_timbre.envelope_damper_sustain_curve,
-															loaded_instrument_timbre.envelope_damper_sustain_duration_in_seconds);
+
+					int waveform;
+					int envelope_attack_curve; double envelope_attack_duration_in_seconds;
+					int envelope_decay_curve; double envelope_decay_duration_in_seconds;
+					int envelope_note_on_sustain_level;
+					int envelope_release_curve; double envelope_release_duration_in_seconds;
+					int envelope_damper_sustain_level;
+					int envelope_damper_sustain_curve;
+					double envelope_damper_sustain_duration_in_seconds;
+					p_channel_list_widget->GetMelodicChannelTimbre(channel_index,
+											&waveform, &envelope_attack_curve, &envelope_attack_duration_in_seconds,
+											&envelope_decay_curve, &envelope_decay_duration_in_seconds,
+											&envelope_note_on_sustain_level,
+											&envelope_release_curve, &envelope_release_duration_in_seconds,
+											&envelope_damper_sustain_level,
+											&envelope_damper_sustain_curve,
+											&envelope_damper_sustain_duration_in_seconds);
+					instrument_timbre_t const gui_instrument_timbre =
+							GetInstrumentTimbre(waveform,
+												envelope_attack_curve,
+												(float)envelope_attack_duration_in_seconds,
+												envelope_decay_curve,
+												(float)envelope_decay_duration_in_seconds,
+												envelope_note_on_sustain_level,
+												envelope_release_curve,
+												(float)envelope_release_duration_in_seconds,
+												envelope_damper_sustain_level,
+												envelope_damper_sustain_curve,
+												(float)envelope_damper_sustain_duration_in_seconds);
+					if(true == IsInstrumentTimbreIdentical(&loaded_instrument_timbre, &gui_instrument_timbre)){
+						break;
+					}
+					p_channel_list_widget->SetMelodicChannelTimbre(
+								channel_index,
+								loaded_instrument_timbre.waveform,
+								loaded_instrument_timbre.envelope_attack_curve,
+								loaded_instrument_timbre.envelope_attack_duration_in_seconds,
+								loaded_instrument_timbre.envelope_decay_curve,
+								loaded_instrument_timbre.envelope_decay_duration_in_seconds,
+								loaded_instrument_timbre.envelope_note_on_sustain_level,
+								loaded_instrument_timbre.envelope_release_curve,
+								loaded_instrument_timbre.envelope_release_duration_in_seconds,
+								loaded_instrument_timbre.envelope_damper_sustain_level,
+								loaded_instrument_timbre.envelope_damper_sustain_curve,
+								loaded_instrument_timbre.envelope_damper_sustain_duration_in_seconds,
+								true);
+					m_p_tune_manager->SetMelodicChannelTimbre(
+								(int8_t)channel_index,
+								loaded_instrument_timbre.waveform,
+								loaded_instrument_timbre.envelope_attack_curve,
+								loaded_instrument_timbre.envelope_attack_duration_in_seconds,
+								loaded_instrument_timbre.envelope_decay_curve,
+								loaded_instrument_timbre.envelope_decay_duration_in_seconds,
+								loaded_instrument_timbre.envelope_note_on_sustain_level,
+								loaded_instrument_timbre.envelope_release_curve,
+								loaded_instrument_timbre.envelope_release_duration_in_seconds,
+								loaded_instrument_timbre.envelope_damper_sustain_level,
+								loaded_instrument_timbre.envelope_damper_sustain_curve,
+								loaded_instrument_timbre.envelope_damper_sustain_duration_in_seconds);
+					qInfo() << Q_FUNC_INFO
+							<< "loaded timbre,"
+							<< "channel =" << channel_index
+							<< "instrument =" << GetInstrumentNameString(channel_instrument_code);
 				}while(0);
 			}
 		}while(0);
@@ -951,34 +1019,12 @@ void ChiptuneMidiWidget::on_LoadTimbresPushButton_released(void)
 }
 
 /**********************************************************************************/
-static inline bool IsInstrumentTimbreIdentical(instrument_timbre_t const * const p_original_timbre,
-											   instrument_timbre_t const * const p_compared_timbre)
-{
-	return p_original_timbre->waveform == p_compared_timbre->waveform
-			&& p_original_timbre->envelope_attack_curve == p_compared_timbre->envelope_attack_curve
-			&& qRound(1000.0f * p_original_timbre->envelope_attack_duration_in_seconds)
-				== qRound(1000.0f * p_compared_timbre->envelope_attack_duration_in_seconds)
-			&& p_original_timbre->envelope_decay_curve == p_compared_timbre->envelope_decay_curve
-			&& qRound(1000.0f * p_original_timbre->envelope_decay_duration_in_seconds)
-				== qRound(1000.0f * p_compared_timbre->envelope_decay_duration_in_seconds)
-			&& p_original_timbre->envelope_note_on_sustain_level
-				== p_compared_timbre->envelope_note_on_sustain_level
-			&& p_original_timbre->envelope_release_curve == p_compared_timbre->envelope_release_curve
-			&& qRound(1000.0f * p_original_timbre->envelope_release_duration_in_seconds)
-				== qRound(1000.0f * p_compared_timbre->envelope_release_duration_in_seconds)
-			&& p_original_timbre->envelope_damper_sustain_level
-				== p_compared_timbre->envelope_damper_sustain_level
-			&& p_original_timbre->envelope_damper_sustain_curve
-				== p_compared_timbre->envelope_damper_sustain_curve
-			&& qRound(1000.0f * p_original_timbre->envelope_damper_sustain_duration_in_seconds)
-				== qRound(1000.0f * p_compared_timbre->envelope_damper_sustain_duration_in_seconds);
-}
-
 void ChiptuneMidiWidget::on_StoreTimbresPushButton_released(void)
 {
-	InstrumentTimbreIniFile timbre_ini_file(QStringLiteral("istrument_timbres.ini"));
+	InstrumentTimbreIniFile timbre_ini_file(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING);
 
-	instrument_timbre_t const default_instrument_timbre = GetDefaultInstrumentTimbre();
+	QMap<int8_t, instrument_timbre_t> ini_instrument_timbre_map;
+	timbre_ini_file.ReadTimbres(&ini_instrument_timbre_map);
 	QList<QPair<int, int>> const channel_instrument_pair_list = m_p_tune_manager->GetChannelInstrumentPairList();
 	ChannelListWidget * const p_channel_list_widget = ui->TimbreListWidget->findChild<ChannelListWidget*>();
 	do
@@ -1017,31 +1063,49 @@ void ChiptuneMidiWidget::on_StoreTimbresPushButton_released(void)
 										&envelope_damper_sustain_duration_in_seconds);
 
 				instrument_timbre_t const channel_instrument_timbre =
+						GetInstrumentTimbre(waveform,
+											envelope_attack_curve,
+											(float)envelope_attack_duration_in_seconds,
+											envelope_decay_curve,
+											(float)envelope_decay_duration_in_seconds,
+											envelope_note_on_sustain_level,
+											envelope_release_curve,
+											(float)envelope_release_duration_in_seconds,
+											envelope_damper_sustain_level,
+											envelope_damper_sustain_curve,
+											(float)envelope_damper_sustain_duration_in_seconds);
+
+				bool is_to_write = true;
+				do
 				{
-					(int8_t)waveform, //waveform
+					instrument_timbre_t const default_instrument_timbre = GetDefaultInstrumentTimbre();
+					if(true == IsInstrumentTimbreIdentical(&default_instrument_timbre,
+														   &channel_instrument_timbre)){
+						is_to_write = false;
+						if(true == ini_instrument_timbre_map.contains((int8_t)channel_instrument_code)){
+							timbre_ini_file.RemoveTimbre((int8_t)channel_instrument_code);
+							qInfo() << Q_FUNC_INFO
+									<< "removed stored timbre,"
+									<< "channel =" << channel_index
+									<< "instrument =" << GetInstrumentNameString(channel_instrument_code)
+									<< "reverted to default";
+							break;
+						}
+					}
 
-					(int8_t)envelope_attack_curve, //envelope_attack_curve
-					{0, 0}, //attack_padding[2]
-					(float)envelope_attack_duration_in_seconds, //envelope_attack_duration_in_seconds
-
-					(int8_t)envelope_decay_curve, //envelope_decay_curve
-					{0, 0, 0}, //decay_padding[3]
-					(float)envelope_decay_duration_in_seconds, //envelope_decay_duration_in_seconds
-
-					(uint8_t)envelope_note_on_sustain_level, //envelope_note_on_sustain_level
-
-					(int8_t)envelope_release_curve, //envelope_release_curve
-					{0, 0}, //release_padding[2]
-					(float)envelope_release_duration_in_seconds, //envelope_release_duration_in_seconds
-
-					(uint8_t)envelope_damper_sustain_level, //envelope_damper_sustain_level
-					(int8_t)envelope_damper_sustain_curve, //envelope_damper_sustain_curve
-					{0, 0}, //damper_sustain_padding[2]
-					(float)envelope_damper_sustain_duration_in_seconds //envelope_damper_sustain_duration_in_seconds
-				};
-				if(true == IsInstrumentTimbreIdentical(&default_instrument_timbre, &channel_instrument_timbre)){
+					if(true == ini_instrument_timbre_map.contains((int8_t)channel_instrument_code)){
+						instrument_timbre_t const ini_instrument_timbre
+								= ini_instrument_timbre_map.value((int8_t)channel_instrument_code);
+						if(true == IsInstrumentTimbreIdentical(&ini_instrument_timbre,
+															   &channel_instrument_timbre)){
+							is_to_write = false;
+						}
+					}
+				}while(0);
+				if(false == is_to_write){
 					break;
 				}
+
 				timbre_ini_file.WriteTimbre((int8_t)channel_instrument_code,
 											channel_instrument_timbre.waveform,
 											channel_instrument_timbre.envelope_attack_curve,
@@ -1054,6 +1118,10 @@ void ChiptuneMidiWidget::on_StoreTimbresPushButton_released(void)
 											channel_instrument_timbre.envelope_damper_sustain_level,
 											channel_instrument_timbre.envelope_damper_sustain_curve,
 											channel_instrument_timbre.envelope_damper_sustain_duration_in_seconds);
+				qInfo() << Q_FUNC_INFO
+						<< "stored timbre,"
+						<< "channel =" << channel_index
+						<< "instrument =" << GetInstrumentNameString(channel_instrument_code);
 			}while(0);
 		}
 	} while(0);

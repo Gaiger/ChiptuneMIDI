@@ -22,6 +22,7 @@ public:
 					 uint8_t const envelope_damper_sustain_level,
 					 int8_t const envelope_damper_sustain_curve,
 					 float const envelope_damper_sustain_duration_in_seconds);
+	void RemoveTimbre(int8_t const instrument_code);
 
 private:
 	int ReadTimbre(int8_t const instrument_code, int8_t * const p_waveform,

@@ -391,3 +391,12 @@ void InstrumentTimbreIniFile::WriteTimbre(int8_t const instrument_code, int8_t c
 	m_settings.endGroup();
 	m_settings.sync();
 }
+
+/******************************************************************************/
+void InstrumentTimbreIniFile::RemoveTimbre(int8_t const instrument_code)
+{
+	m_settings.beginGroup(GetInstrumentTimbreGroupName(instrument_code));
+	m_settings.remove(QString());
+	m_settings.endGroup();
+	m_settings.sync();
+}

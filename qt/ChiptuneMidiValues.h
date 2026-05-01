@@ -32,6 +32,17 @@ typedef struct _instrument_timbre_t
 
 QString GetInstrumentNameString(int const instrument_code);
 QColor GetChannelColor(int const channel_index);
+instrument_timbre_t GetInstrumentTimbre(int waveform,
+										int envelope_attack_curve,
+										float envelope_attack_duration_in_seconds,
+										int envelope_decay_curve,
+										float envelope_decay_duration_in_seconds,
+										int envelope_note_on_sustain_level,
+										int envelope_release_curve,
+										float envelope_release_duration_in_seconds,
+										int envelope_damper_sustain_level,
+										int envelope_damper_sustain_curve,
+										float envelope_damper_sustain_duration_in_seconds);
 instrument_timbre_t GetDefaultInstrumentTimbre(void);
 
 #endif // _CHIPTUNEMIDIVALUES_H_
