@@ -272,7 +272,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager * p_tune_manager, QWidget *pa
 					 this, &ChiptuneMidiWidget::HandleAudioPlayerStateChanged, Qt::QueuedConnection);
 
 	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
-	ui->SaveFilePushButton->setToolTip(tr("Save as .wav file"));
+	ui->SaveWavFilePushButton->setToolTip(tr("Save as .wav file"));
 	ui->LoadTimbresPushButton->setToolTip(tr("Load instrument timbre parameters from %1")
 										  .arg(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING));
 	ui->StoreTimbresPushButton->setToolTip(tr("Store instrument timbre parameters for output-enabled channels to %1")
@@ -399,7 +399,6 @@ int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 		ui->PlayProgressSlider->setEnabled(true);
 		m_p_wave_chartview->Reset();
 
-		ui->SaveFilePushButton->setEnabled(true);
 		message_string = QString::asprintf("Playing file");
 		ui->MessageLabel->setText(message_string);
 		m_playback_state_inquiry_timer_id = QObject::startTimer(500);
@@ -407,7 +406,7 @@ int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 
 		ui->PlayPausePushButton->setEnabled(true);
 		SetPlayPauseButtonInPlayState(true);
-		ui->SaveFilePushButton->setEnabled(true);
+		ui->SaveWavFilePushButton->setEnabled(true);
 
 		SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(0);
 		SetTimbresFileButtonsEnabled(true);
@@ -458,7 +457,7 @@ void ChiptuneMidiWidget::EjectMidiFile(void)
 		delete ui->TimbreListWidget->findChild<ChannelListWidget*>();
 	}
 	//delete ui->TimbreListWidget->layout();
-	ui->SaveFilePushButton->setEnabled(false);
+	ui->SaveWavFilePushButton->setEnabled(false);
 	SetTimbresFileButtonsEnabled(false);
 }
 
@@ -850,7 +849,7 @@ void ChiptuneMidiWidget::on_OpenMidiFilePushButton_released(void)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_SaveFilePushButton_released(void)
+void ChiptuneMidiWidget::on_SaveWavFilePushButton_released(void)
 {
 	m_p_audio_player->Stop();
 	int current_playing_position = ui->PlayProgressSlider->value();

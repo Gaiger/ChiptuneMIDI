@@ -37,7 +37,7 @@ private:
 	void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 private slots:
 	void on_OpenMidiFilePushButton_released(void);
-	void on_SaveFilePushButton_released(void);
+	void on_SaveWavFilePushButton_released(void);
 	void on_LoadTimbresPushButton_released(void);
 	void on_StoreTimbresPushButton_released(void);
 
