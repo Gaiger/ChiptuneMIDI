@@ -965,7 +965,7 @@ void ChiptuneMidiWidget::on_LoadTimbresPushButton_released(void)
 											&envelope_damper_sustain_level,
 											&envelope_damper_sustain_curve,
 											&envelope_damper_sustain_duration_in_seconds);
-					instrument_timbre_t const gui_instrument_timbre =
+					instrument_timbre_t const channel_instrument_timbre =
 							GetInstrumentTimbre(waveform,
 												envelope_attack_curve,
 												(float)envelope_attack_duration_in_seconds,
@@ -977,7 +977,7 @@ void ChiptuneMidiWidget::on_LoadTimbresPushButton_released(void)
 												envelope_damper_sustain_level,
 												envelope_damper_sustain_curve,
 												(float)envelope_damper_sustain_duration_in_seconds);
-					if(true == IsInstrumentTimbreIdentical(&loaded_instrument_timbre, &gui_instrument_timbre)){
+					if(true == IsInstrumentTimbreIdentical(&loaded_instrument_timbre, &channel_instrument_timbre)){
 						break;
 					}
 					p_channel_list_widget->SetMelodicChannelTimbre(
