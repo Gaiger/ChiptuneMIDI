@@ -913,11 +913,45 @@ static inline bool IsInstrumentTimbreIdentical(instrument_timbre_t const * const
 }
 
 /**********************************************************************************/
+static instrument_timbre_t GetChannelInstrumentTimbre(ChannelListWidget * const p_channel_list_widget,
+													  int const channel_index)
+{
+	int waveform;
+	int envelope_attack_curve; double envelope_attack_duration_in_seconds;
+	int envelope_decay_curve; double envelope_decay_duration_in_seconds;
+	int envelope_note_on_sustain_level;
+	int envelope_release_curve; double envelope_release_duration_in_seconds;
+	int envelope_damper_sustain_level;
+	int envelope_damper_sustain_curve;
+	double envelope_damper_sustain_duration_in_seconds;
+	p_channel_list_widget->GetMelodicChannelTimbre(channel_index,
+							&waveform, &envelope_attack_curve, &envelope_attack_duration_in_seconds,
+							&envelope_decay_curve, &envelope_decay_duration_in_seconds,
+							&envelope_note_on_sustain_level,
+							&envelope_release_curve, &envelope_release_duration_in_seconds,
+							&envelope_damper_sustain_level,
+							&envelope_damper_sustain_curve,
+							&envelope_damper_sustain_duration_in_seconds);
+
+	return GetInstrumentTimbre(waveform,
+							   envelope_attack_curve,
+							   (float)envelope_attack_duration_in_seconds,
+							   envelope_decay_curve,
+							   (float)envelope_decay_duration_in_seconds,
+							   envelope_note_on_sustain_level,
+							   envelope_release_curve,
+							   (float)envelope_release_duration_in_seconds,
+							   envelope_damper_sustain_level,
+							   envelope_damper_sustain_curve,
+							   (float)envelope_damper_sustain_duration_in_seconds);
+}
+
+/**********************************************************************************/
 void ChiptuneMidiWidget::on_LoadTimbresPushButton_released(void)
 {
 	InstrumentTimbreIniFile timbre_ini_file(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING);
-	QMap<int8_t, instrument_timbre_t> instrument_timbre_map;
-	int const ret = timbre_ini_file.ReadTimbres(&instrument_timbre_map);
+	QMap<int8_t, instrument_timbre_t> ini_instrument_timbre_map;
+	int const ret = timbre_ini_file.ReadTimbres(&ini_instrument_timbre_map);
 
 	do {
 		if(-1 == ret){
@@ -941,41 +975,14 @@ void ChiptuneMidiWidget::on_LoadTimbresPushButton_released(void)
 					if(MIDI_PERCUSSION_CHANNEL == channel_index){
 						break;
 					}
-					if(false == instrument_timbre_map.contains((int8_t)channel_instrument_code)){
+					if(false == ini_instrument_timbre_map.contains((int8_t)channel_instrument_code)){
 						break;
 					}
 
 					instrument_timbre_t const loaded_instrument_timbre
-							= instrument_timbre_map.value((int8_t)channel_instrument_code);
-
-					int waveform;
-					int envelope_attack_curve; double envelope_attack_duration_in_seconds;
-					int envelope_decay_curve; double envelope_decay_duration_in_seconds;
-					int envelope_note_on_sustain_level;
-					int envelope_release_curve; double envelope_release_duration_in_seconds;
-					int envelope_damper_sustain_level;
-					int envelope_damper_sustain_curve;
-					double envelope_damper_sustain_duration_in_seconds;
-					p_channel_list_widget->GetMelodicChannelTimbre(channel_index,
-											&waveform, &envelope_attack_curve, &envelope_attack_duration_in_seconds,
-											&envelope_decay_curve, &envelope_decay_duration_in_seconds,
-											&envelope_note_on_sustain_level,
-											&envelope_release_curve, &envelope_release_duration_in_seconds,
-											&envelope_damper_sustain_level,
-											&envelope_damper_sustain_curve,
-											&envelope_damper_sustain_duration_in_seconds);
-					instrument_timbre_t const channel_instrument_timbre =
-							GetInstrumentTimbre(waveform,
-												envelope_attack_curve,
-												(float)envelope_attack_duration_in_seconds,
-												envelope_decay_curve,
-												(float)envelope_decay_duration_in_seconds,
-												envelope_note_on_sustain_level,
-												envelope_release_curve,
-												(float)envelope_release_duration_in_seconds,
-												envelope_damper_sustain_level,
-												envelope_damper_sustain_curve,
-												(float)envelope_damper_sustain_duration_in_seconds);
+							= ini_instrument_timbre_map.value((int8_t)channel_instrument_code);
+					instrument_timbre_t const channel_instrument_timbre
+							= GetChannelInstrumentTimbre(p_channel_list_widget, channel_index);
 					if(true == IsInstrumentTimbreIdentical(&loaded_instrument_timbre, &channel_instrument_timbre)){
 						break;
 					}
@@ -1031,6 +1038,45 @@ void ChiptuneMidiWidget::on_StoreTimbresPushButton_released(void)
 		if(nullptr == p_channel_list_widget){
 			break;
 		}
+		bool is_changed = false;
+		for(int i = 0; i < channel_instrument_pair_list.size(); i++){
+			int const channel_index = channel_instrument_pair_list.at(i).first;
+			int const channel_instrument_code = channel_instrument_pair_list.at(i).second;
+			if(MIDI_PERCUSSION_CHANNEL == channel_index){
+				continue;
+			}
+			if(false == p_channel_list_widget->IsOutputEnabled(channel_index)){
+				continue;
+			}
+
+			instrument_timbre_t const channel_instrument_timbre
+					= GetChannelInstrumentTimbre(p_channel_list_widget, channel_index);
+
+			if(false == ini_instrument_timbre_map.contains((int8_t)channel_instrument_code)){
+				instrument_timbre_t const default_instrument_timbre = GetDefaultInstrumentTimbre();
+				if(true == IsInstrumentTimbreIdentical(&default_instrument_timbre, &channel_instrument_timbre)){
+					continue;
+				}
+				is_changed = true;
+				break;
+			}
+
+			instrument_timbre_t const loaded_instrument_timbre
+					= ini_instrument_timbre_map.value((int8_t)channel_instrument_code);
+			if(false == IsInstrumentTimbreIdentical(&loaded_instrument_timbre, &channel_instrument_timbre)){
+				is_changed = true;
+				break;
+			}
+		}
+
+		if(false == is_changed){
+			break;
+		}
+		if(QMessageBox::No == QMessageBox::question(this, QStringLiteral("Store Timbres"),
+													tr("Store changed timbres to the INI file?"))){
+			break;
+		}
+
 		for(int i = 0; i < channel_instrument_pair_list.size(); i++){
 			int const channel_index = channel_instrument_pair_list.at(i).first;
 			int const channel_instrument_code = channel_instrument_pair_list.at(i).second;
@@ -1043,37 +1089,8 @@ void ChiptuneMidiWidget::on_StoreTimbresPushButton_released(void)
 					break;
 				}
 
-				int waveform;
-				int envelope_attack_curve; double envelope_attack_duration_in_seconds;
-				int envelope_decay_curve; double envelope_decay_duration_in_seconds;
-				int envelope_note_on_sustain_level;
-				int envelope_release_curve; double envelope_release_duration_in_seconds;
-				int envelope_damper_sustain_level;
-				int envelope_damper_sustain_curve;
-				double envelope_damper_sustain_duration_in_seconds;
-
-				p_channel_list_widget->GetMelodicChannelTimbre(channel_index,
-										&waveform, &envelope_attack_curve, &envelope_attack_duration_in_seconds,
-										&envelope_decay_curve, &envelope_decay_duration_in_seconds,
-										&envelope_note_on_sustain_level,
-										&envelope_release_curve, &envelope_release_duration_in_seconds,
-										&envelope_damper_sustain_level,
-										&envelope_damper_sustain_curve,
-										&envelope_damper_sustain_duration_in_seconds);
-
-				instrument_timbre_t const channel_instrument_timbre =
-						GetInstrumentTimbre(waveform,
-											envelope_attack_curve,
-											(float)envelope_attack_duration_in_seconds,
-											envelope_decay_curve,
-											(float)envelope_decay_duration_in_seconds,
-											envelope_note_on_sustain_level,
-											envelope_release_curve,
-											(float)envelope_release_duration_in_seconds,
-											envelope_damper_sustain_level,
-											envelope_damper_sustain_curve,
-											(float)envelope_damper_sustain_duration_in_seconds);
-
+				instrument_timbre_t const channel_instrument_timbre
+						= GetChannelInstrumentTimbre(p_channel_list_widget, channel_index);
 				bool is_to_write = true;
 				do
 				{
@@ -1088,8 +1105,8 @@ void ChiptuneMidiWidget::on_StoreTimbresPushButton_released(void)
 									<< "channel =" << channel_index
 									<< "instrument =" << GetInstrumentNameString(channel_instrument_code)
 									<< "reverted to default";
-							break;
 						}
+						break;
 					}
 
 					if(true == ini_instrument_timbre_map.contains((int8_t)channel_instrument_code)){
