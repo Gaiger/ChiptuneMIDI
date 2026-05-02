@@ -12,8 +12,6 @@
 #include <math.h>
 #include <stdint.h>
 
-#define EXPAND_CASE_TO_STR(ENUMS_ELEMENT, VAL)					case VAL:	return #ENUMS_ELEMENT;
-
 typedef struct _test_instrument_timbre_t
 {
 	bool has_instrument;
@@ -124,19 +122,6 @@ static bool ShouldKeepDamperSustainKey(int const instrument_code, int const key_
 }
 
 /******************************************************************************/
-static char const * const GetInstrumentNameString(int8_t const instrument_code)
-{
-	switch (instrument_code)
-	{
-		MIDI_INSTRUMENT_CODE_LIST(EXPAND_CASE_TO_STR)
-	}
-
-	return "UnknownInstrument";
-}
-
-#undef EXPAND_CASE_TO_STR
-
-/******************************************************************************/
 static QString GetWaveformNameString(int8_t const waveform)
 {
 	if(true == IsSquareWaveform(waveform)){
@@ -231,7 +216,7 @@ static void WriteTestTimbre(QSettings * const p_settings, int const instrument_c
 		return;
 	}
 
-	p_settings->beginGroup(QString::fromLatin1(GetInstrumentNameString((int8_t)instrument_code)));
+	p_settings->beginGroup(GetInstrumentNameString(instrument_code));
 	if(true == test_timbre.has_waveform){
 		p_settings->setValue("waveform", GetWaveformNameString(test_timbre.expected_instrument_timbre.waveform));
 	}
@@ -328,10 +313,11 @@ static int TestSingleInstrumentFromMap(QMap<int8_t, instrument_timbre_t> const& 
 	}
 
 	instrument_timbre_t const actual_instrument_timbre = instrument_timbre_map.value((int8_t)instrument_code);
+	instrument_timbre_t const default_instrument_timbre = GetDefaultInstrumentTimbre();
 	bool const does_dutycycle_matter =
 			true == test_timbre.has_waveform && true == IsSquareWaveform(test_timbre.expected_instrument_timbre.waveform);
 	int8_t const expected_waveform = false == test_timbre.has_waveform
-			? ChiptuneWaveformTriangle
+			? default_instrument_timbre.waveform
 			: ((true == does_dutycycle_matter && false == test_timbre.has_dutycycle)
 			   ? ChiptuneWaveformSquareDutyCycle50
 			   : test_timbre.expected_instrument_timbre.waveform);
@@ -339,58 +325,68 @@ static int TestSingleInstrumentFromMap(QMap<int8_t, instrument_timbre_t> const& 
 		return -1;
 	}
 	if(0 != ExpectTrue((false == test_timbre.has_attack_curve
-						 ? ChiptuneEnvelopeCurveLinear : test_timbre.expected_instrument_timbre.envelope_attack_curve)
+						 ? default_instrument_timbre.envelope_attack_curve
+						 : test_timbre.expected_instrument_timbre.envelope_attack_curve)
 						== actual_instrument_timbre.envelope_attack_curve, "missing-key attack curve mismatch")){
 		return -1;
 	}
 	if(0 != ExpectTrue(IsNear(false == test_timbre.has_attack_duration
-								? 0.02f : test_timbre.expected_instrument_timbre.envelope_attack_duration_in_seconds,
+								? default_instrument_timbre.envelope_attack_duration_in_seconds
+								: test_timbre.expected_instrument_timbre.envelope_attack_duration_in_seconds,
 								actual_instrument_timbre.envelope_attack_duration_in_seconds),
 						"missing-key attack duration mismatch")){
 		return -1;
 	}
 	if(0 != ExpectTrue((false == test_timbre.has_decay_curve
-						 ? ChiptuneEnvelopeCurveFermi : test_timbre.expected_instrument_timbre.envelope_decay_curve)
+						 ? default_instrument_timbre.envelope_decay_curve
+						 : test_timbre.expected_instrument_timbre.envelope_decay_curve)
 						== actual_instrument_timbre.envelope_decay_curve, "missing-key decay curve mismatch")){
 		return -1;
 	}
 	if(0 != ExpectTrue(IsNear(false == test_timbre.has_decay_duration
-								? 0.01f : test_timbre.expected_instrument_timbre.envelope_decay_duration_in_seconds,
+								? default_instrument_timbre.envelope_decay_duration_in_seconds
+								: test_timbre.expected_instrument_timbre.envelope_decay_duration_in_seconds,
 								actual_instrument_timbre.envelope_decay_duration_in_seconds),
 						"missing-key decay duration mismatch")){
 		return -1;
 	}
 	if(0 != ExpectTrue((false == test_timbre.has_note_on_sustain_level
-						 ? 96 : test_timbre.expected_instrument_timbre.envelope_note_on_sustain_level)
+						 ? default_instrument_timbre.envelope_note_on_sustain_level
+						 : test_timbre.expected_instrument_timbre.envelope_note_on_sustain_level)
 						== actual_instrument_timbre.envelope_note_on_sustain_level,
 						"missing-key note-on sustain level mismatch")){
 		return -1;
 	}
 	if(0 != ExpectTrue((false == test_timbre.has_release_curve
-						 ? ChiptuneEnvelopeCurveExponential : test_timbre.expected_instrument_timbre.envelope_release_curve)
+						 ? default_instrument_timbre.envelope_release_curve
+						 : test_timbre.expected_instrument_timbre.envelope_release_curve)
 						== actual_instrument_timbre.envelope_release_curve, "missing-key release curve mismatch")){
 		return -1;
 	}
 	if(0 != ExpectTrue(IsNear(false == test_timbre.has_release_duration
-								? 0.03f : test_timbre.expected_instrument_timbre.envelope_release_duration_in_seconds,
+								? default_instrument_timbre.envelope_release_duration_in_seconds
+								: test_timbre.expected_instrument_timbre.envelope_release_duration_in_seconds,
 								actual_instrument_timbre.envelope_release_duration_in_seconds),
 						"missing-key release duration mismatch")){
 		return -1;
 	}
 	if(0 != ExpectTrue((false == test_timbre.has_damper_sustain_level
-						 ? 72 : test_timbre.expected_instrument_timbre.envelope_damper_sustain_level)
+						 ? default_instrument_timbre.envelope_damper_sustain_level
+						 : test_timbre.expected_instrument_timbre.envelope_damper_sustain_level)
 						== actual_instrument_timbre.envelope_damper_sustain_level,
 						"missing-key damper sustain level mismatch")){
 		return -1;
 	}
 	if(0 != ExpectTrue((false == test_timbre.has_damper_sustain_curve
-						 ? ChiptuneEnvelopeCurveLinear : test_timbre.expected_instrument_timbre.envelope_damper_sustain_curve)
+						 ? default_instrument_timbre.envelope_damper_sustain_curve
+						 : test_timbre.expected_instrument_timbre.envelope_damper_sustain_curve)
 						== actual_instrument_timbre.envelope_damper_sustain_curve,
 						"missing-key damper sustain curve mismatch")){
 		return -1;
 	}
 	if(0 != ExpectTrue(IsNear(false == test_timbre.has_damper_sustain_duration
-								? 8.0f : test_timbre.expected_instrument_timbre.envelope_damper_sustain_duration_in_seconds,
+								? default_instrument_timbre.envelope_damper_sustain_duration_in_seconds
+								: test_timbre.expected_instrument_timbre.envelope_damper_sustain_duration_in_seconds,
 								actual_instrument_timbre.envelope_damper_sustain_duration_in_seconds),
 						"missing-key damper sustain duration mismatch")){
 		return -1;
@@ -400,8 +396,10 @@ static int TestSingleInstrumentFromMap(QMap<int8_t, instrument_timbre_t> const& 
 }
 
 /******************************************************************************/
-static int TestInstrumentTimbreIniFile(QString const& ini_file_name_string)
+static int TestReadMultipleInstrumentTimbresWithMissingKeys(QString const& ini_file_name_string)
 {
+	QFile::remove(ini_file_name_string);
+
 	test_instrument_timbre_t test_instrument_timbres[128];
 	for(int instrument_code = 0; instrument_code < 128; instrument_code++){
 		test_instrument_timbres[instrument_code] = MakeTestInstrumentTimbre(instrument_code);
@@ -449,6 +447,73 @@ static int TestInstrumentTimbreIniFile(QString const& ini_file_name_string)
 }
 
 /******************************************************************************/
+static int TestSingleCompleteInstrumentTimbreWriteReadRemove(QString const& ini_file_name_string)
+{
+	QFile::remove(ini_file_name_string);
+
+	InstrumentTimbreIniFile timbre_ini_file(ini_file_name_string);
+	instrument_timbre_t const written_instrument_timbre =
+			GetInstrumentTimbre(ChiptuneWaveformSquareDutyCycle25,
+								ChiptuneEnvelopeCurveLinear,
+								0.021f,
+								ChiptuneEnvelopeCurveFermi,
+								0.012f,
+								95,
+								ChiptuneEnvelopeCurveExponential,
+								0.034f,
+								70,
+								ChiptuneEnvelopeCurveGaussian,
+								7.5f);
+	timbre_ini_file.WriteTimbre(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED,
+								written_instrument_timbre.waveform,
+								written_instrument_timbre.envelope_attack_curve,
+								written_instrument_timbre.envelope_attack_duration_in_seconds,
+								written_instrument_timbre.envelope_decay_curve,
+								written_instrument_timbre.envelope_decay_duration_in_seconds,
+								written_instrument_timbre.envelope_note_on_sustain_level,
+								written_instrument_timbre.envelope_release_curve,
+								written_instrument_timbre.envelope_release_duration_in_seconds,
+								written_instrument_timbre.envelope_damper_sustain_level,
+								written_instrument_timbre.envelope_damper_sustain_curve,
+								written_instrument_timbre.envelope_damper_sustain_duration_in_seconds);
+
+	QMap<int8_t, instrument_timbre_t> instrument_timbre_map;
+	int ret = timbre_ini_file.ReadTimbres(&instrument_timbre_map);
+	if(0 != ExpectTrue(0 == ret, "ReadTimbres should read a written Not Specified timbre")){
+		return -1;
+	}
+	if(0 != ExpectTrue(true == instrument_timbre_map.contains(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED),
+					   "ReadTimbres should return the written Not Specified timbre")){
+		return -1;
+	}
+	instrument_timbre_t const read_instrument_timbre =
+			instrument_timbre_map.value(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED);
+	if(0 != ExpectTrue(written_instrument_timbre.waveform == read_instrument_timbre.waveform,
+					   "written waveform mismatch")){
+		return -1;
+	}
+	if(0 != ExpectTrue(IsNear(written_instrument_timbre.envelope_attack_duration_in_seconds,
+							  read_instrument_timbre.envelope_attack_duration_in_seconds),
+					   "written attack duration mismatch")){
+		return -1;
+	}
+	if(0 != ExpectTrue(written_instrument_timbre.envelope_damper_sustain_curve
+					   == read_instrument_timbre.envelope_damper_sustain_curve,
+					   "written damper sustain curve mismatch")){
+		return -1;
+	}
+
+	timbre_ini_file.RemoveTimbre(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED);
+	instrument_timbre_map.clear();
+	ret = timbre_ini_file.ReadTimbres(&instrument_timbre_map);
+	if(0 != ExpectTrue(0 == ret, "ReadTimbres should succeed after removing the Not Specified timbre")){
+		return -1;
+	}
+	return ExpectTrue(false == instrument_timbre_map.contains(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED),
+					  "RemoveTimbre should remove the Not Specified timbre");
+}
+
+/******************************************************************************/
 int main(int argc, char *argv[])
 {
 	QCoreApplication app(argc, argv);
@@ -458,7 +523,10 @@ int main(int argc, char *argv[])
 	if(0 != TestMissingFile(ini_file_name_string)){
 		return 1;
 	}
-	if(0 != TestInstrumentTimbreIniFile(ini_file_name_string)){
+	if(0 != TestSingleCompleteInstrumentTimbreWriteReadRemove(ini_file_name_string)){
+		return 1;
+	}
+	if(0 != TestReadMultipleInstrumentTimbresWithMissingKeys(ini_file_name_string)){
 		return 1;
 	}
 
