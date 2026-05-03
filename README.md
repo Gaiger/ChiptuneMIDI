@@ -61,7 +61,7 @@ You can build ChiptuneMIDI in two ways:
 - Playback starts automatically.
 - To export audio, click the **Save as .wav File** button.
 
-**Note:** A sample MIDI file (`qt/暗黒舞踏会8bit ver..mid`) is included for quick testing. Additional MIDI test files can be downloaded from [Google Drive](https://drive.google.com/file/d/19hkeXNSYX80RGQMtTQ6RaFjBnu4ZCKod/view?usp=sharing).
+**Note:** A sample MIDI file (`qt/暗黒舞踏会8bit ver..mid`) is included for quick testing. Additional MIDI test files can be downloaded as [`midi_files.zip`](https://drive.google.com/uc?export=download&id=19hkeXNSYX80RGQMtTQ6RaFjBnu4ZCKod).
 
 ## Project Structure
 <!--- Overview of folders and files. -->
