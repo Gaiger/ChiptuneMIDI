@@ -43,12 +43,12 @@ with a Qt application as a reference front-end that showcases real-time playback
 You can build ChiptuneMIDI in two ways:
 
 ### Option A: CMake (Qt5 or Qt6)
-1. Open `qt/CMakeLists.txt` with QtCreator or run CMake manually
+1. Open `qt/player/CMakeLists.txt` with QtCreator or run CMake manually
 2. Select a Qt kit (Qt5 or Qt6)
 3. Build and run
 
 ### Option B: qmake (Qt5 only)
-1. Open `qt/qt5_qmake_project/ChiptuneMIDI.pro` in QtCreator
+1. Open `qt/player/qt5_qmake_project/ChiptuneMIDI.pro` in QtCreator
 2. Build and run
 
 ## Usage
@@ -72,7 +72,8 @@ ChiptuneMIDI/
 │ ├─ qt/ # Qt integration layer
 │ └─ test/ # Tests and reference materials
 ├─ qt/ # Qt GUI application
-│ ├─ qt5_qmake_project/ # qmake project (Qt5 only)
+│ ├─ player/ # Qt MIDI player application
+│ │ └─ qt5_qmake_project/ # qmake project (Qt5 only)
 │ ├─ module_tests/ # Qt-side module tests
 │ └─ icons/ # Application icons
 ```

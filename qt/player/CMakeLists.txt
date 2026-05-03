@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(ChiptuneMIDI)
+project(ChiptuneMIDIPlayer)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -7,8 +7,10 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CHIPTUNE_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
+set(CHIPTUNE_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/../..")
 set(CHIPTUNE_QT_DIR "${CHIPTUNE_ROOT_DIR}/qt")
+set(CHIPTUNE_QT_PLAYER_DIR "${CHIPTUNE_QT_DIR}/player")
+set(CMAKE_AUTOUIC_SEARCH_PATHS ${CHIPTUNE_QT_DIR} ${CHIPTUNE_QT_PLAYER_DIR})
 
 #find_package(Qt5 REQUIRED COMPONENTS Widgets Charts Multimedia WinExtras)
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Core REQUIRED)
@@ -47,33 +49,33 @@ set(ENGINE
 
 
 set(APPILCATION
-    ${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp
-    ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp
-    ${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiWidget.cpp
     ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.cpp
     ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.cpp
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.cpp
-    ${CHIPTUNE_QT_DIR}/ProgressSlider.cpp
-    ${CHIPTUNE_QT_DIR}/SequencerWidget.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.cpp
     ${CHIPTUNE_QT_DIR}/TuneManager.cpp
     ${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp
     ${CHIPTUNE_QT_DIR}/AudioPlayer.cpp
     ${CHIPTUNE_QT_DIR}/WaveChartView.cpp
 
-    ${CHIPTUNE_QT_DIR}/ChannelListWidget.h
-    ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.h
-    ${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.h
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.h
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.h
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiWidget.h
     ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.h
     ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.h
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h
-    ${CHIPTUNE_QT_DIR}/ProgressSlider.h
-    ${CHIPTUNE_QT_DIR}/SequencerWidget.h
+    ${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.h
+    ${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.h
     ${CHIPTUNE_QT_DIR}/TuneManager.h
     ${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.h
     ${CHIPTUNE_QT_DIR}/AudioPlayer.h
     ${CHIPTUNE_QT_DIR}/WaveChartView.h
 
-    ${CHIPTUNE_QT_DIR}/main.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/main.cpp
 )
 
 set(MID_SONG
@@ -85,15 +87,15 @@ set(MID_SONG
 
 
 set(FORMS
-    ${CHIPTUNE_QT_DIR}/ChannelListWidgetForm.ui
-    ${CHIPTUNE_QT_DIR}/ChannelNodeWidgetForm.ui
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidgetForm.ui
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidgetForm.ui
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrameForm.ui
-    ${CHIPTUNE_QT_DIR}/ChiptuneMidiWidgetForm.ui
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiWidgetForm.ui
 )
 
 
 if(WIN32)
-    set(RESOURCES ${CHIPTUNE_QT_DIR}/ChiptuneMIDI.rc)
+    set(RESOURCES ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMIDIPlayer.rc)
 endif()
 
 
@@ -105,27 +107,28 @@ if(WIN32)
     source_group("Resources" FILES ${RESOURCES})
 endif()
 
-add_executable(ChiptuneMIDI WIN32
+add_executable(ChiptuneMIDIPlayer WIN32
     ${ENGINE} ${APPILCATION} ${MID_SONG} ${FORMS})
 
 if(WIN32)
-    target_sources(ChiptuneMIDI PRIVATE ${RESOURCES})
+    target_sources(ChiptuneMIDIPlayer PRIVATE ${RESOURCES})
 endif()
 
-target_include_directories(ChiptuneMIDI PRIVATE
+target_include_directories(ChiptuneMIDIPlayer PRIVATE
+    ${CHIPTUNE_QT_PLAYER_DIR}
     ${CHIPTUNE_QT_DIR}
     ${CHIPTUNE_ROOT_DIR})
 
-target_link_libraries(ChiptuneMIDI
+target_link_libraries(ChiptuneMIDIPlayer
     PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts Qt${QT_VERSION_MAJOR}::Multimedia)
 if (QT_VERSION_MAJOR EQUAL 5)
     if(WIN32)
-        target_link_libraries(ChiptuneMIDI PRIVATE Qt5::WinExtras)
+        target_link_libraries(ChiptuneMIDIPlayer PRIVATE Qt5::WinExtras)
     endif()
 endif()
 
-add_custom_command(TARGET ChiptuneMIDI POST_BUILD
+add_custom_command(TARGET ChiptuneMIDIPlayer POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CHIPTUNE_QT_DIR}/icons
-        $<TARGET_FILE_DIR:ChiptuneMIDI>/icons
+        $<TARGET_FILE_DIR:ChiptuneMIDIPlayer>/icons
 )

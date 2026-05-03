@@ -1,4 +1,5 @@
 TEMPLATE = app
+TARGET = ChiptuneMIDIPlayer
 
 QT += widgets
 QT += charts
@@ -25,10 +26,13 @@ win32 {
     QMAKE_CXXFLAGS += /wd4819
 }
 
-CHIPTUNE_ROOT_DIR = ../..
+CHIPTUNE_ROOT_DIR = ../../..
 CHIPTUNE_QT_DIR = $${CHIPTUNE_ROOT_DIR}/qt
+CHIPTUNE_QT_PLAYER_DIR = $${CHIPTUNE_QT_DIR}/player
 
 INCLUDEPATH += $${CHIPTUNE_ROOT_DIR}
+INCLUDEPATH += $${CHIPTUNE_QT_DIR}
+INCLUDEPATH += $${CHIPTUNE_QT_PLAYER_DIR}
 
 SOURCES += \
     $${CHIPTUNE_ROOT_DIR}/chiptune.c \
@@ -42,20 +46,20 @@ SOURCES += \
     $${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.c \
     $${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.c \
     $${CHIPTUNE_ROOT_DIR}/mid_reader/mid_reader.c \
-    $${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp \
-    $${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp \
-    $${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.cpp \
+    $${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.cpp \
+    $${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.cpp \
+    $${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiWidget.cpp \
     $${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.cpp \
     $${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.cpp \
     $${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.cpp \
-    $${CHIPTUNE_QT_DIR}/ProgressSlider.cpp \
-    $${CHIPTUNE_QT_DIR}/SequencerWidget.cpp \
+    $${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.cpp \
+    $${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.cpp \
     $${CHIPTUNE_QT_DIR}/TuneManager.cpp \
     $${CHIPTUNE_QT_DIR}/AudioPlayer.cpp \
     $${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp \
     $${CHIPTUNE_QT_DIR}/WaveChartView.cpp \
     $${CHIPTUNE_ROOT_DIR}/mid_reader/qt/MidSong.cpp \
-    $${CHIPTUNE_QT_DIR}/main.cpp \
+    $${CHIPTUNE_QT_PLAYER_DIR}/main.cpp \
 
 HEADERS += \
     $${CHIPTUNE_ROOT_DIR}/chiptune.h \
@@ -70,14 +74,14 @@ HEADERS += \
     $${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.h \
     $${CHIPTUNE_ROOT_DIR}/chiptune_midi_define.h \
     $${CHIPTUNE_ROOT_DIR}/mid_reader/mid_reader.h \
-    $${CHIPTUNE_QT_DIR}/ChannelListWidget.h \
-    $${CHIPTUNE_QT_DIR}/ChannelNodeWidget.h \
-    $${CHIPTUNE_QT_DIR}/ChiptuneMidiWidget.h \
+    $${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.h \
+    $${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.h \
+    $${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiWidget.h \
     $${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.h \
     $${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.h \
     $${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h \
-    $${CHIPTUNE_QT_DIR}/ProgressSlider.h \
-    $${CHIPTUNE_QT_DIR}/SequencerWidget.h \
+    $${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.h \
+    $${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.h \
     $${CHIPTUNE_QT_DIR}/TuneManager.h \
     $${CHIPTUNE_QT_DIR}/AudioPlayer.h \
     $${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.h \
@@ -85,10 +89,10 @@ HEADERS += \
     $${CHIPTUNE_ROOT_DIR}/mid_reader/qt/MidSong.h \
 
 FORMS += \
-    $${CHIPTUNE_QT_DIR}/ChannelListWidgetForm.ui \
-    $${CHIPTUNE_QT_DIR}/ChannelNodeWidgetForm.ui \
+    $${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidgetForm.ui \
+    $${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidgetForm.ui \
     $${CHIPTUNE_QT_DIR}/MelodicTimbreFrameForm.ui \
-    $${CHIPTUNE_QT_DIR}/ChiptuneMidiWidgetForm.ui
+    $${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiWidgetForm.ui
 
 
 # Default rules for deployment.
@@ -97,10 +101,10 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 win32{
-    RC_ICONS = $${CHIPTUNE_QT_DIR}/chiptune.ico
+    RC_FILE = $${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMIDIPlayer.rc
     VERSION = 0.0.10.0
-    QMAKE_TARGET_PRODUCT = "ChiptuneMIDI"
-    QMAKE_TARGET_DESCRIPTION = "ChiptuneMIDI: Convert .mid file into chiptune"
+    QMAKE_TARGET_PRODUCT = "ChiptuneMIDIPlayer"
+    QMAKE_TARGET_DESCRIPTION = "ChiptuneMIDIPlayer: Play MIDI files as chiptune music"
     QMAKE_TARGET_COPYRIGHT = "Copyright 2026 by Chen Gaiger"
 }
 

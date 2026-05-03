@@ -1,6 +1,6 @@
 #include <windows.h>
 
-IDI_ICON1	ICON	DISCARDABLE	"chiptune.ico"
+IDI_ICON1	ICON	DISCARDABLE	"../chiptune.ico"
 
 VS_VERSION_INFO VERSIONINFO
 	FILEVERSION 0,0,10,0
@@ -20,11 +20,11 @@ VS_VERSION_INFO VERSIONINFO
 			BLOCK "040904b0"
 			BEGIN
 				VALUE "CompanyName", "\0"
-				VALUE "FileDescription", "ChiptuneMIDI: Convert .mid file into chiptune\0"
+				VALUE "FileDescription", "ChiptuneMIDIPlayer: Play MIDI files as chiptune music\0"
 				VALUE "FileVersion", "0.0.10.0\0"
 				VALUE "LegalCopyright", "Copyright 2026 by Chen Gaiger\0"
-				VALUE "OriginalFilename", "ChiptuneMIDI.exe\0"
-				VALUE "ProductName", "ChiptuneMIDI\0"
+				VALUE "OriginalFilename", "ChiptuneMIDIPlayer.exe\0"
+				VALUE "ProductName", "ChiptuneMIDIPlayer\0"
 				VALUE "ProductVersion", "0.0.10.0\0"
 			END
 		END
@@ -34,4 +34,3 @@ VS_VERSION_INFO VERSIONINFO
 		END
 	END
 /* End of Version info */
-
