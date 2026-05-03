@@ -1168,6 +1168,9 @@ void chiptune_get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NU
 }
 
 /**********************************************************************************/
+#ifdef _DEBUG
+#define _REPORT_AMPLITUDE_NORMALIZAION
+#endif
 
 int16_t chiptune_fetch_16bit_wave(void)
 {
@@ -1188,7 +1191,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 			{
 
 				if(AMPLITUDE_NORMALIZATION_DIVISOR() != original_amplitude_normalization_divisor){
-#ifdef _DEBUG
+#ifdef _REPORT_AMPLITUDE_NORMALIZAION
 					CHIPTUNE_PRINTF(cDeveloping, "raise AMPLITUDE_NORMALIZATION_DIVISOR to %d\r\n",
 									AMPLITUDE_NORMALIZATION_DIVISOR());
 #endif
@@ -1205,7 +1208,7 @@ int16_t chiptune_fetch_16bit_wave(void)
 
 						UPDATE_AMPLITUDE_NORMALIZATION_DIVISOR(updated_amplitude_normalization_divisor);
 						RESET_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_COUNT();
-#ifdef _DEBUG
+#ifdef _REPORT_AMPLITUDE_NORMALIZAION
 						float const recovery_step_in_db = 20.0f
 								* log10f((float)original_amplitude_normalization_divisor
 										/ (float)updated_amplitude_normalization_divisor);
