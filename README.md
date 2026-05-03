@@ -61,7 +61,7 @@ You can build ChiptuneMIDI in two ways:
 - Playback starts automatically.
 - To export audio, click the **Save as .wav File** button.
 
-**Note:** A sample MIDI file (`qt/暗黒舞踏会8bit ver..mid`) is included for quick testing.
+**Note:** A sample MIDI file (`qt/暗黒舞踏会8bit ver..mid`) is included for quick testing. Additional MIDI test files can be downloaded from [Google Drive](https://drive.google.com/file/d/19hkeXNSYX80RGQMtTQ6RaFjBnu4ZCKod/view?usp=sharing).
 
 ## Project Structure
 <!--- Overview of folders and files. -->
@@ -73,6 +73,7 @@ ChiptuneMIDI/
 │ └─ test/ # Tests and reference materials
 ├─ qt/ # Qt GUI application
 │ ├─ qt5_qmake_project/ # qmake project (Qt5 only)
+│ ├─ module_tests/ # Qt-side module tests
 │ └─ icons/ # Application icons
 ```
 
@@ -94,7 +95,7 @@ Please fork the repository and submit pull requests.
 For major changes, open an issue first to discuss what you would like to add or modify.  
 
 Make sure your code passes existing builds/tests and follows the coding style:
-- Functions use `camelCase`
+- Functions use `CamelCase`
 - Variables use `snake_case`
 - Avoid abbreviations
 
