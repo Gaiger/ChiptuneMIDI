@@ -679,8 +679,35 @@ int32_t generate_panned_wave_amplitude(oscillator_t const * const p_oscillator)
 
 		channel_controller_t const * const p_channel_controller
 				= get_channel_controller_pointer_from_index(p_oscillator->voice);
-		bool is_pan_not_centered = (MIDI_SEVEN_BITS_CENTER_VALUE != p_channel_controller->pan);
-		uint8_t panning_weight = ONE_TO_ZERO(p_channel_controller->pan + (uint8_t)is_pan_not_centered);
+		/*
+		 * MIDI pan is [0, 127], while the panning calculation uses [0, 128].
+		 *
+		 * Keep the center continuous and unique:
+		 *
+		 *   pan 63  -> R63  / L65
+		 *   pan 64  -> R64  / L64
+		 *   pan 65  -> R65  / L63
+		 *
+		 * The mapping is symmetric up to the last regular pair:
+		 *
+		 *   pan 3   -> R3   / L125    <=>    pan 125 -> R125 / L3
+		 *
+		 * Then stretch only the hard-right end to reach full scale:
+		 *
+		 *   pan 126 -> R127 / L1
+		 *   pan 127 -> R128 / L0
+		 *
+		 * Therefore only the outermost two pairs lose perfect symmetry:
+		 *
+		 *   pan 2   -> R2   / L126    <=>    pan 126 -> R127 / L1
+		 *   pan 1   -> R1   / L127    <=>    pan 127 -> R128 / L0
+		 *
+		 * The hard-left end is already full scale:
+		 *
+		 *   pan 0   -> R0   / L128
+		 */
+		uint8_t panning_weight = p_channel_controller->pan;
+		panning_weight += (MIDI_SEVEN_BITS_MAX_VALUE - 1) <= p_channel_controller->pan;
 		if(true == is_processing_left_channel()){
 			panning_weight = 2 * MIDI_SEVEN_BITS_CENTER_VALUE - panning_weight;
 		}
