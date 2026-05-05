@@ -48,35 +48,40 @@ set(ENGINE
 )
 
 
-set(APPILCATION
-    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.cpp
-    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.cpp
-    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.cpp
+set(APPLICATION_COMMON
     ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.cpp
     ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.cpp
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.cpp
-    ${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.cpp
-    ${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.cpp
     ${CHIPTUNE_QT_DIR}/TuneManager.cpp
     ${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp
     ${CHIPTUNE_QT_DIR}/AudioPlayer.cpp
     ${CHIPTUNE_QT_DIR}/WaveChartView.cpp
 
-    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.h
-    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.h
-    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.h
     ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.h
     ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.h
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h
-    ${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.h
-    ${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.h
     ${CHIPTUNE_QT_DIR}/TuneManager.h
     ${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.h
     ${CHIPTUNE_QT_DIR}/AudioPlayer.h
     ${CHIPTUNE_QT_DIR}/WaveChartView.h
+)
+
+set(APPLICATION_PLAYER
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.cpp
+
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.h
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.h
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.h
+    ${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.h
+    ${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.h
 
     ${CHIPTUNE_QT_PLAYER_DIR}/main.cpp
 )
+
 
 set(MID_SONG
     ${CHIPTUNE_ROOT_DIR}/mid_reader/mid_reader.c
@@ -86,11 +91,14 @@ set(MID_SONG
 )
 
 
-set(FORMS
+set(PLAYER_FORMS
     ${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidgetForm.ui
     ${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidgetForm.ui
-    ${CHIPTUNE_QT_DIR}/MelodicTimbreFrameForm.ui
     ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidgetForm.ui
+)
+
+set(COMMON_FORMS
+    ${CHIPTUNE_QT_DIR}/MelodicTimbreFrameForm.ui
 )
 
 
@@ -100,15 +108,17 @@ endif()
 
 
 source_group("Engine" FILES ${ENGINE})
-source_group("Application" FILES ${APPILCATION})
+source_group("Application/Common" FILES ${APPLICATION_COMMON})
+source_group("Application/Player" FILES ${APPLICATION_PLAYER})
 source_group("MidSong" FILES ${MID_SONG})
-source_group("Forms" FILES ${FORMS})
+source_group("Forms/Common" FILES ${COMMON_FORMS})
+source_group("Forms/Player" FILES ${PLAYER_FORMS})
 if(WIN32)
     source_group("Resources" FILES ${RESOURCES})
 endif()
 
 add_executable(ChiptuneMIDIPlayer WIN32
-    ${ENGINE} ${APPILCATION} ${MID_SONG} ${FORMS})
+    ${ENGINE} ${APPLICATION_COMMON} ${APPLICATION_PLAYER} ${MID_SONG} ${PLAYER_FORMS} ${COMMON_FORMS})
 
 if(WIN32)
     target_sources(ChiptuneMIDIPlayer PRIVATE ${RESOURCES})
