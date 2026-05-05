@@ -1,5 +1,5 @@
-#ifndef _CHIPTUNEMIDIWIDGET_H_
-#define _CHIPTUNEMIDIWIDGET_H_
+#ifndef _CHIPTUNEMIDIPLAYERWIDGET_H_
+#define _CHIPTUNEMIDIPLAYERWIDGET_H_
 #include <QTimer>
 #include <QWidget>
 #include <QToolBox>
@@ -10,18 +10,18 @@
 
 
 namespace Ui {
-class ChiptuneMidiWidget;
+class ChiptuneMidiPlayerWidget;
 }
 
 class WaveChartView;
 class SequencerWidget;
 
-class ChiptuneMidiWidget : public QWidget
+class ChiptuneMidiPlayerWidget : public QWidget
 {
 	Q_OBJECT
 public:
-	explicit ChiptuneMidiWidget(TuneManager * p_tune_manager, QWidget *parent = nullptr);
-	~ChiptuneMidiWidget()  Q_DECL_OVERRIDE;
+	explicit ChiptuneMidiPlayerWidget(TuneManager * p_tune_manager, QWidget *parent = nullptr);
+	~ChiptuneMidiPlayerWidget()  Q_DECL_OVERRIDE;
 signals:
 
 private:
@@ -91,7 +91,7 @@ private:
 	WaveChartView *		m_p_wave_chartview;
 	SequencerWidget *	m_p_sequencer_widget;
 private:
-	Ui::ChiptuneMidiWidget *ui;
+	Ui::ChiptuneMidiPlayerWidget *ui;
 };
 
-#endif // _CHIPTUNEMIDIWIDGET_H_
+#endif // _CHIPTUNEMIDIPLAYERWIDGET_H_

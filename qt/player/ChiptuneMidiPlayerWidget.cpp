@@ -20,17 +20,18 @@
 
 #include "chiptune_midi_define.h"
 
-#include "ui_ChiptuneMidiWidgetForm.h"
+#include "ui_ChiptuneMidiPlayerWidgetForm.h"
+
+#include "ChiptuneMidiValues.h"
+#include "InstrumentTimbreIniFile.h"
+
 #include "ProgressSlider.h"
 
 #include "WaveChartView.h"
 #include "SequencerWidget.h"
-
 #include "ChannelListWidget.h"
 
-#include "ChiptuneMidiWidget.h"
-#include "ChiptuneMidiValues.h"
-#include "InstrumentTimbreIniFile.h"
+#include "ChiptuneMidiPlayerWidget.h"
 
 typedef struct
 {
@@ -213,7 +214,7 @@ void SetFontSizeForWidgetSubtree(QWidget * const p_root_widget, int const target
 #define AUDIO_PLAYER_BUFFER_IN_MILLISECONDS						\
 	(AUDIO_BUFFER_TIME_FACTOR * PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS)
 
-ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager * p_tune_manager, QWidget *parent)
+ChiptuneMidiPlayerWidget::ChiptuneMidiPlayerWidget(TuneManager * p_tune_manager, QWidget *parent)
 	: QWidget(parent),
 	m_p_tune_manager(p_tune_manager),
 
@@ -221,7 +222,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager * p_tune_manager, QWidget *pa
 	m_playback_tick_inquiry_timer_id(-1),
 	m_audio_player_buffer_in_milliseconds(AUDIO_PLAYER_BUFFER_IN_MILLISECONDS),
 	m_p_sequencer_widget(nullptr),
-	ui(new Ui::ChiptuneMidiWidget)
+	ui(new Ui::ChiptuneMidiPlayerWidget)
 {
 	ui->setupUi(this);
 
@@ -267,9 +268,9 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager * p_tune_manager, QWidget *pa
 	p_audio_player_working_thread->QThread::start(QThread::NormalPriority);
 
 	QObject::connect(ui->PlayProgressSlider, &ProgressSlider::MousePressed, this,
-						 &ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed);
+						 &ChiptuneMidiPlayerWidget::HandlePlayProgressSliderMousePressed);
 	QObject::connect(m_p_audio_player, &AudioPlayer::StateChanged,
-					 this, &ChiptuneMidiWidget::HandleAudioPlayerStateChanged, Qt::QueuedConnection);
+					 this, &ChiptuneMidiPlayerWidget::HandleAudioPlayerStateChanged, Qt::QueuedConnection);
 
 	ui->OpenMidiFilePushButton->setToolTip(tr("Open MIDI File"));
 	ui->SaveWavFilePushButton->setToolTip(tr("Save as .wav file"));
@@ -293,7 +294,7 @@ ChiptuneMidiWidget::ChiptuneMidiWidget(TuneManager * p_tune_manager, QWidget *pa
 
 /**********************************************************************************/
 
-ChiptuneMidiWidget::~ChiptuneMidiWidget()
+ChiptuneMidiPlayerWidget::~ChiptuneMidiPlayerWidget()
 {
 	do
 	{
@@ -324,7 +325,7 @@ static QString FormatTimeString(qint64 timeMilliSeconds)
 
 /**********************************************************************************/
 
-int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
+int ChiptuneMidiPlayerWidget::LoadAndPlayMidiFile(QString filename_string)
 {
 	EjectMidiFile();
 
@@ -342,9 +343,9 @@ int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 
 		ChannelListWidget * const p_channel_list_widget = new ChannelListWidget(ui->TimbreListWidget);
 		QObject::connect(p_channel_list_widget, &ChannelListWidget::OutputEnabled,
-						 this, &ChiptuneMidiWidget::HandleChannelOutputEnabled);
+						 this, &ChiptuneMidiPlayerWidget::HandleChannelOutputEnabled);
 		QObject::connect(p_channel_list_widget, &ChannelListWidget::MelodicChannelTimbreChanged,
-						 this, &ChiptuneMidiWidget::HandleMelodicChannelTimbreChanged);
+						 this, &ChiptuneMidiPlayerWidget::HandleMelodicChannelTimbreChanged);
 		FillWidget(p_channel_list_widget, ui->TimbreListWidget);
 
 		instrument_timbre_t const default_instrument_timbre = GetDefaultInstrumentTimbre();
@@ -419,7 +420,7 @@ int ChiptuneMidiWidget::LoadAndPlayMidiFile(QString filename_string)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::EjectMidiFile(void)
+void ChiptuneMidiPlayerWidget::EjectMidiFile(void)
 {
 	if(nullptr != m_p_sequencer_widget){
 		delete m_p_sequencer_widget;
@@ -463,7 +464,7 @@ void ChiptuneMidiWidget::EjectMidiFile(void)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::SetTimbresFileButtonsEnabled(bool is_enabled)
+void ChiptuneMidiPlayerWidget::SetTimbresFileButtonsEnabled(bool is_enabled)
 {
 	ui->LoadTimbresPushButton->setEnabled(is_enabled);
 	ui->StoreTimbresPushButton->setEnabled(is_enabled);
@@ -473,7 +474,7 @@ void ChiptuneMidiWidget::SetTimbresFileButtonsEnabled(bool is_enabled)
 
 #define UNICODE_QUARTER_NOTE_ICON						u8"\u2669" //♩
 
-void ChiptuneMidiWidget::UpdateTempoLabelText(void)
+void ChiptuneMidiPlayerWidget::UpdateTempoLabelText(void)
 {
 	double tempo = m_p_tune_manager->GetTempo();
 	QString tempo_string = QString::asprintf(" = %2.0f", tempo);
@@ -501,7 +502,7 @@ void ChiptuneMidiWidget::UpdateTempoLabelText(void)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds)
+void ChiptuneMidiPlayerWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds)
 {
 	if(true == m_defer_start_play_timer.isActive()){
 		m_defer_start_play_timer.stop();
@@ -548,14 +549,14 @@ void ChiptuneMidiWidget::SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(i
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_PlayProgressSlider_sliderMoved(int value)
+void ChiptuneMidiPlayerWidget::on_PlayProgressSlider_sliderMoved(int value)
 {
 	SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(value);
 }
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackState state)
+void ChiptuneMidiPlayerWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackState state)
 {
 	do
 	{
@@ -574,7 +575,7 @@ void ChiptuneMidiWidget::HandleAudioPlayerStateChanged(AudioPlayer::PlaybackStat
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value)
+void ChiptuneMidiPlayerWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton button, int value)
 {
 	qDebug() << Q_FUNC_INFO;
 	do
@@ -589,7 +590,7 @@ void ChiptuneMidiWidget::HandlePlayProgressSliderMousePressed(Qt::MouseButton bu
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::HandleChannelOutputEnabled(int channel_index, bool is_enabled)
+void ChiptuneMidiPlayerWidget::HandleChannelOutputEnabled(int channel_index, bool is_enabled)
 {
 	m_p_tune_manager->SetChannelOutputEnabled(channel_index, is_enabled);
 	m_p_sequencer_widget->SetChannelDrawAsEnabled(channel_index, is_enabled);
@@ -597,7 +598,7 @@ void ChiptuneMidiWidget::HandleChannelOutputEnabled(int channel_index, bool is_e
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::HandleMelodicChannelTimbreChanged(int channel_index,
+void ChiptuneMidiPlayerWidget::HandleMelodicChannelTimbreChanged(int channel_index,
 										int waveform,
 										int envelope_attack_curve, double envelope_attack_duration_in_seconds,
 										int envelope_decay_curve, double envelope_decay_duration_in_seconds,
@@ -619,7 +620,7 @@ void ChiptuneMidiWidget::HandleMelodicChannelTimbreChanged(int channel_index,
 
 /**********************************************************************************/
 
-bool ChiptuneMidiWidget::eventFilter(QObject *watched, QEvent *event)
+bool ChiptuneMidiPlayerWidget::eventFilter(QObject *watched, QEvent *event)
 {
 	bool is_handled = false;
 	bool ret = false;
@@ -680,7 +681,7 @@ bool ChiptuneMidiWidget::eventFilter(QObject *watched, QEvent *event)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
+void ChiptuneMidiPlayerWidget::timerEvent(QTimerEvent *event)
 {
 	QWidget::timerEvent(event);
 	if(event->timerId() == m_playback_state_inquiry_timer_id){
@@ -733,7 +734,7 @@ void ChiptuneMidiWidget::timerEvent(QTimerEvent *event)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::showEvent(QShowEvent *event)
+void ChiptuneMidiPlayerWidget::showEvent(QShowEvent *event)
 {
 	QWidget::showEvent(event);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -752,19 +753,19 @@ void ChiptuneMidiWidget::showEvent(QShowEvent *event)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::dragEnterEvent(QDragEnterEvent* event) { event->acceptProposedAction(); }
+void ChiptuneMidiPlayerWidget::dragEnterEvent(QDragEnterEvent* event) { event->acceptProposedAction(); }
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::dragMoveEvent(QDragMoveEvent* event) { event->acceptProposedAction(); }
+void ChiptuneMidiPlayerWidget::dragMoveEvent(QDragMoveEvent* event) { event->acceptProposedAction(); }
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::dragLeaveEvent(QDragLeaveEvent* event) { event->accept();}
+void ChiptuneMidiPlayerWidget::dragLeaveEvent(QDragLeaveEvent* event) { event->accept();}
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::dropEvent(QDropEvent *event)
+void ChiptuneMidiPlayerWidget::dropEvent(QDropEvent *event)
 {
 	QWidget::dropEvent(event);
 
@@ -795,7 +796,7 @@ void ChiptuneMidiWidget::dropEvent(QDropEvent *event)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::keyPressEvent(QKeyEvent *event)
+void ChiptuneMidiPlayerWidget::keyPressEvent(QKeyEvent *event)
 {
 	QWidget:: keyPressEvent(event);
 
@@ -831,7 +832,7 @@ void ChiptuneMidiWidget::keyPressEvent(QKeyEvent *event)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_OpenMidiFilePushButton_released(void)
+void ChiptuneMidiPlayerWidget::on_OpenMidiFilePushButton_released(void)
 {
 	QString open_filename_string = QFileDialog::getOpenFileName(this, QString("Open the MIDI File"),
 											   QString(),
@@ -849,7 +850,7 @@ void ChiptuneMidiWidget::on_OpenMidiFilePushButton_released(void)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_SaveWavFilePushButton_released(void)
+void ChiptuneMidiPlayerWidget::on_SaveWavFilePushButton_released(void)
 {
 	m_p_audio_player->Stop();
 	int current_playing_position = ui->PlayProgressSlider->value();
@@ -947,7 +948,7 @@ static instrument_timbre_t GetChannelInstrumentTimbre(ChannelListWidget * const 
 }
 
 /**********************************************************************************/
-void ChiptuneMidiWidget::on_LoadTimbresPushButton_released(void)
+void ChiptuneMidiPlayerWidget::on_LoadTimbresPushButton_released(void)
 {
 	InstrumentTimbreIniFile timbre_ini_file(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING);
 	QMap<int8_t, instrument_timbre_t> ini_instrument_timbre_map;
@@ -1025,7 +1026,7 @@ void ChiptuneMidiWidget::on_LoadTimbresPushButton_released(void)
 }
 
 /**********************************************************************************/
-void ChiptuneMidiWidget::on_StoreTimbresPushButton_released(void)
+void ChiptuneMidiPlayerWidget::on_StoreTimbresPushButton_released(void)
 {
 	InstrumentTimbreIniFile timbre_ini_file(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING);
 
@@ -1145,7 +1146,7 @@ void ChiptuneMidiWidget::on_StoreTimbresPushButton_released(void)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_EjectPushButton_released(void)
+void ChiptuneMidiPlayerWidget::on_EjectPushButton_released(void)
 {
 	EjectMidiFile();
 }
@@ -1167,7 +1168,7 @@ void ChiptuneMidiWidget::on_EjectPushButton_released(void)
 #define PAUSE_ICON									(UNICAODE_DOUBLE_VERTICAL_LINE)
 #endif
 
-bool ChiptuneMidiWidget::IsPlayPauseButtonInPlayState(void)
+bool ChiptuneMidiPlayerWidget::IsPlayPauseButtonInPlayState(void)
 {
 	bool is_play_state = false;
 	do
@@ -1182,7 +1183,7 @@ bool ChiptuneMidiWidget::IsPlayPauseButtonInPlayState(void)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::SetPlayPauseButtonInPlayState(bool is_play_state)
+void ChiptuneMidiPlayerWidget::SetPlayPauseButtonInPlayState(bool is_play_state)
 {
 	do {
 		if(true == is_play_state){
@@ -1195,7 +1196,7 @@ void ChiptuneMidiWidget::SetPlayPauseButtonInPlayState(bool is_play_state)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_PlayPausePushButton_released(void)
+void ChiptuneMidiPlayerWidget::on_PlayPausePushButton_released(void)
 {
 	do {
 		if(false == IsPlayPauseButtonInPlayState()){
@@ -1213,7 +1214,7 @@ void ChiptuneMidiWidget::on_PlayPausePushButton_released(void)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_AllOutputDisabledPushButton_released(void)
+void ChiptuneMidiPlayerWidget::on_AllOutputDisabledPushButton_released(void)
 {
 	do {
 		if(nullptr == ui->TimbreListWidget->layout()){
@@ -1227,7 +1228,7 @@ void ChiptuneMidiWidget::on_AllOutputDisabledPushButton_released(void)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_AllOutputEnabledPushButton_released(void)
+void ChiptuneMidiPlayerWidget::on_AllOutputEnabledPushButton_released(void)
 {
 	do {
 		if(nullptr == ui->TimbreListWidget->layout()){
@@ -1240,7 +1241,7 @@ void ChiptuneMidiWidget::on_AllOutputEnabledPushButton_released(void)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_PitchShiftSpinBox_valueChanged(int i)
+void ChiptuneMidiPlayerWidget::on_PitchShiftSpinBox_valueChanged(int i)
 {
 	ui->PitchShiftSpinBox->setPrefix("");
 	if(i > 0){
@@ -1252,7 +1253,7 @@ void ChiptuneMidiWidget::on_PitchShiftSpinBox_valueChanged(int i)
 
 /**********************************************************************************/
 
-void ChiptuneMidiWidget::on_PlayingSpeedRatioComboBox_currentIndexChanged(int i)
+void ChiptuneMidiPlayerWidget::on_PlayingSpeedRatioComboBox_currentIndexChanged(int i)
 {
 	Q_UNUSED(i);
 	m_p_tune_manager->SetPlayingSpeedRatio(ui->PlayingSpeedRatioComboBox->currentText().split("x").at(1).toDouble());

@@ -51,7 +51,7 @@ set(ENGINE
 set(APPILCATION
     ${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.cpp
     ${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.cpp
-    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiWidget.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.cpp
     ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.cpp
     ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.cpp
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.cpp
@@ -64,7 +64,7 @@ set(APPILCATION
 
     ${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.h
     ${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.h
-    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiWidget.h
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.h
     ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.h
     ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.h
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h
@@ -90,7 +90,7 @@ set(FORMS
     ${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidgetForm.ui
     ${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidgetForm.ui
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrameForm.ui
-    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiWidgetForm.ui
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidgetForm.ui
 )
 
 

@@ -14,7 +14,7 @@
 #include <QDebug>
 
 #include "TuneManager.h"
-#include "ChiptuneMidiWidget.h"
+#include "ChiptuneMidiPlayerWidget.h"
 
 /**********************************************************************************/
 
@@ -52,8 +52,8 @@ int main(int argc, char* argv[])
 	p_tune_manager->QObject::moveToThread(p_tune_manager_working_thread);
 	p_tune_manager_working_thread->QThread::start(QThread::HighPriority);
 
-	ChiptuneMidiWidget chiptune_midi_widget(p_tune_manager);
-	chiptune_midi_widget.show();
-	chiptune_midi_widget.setFocus();
+	ChiptuneMidiPlayerWidget chiptune_midi_player_widget(p_tune_manager);
+	chiptune_midi_player_widget.show();
+	chiptune_midi_player_widget.setFocus();
 	return app.exec();
 }
