@@ -16,7 +16,7 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>ChiptuneMIDIPlayer</string>
+   <string>ChiptuneMIDI Player</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QWidget {

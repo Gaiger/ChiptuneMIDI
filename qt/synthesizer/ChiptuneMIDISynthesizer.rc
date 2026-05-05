@@ -3,8 +3,8 @@
 IDI_ICON1	ICON	DISCARDABLE	"../chiptune.ico"
 
 VS_VERSION_INFO VERSIONINFO
-	FILEVERSION 0,0,10,0
-	PRODUCTVERSION 0,0,10,0
+	FILEVERSION 0,1,0,0
+	PRODUCTVERSION 0,1,0,0
 	FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
 	FILEFLAGS VS_FF_DEBUG
@@ -20,12 +20,12 @@ VS_VERSION_INFO VERSIONINFO
 			BLOCK "040904b0"
 			BEGIN
 				VALUE "CompanyName", "\0"
-				VALUE "FileDescription", "ChiptuneMIDI Player: Play MIDI files as chiptune music\0"
-				VALUE "FileVersion", "0.0.10.0\0"
+				VALUE "FileDescription", "ChiptuneMIDI Synthesizer\0"
+				VALUE "FileVersion", "0.1.0.0\0"
 				VALUE "LegalCopyright", "Copyright 2026 by Chen Gaiger\0"
-				VALUE "OriginalFilename", "ChiptuneMIDIPlayer.exe\0"
-				VALUE "ProductName", "ChiptuneMIDI Player\0"
-				VALUE "ProductVersion", "0.0.10.0\0"
+				VALUE "OriginalFilename", "ChiptuneMIDISynthesizer.exe\0"
+				VALUE "ProductName", "ChiptuneMIDI Synthesizer\0"
+				VALUE "ProductVersion", "0.1.0.0\0"
 			END
 		END
 		BLOCK "VarFileInfo"
