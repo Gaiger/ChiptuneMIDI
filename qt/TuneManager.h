@@ -22,6 +22,7 @@ public:
 
 	explicit TuneManager(bool const is_stereo = true,
 						 int const sampling_rate = 16000, int const sampling_size = SamplingSize8Bit,
+						 bool const is_push_mode = false,
 						 QObject * parent = nullptr);
 	~TuneManager(void);
 
@@ -29,6 +30,9 @@ public:
 	void ClearOutMidiFile(void);
 	bool IsFileLoaded(void);
 	MidSong *GetMidSongPointer(void) const;
+
+	int SendMidiMessage(uint32_t const midi_message);
+
 	int GetNumberOfChannels(void);
 	int GetSamplingRate(void);
 	int GetSamplingSize(void);

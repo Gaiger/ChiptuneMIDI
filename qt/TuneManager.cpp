@@ -81,6 +81,7 @@ public:
 	}
 
 public:
+	bool m_is_push_mode;
 	MidSong *m_p_mid_song;
 	int m_number_of_channels;
 	int m_sampling_rate;
@@ -107,7 +108,8 @@ extern "C" int get_midi_message(uint32_t const message_index, uint32_t * const p
 /**********************************************************************************/
 
 TuneManager::TuneManager(bool const is_stereo,
-						 int const sampling_rate, int const sampling_size, QObject *parent)
+						 int const sampling_rate, int const sampling_size, bool const is_push_mode,
+						 QObject *parent)
 	: QObject(parent),
 	  m_p_private(new TuneManagerPrivate())
 {
@@ -147,9 +149,11 @@ TuneManager::TuneManager(bool const is_stereo,
 	m_p_private->m_channel_instrument_pair_list.clear();
 	m_p_private->m_connection_type = Qt::AutoConnection;
 
+	m_p_private->m_is_push_mode = is_push_mode;
 	s_p_private_instance = m_p_private;
 	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
-						 (uint32_t)m_p_private->m_sampling_rate, get_midi_message);
+						 (uint32_t)m_p_private->m_sampling_rate,
+						 (false == is_push_mode) ? get_midi_message : nullptr);
 }
 
 /**********************************************************************************/
@@ -177,6 +181,10 @@ int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 	int ret = 0;
 	do
 	{
+		if(false != m_p_private->m_is_push_mode){
+			return INT_MIN;
+		}
+
 		QFileInfo file_info(midi_file_name_string);
 		if(false == file_info.isFile()){
 			qDebug() << Q_FUNC_INFO << midi_file_name_string << "is not a file";
@@ -209,6 +217,9 @@ int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 void TuneManager::ClearOutMidiFile(void)
 {
 	QMutexLocker locker(&m_p_private->m_mutex);
+	if(false != m_p_private->m_is_push_mode){
+		return;
+	}
 	m_p_private->m_wave_bytearray.clear();
 	m_p_private->m_wave_prebuffer_size = 0;
 
@@ -221,19 +232,30 @@ void TuneManager::ClearOutMidiFile(void)
 
 /**********************************************************************************/
 
-MidSong *TuneManager::GetMidSongPointer(void) const
-{
-	return m_p_private->m_p_mid_song;
-}
-
-/**********************************************************************************/
-
 bool TuneManager::IsFileLoaded(void)
 {
 	if(nullptr == m_p_private->m_p_mid_song){
 		return false;
 	}
 	return true;
+}
+
+/**********************************************************************************/
+MidSong *TuneManager::GetMidSongPointer(void) const
+{
+	return m_p_private->m_p_mid_song;
+}
+
+/**********************************************************************************/
+int TuneManager::SendMidiMessage(uint32_t const midi_message)
+{
+	if(false == m_p_private->m_is_push_mode){
+		return INT_MIN;
+	}
+
+	qDebug() << Q_FUNC_INFO << Qt::hex << midi_message;
+	return 0;
+	//return chiptune_push_midi_message(midi_message);
 }
 
 /**********************************************************************************/

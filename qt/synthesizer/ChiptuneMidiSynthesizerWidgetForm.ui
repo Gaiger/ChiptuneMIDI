@@ -60,6 +60,19 @@ QSlider::handle {
     border-radius: 3px;
 }</string>
   </property>
+  <widget class="QPushButton" name="NotePushButton">
+   <property name="geometry">
+    <rect>
+     <x>16</x>
+     <y>16</y>
+     <width>96</width>
+     <height>48</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Note</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>
