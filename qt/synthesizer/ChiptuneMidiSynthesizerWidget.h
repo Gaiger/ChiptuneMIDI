@@ -6,6 +6,8 @@
 #include "TuneManager.h"
 #include "AudioPlayer.h"
 
+class WaveChartView;
+
 namespace Ui {
 class ChiptuneMidiSynthesizerWidget;
 }
@@ -22,6 +24,7 @@ private slots:
 private:
 	TuneManager * const	m_p_tune_manager;
 	AudioPlayer *		m_p_audio_player;
+	WaveChartView *		m_p_wave_chartview;
 
 	int					m_audio_player_buffer_in_milliseconds;
 private:

@@ -60,11 +60,27 @@ QSlider::handle {
     border-radius: 3px;
 }</string>
   </property>
+  <widget class="QWidget" name="WaveWidget" native="true">
+   <property name="geometry">
+    <rect>
+     <x>4</x>
+     <y>4</y>
+     <width>952</width>
+     <height>64</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QWidget {
+background-color: rgb(56, 56, 56);
+color: rgb(208, 208, 208);
+}</string>
+   </property>
+  </widget>
   <widget class="QPushButton" name="NotePushButton">
    <property name="geometry">
     <rect>
-     <x>16</x>
-     <y>16</y>
+     <x>432</x>
+     <y>296</y>
      <width>96</width>
      <height>48</height>
     </rect>

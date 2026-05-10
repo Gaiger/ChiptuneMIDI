@@ -1,9 +1,30 @@
 #include <QThread>
 #include <QDebug>
+#include <QGridLayout>
 
 #include "ui_ChiptuneMidiSynthesizerWidgetForm.h"
 
+#include "WaveChartView.h"
+
 #include "ChiptuneMidiSynthesizerWidget.h"
+
+/**********************************************************************************/
+
+static void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
+{
+	QGridLayout *p_layout = nullptr;
+	do
+	{
+		p_layout = (QGridLayout*)p_filled_widget->layout();
+		if(nullptr != p_layout){
+			break;
+		}
+		p_layout = new QGridLayout(p_filled_widget);
+		p_layout->setContentsMargins(0, 0, 0, 0);
+		p_layout->setSpacing(0);
+	} while(0);
+	p_layout->addWidget(p_widget, 0, 0);
+}
 
 /**********************************************************************************/
 
@@ -33,10 +54,21 @@ static uint32_t MakeShortMidiMessage(uint8_t const status_byte, uint8_t const da
 ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tune_manager, QWidget *parent)
 	: QWidget(parent)
 	, m_p_tune_manager(p_tune_manager)
+	, m_p_audio_player(nullptr)
+	, m_p_wave_chartview(nullptr)
 	, m_audio_player_buffer_in_milliseconds(SYNTHESIZER_AUDIO_PLAYER_BUFFER_IN_MILLISECONDS)
 	, ui(new Ui::ChiptuneMidiSynthesizerWidget)
 {
 	ui->setupUi(this);
+
+	do {
+		m_p_wave_chartview = new WaveChartView(
+					p_tune_manager->GetNumberOfChannels(),
+					p_tune_manager->GetSamplingRate(), p_tune_manager->GetSamplingSize(), this);
+		FillWidget(m_p_wave_chartview, ui->WaveWidget);
+		QObject::connect(p_tune_manager, &TuneManager::WaveDelivered,
+						 m_p_wave_chartview, &WaveChartView::UpdateWave, Qt::QueuedConnection);
+	} while(0);
 
 	m_p_audio_player = new AudioPlayer(m_p_tune_manager->GetNumberOfChannels(),
 									   m_p_tune_manager->GetSamplingRate(),
@@ -57,6 +89,8 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 
 	QWidget::setFocusPolicy(Qt::StrongFocus);
 	QWidget::setFixedSize(QWidget::size());
+
+	//m_p_audio_player->Play();
 }
 
 /**********************************************************************************/
