@@ -16,11 +16,12 @@ void chiptune_set_lock_callback(chiptune_lock_callback_t const lock_callback);
 
 typedef int (*chiptune_pull_midi_message_callback_t)(
 		uint32_t const message_index, uint32_t * const p_tick, uint32_t * const p_message);
+void chiptune_set_pull_message_callback(chiptune_pull_midi_message_callback_t const pull_midi_message_callback);
 
-void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
-						 chiptune_pull_midi_message_callback_t const pull_midi_message_callback);
+int chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate);
+
 void chiptune_finalize(void);
-void chiptune_prepare_song(uint32_t const resolution);
+void chiptune_prepare_session(uint32_t const resolution);
 
 int chiptune_push_midi_message(uint32_t const message);
 
@@ -35,9 +36,9 @@ float chiptune_get_playing_effective_tempo(void);
 
 #define CHIPTUNE_INSTRUMENT_NOT_SPECIFIED			(-1)
 #define CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL			(-2)
-void chiptune_get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER]);
+int chiptune_get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER]);
 
-void chiptune_set_current_message_index(uint32_t const message_index);
+int chiptune_set_current_message_index(uint32_t const message_index);
 uint32_t chiptune_get_current_tick(void);
 
 void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const is_enabled);

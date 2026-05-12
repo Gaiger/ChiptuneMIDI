@@ -1212,16 +1212,18 @@ static uint32_t s_reduce_amplitude_normalization_divisor_sample_number = (UINT16
 
 /**********************************************************************************/
 
-void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
-						 chiptune_pull_midi_message_callback_t const pull_midi_message_callback)
+int chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate)
 {
-	if(NULL == s_handler_lock && NULL == pull_midi_message_callback){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: push mode requires lock callback\r\n");
+	if(NULL == s_handler_lock
+			&& NULL == s_handler_pull_midi_message){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: call chiptune_set_pull_message_callback()"
+									 " or chiptune_set_lock_callback()"
+									 " before chiptune_initialize()\r\n");
+		return -1;
 	}
 
 	s_is_stereo = is_stereo;
 	s_is_processing_left_channel = true;
-	s_handler_pull_midi_message = pull_midi_message_callback;
 	UPDATE_SAMPLING_RATE(sampling_rate);
 	UPDATE_RESOLUTION(MIDI_DEFAULT_RESOLUTION);
 	UPDATE_TEMPO(MIDI_DEFAULT_TEMPO);
@@ -1230,7 +1232,7 @@ void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
 		s_sine_table[i] = (int16_t)(INT16_MAX * sinf((float)(2.0 * M_PI * i/SINE_TABLE_LENGTH)));
 	}
 	initialize_channel_controllers();
-	return ;
+	return 0;
 }
 /**********************************************************************************/
 
@@ -1241,7 +1243,7 @@ void chiptune_finalize(void)
 
 /**********************************************************************************/
 
-void chiptune_prepare_song(uint32_t const resolution)
+void chiptune_prepare_session(uint32_t const resolution)
 {
 	UPDATE_RESOLUTION(resolution);
 
@@ -1277,29 +1279,39 @@ void chiptune_set_lock_callback(chiptune_lock_callback_t const lock_callback)
 }
 
 /**********************************************************************************/
-
-void chiptune_set_current_message_index(uint32_t const message_index)
+void chiptune_set_pull_message_callback(
+		chiptune_pull_midi_message_callback_t const pull_midi_message_callback)
 {
-	do
-	{
-		if(NULL == s_handler_pull_midi_message){
-			break;
-		}
-		chase_midi_messages(message_index, NULL);
-	}while(0);
+	s_handler_pull_midi_message = pull_midi_message_callback;
+}
+
+/**********************************************************************************/
+int chiptune_set_current_message_index(uint32_t const message_index)
+{
+	if(true == is_push_mode()){
+		return INT_MIN;
+	}
+	int ret = chase_midi_messages(message_index, NULL);
 	RESET_AMPLITUDE_NORMALIZATION_DIVISOR();
 	RESET_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_COUNT();
+	return ret;
 }
 
 /**********************************************************************************/
 
 void chiptune_set_tempo(float const tempo)
 {
+	if(true == is_push_mode()){
+		s_handler_lock(true);
+	}
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %d, set tempo as %3.1f\r\n", CURRENT_TICK(), tempo);
 	adjust_event_triggering_tick_by_playing_tempo(CURRENT_TICK(), tempo * get_playing_speed_ratio());
 	UPDATE_TEMPO(tempo);
 	update_effect_tick();
 	synchronize_channel_controllers_to_playing_tempo();
+	if(true == is_push_mode()){
+		s_handler_lock(false);
+	}
 }
 
 /**********************************************************************************/
@@ -1313,10 +1325,16 @@ float chiptune_get_tempo(void)
 
 void chiptune_set_playing_speed_ratio(float const playing_speed_ratio)
 {
+	if(true == is_push_mode()){
+		s_handler_lock(true);
+	}
 	adjust_event_triggering_tick_by_playing_tempo(CURRENT_TICK(), chiptune_get_tempo() * playing_speed_ratio);
 	UPDATE_PLAYING_SPEED_RATIO(playing_speed_ratio);
 	update_effect_tick();
 	synchronize_channel_controllers_to_playing_tempo();
+	if(true == is_push_mode()){
+		s_handler_lock(false);
+	}
 }
 
 /**********************************************************************************/
@@ -1328,9 +1346,13 @@ float chiptune_get_playing_effective_tempo(void)
 
 /**********************************************************************************/
 
-void chiptune_get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER])
+int chiptune_get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER])
 {
+	if(true == is_push_mode()){
+		return INT_MIN;
+	}
 	memcpy(&instrument_array[0], &s_ending_instrument_array[0], MIDI_MAX_CHANNEL_NUMBER * sizeof(int8_t));
+	return 0;
 }
 
 /**********************************************************************************/

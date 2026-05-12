@@ -167,10 +167,20 @@ TuneManager::TuneManager(bool const is_stereo,
 
 	m_p_private->m_is_push_mode = is_push_mode;
 	s_p_private_instance = m_p_private;
-	chiptune_set_lock_callback(chiptune_lock);
+
+	do
+	{
+		if(true == is_push_mode){
+			chiptune_set_lock_callback(chiptune_lock);
+			break;
+		}
+		chiptune_set_pull_message_callback(get_midi_message);
+	}while(0);
 	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
-						 (uint32_t)m_p_private->m_sampling_rate,
-						 (false == is_push_mode) ? get_midi_message : nullptr);
+						 (uint32_t)m_p_private->m_sampling_rate);
+	if(true == is_push_mode){
+		chiptune_prepare_session(MIDI_DEFAULT_RESOLUTION);
+	}
 }
 
 /**********************************************************************************/
@@ -224,7 +234,7 @@ int TuneManager::LoadMidiFile(QString const midi_file_name_string)
 
 		qDebug()  << "Music time length = " << GetMidiFileDurationInSeconds() << "seconds";
 		m_p_private->ResetSongResources();
-		chiptune_prepare_song((uint32_t)m_p_private->m_p_mid_song->GetResolution());
+		chiptune_prepare_session((uint32_t)m_p_private->m_p_mid_song->GetResolution());
 	} while(0);
 	return ret;
 }
