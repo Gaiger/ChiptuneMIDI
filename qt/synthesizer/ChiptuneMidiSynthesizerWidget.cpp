@@ -2,6 +2,7 @@
 #include <QDebug>
 #include <QGridLayout>
 #include <QKeyEvent>
+#include <QTimer>
 
 #include "ui_ChiptuneMidiSynthesizerWidgetForm.h"
 
@@ -92,7 +93,9 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 	QWidget::setFocusPolicy(Qt::StrongFocus);
 	QWidget::setFixedSize(QWidget::size());
 
-	m_p_audio_player->Play();
+#define SYNTHESIZER_AUDIO_PLAYER_THREAD_STARTUP_DELAY_IN_MILLISECONDS	(50)
+	QTimer::singleShot(SYNTHESIZER_AUDIO_PLAYER_THREAD_STARTUP_DELAY_IN_MILLISECONDS,
+					   m_p_audio_player, &AudioPlayer::Play);
 }
 
 /**********************************************************************************/
