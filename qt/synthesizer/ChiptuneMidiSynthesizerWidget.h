@@ -7,6 +7,7 @@
 #include "AudioPlayer.h"
 
 class WaveChartView;
+class QKeyEvent;
 
 namespace Ui {
 class ChiptuneMidiSynthesizerWidget;
@@ -21,6 +22,9 @@ public:
 private slots:
 	void on_NotePushButton_pressed(void);
 	void on_NotePushButton_released(void);
+private:
+	void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
+	void keyReleaseEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 private:
 	TuneManager * const	m_p_tune_manager;
 	AudioPlayer *		m_p_audio_player;

@@ -154,7 +154,9 @@ static int16_t s_sine_table[SINE_TABLE_LENGTH]		= {0};
 
 /**********************************************************************************/
 
+static chiptune_lock_callback_t s_handler_lock = NULL;
 static chiptune_pull_midi_message_callback_t s_handler_pull_midi_message = NULL;
+
 static bool s_is_tune_ending = false;
 
 /**********************************************************************************/
@@ -175,6 +177,9 @@ float get_playing_tempo(void)
 {
 	return s_tempo * s_playing_speed_ratio;
 }
+
+/**********************************************************************************/
+static inline bool is_push_mode() { return (NULL == s_handler_pull_midi_message) ? true : false; }
 
 /**********************************************************************************/
 
@@ -349,13 +354,21 @@ static int fetch_midi_tick_message(uint32_t const message_index, struct _tick_me
 #if 1 //PUSH_MODE
 int chiptune_push_midi_message(uint32_t const message)
 {
-	if(NULL != s_handler_pull_midi_message){
+	if(false == is_push_mode()){
 		return INT_MIN;
 	}
+	if(NULL == s_handler_lock){
+		return INT_MIN;
+	}
+	s_handler_lock(true);
+
 	struct _tick_message tick_message;
 	tick_message.tick = CURRENT_TICK();
 	tick_message.message = message;
-	return process_midi_message(tick_message);
+	int ret = process_midi_message(tick_message);
+	s_handler_lock(false);
+
+	return ret;
 }
 #endif
 /**********************************************************************************/
@@ -449,7 +462,7 @@ static uint32_t s_fetched_event_tick = NULL_TICK;
 
 static int process_timely_midi_message_and_events(void)
 {
-	if(NULL == s_handler_pull_midi_message){
+	if(true == is_push_mode()){
 		return INT_MIN;
 	}
 
@@ -519,7 +532,7 @@ static int process_timely_midi_message_and_events(void)
 /**********************************************************************************/
 static int process_timely_midi_events(void)
 {
-	if(NULL != s_handler_pull_midi_message){
+	if(false == is_push_mode()){
 		return INT_MIN;
 	}
 
@@ -763,7 +776,7 @@ int32_t generate_panned_wave_amplitude(oscillator_t const * const p_oscillator)
 /**********************************************************************************/
 #define MIX_WAVE_AMPLITUDE_DIVISOR					(256)
 
-static int32_t chiptune_fetch_32bit_wave(void)
+static int32_t generate_32bit_wave(void)
 {
 	bool is_all_events_processed = false;
 	do
@@ -839,6 +852,25 @@ static int32_t chiptune_fetch_32bit_wave(void)
 	}
 
 	return accumulated_wave_amplitude;
+}
+
+/**********************************************************************************/
+static int32_t chiptune_fetch_32bit_wave(void)
+{
+	if(true == is_push_mode()){
+		if(NULL == s_handler_lock){
+			return (int32_t)0;
+		}
+	}
+
+	if(true == is_push_mode()){
+		s_handler_lock(true);
+	}
+	int32_t const wave = generate_32bit_wave();
+	if(true == is_push_mode()){
+		s_handler_lock(false);
+	}
+	return wave;
 }
 
 /**********************************************************************************/
@@ -1183,6 +1215,10 @@ static uint32_t s_reduce_amplitude_normalization_divisor_sample_number = (UINT16
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
 						 chiptune_pull_midi_message_callback_t const pull_midi_message_callback)
 {
+	if(NULL == s_handler_lock && NULL == pull_midi_message_callback){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: push mode requires lock callback\r\n");
+	}
+
 	s_is_stereo = is_stereo;
 	s_is_processing_left_channel = true;
 	s_handler_pull_midi_message = pull_midi_message_callback;
@@ -1232,6 +1268,12 @@ void chiptune_prepare_song(uint32_t const resolution)
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_DIVISOR();
 	RESET_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_COUNT();
+}
+
+/**********************************************************************************/
+void chiptune_set_lock_callback(chiptune_lock_callback_t const lock_callback)
+{
+	s_handler_lock = lock_callback;
 }
 
 /**********************************************************************************/

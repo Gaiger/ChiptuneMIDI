@@ -1,6 +1,7 @@
 #include <QThread>
 #include <QDebug>
 #include <QGridLayout>
+#include <QKeyEvent>
 
 #include "ui_ChiptuneMidiSynthesizerWidgetForm.h"
 
@@ -40,11 +41,12 @@ static void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
 	(SYNTHESIZER_AUDIO_BUFFER_TIME_FACTOR * SYNTHESIZER_PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS)
 
 #define SYNTHESIZER_NOTE_MIDI_CHANNEL				(0)
-#define SYNTHESIZER_NOTE_NUMBER						(64)
+#define SYNTHESIZER_NOTE_NUMBER						(69)
 #define SYNTHESIZER_NOTE_ON_VELOCITY				(127)
 #define SYNTHESIZER_NOTE_OFF_VELOCITY				(64)
 #define MIDI_MESSAGE_NOTE_ON						(0x90)
 #define MIDI_MESSAGE_NOTE_OFF						(0x80)
+#define SYNTHESIZER_NOTE_SHORTCUT_KEY				(Qt::Key_H)
 
 static uint32_t MakeShortMidiMessage(uint8_t const status_byte, uint8_t const data_byte_1, uint8_t const data_byte_2)
 {
@@ -133,4 +135,46 @@ void ChiptuneMidiSynthesizerWidget::on_NotePushButton_released(void)
 													   SYNTHESIZER_NOTE_OFF_VELOCITY);
 	qDebug() << "midi message =" << Qt::hex << midi_message;
 	m_p_tune_manager->SendMidiMessage(midi_message);
+}
+
+/**********************************************************************************/
+
+void ChiptuneMidiSynthesizerWidget::keyPressEvent(QKeyEvent *event)
+{
+	do
+	{
+		if(SYNTHESIZER_NOTE_SHORTCUT_KEY != event->key()){
+			break;
+		}
+		if(true == event->isAutoRepeat()){
+			event->accept();
+			return;
+		}
+		ui->NotePushButton->setDown(true);
+		on_NotePushButton_pressed();
+		event->accept();
+		return;
+	} while(0);
+	QWidget::keyPressEvent(event);
+}
+
+/**********************************************************************************/
+
+void ChiptuneMidiSynthesizerWidget::keyReleaseEvent(QKeyEvent *event)
+{
+	do
+	{
+		if(SYNTHESIZER_NOTE_SHORTCUT_KEY != event->key()){
+			break;
+		}
+		if(true == event->isAutoRepeat()){
+			event->accept();
+			return;
+		}
+		ui->NotePushButton->setDown(false);
+		on_NotePushButton_released();
+		event->accept();
+		return;
+	} while(0);
+	QWidget::keyReleaseEvent(event);
 }

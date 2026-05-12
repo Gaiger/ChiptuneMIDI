@@ -11,9 +11,11 @@ extern "C"
 {
 #endif
 
+typedef void (*chiptune_lock_callback_t)(bool const is_to_lock);
+void chiptune_set_lock_callback(chiptune_lock_callback_t const lock_callback);
+
 typedef int (*chiptune_pull_midi_message_callback_t)(
 		uint32_t const message_index, uint32_t * const p_tick, uint32_t * const p_message);
-
 
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
 						 chiptune_pull_midi_message_callback_t const pull_midi_message_callback);
