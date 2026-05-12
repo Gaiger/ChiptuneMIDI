@@ -28,7 +28,7 @@ static void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
 
 /**********************************************************************************/
 
-#define SYNTHESIZER_PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS		(35)
+#define SYNTHESIZER_PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS		(10)
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 	#define SYNTHESIZER_AUDIO_BUFFER_TIME_FACTOR    					(2)
@@ -90,7 +90,7 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 	QWidget::setFocusPolicy(Qt::StrongFocus);
 	QWidget::setFixedSize(QWidget::size());
 
-	//m_p_audio_player->Play();
+	m_p_audio_player->Play();
 }
 
 /**********************************************************************************/

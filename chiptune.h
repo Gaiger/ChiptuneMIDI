@@ -11,14 +11,16 @@ extern "C"
 {
 #endif
 
-typedef int (*chiptune_get_midi_message_callback_t)(
+typedef int (*chiptune_pull_midi_message_callback_t)(
 		uint32_t const message_index, uint32_t * const p_tick, uint32_t * const p_message);
 
 
 void chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate,
-						 chiptune_get_midi_message_callback_t const get_midi_message_callback);
+						 chiptune_pull_midi_message_callback_t const pull_midi_message_callback);
 void chiptune_finalize(void);
 void chiptune_prepare_song(uint32_t const resolution);
+
+int chiptune_push_midi_message(uint32_t const message);
 
 uint8_t chiptune_fetch_8bit_wave(void);
 int16_t chiptune_fetch_16bit_wave(void);

@@ -254,8 +254,7 @@ int TuneManager::SendMidiMessage(uint32_t const midi_message)
 	}
 
 	qDebug() << Q_FUNC_INFO << Qt::hex << midi_message;
-	return 0;
-	//return chiptune_push_midi_message(midi_message);
+	return chiptune_push_midi_message(midi_message);
 }
 
 /**********************************************************************************/
