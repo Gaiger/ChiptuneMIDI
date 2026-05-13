@@ -226,8 +226,6 @@ int TuneManager::SendMidiMessage(uint32_t const midi_message)
 	if(false == m_p_private->IsPushMode()){
 		return INT_MIN;
 	}
-
-	qDebug() << Q_FUNC_INFO << Qt::hex << midi_message;
 	return chiptune_push_midi_message(midi_message);
 }
 
@@ -601,9 +599,6 @@ int TuneManager::SetMelodicChannelTimbre(int8_t const channel_index,
 	int ret = -1;
 	do
 	{
-		if(true == m_p_private->IsPushMode()){
-			break;
-		}
 		if(MIDI_PERCUSSION_CHANNEL == channel_index){
 			qDebug() << "WARNING :: MIDI_PERCUSSION_CHANNEL timbre is unsettable, ignored";
 			break;
