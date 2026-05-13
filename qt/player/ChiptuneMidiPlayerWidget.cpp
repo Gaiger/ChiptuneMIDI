@@ -25,6 +25,7 @@
 #include "ChiptuneMidiValues.h"
 #include "InstrumentTimbreIniFile.h"
 
+#include "MidSongManager.h"
 #include "ProgressSlider.h"
 
 #include "WaveChartView.h"
@@ -217,6 +218,7 @@ void SetFontSizeForWidgetSubtree(QWidget * const p_root_widget, int const target
 ChiptuneMidiPlayerWidget::ChiptuneMidiPlayerWidget(TuneManager * p_tune_manager, QWidget *parent)
 	: QWidget(parent),
 	m_p_tune_manager(p_tune_manager),
+	m_p_mid_song_manager(nullptr),
 
 	m_playback_state_inquiry_timer_id(-1),
 	m_playback_tick_inquiry_timer_id(-1),
@@ -309,6 +311,10 @@ ChiptuneMidiPlayerWidget::~ChiptuneMidiPlayerWidget()
 		m_p_audio_player->QObject::deleteLater();
 	}while(0);
 	m_p_audio_player = nullptr;
+	if(nullptr != m_p_mid_song_manager){
+		delete m_p_mid_song_manager;
+		m_p_mid_song_manager = nullptr;
+	}
 }
 
 /**********************************************************************************/
@@ -334,12 +340,15 @@ int ChiptuneMidiPlayerWidget::LoadAndPlayMidiFile(QString filename_string)
 	m_opened_file_info = QFileInfo(filename_string);
 	int ret = 0;
 	do {
-		if(0 > m_p_tune_manager->LoadMidiFile(filename_string)){
+		MidSongManager *p_mid_song_manager = MidSongManager::Create(filename_string);
+		if(nullptr == p_mid_song_manager){
 			message_string = QString::asprintf("Not a MIDI File");
 			ui->MessageLabel->setText(message_string);
 			ret = -1;
 			break;
 		}
+		m_p_mid_song_manager = p_mid_song_manager;
+		m_p_tune_manager->SetMidiMessageProvider(m_p_mid_song_manager);
 
 		ChannelListWidget * const p_channel_list_widget = new ChannelListWidget(ui->TimbreListWidget);
 		QObject::connect(p_channel_list_widget, &ChannelListWidget::OutputEnabled,
@@ -388,7 +397,7 @@ int ChiptuneMidiPlayerWidget::LoadAndPlayMidiFile(QString filename_string)
 		SetFontSizeForWidgetSubtree(p_channel_list_widget,
 										p_channel_list_widget->QWidget::font().pointSize() + 3, false);
 #endif
-		m_p_sequencer_widget = new SequencerWidget(m_p_tune_manager,
+		m_p_sequencer_widget = new SequencerWidget(m_p_mid_song_manager, m_p_tune_manager,
 											   m_audio_player_buffer_in_milliseconds/1000.0,
 											   ui->SequencerScrollArea);
 
@@ -428,7 +437,11 @@ void ChiptuneMidiPlayerWidget::EjectMidiFile(void)
 	m_p_sequencer_widget = nullptr;
 
 	m_p_audio_player->Stop();
-	m_p_tune_manager->ClearOutMidiFile();
+	m_p_tune_manager->SetMidiMessageProvider(nullptr);
+	if(nullptr != m_p_mid_song_manager){
+		delete m_p_mid_song_manager;
+		m_p_mid_song_manager = nullptr;
+	}
 
 	if(-1 != m_playback_state_inquiry_timer_id){
 		QObject::killTimer(m_playback_state_inquiry_timer_id);
@@ -727,7 +740,7 @@ void ChiptuneMidiPlayerWidget::timerEvent(QTimerEvent *event)
 	if(event->timerId() == m_playback_tick_inquiry_timer_id){
 		m_p_sequencer_widget->Update();
 		m_p_sequencer_widget->Prepare(
-					(int)m_p_tune_manager->GetMidSongPointer()->TickFromTime(PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS /1000.0f)
+					(int)m_p_mid_song_manager->GetMidSongPointer()->TickFromTime(PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS /1000.0f)
 					+ m_p_tune_manager->GetCurrentTick());
 	}
 }

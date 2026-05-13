@@ -4,8 +4,8 @@
 #include <QWidget>
 #include <QScrollArea>
 
-#include "TuneManager.h"
-
+class MidSongManager;
+class TuneManager;
 class NoteNameWidget;
 class NoteDurationWidget;
 
@@ -13,7 +13,8 @@ class SequencerWidget : public QWidget
 {
 	Q_OBJECT
 public :
-	explicit SequencerWidget(TuneManager *p_tune_manager, double audio_out_latency_in_seconds,
+	explicit SequencerWidget(MidSongManager *p_mid_song_manager, TuneManager *p_tune_manager,
+							 double audio_out_latency_in_seconds,
 							 QScrollArea *p_parent_scroll_area);
 	~SequencerWidget(void);
 	void Prepare(int tick_in_center);

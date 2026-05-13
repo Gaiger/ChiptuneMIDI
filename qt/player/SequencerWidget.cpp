@@ -1,11 +1,15 @@
 #include <QDebug>
+#include <QMutex>
 #include <QHBoxLayout>
 #include <QPainter>
 
 #include <QScrollBar>
 
 #include "chiptune_midi_define.h"
+#include "mid_reader/qt/MidSong.h"
 #include "ChiptuneMidiValues.h"
+#include "MidSongManager.h"
+#include "TuneManager.h"
 
 #include "SequencerWidget.h"
 
@@ -111,8 +115,9 @@ class NoteDurationWidget : public QWidget
 {
 	//Q_OBJECT
 public:
-	explicit NoteDurationWidget(TuneManager *p_tune_manager, int drawn_highest_pitch,
-							 double audio_out_latency_in_seconds = 0.0, QWidget *parent = nullptr);
+	explicit NoteDurationWidget(MidSongManager *p_mid_song_manager, TuneManager *p_tune_manager,
+								int drawn_highest_pitch, double audio_out_latency_in_seconds,
+								QWidget *parent = nullptr);
 	~NoteDurationWidget(void);
 public :
 	void Prepare(int tick_in_center);
@@ -129,6 +134,7 @@ private :
 private:
 	void paintEvent(QPaintEvent  *event) Q_DECL_OVERRIDE;
 private:
+	MidSongManager *m_p_mid_song_manager;
 	TuneManager *m_p_tune_manager;
 	int m_drawn_highest_pitch;
 
@@ -149,9 +155,11 @@ private:
 #define ONE_BEAT_WIDTH					(64)
 #define ONE_BEAT_HEIGHT					(ONE_NAME_HEIGHT)
 
-NoteDurationWidget::NoteDurationWidget(TuneManager *p_tune_manager, int drawn_highest_pitch,
-								 double audio_out_latency_in_seconds, QWidget *parent) :
+NoteDurationWidget::NoteDurationWidget(MidSongManager *p_mid_song_manager, TuneManager *p_tune_manager,
+								 int drawn_highest_pitch, double audio_out_latency_in_seconds,
+								 QWidget *parent) :
 	QWidget(parent),
+	m_p_mid_song_manager(p_mid_song_manager),
 	m_p_tune_manager(p_tune_manager),
 	m_drawn_highest_pitch(drawn_highest_pitch),
 	m_audio_out_latency_in_seconds(audio_out_latency_in_seconds),
@@ -159,7 +167,7 @@ NoteDurationWidget::NoteDurationWidget(TuneManager *p_tune_manager, int drawn_hi
 	m_last_tick_in_center(0)
 {
 	QSize size = QSize(parent->width() - ONE_NAME_WIDTH * 3 / 2, (m_drawn_highest_pitch - A0 + 1) * ONE_NAME_HEIGHT);
-	setFixedSize(size);
+	QWidget::setFixedSize(size);
 
 	for(int j = 0; j < 2; j++){
 		for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
@@ -182,7 +190,7 @@ NoteDurationWidget::~NoteDurationWidget(){ }
 
 int NoteDurationWidget::tickToX(int tick, int const tick_in_center)
 {
-	int x = ONE_BEAT_WIDTH * (tick - tick_in_center)/(double)m_p_tune_manager->GetMidSongPointer()->GetResolution();
+	int x = ONE_BEAT_WIDTH * (tick - tick_in_center)/(double)m_p_mid_song_manager->GetMidSongPointer()->GetResolution();
 	x += QWidget::width()/2;
 	return x;
 }
@@ -193,7 +201,7 @@ int NoteDurationWidget::XtoTick(int x, int tick_in_center)
 {
 	int tick  = tick_in_center;
 	x -= QWidget::width()/2;
-	tick += ( x / (double) ONE_BEAT_WIDTH) * m_p_tune_manager->GetMidSongPointer()->GetResolution();
+	tick += ( x / (double) ONE_BEAT_WIDTH) * m_p_mid_song_manager->GetMidSongPointer()->GetResolution();
 	return tick;
 }
 
@@ -272,7 +280,7 @@ void NoteDurationWidget::Prepare(int const tick_in_center)
 		m_channel_rectangle_list[preparing_channel_rectangle_list_index][voice].clear();
 	}
 
-	MidSong *p_mid_song = m_p_tune_manager->GetMidSongPointer();
+	MidSong *p_mid_song = m_p_mid_song_manager->GetMidSongPointer();
 
 	typedef struct
 	{
@@ -464,7 +472,8 @@ void NoteDurationWidget::Update(void)
 /**********************************************************************************/
 /**********************************************************************************/
 
-SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, double audio_out_latency_in_seconds,
+SequencerWidget::SequencerWidget(MidSongManager *p_mid_song_manager, TuneManager *p_tune_manager,
+						 double audio_out_latency_in_seconds,
 						 QScrollArea *p_parent_scroll_area)
 	: QWidget(p_parent_scroll_area),
 	  m_p_parent_scroll_area(p_parent_scroll_area)
@@ -474,7 +483,7 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, double audio_out_l
 	p_layout->setContentsMargins(0, 0, 0, 0);
 	p_layout->setSpacing(0);
 
-	MidSong *p_mid_song = p_tune_manager->GetMidSongPointer();
+	MidSong *p_mid_song = p_mid_song_manager->GetMidSongPointer();
 	int highest_pitch = A0;
 	int lowest_pitch = G9;
 	int first_note_pitch = 0;
@@ -511,7 +520,8 @@ SequencerWidget::SequencerWidget(TuneManager *p_tune_manager, double audio_out_l
 		drawn_hightest_pitch = (QWidget::height()/ONE_BEAT_HEIGHT) + A0 - 1;
 	}
 	m_p_note_name_widget = new NoteNameWidget(drawn_hightest_pitch, this);
-	m_p_note_duration_widget = new NoteDurationWidget(p_tune_manager, drawn_hightest_pitch, audio_out_latency_in_seconds, this);
+	m_p_note_duration_widget = new NoteDurationWidget(p_mid_song_manager, p_tune_manager,
+													  drawn_hightest_pitch, audio_out_latency_in_seconds, this);
 	p_layout->addWidget(m_p_note_name_widget);
 	p_layout->addWidget(m_p_note_duration_widget);
 	//p_parent_scroll_area->verticalScrollBar()->setSingleStep(ONE_BEAT_HEIGHT);

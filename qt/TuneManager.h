@@ -4,9 +4,16 @@
 #include <QObject>
 #include <QMutex>
 
-#include "mid_reader/qt/MidSong.h"
-
+class MidSong;
 class TuneManagerPrivate;
+
+class MidiMessageProvider
+ {
+ public:
+	virtual MidSong *GetMidSongPointer(void) const = 0;
+	virtual ~MidiMessageProvider(void){};
+ };
+
 
 class TuneManager : public QObject
 {
@@ -22,14 +29,11 @@ public:
 
 	explicit TuneManager(bool const is_stereo = true,
 						 int const sampling_rate = 16000, int const sampling_size = SamplingSize8Bit,
-						 bool const is_push_mode = false,
 						 QObject * parent = nullptr);
 	~TuneManager(void);
 
-	int LoadMidiFile(QString const midi_file_name_string);
-	void ClearOutMidiFile(void);
-	bool IsFileLoaded(void);
-	MidSong *GetMidSongPointer(void) const;
+	void SetMidiMessageProvider(MidiMessageProvider *p_midi_message_provider);
+	bool IsFileLoaded(void) const;
 
 	int SendMidiMessage(uint32_t const midi_message);
 

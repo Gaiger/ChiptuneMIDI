@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 #ifdef _DEBUG
 	sampling_rate = 16000;
 #endif
-	TuneManager *p_tune_manager = new TuneManager(true, sampling_rate, 16, true);
+	TuneManager *p_tune_manager = new TuneManager(true, sampling_rate, 16);
 	QObject::connect(&app, &QCoreApplication::aboutToQuit,
 					   p_tune_manager, &QObject::deleteLater);
 

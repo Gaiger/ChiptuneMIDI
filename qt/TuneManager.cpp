@@ -1,10 +1,11 @@
 #include <QThread>
-#include <QFileInfo>
 #include <QTimer>
 
 #include <cfloat>
 
 #include <QDebug>
+
+#include "mid_reader/qt/MidSong.h"
 
 #include "chiptune_midi_define.h"
 #include "chiptune.h"
@@ -31,14 +32,14 @@ public:
 		MidEvent midi_event;
 		do
 		{
-			if((nullptr == m_p_mid_song) || (index < 0)){
+			if((nullptr == m_p_midi_message_provider) || (index < 0)){
 				break;
 			}
-			if(m_p_mid_song->GetEventCount() <= index){
+			if(m_p_midi_message_provider->GetMidSongPointer()->GetEventCount() <= index){
 				break;
 			}
 
-			midi_event = m_p_mid_song->GetEvent(index);
+			midi_event = m_p_midi_message_provider->GetMidSongPointer()->GetEvent(index);
 			if(false == midi_event.IsValid()){
 				break;
 			}
@@ -90,10 +91,13 @@ public:
 		m_wave_prebuffer_size = 0;
 		m_channel_instrument_pair_list.clear();
 	}
+	bool IsPushMode(void) const
+	{
+		return (nullptr == m_p_midi_message_provider);
+	}
 
 public:
-	bool m_is_push_mode;
-	MidSong *m_p_mid_song;
+	MidiMessageProvider *m_p_midi_message_provider;
 	int m_number_of_channels;
 	int m_sampling_rate;
 	int m_sampling_size;
@@ -124,7 +128,7 @@ extern "C" int get_midi_message(uint32_t const message_index, uint32_t * const p
 /**********************************************************************************/
 
 TuneManager::TuneManager(bool const is_stereo,
-						 int const sampling_rate, int const sampling_size, bool const is_push_mode,
+						 int const sampling_rate, int const sampling_size,
 						 QObject *parent)
 	: QObject(parent),
 	  m_p_private(new TuneManagerPrivate())
@@ -161,26 +165,17 @@ TuneManager::TuneManager(bool const is_stereo,
 		}
 		m_p_private->m_number_of_channels = 1;
 	} while(0);
-	m_p_private->m_p_mid_song = nullptr;
+	m_p_private->m_p_midi_message_provider = nullptr;
 	m_p_private->m_channel_instrument_pair_list.clear();
 	m_p_private->m_connection_type = Qt::AutoConnection;
 
-	m_p_private->m_is_push_mode = is_push_mode;
 	s_p_private_instance = m_p_private;
 
-	do
-	{
-		if(true == is_push_mode){
-			chiptune_set_lock_callback(chiptune_lock);
-			break;
-		}
-		chiptune_set_pull_message_callback(get_midi_message);
-	}while(0);
+	chiptune_set_lock_callback(chiptune_lock);
+	chiptune_set_pull_message_callback(nullptr);
 	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
 						 (uint32_t)m_p_private->m_sampling_rate);
-	if(true == is_push_mode){
-		chiptune_prepare_session(MIDI_DEFAULT_RESOLUTION);
-	}
+	chiptune_prepare_session(MIDI_DEFAULT_RESOLUTION);
 }
 
 /**********************************************************************************/
@@ -191,10 +186,6 @@ TuneManager::~TuneManager(void)
 		QMutexLocker locker(&m_p_private->m_tune_manager_mutex);
 
 		chiptune_finalize();
-		if(nullptr != m_p_private->m_p_mid_song){
-			delete m_p_private->m_p_mid_song;
-			m_p_private->m_p_mid_song = nullptr;
-		}
 		m_p_private->m_channel_instrument_pair_list.clear();
 	}
 	delete m_p_private;
@@ -202,81 +193,37 @@ TuneManager::~TuneManager(void)
 
 /**********************************************************************************/
 
-int TuneManager::LoadMidiFile(QString const midi_file_name_string)
+void TuneManager::SetMidiMessageProvider(MidiMessageProvider *p_midi_message_provider)
 {
 	QMutexLocker locker(&m_p_private->m_tune_manager_mutex);
-	int ret = 0;
+	m_p_private->m_p_midi_message_provider = p_midi_message_provider;
+
 	do
 	{
-		if(false != m_p_private->m_is_push_mode){
-			return INT_MIN;
-		}
-
-		QFileInfo file_info(midi_file_name_string);
-		if(false == file_info.isFile()){
-			qDebug() << Q_FUNC_INFO << midi_file_name_string << "is not a file";
-			ret = -1;
+		if(nullptr == p_midi_message_provider){
+			chiptune_set_pull_message_callback(nullptr);
+			chiptune_prepare_session(MIDI_DEFAULT_RESOLUTION);
 			break;
 		}
 
-		MidSong *p_mid_song = new MidSong();
-		if(false == p_mid_song->Load(midi_file_name_string))
-		{
-			delete p_mid_song; p_mid_song = nullptr;
-			ret = -2;
-			break;
-		}
-
-		if(nullptr != m_p_private->m_p_mid_song){
-			delete m_p_private->m_p_mid_song;
-		}
-		m_p_private->m_p_mid_song = p_mid_song;
-
-		qDebug()  << "Music time length = " << GetMidiFileDurationInSeconds() << "seconds";
-		m_p_private->ResetSongResources();
-		chiptune_prepare_session((uint32_t)m_p_private->m_p_mid_song->GetResolution());
+		chiptune_set_pull_message_callback(get_midi_message);
+		chiptune_prepare_session((uint32_t)p_midi_message_provider->GetMidSongPointer()->GetResolution());
 	} while(0);
-	return ret;
+
+	m_p_private->ResetSongResources();
 }
 
 /**********************************************************************************/
 
-void TuneManager::ClearOutMidiFile(void)
+bool TuneManager::IsFileLoaded(void) const
 {
-	QMutexLocker locker(&m_p_private->m_tune_manager_mutex);
-	if(false != m_p_private->m_is_push_mode){
-		return;
-	}
-	m_p_private->m_wave_bytearray.clear();
-	m_p_private->m_wave_prebuffer_size = 0;
-
-	if(nullptr != m_p_private->m_p_mid_song){
-		delete m_p_private->m_p_mid_song;	
-		m_p_private->m_p_mid_song = nullptr;
-	}
-	m_p_private->m_channel_instrument_pair_list.clear();
-}
-
-/**********************************************************************************/
-
-bool TuneManager::IsFileLoaded(void)
-{
-	if(nullptr == m_p_private->m_p_mid_song){
-		return false;
-	}
-	return true;
-}
-
-/**********************************************************************************/
-MidSong *TuneManager::GetMidSongPointer(void) const
-{
-	return m_p_private->m_p_mid_song;
+	return !m_p_private->IsPushMode();
 }
 
 /**********************************************************************************/
 int TuneManager::SendMidiMessage(uint32_t const midi_message)
 {
-	if(false == m_p_private->m_is_push_mode){
+	if(false == m_p_private->IsPushMode()){
 		return INT_MIN;
 	}
 
@@ -418,33 +365,35 @@ float TuneManager::GetMidiFileDurationInSeconds(void)
 {
 	MidEvent midi_event;
 
-	if(nullptr == m_p_private->m_p_mid_song){
+	if(true == m_p_private->IsPushMode()){
 		return -1.0;
 	}
-	if(0 == m_p_private->m_p_mid_song->GetEventCount()){
+	MidSong * const p_mid_song = m_p_private->m_p_midi_message_provider->GetMidSongPointer();
+	if(0 == p_mid_song->GetEventCount()){
 		return 0.0f;
 	}
 
-	midi_event = m_p_private->m_p_mid_song->GetEvent(m_p_private->m_p_mid_song->GetEventCount() - 1);
-	return m_p_private->m_p_mid_song->TimeFromTick(midi_event.GetTick());
+	midi_event = p_mid_song->GetEvent(p_mid_song->GetEventCount() - 1);
+	return p_mid_song->TimeFromTick(midi_event.GetTick());
 }
 
 /**********************************************************************************/
 
 float TuneManager::GetCurrentElapsedTimeInSeconds(void)
 {
-	if(nullptr == m_p_private->m_p_mid_song){
+	if(true == m_p_private->IsPushMode()){
 		return -1.0;
 	}
+	MidSong * const p_mid_song = m_p_private->m_p_midi_message_provider->GetMidSongPointer();
 
-	return m_p_private->m_p_mid_song->TimeFromTick((uint32_t)chiptune_get_current_tick());
+	return p_mid_song->TimeFromTick((uint32_t)chiptune_get_current_tick());
 }
 
 /**********************************************************************************/
 
 int TuneManager::GetCurrentTick(void)
 {
-	if(nullptr == m_p_private->m_p_mid_song){
+	if(true == m_p_private->IsPushMode()){
 		return -1;
 	}
 
@@ -455,7 +404,7 @@ int TuneManager::GetCurrentTick(void)
 
 double TuneManager::GetTempo(void)
 {
-	if(nullptr == m_p_private->m_p_mid_song){
+	if(true == m_p_private->IsPushMode()){
 		return FLT_MAX;
 	}
 	return chiptune_get_tempo();
@@ -465,7 +414,7 @@ double TuneManager::GetTempo(void)
 
 double TuneManager::GetPlayingEffectiveTempo(void)
 {
-	if(nullptr == m_p_private->m_p_mid_song){
+	if(true == m_p_private->IsPushMode()){
 		return FLT_MAX;
 	}
 	return chiptune_get_playing_effective_tempo();
@@ -493,18 +442,19 @@ void TuneManager::SetPitchShift(int const pitch_shift_in_semitones)
 int TuneManager::SetStartTimeInSeconds(float const target_start_time_in_seconds)
 {
 	QMutexLocker locker(&m_p_private->m_tune_manager_mutex);
+	if(true == m_p_private->IsPushMode()){
+		return -1;
+	}
+	MidSong * const p_mid_song = m_p_private->m_p_midi_message_provider->GetMidSongPointer();
 
 	int set_index = -1;
-	int const event_count = (nullptr == m_p_private->m_p_mid_song) ? 0 : m_p_private->m_p_mid_song->GetEventCount();
+	int const event_count = p_mid_song->GetEventCount();
 
 	do {
 		if(target_start_time_in_seconds < 0){
 			break;
 		}
 
-		if(nullptr == m_p_private->m_p_mid_song){
-			break;
-		}
 		if(0 == event_count){
 			break;
 		}
@@ -516,7 +466,7 @@ int TuneManager::SetStartTimeInSeconds(float const target_start_time_in_seconds)
 			do
 			{
 				float const middle_index_event_time_in_seconds
-						= m_p_private->m_p_mid_song->TimeFromTick(m_p_private->m_p_mid_song->GetEvent(middle_index).GetTick());
+						= p_mid_song->TimeFromTick(p_mid_song->GetEvent(middle_index).GetTick());
 				if(middle_index_event_time_in_seconds > target_start_time_in_seconds){
 					right_index = middle_index - 1;
 					break;
@@ -533,10 +483,13 @@ int TuneManager::SetStartTimeInSeconds(float const target_start_time_in_seconds)
 	int ret = -1;
 	do
 	{
+		if((set_index < 0) || ((set_index + 1) >= event_count)){
+			break;
+		}
 		{
-			float found_timestamp_tail_index_time_in_seconds = m_p_private->m_p_mid_song->TimeFromTick(m_p_private->m_p_mid_song->GetEvent(set_index).GetTick());
+			float found_timestamp_tail_index_time_in_seconds = p_mid_song->TimeFromTick(p_mid_song->GetEvent(set_index).GetTick());
 			float found_timestamp_tail_index_plus_one_time_in_seconds
-					= m_p_private->m_p_mid_song->TimeFromTick(m_p_private->m_p_mid_song->GetEvent(set_index + 1).GetTick());
+					= p_mid_song->TimeFromTick(p_mid_song->GetEvent(set_index + 1).GetTick());
 			if(false == (found_timestamp_tail_index_time_in_seconds <= target_start_time_in_seconds &&
 					target_start_time_in_seconds < found_timestamp_tail_index_plus_one_time_in_seconds)){
 				qDebug() << Q_FUNC_INFO << "ERROR :: found_timestamp_tail_index_time_in_seconds = " << found_timestamp_tail_index_time_in_seconds
@@ -556,12 +509,12 @@ int TuneManager::SetStartTimeInSeconds(float const target_start_time_in_seconds)
 			}
 			int left_index = 0;
 			int right_index = set_index;
-			uint32_t const found_timestamp_in_ticks = m_p_private->m_p_mid_song->GetEvent(set_index).GetTick();
+			uint32_t const found_timestamp_in_ticks = p_mid_song->GetEvent(set_index).GetTick();
 			while(left_index <= right_index){
 				int middle_index = (left_index + right_index) / 2;
 				do
 				{
-					uint32_t const middle_index_event_time_in_tick = m_p_private->m_p_mid_song->GetEvent(middle_index).GetTick();
+					uint32_t const middle_index_event_time_in_tick = p_mid_song->GetEvent(middle_index).GetTick();
 					if(middle_index_event_time_in_tick >= found_timestamp_in_ticks){
 						right_index = middle_index - 1;
 						break;
@@ -574,16 +527,16 @@ int TuneManager::SetStartTimeInSeconds(float const target_start_time_in_seconds)
 			if(0 == set_index){
 				break;
 			}
-			if(m_p_private->m_p_mid_song->GetEvent(set_index - 1).GetTick() == m_p_private->m_p_mid_song->GetEvent(set_index).GetTick()){
+			if(p_mid_song->GetEvent(set_index - 1).GetTick() == p_mid_song->GetEvent(set_index).GetTick()){
 				qDebug() << Q_FUNC_INFO << "WARNING :: set_index is not the head for the same tick";
 			}
 		} while(0);
 
 		qDebug() << Q_FUNC_INFO << "target_start_time_in_seconds = " << target_start_time_in_seconds
-				 << ", found time in seconds = " << m_p_private->m_p_mid_song->TimeFromTick(m_p_private->m_p_mid_song->GetEvent(set_index).GetTick())
+				 << ", found time in seconds = " << p_mid_song->TimeFromTick(p_mid_song->GetEvent(set_index).GetTick())
 				 << ", found_timestamp_tail_index = " << found_timestamp_tail_index
 				 << ", set_index = " << set_index
-				 << ", tick = " << m_p_private->m_p_mid_song->GetEvent(set_index).GetTick();
+				 << ", tick = " << p_mid_song->GetEvent(set_index).GetTick();
 		chiptune_set_current_message_index(set_index);
 
 		m_p_private->m_wave_bytearray.clear();
@@ -648,7 +601,7 @@ int TuneManager::SetMelodicChannelTimbre(int8_t const channel_index,
 	int ret = -1;
 	do
 	{
-		if(nullptr == m_p_private->m_p_mid_song){
+		if(true == m_p_private->IsPushMode()){
 			break;
 		}
 		if(MIDI_PERCUSSION_CHANNEL == channel_index){

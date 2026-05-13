@@ -67,12 +67,14 @@ set(APPLICATION_COMMON
 )
 
 set(APPLICATION_PLAYER
+    ${CHIPTUNE_QT_PLAYER_DIR}/MidSongManager.cpp
     ${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.cpp
     ${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.cpp
     ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.cpp
     ${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.cpp
     ${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.cpp
 
+    ${CHIPTUNE_QT_PLAYER_DIR}/MidSongManager.h
     ${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.h
     ${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.h
     ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.h

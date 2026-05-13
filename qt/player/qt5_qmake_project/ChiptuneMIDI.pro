@@ -52,6 +52,7 @@ SOURCES += \
     $${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.cpp \
     $${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.cpp \
     $${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.cpp \
+    $${CHIPTUNE_QT_PLAYER_DIR}/MidSongManager.cpp \
     $${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.cpp \
     $${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.cpp \
     $${CHIPTUNE_QT_DIR}/TuneManager.cpp \
@@ -80,6 +81,7 @@ HEADERS += \
     $${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.h \
     $${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.h \
     $${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h \
+    $${CHIPTUNE_QT_PLAYER_DIR}/MidSongManager.h \
     $${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.h \
     $${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.h \
     $${CHIPTUNE_QT_DIR}/TuneManager.h \

@@ -15,6 +15,7 @@ class ChiptuneMidiPlayerWidget;
 
 class WaveChartView;
 class SequencerWidget;
+class MidSongManager;
 
 class ChiptuneMidiPlayerWidget : public QWidget
 {
@@ -76,6 +77,7 @@ private:
 
 private :
 	TuneManager * const	m_p_tune_manager;
+	MidSongManager *	m_p_mid_song_manager;
 	AudioPlayer *		m_p_audio_player;
 
 	QFileInfo			m_opened_file_info;
