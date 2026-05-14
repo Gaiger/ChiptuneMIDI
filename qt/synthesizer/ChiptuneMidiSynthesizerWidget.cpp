@@ -2,11 +2,13 @@
 #include <QDebug>
 #include <QGridLayout>
 #include <QKeyEvent>
+#include <QStringList>
 #include <QTimer>
 
 #include "ui_ChiptuneMidiSynthesizerWidgetForm.h"
 
 #include "WaveChartView.h"
+#include "MidiInputManager.h"
 
 #include "ChiptuneMidiSynthesizerWidget.h"
 
@@ -30,7 +32,7 @@ static void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
 
 /**********************************************************************************/
 
-#define SYNTHESIZER_PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS		(10)
+#define SYNTHESIZER_PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS		(30)
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 	#define SYNTHESIZER_AUDIO_BUFFER_TIME_FACTOR    					(2)
@@ -59,6 +61,7 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 	, m_p_tune_manager(p_tune_manager)
 	, m_p_audio_player(nullptr)
 	, m_p_wave_chartview(nullptr)
+	, m_p_midi_input_manager(nullptr)
 	, m_audio_player_buffer_in_milliseconds(SYNTHESIZER_AUDIO_PLAYER_BUFFER_IN_MILLISECONDS)
 	, ui(new Ui::ChiptuneMidiSynthesizerWidget)
 {
@@ -96,12 +99,27 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 #define SYNTHESIZER_AUDIO_PLAYER_THREAD_STARTUP_DELAY_IN_MILLISECONDS	(50)
 	QTimer::singleShot(SYNTHESIZER_AUDIO_PLAYER_THREAD_STARTUP_DELAY_IN_MILLISECONDS,
 					   m_p_audio_player, &AudioPlayer::Play);
+
+	m_p_midi_input_manager = new MidiInputManager(this);
+	QObject::connect(m_p_midi_input_manager, &MidiInputManager::MidiMessageReceived,
+					 m_p_tune_manager, &TuneManager::SendMidiMessage, Qt::QueuedConnection);
+
+	QStringList const midi_input_port_name_list = m_p_midi_input_manager->GetPortNameList();
+	qInfo() << "MIDI input ports:" << midi_input_port_name_list;
+	if(false == midi_input_port_name_list.isEmpty()){
+		m_p_midi_input_manager->OpenPort(0);
+	}
 }
 
 /**********************************************************************************/
 
 ChiptuneMidiSynthesizerWidget::~ChiptuneMidiSynthesizerWidget()
 {
+	if(nullptr != m_p_midi_input_manager){
+		m_p_midi_input_manager->ClosePort();
+		//delete m_p_midi_input_manager;
+		m_p_midi_input_manager = nullptr;
+	}
 	do
 	{
 		if(nullptr == m_p_audio_player){

@@ -10,6 +10,7 @@ set(CMAKE_AUTORCC ON)
 set(CHIPTUNE_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/../..")
 set(CHIPTUNE_QT_DIR "${CHIPTUNE_ROOT_DIR}/qt")
 set(CHIPTUNE_QT_SYNTHESIZER_DIR "${CHIPTUNE_QT_DIR}/synthesizer")
+set(RTMIDI_DIR "${CHIPTUNE_QT_SYNTHESIZER_DIR}/rtmidi")
 set(CMAKE_AUTOUIC_SEARCH_PATHS ${CHIPTUNE_QT_DIR} ${CHIPTUNE_QT_SYNTHESIZER_DIR})
 
 #find_package(Qt5 REQUIRED COMPONENTS Widgets Charts Multimedia WinExtras)
@@ -21,6 +22,11 @@ if (QT_VERSION_MAJOR EQUAL 5)
        find_package(Qt${QT_VERSION_MAJOR} COMPONENTS WinExtras REQUIRED)
     endif()
 endif()
+
+set(RTMIDI_BUILD_STATIC_LIBS ON CACHE BOOL "Build RtMidi as a static library" FORCE)
+set(RTMIDI_BUILD_TESTING OFF CACHE BOOL "Disable RtMidi tests" FORCE)
+set(RTMIDI_BUILD_EXAMPLES OFF CACHE BOOL "Disable RtMidi examples" FORCE)
+add_subdirectory(${RTMIDI_DIR} RtMidi)
 
 set(ENGINE
     ${CHIPTUNE_ROOT_DIR}/chiptune.c
@@ -69,6 +75,8 @@ set(APPLICATION_COMMON
 set(APPLICATION_SYNTHESIZER
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/ChiptuneMidiSynthesizerWidget.cpp
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/ChiptuneMidiSynthesizerWidget.h
+    ${CHIPTUNE_QT_SYNTHESIZER_DIR}/MidiInputManager.cpp
+    ${CHIPTUNE_QT_SYNTHESIZER_DIR}/MidiInputManager.h
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/main.cpp
 )
 
@@ -117,7 +125,7 @@ target_include_directories(ChiptuneMIDISynthesizer PRIVATE
     ${CHIPTUNE_ROOT_DIR})
 
 target_link_libraries(ChiptuneMIDISynthesizer
-    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts Qt${QT_VERSION_MAJOR}::Multimedia)
+    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts Qt${QT_VERSION_MAJOR}::Multimedia rtmidi)
 if (QT_VERSION_MAJOR EQUAL 5)
     if(WIN32)
         target_link_libraries(ChiptuneMIDISynthesizer PRIVATE Qt5::WinExtras)

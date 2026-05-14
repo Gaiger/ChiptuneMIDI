@@ -1,3 +1,6 @@
 [submodule "mid_reader/test/QMidi"]
 	path = mid_reader/test/QMidi
 	url = https://github.com/waddlesplash/QMidi
+[submodule "qt/synthesizer/rtmidi"]
+	path = qt/synthesizer/rtmidi
+	url = https://github.com/thestk/rtmidi.git

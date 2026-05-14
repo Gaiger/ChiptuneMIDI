@@ -8,6 +8,7 @@
 
 class WaveChartView;
 class QKeyEvent;
+class MidiInputManager;
 
 namespace Ui {
 class ChiptuneMidiSynthesizerWidget;
@@ -29,6 +30,7 @@ private:
 	TuneManager * const	m_p_tune_manager;
 	AudioPlayer *		m_p_audio_player;
 	WaveChartView *		m_p_wave_chartview;
+	MidiInputManager *	m_p_midi_input_manager;
 
 	int					m_audio_player_buffer_in_milliseconds;
 private:

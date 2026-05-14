@@ -35,8 +35,10 @@ public:
 	void SetMidiMessageProvider(MidiMessageProvider *p_midi_message_provider);
 	bool IsFileLoaded(void) const;
 
+public slots:
 	int SendMidiMessage(uint32_t const midi_message);
 
+public:
 	int GetNumberOfChannels(void);
 	int GetSamplingRate(void);
 	int GetSamplingSize(void);
