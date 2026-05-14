@@ -1168,6 +1168,7 @@ static inline int32_t normalize_wave_amplitude_by_scaled_reciprocal_multiplier(
 #endif
 
 #define AMPLITUDE_NORMALIZATION_DIVISOR_INCREMENT	(1)
+
 /*
  * Recovery step in dB:
  *   20 * log10(divisor / (divisor - decrement))
@@ -1183,6 +1184,17 @@ static inline int32_t normalize_wave_amplitude_by_scaled_reciprocal_multiplier(
  * mostly around 0.15-0.45 dB/window in that range.
  */
 #define AMPLITUDE_NORMALIZATION_DIVISOR_DECREMENT	(2)
+
+/*
+ * Recovery step examples when decrement = 2:
+ *   20 -> 18: +0.92 dB
+ *   18 -> 16: +1.02 dB
+ *   16 -> 14: +1.16 dB
+ *
+ * Use 18 as the recovery lower bound to avoid the > 1 dB steps below it.
+ */
+#define AMPLITUDE_NORMALIZATION_DIVISOR_RECOVERY_LOWER_BOUND	(18)
+
 #define REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_OUTPUT_AMPLITUDE_THRESHOLD	((INT16_MAX * 3) / 4)
 static uint32_t s_reduce_amplitude_normalization_divisor_sample_count = 0;
 #define RESET_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_COUNT() \
@@ -1194,7 +1206,7 @@ static uint32_t s_reduce_amplitude_normalization_divisor_sample_count = 0;
 														s_reduce_amplitude_normalization_divisor_sample_count += 1; \
 													}while(0)
 #define IS_TO_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR() \
-													(((AMPLITUDE_NORMALIZATION_DIVISOR() > DEFAULT_AMPLITUDE_NORMALIZATION_DIVISOR) \
+													(((AMPLITUDE_NORMALIZATION_DIVISOR() > AMPLITUDE_NORMALIZATION_DIVISOR_RECOVERY_LOWER_BOUND) \
 														&& (REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_NUMBER() <= s_reduce_amplitude_normalization_divisor_sample_count)) \
 														? true : false)
 #define IS_OUTPUT_AMPLITUDE_BELOW_THRESHOLD(WAVE_AMPLITUDE) \
@@ -1390,8 +1402,8 @@ int16_t chiptune_fetch_16bit_wave(void)
 					if(true == IS_TO_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR()){
 						int32_t updated_amplitude_normalization_divisor
 								= AMPLITUDE_NORMALIZATION_DIVISOR() - AMPLITUDE_NORMALIZATION_DIVISOR_DECREMENT;
-						if(DEFAULT_AMPLITUDE_NORMALIZATION_DIVISOR > updated_amplitude_normalization_divisor){
-							updated_amplitude_normalization_divisor = DEFAULT_AMPLITUDE_NORMALIZATION_DIVISOR;
+						if(AMPLITUDE_NORMALIZATION_DIVISOR_RECOVERY_LOWER_BOUND > updated_amplitude_normalization_divisor){
+							updated_amplitude_normalization_divisor = AMPLITUDE_NORMALIZATION_DIVISOR_RECOVERY_LOWER_BOUND;
 						}
 
 						UPDATE_AMPLITUDE_NORMALIZATION_DIVISOR(updated_amplitude_normalization_divisor);
