@@ -14,7 +14,7 @@ public:
 	~MidSongManager(void) Q_DECL_OVERRIDE;
 
 	MidSong *GetMidSongPointer(void) const Q_DECL_OVERRIDE;
-
+	float GetMidiFileDurationInSeconds(void);
 private:
 	explicit MidSongManager(MidSong *p_mid_song);
 

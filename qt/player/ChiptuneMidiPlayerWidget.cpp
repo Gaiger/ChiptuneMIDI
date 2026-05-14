@@ -109,7 +109,7 @@ int SaveAsWavFile(TuneManager * p_tune_manager, QString filename)
 	QByteArray wave_bytearray;
 	while(1)
 	{
-		wave_bytearray += p_tune_manager->FetchWave(data_buffer_size);
+		wave_bytearray += p_tune_manager->TakeWave(data_buffer_size);
 		if(true == p_tune_manager->IsTuneEnding()){
 			break;
 		}
@@ -401,7 +401,7 @@ int ChiptuneMidiPlayerWidget::LoadAndPlayMidiFile(QString filename_string)
 											   m_audio_player_buffer_in_milliseconds/1000.0,
 											   ui->SequencerScrollArea);
 
-		m_midi_file_duration_in_milliseconds = (int)(1000 * m_p_tune_manager->GetMidiFileDurationInSeconds());
+		m_midi_file_duration_in_milliseconds = (int)(1000 * p_mid_song_manager->GetMidiFileDurationInSeconds());
 		m_midi_file_duration_time_string = FormatTimeString(m_midi_file_duration_in_milliseconds);
 		ui->PlayPositionLabel->setText(FormatTimeString(0) + " / " + m_midi_file_duration_time_string);
 		ui->PlayProgressSlider->setRange(0, m_midi_file_duration_in_milliseconds);
@@ -489,18 +489,18 @@ void ChiptuneMidiPlayerWidget::SetTimbresFileButtonsEnabled(bool is_enabled)
 
 void ChiptuneMidiPlayerWidget::UpdateTempoLabelText(void)
 {
-	double tempo = m_p_tune_manager->GetTempo();
-	QString tempo_string = QString::asprintf(" = %2.0f", tempo);
+	double current_tempo = m_p_tune_manager->GetCurrentTempo();
+	QString tempo_string = QString::asprintf(" = %2.0f", current_tempo);
 	do{
-		if( 0.1 < abs(tempo - (int)(tempo + 0.5))){
-			tempo_string = QString::asprintf(" = %2.1f", tempo);
+		if( 0.1 < abs(current_tempo - (int)(current_tempo + 0.5))){
+			tempo_string = QString::asprintf(" = %2.1f", current_tempo);
 			break;
 		}
 	} while(0);
 
 	double playing_tempo = m_p_tune_manager->GetPlayingEffectiveTempo();
 	do{
-		if(abs(playing_tempo - tempo) < 0.1){
+		if(abs(playing_tempo - current_tempo) < 0.1){
 			break;
 		}
 
@@ -673,8 +673,8 @@ bool ChiptuneMidiPlayerWidget::eventFilter(QObject *watched, QEvent *event)
 					  || Qt::Key_Right == p_key_event->key()) ){
 			break;
 		}
-		qDebug() << QApplication::focusWidget()->metaObject()->className();
-		qDebug() << watched->metaObject()->className();
+		//qDebug() << QApplication::focusWidget()->metaObject()->className();
+		//qDebug() << watched->metaObject()->className();
 #if 1
 		QCoreApplication::sendEvent(this, p_key_event);
 #else
@@ -814,7 +814,7 @@ void ChiptuneMidiPlayerWidget::keyPressEvent(QKeyEvent *event)
 	QWidget:: keyPressEvent(event);
 
 	do {
-		if(false == m_p_tune_manager->IsFileLoaded()){
+		if(nullptr == m_p_mid_song_manager){
 			break;
 		}
 
@@ -833,8 +833,8 @@ void ChiptuneMidiPlayerWidget::keyPressEvent(QKeyEvent *event)
 
 		if(Qt::Key_Right == event->key()){
 			start_time += KEY_LEFT_RIGHT_DELTA_TIME_IN_SECONDS * 1000;
-			if(start_time > m_p_tune_manager->GetMidiFileDurationInSeconds() * 1000){
-				start_time = m_p_tune_manager->GetMidiFileDurationInSeconds() * 1000;
+			if(start_time > m_p_mid_song_manager->GetMidiFileDurationInSeconds() * 1000){
+				start_time = m_p_mid_song_manager->GetMidiFileDurationInSeconds() * 1000;
 			}
 		}
 

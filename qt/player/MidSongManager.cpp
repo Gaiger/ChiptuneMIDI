@@ -49,3 +49,16 @@ MidSong *MidSongManager::GetMidSongPointer(void) const
 {
 	return m_p_mid_song;
 }
+
+
+/**********************************************************************************/
+
+float MidSongManager::GetMidiFileDurationInSeconds(void)
+{
+	if(0 == m_p_mid_song->GetEventCount()){
+		return 0.0f;
+	}
+
+	MidEvent midi_event = m_p_mid_song->GetEvent(m_p_mid_song->GetEventCount() - 1);
+	return m_p_mid_song->TimeFromTick(midi_event.GetTick());
+}

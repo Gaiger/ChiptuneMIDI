@@ -214,13 +214,6 @@ void TuneManager::SetMidiMessageProvider(MidiMessageProvider *p_midi_message_pro
 }
 
 /**********************************************************************************/
-
-bool TuneManager::IsFileLoaded(void) const
-{
-	return !m_p_private->IsPushMode();
-}
-
-/**********************************************************************************/
 int TuneManager::SendMidiMessage(uint32_t const midi_message)
 {
 	if(false == m_p_private->IsPushMode()){
@@ -329,6 +322,17 @@ QByteArray TuneManager::FetchWave(int const size)
 }
 
 /**********************************************************************************/
+QByteArray TuneManager::TakeWave(int const size)
+{
+	if(true == m_p_private->IsPushMode()){
+		 qWarning() << Q_FUNC_INFO << "TakeWave() is unavailable in push mode";
+		return QByteArray();
+	}
+
+	return FetchWave(size);
+}
+
+/**********************************************************************************/
 
 void TuneManager::RequestWave(int const size)
 {
@@ -359,24 +363,6 @@ bool TuneManager::IsTuneEnding(void)
 
 /**********************************************************************************/
 
-float TuneManager::GetMidiFileDurationInSeconds(void)
-{
-	MidEvent midi_event;
-
-	if(true == m_p_private->IsPushMode()){
-		return -1.0;
-	}
-	MidSong * const p_mid_song = m_p_private->m_p_midi_message_provider->GetMidSongPointer();
-	if(0 == p_mid_song->GetEventCount()){
-		return 0.0f;
-	}
-
-	midi_event = p_mid_song->GetEvent(p_mid_song->GetEventCount() - 1);
-	return p_mid_song->TimeFromTick(midi_event.GetTick());
-}
-
-/**********************************************************************************/
-
 float TuneManager::GetCurrentElapsedTimeInSeconds(void)
 {
 	if(true == m_p_private->IsPushMode()){
@@ -400,7 +386,7 @@ int TuneManager::GetCurrentTick(void)
 
 /**********************************************************************************/
 
-double TuneManager::GetTempo(void)
+double TuneManager::GetCurrentTempo(void)
 {
 	if(true == m_p_private->IsPushMode()){
 		return FLT_MAX;

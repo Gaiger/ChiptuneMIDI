@@ -31,33 +31,20 @@ public:
 						 int const sampling_rate = 16000, int const sampling_size = SamplingSize8Bit,
 						 QObject * parent = nullptr);
 	~TuneManager(void);
-
 	void SetMidiMessageProvider(MidiMessageProvider *p_midi_message_provider);
-	bool IsFileLoaded(void) const;
-
-public slots:
-	int SendMidiMessage(uint32_t const midi_message);
 
 public:
 	int GetNumberOfChannels(void);
 	int GetSamplingRate(void);
 	int GetSamplingSize(void);
 
-	QByteArray FetchWave(int const size);
-	bool IsTuneEnding(void);
+public slots:
+	void RequestWave(int const size);
+public:
+	signals:
+	void WaveDelivered(QByteArray const &wave_bytearray);
 
-	float GetMidiFileDurationInSeconds(void);
-	float GetCurrentElapsedTimeInSeconds(void);
-	int GetCurrentTick(void);
-	double GetTempo(void);
-	double GetPlayingEffectiveTempo(void);
-	void SetPlayingSpeedRatio(double const playing_speed_raio);
-	void SetPitchShift(int const pitch_shift_in_semitones);
-
-	int SetStartTimeInSeconds(float const target_start_time_in_seconds);
-
-	QList<QPair<int, int>> GetChannelInstrumentPairList(void);
-	void SetChannelOutputEnabled(int const channel_index, bool is_enabled);
+public:
 	enum WaveformType
 	{
 		WaveformSquareDutyCycle50	= 0,
@@ -86,11 +73,25 @@ public:
 							  uint8_t const envelope_damper_sustain_level = 24,
 							  int8_t const envelope_damper_sustain_curve = EnvelopeCurveLinear,
 							  float const envelope_damper_sustain_duration_in_seconds = 8.0);
+
+	QList<QPair<int, int>> GetChannelInstrumentPairList(void);
+	void SetChannelOutputEnabled(int const channel_index, bool is_enabled);
+
 public slots:
-	void RequestWave(int const size);
+	int SendMidiMessage(uint32_t const midi_message);
+
 public:
-	signals:
-	void WaveDelivered(QByteArray const &wave_bytearray);
+	QByteArray TakeWave(int const size);
+	bool IsTuneEnding(void);
+
+	float GetCurrentElapsedTimeInSeconds(void);
+	int GetCurrentTick(void);
+	double GetCurrentTempo(void);
+	double GetPlayingEffectiveTempo(void);
+	void SetPlayingSpeedRatio(double const playing_speed_raio);
+	void SetPitchShift(int const pitch_shift_in_semitones);
+
+	int SetStartTimeInSeconds(float const target_start_time_in_seconds);
 
 private:
 	signals:
@@ -98,6 +99,7 @@ private:
 private slots:
 	void HandleGenerateWaveRequested(int const size);
 private:
+	QByteArray FetchWave(int const size);
 	void SubmitWaveGeneration(int const size, bool const is_synchronized = true);
 private:
 	TuneManagerPrivate * const m_p_private;
