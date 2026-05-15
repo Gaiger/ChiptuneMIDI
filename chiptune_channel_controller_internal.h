@@ -120,7 +120,7 @@ typedef struct _percussion
 void initialize_channel_controllers(void);
 
 void reset_channel_controller_to_midi_defaults(int8_t const channel_index);
-void reset_all_channels_to_defaults();
+void reset_all_channels_to_defaults(bool is_instrument_to_be_not_specified);
 
 void synchronize_channel_controllers_to_playing_tempo(void);
 

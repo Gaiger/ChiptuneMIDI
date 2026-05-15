@@ -225,7 +225,8 @@ int set_melodic_channel_timbre(int8_t const channel_index, int8_t const waveform
 
 /**********************************************************************************/
 
-static void reset_melodic_channel_to_defaults(int8_t const channel_index)
+static void reset_melodic_channel_to_defaults(int8_t const channel_index,
+											  bool is_instrument_to_be_not_specified)
 {
 	if(MIDI_PERCUSSION_CHANNEL == channel_index){
 		CHIPTUNE_PRINTF(cMidiControlChange, "ignore channel MIDI_PERCUSSION_CHANNEL in %s\r\n",
@@ -254,7 +255,11 @@ static void reset_melodic_channel_to_defaults(int8_t const channel_index)
 									  DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_DURATION_IN_SECOND);
 
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[channel_index];
-	p_channel_controller->instrument = CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED;
+	midi_value_t instrument = CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED;
+	if(false == is_instrument_to_be_not_specified){
+		instrument = AcousticGrandPiano;
+	}
+	p_channel_controller->instrument = instrument;
 	p_channel_controller->is_output_enabled = true;
 	reset_channel_controller_to_midi_defaults(channel_index);
 }
@@ -286,13 +291,13 @@ static void reset_percussion_channel_to_defaults(void)
 
 /**********************************************************************************/
 
-void reset_all_channels_to_defaults()
+void reset_all_channels_to_defaults(bool is_instrument_to_be_not_specified)
 {
 	for(int8_t channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; channel_index++){
 		if(MIDI_PERCUSSION_CHANNEL == channel_index){
 			continue;
 		}
-		reset_melodic_channel_to_defaults(channel_index);
+		reset_melodic_channel_to_defaults(channel_index, is_instrument_to_be_not_specified);
 	}
 
 	reset_percussion_channel_to_defaults();
@@ -392,7 +397,7 @@ void initialize_channel_controllers(void)
 		p_channel_controller->vibrato_same_index_number
 			= (uint16_t)(get_sampling_rate()/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_RATE_IN_HZ);
 	}
-	reset_all_channels_to_defaults();
+	reset_all_channels_to_defaults(false);
 }
 
 /**********************************************************************************/

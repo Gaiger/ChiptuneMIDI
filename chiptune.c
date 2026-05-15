@@ -1259,13 +1259,15 @@ void chiptune_prepare_session(uint32_t const resolution)
 {
 	UPDATE_RESOLUTION(resolution);
 
+	bool is_instrument_to_be_not_specified = false;
 	do
 	{
 		if(NULL == s_handler_pull_midi_message){
 			break;
 		}
+		is_instrument_to_be_not_specified = true;
 		bool is_channel_has_note_array[MIDI_MAX_CHANNEL_NUMBER];
-		reset_all_channels_to_defaults();
+		reset_all_channels_to_defaults(true);
 		chase_midi_messages(TO_LAST_MESSAGE_INDEX, &is_channel_has_note_array[0]);
 		for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 			s_ending_instrument_array[voice] = get_channel_controller_pointer_from_index(voice)->instrument;
@@ -1277,7 +1279,7 @@ void chiptune_prepare_session(uint32_t const resolution)
 		}
 	}while(0);
 	clear_all_oscillators_and_events();
-	reset_all_channels_to_defaults();
+	reset_all_channels_to_defaults(is_instrument_to_be_not_specified);
 
 	RESET_STATIC_INDEX_MESSAGE_TICK_VARIABLES();
 	RESET_AMPLITUDE_NORMALIZATION_DIVISOR();
@@ -1357,7 +1359,12 @@ float chiptune_get_playing_effective_tempo(void)
 }
 
 /**********************************************************************************/
+int8_t chiptune_get_channel_instrument(int8_t const channel_index)
+{
+	return get_channel_controller_pointer_from_index(channel_index)->instrument;
+}
 
+/**********************************************************************************/
 int chiptune_get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER])
 {
 	if(true == is_push_mode()){
