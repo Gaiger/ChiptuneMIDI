@@ -11,7 +11,7 @@ public:
 	explicit ChiptuneMidiOut(bool const is_stereo = true,
 							 int const sampling_rate = 44100,
 							 int const sampling_size = 16,
-							 int const audio_player_buffer_in_milliseconds = 35);
+							 int const audio_player_buffer_in_milliseconds = 30);
 	~ChiptuneMidiOut(void);
 
 	void Start(void);

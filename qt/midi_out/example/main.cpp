@@ -77,8 +77,8 @@ protected:
 					break;
 				}
 			}
+			qInfo() << Q_FUNC_INFO << "SendMidiMessage ::" << Qt::hex << event.GetMessage();
 			midi_out.SendMidiMessage(event.GetMessage());
-			qInfo() << Q_FUNC_INFO << Qt::hex << event.GetMessage();
 		}
 
 		midi_out.Stop();

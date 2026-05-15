@@ -1,3 +1,6 @@
+#include <functional>
+
+#include <QDebug>
 #include <QObject>
 #include <QThread>
 #include <QTimer>
@@ -14,6 +17,7 @@
 class ChiptuneMidiOutPrivate
 {
 public:
+	QObject *m_p_context;
 	TuneManager *m_p_tune_manager;
 	AudioPlayer *m_p_audio_player;
 	QThread *m_p_tune_manager_working_thread;
@@ -28,6 +32,7 @@ ChiptuneMidiOut::ChiptuneMidiOut(bool const is_stereo,
 								 int const audio_player_buffer_in_milliseconds)
 	: m_p_private(new ChiptuneMidiOutPrivate())
 {
+	m_p_private->m_p_context = new QObject();
 	m_p_private->m_p_tune_manager = new TuneManager(is_stereo, sampling_rate, sampling_size);
 	m_p_private->m_p_tune_manager_working_thread = new QThread();
 	QObject::connect(m_p_private->m_p_tune_manager, &QObject::destroyed,
@@ -44,6 +49,20 @@ ChiptuneMidiOut::ChiptuneMidiOut(bool const is_stereo,
 					 m_p_private->m_p_audio_player, &AudioPlayer::FeedData, Qt::DirectConnection);
 	QObject::connect(m_p_private->m_p_audio_player, &AudioPlayer::DataRequested,
 					 m_p_private->m_p_tune_manager, &TuneManager::RequestWave, Qt::DirectConnection);
+
+	std::function<void(AudioPlayer::PlaybackState)> idle_to_restart_play =
+			[this](AudioPlayer::PlaybackState state) {
+		do
+		{
+			if(AudioPlayer::PlaybackStateIdle != state){
+				break;
+			}
+			qInfo() << "ChiptuneMidiOut audio player idle, restarting playback";
+			m_p_private->m_p_audio_player->Play();
+		}while(0);
+	};
+	QObject::connect(m_p_private->m_p_audio_player, &AudioPlayer::StateChanged,
+					 m_p_private->m_p_context, idle_to_restart_play, Qt::QueuedConnection);
 
 	m_p_private->m_p_audio_player_working_thread = new QThread();
 	QObject::connect(m_p_private->m_p_audio_player, &QObject::destroyed,
@@ -80,6 +99,10 @@ ChiptuneMidiOut::~ChiptuneMidiOut(void)
 		m_p_private->m_p_tune_manager_working_thread = nullptr;
 	}
 
+	if(nullptr != m_p_private->m_p_context){
+		delete m_p_private->m_p_context;
+		m_p_private->m_p_context = nullptr;
+	}
 	delete m_p_private;
 }
 
