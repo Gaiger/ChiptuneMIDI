@@ -373,7 +373,7 @@ int chiptune_push_midi_message(uint32_t const message)
 #endif
 /**********************************************************************************/
 
-static int free_note_off_but_damper_pedal_on_oscillators(uint32_t const tick)
+static int force_free_note_off_but_damper_pedal_on_oscillators(uint32_t const tick)
 {
 	int ret = 0;
 	int16_t oscillator_index = get_occupied_oscillator_head_index();
@@ -384,6 +384,7 @@ static int free_note_off_but_damper_pedal_on_oscillators(uint32_t const tick)
 			if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 				break;
 			}
+
 			channel_controller_t const * const p_channel_controller
 					= get_channel_controller_pointer_from_index(p_oscillator->voice);
 			if(false == p_channel_controller->is_damper_pedal_on){
@@ -401,7 +402,7 @@ static int free_note_off_but_damper_pedal_on_oscillators(uint32_t const tick)
 
 /**********************************************************************************/
 
-static int free_remaining_oscillators(uint32_t const tick)
+static int force_free_remaining_oscillators(uint32_t const tick)
 {
 	int ret = 0;
 	do {
@@ -438,8 +439,13 @@ static int free_remaining_oscillators(uint32_t const tick)
 int process_ending(uint32_t const tick)
 {
 	int ret = 0;
-	ret += free_note_off_but_damper_pedal_on_oscillators(tick);
-	ret += free_remaining_oscillators(tick);
+	ret += force_free_note_off_but_damper_pedal_on_oscillators(tick);
+	ret += force_free_remaining_oscillators(tick);
+	if(0 == ret){
+		if(0 != get_occupied_oscillator_number()){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: tune ending get_occupied_oscillator_number is not zero\r\n");
+		}
+	}
 	return ret;
 }
 
