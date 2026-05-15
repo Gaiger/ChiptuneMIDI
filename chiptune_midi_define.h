@@ -56,6 +56,8 @@
 #define MIDI_CC_ALL_SOUND_OFF						(120)
 #define MIDI_CC_RESET_ALL_CONTROLLERS				(121)
 
+#define MIDI_CC_ALL_NOTES_OFF						(123)
+
 //http://www.philrees.co.uk/nrpnq.htm
 #define MIDI_CC_RPN_PITCH_BEND_SENSITIVY			(0)
 #define MIDI_CC_RPN_CHANNEL_FINE_TUNING				(1)

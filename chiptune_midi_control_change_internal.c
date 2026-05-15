@@ -399,6 +399,49 @@ static void process_cc_reset_all_controllers(uint32_t const tick, int8_t const v
 }
 
 /**********************************************************************************/
+static void process_cc_all_notes_off(uint32_t const tick, int8_t const voice, midi_value_t const value)
+{
+	(void)value;
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_ALL_NOTES_OFF(%d) :: voice = %d\r\n",
+					tick, MIDI_CC_ALL_NOTES_OFF, voice);
+
+	do {
+		int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
+
+		int16_t oscillator_index = get_occupied_oscillator_head_index();
+		for(int16_t i = 0; i < occupied_oscillator_number; i++){
+			oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+
+			do {
+				/*
+				 * Do not skip release here when p_channel_controller->is_damper_pedal_on is true.
+				 * MIDI_CC_ALL_NOTES_OFF(CC123) is normally allowed to keep damper-held notes sounding.
+				 * However, some sequencers use MIDI_CC_ALL_NOTES_OFF(CC123) as a stop/pause cleanup
+				 * message without sending MIDI_CC_DAMPER_PEDAL(CC64) off or
+				 * MIDI_CC_ALL_SOUND_OFF(CC120). Honoring the damper here causes stuck notes.
+				 * Treat MIDI_CC_ALL_NOTES_OFF as a real cleanup command and ignore the damper state.
+				 */
+
+				if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
+					break;
+				}
+				if(false == IS_PRIMARY_OSCILLATOR(p_oscillator)){
+					break;
+				}
+				if(voice != p_oscillator->voice){
+					break;
+				}
+
+				put_event(EventTypeFree, oscillator_index, tick);
+				process_effects(tick, EventTypeFree, p_oscillator->voice, p_oscillator->note,
+								p_oscillator->velocity, oscillator_index);
+			} while(0);
+			oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
+		}
+	} while(0);
+}
+
+/**********************************************************************************/
 
 static void print_cc_unsupported_message(uint32_t const tick, int8_t const voice,
 										   midi_value_t const number, midi_value_t const value)
@@ -496,6 +539,9 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 		break;
 	case MIDI_CC_RESET_ALL_CONTROLLERS:
 		process_cc_reset_all_controllers(tick, voice, value);
+		break;
+	case MIDI_CC_ALL_NOTES_OFF:
+		process_cc_all_notes_off(tick, voice, value);
 		break;
 	default:
 		do
