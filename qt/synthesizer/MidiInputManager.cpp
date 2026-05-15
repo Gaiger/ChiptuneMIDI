@@ -8,7 +8,6 @@
 #include "MidiInputManager.h"
 
 /**********************************************************************************/
-
 static uint32_t MakeShortMidiMessage(std::vector<unsigned char> const &message)
 {
 	uint32_t midi_message = 0;
@@ -25,7 +24,6 @@ static uint32_t MakeShortMidiMessage(std::vector<unsigned char> const &message)
 }
 
 /**********************************************************************************/
-
 MidiInputManager::MidiInputManager(QObject *parent)
 	: QObject(parent)
 	, m_p_midi_in(nullptr)
@@ -41,7 +39,6 @@ MidiInputManager::MidiInputManager(QObject *parent)
 }
 
 /**********************************************************************************/
-
 MidiInputManager::~MidiInputManager(void)
 {
 	ClosePort();
@@ -50,7 +47,6 @@ MidiInputManager::~MidiInputManager(void)
 }
 
 /**********************************************************************************/
-
 QStringList MidiInputManager::GetPortNameList(void) const
 {
 	QStringList port_name_list;
@@ -71,7 +67,6 @@ QStringList MidiInputManager::GetPortNameList(void) const
 }
 
 /**********************************************************************************/
-
 bool MidiInputManager::OpenPort(unsigned int const port_index)
 {
 	if(nullptr == m_p_midi_in){
@@ -95,7 +90,30 @@ bool MidiInputManager::OpenPort(unsigned int const port_index)
 }
 
 /**********************************************************************************/
+#ifndef Q_OS_WIN
+bool MidiInputManager::OpenVirtualPort(QString const &port_name)
+{
+	if(nullptr == m_p_midi_in){
+		return false;
+	}
 
+	try {
+		if(true == m_p_midi_in->isPortOpen()){
+			m_p_midi_in->closePort();
+		}
+		m_p_midi_in->openVirtualPort(port_name.toStdString());
+		m_p_midi_in->setCallback(&MidiInputManager::HandleRtMidiMessage, this);
+		qInfo() << "Opened virtual MIDI input port" << port_name;
+		return true;
+	}
+	catch(RtMidiError &error){
+		qWarning() << "Opening virtual MIDI input port failed:" << error.what();
+		return false;
+	}
+}
+#endif
+
+/**********************************************************************************/
 void MidiInputManager::ClosePort(void)
 {
 	if(nullptr == m_p_midi_in){
@@ -114,7 +132,6 @@ void MidiInputManager::ClosePort(void)
 }
 
 /**********************************************************************************/
-
 void MidiInputManager::HandleRtMidiMessage(double, std::vector<unsigned char> *p_message, void *p_user_data)
 {
 	if((nullptr == p_message) || (nullptr == p_user_data)){
@@ -126,7 +143,6 @@ void MidiInputManager::HandleRtMidiMessage(double, std::vector<unsigned char> *p
 }
 
 /**********************************************************************************/
-
 void MidiInputManager::HandleMessage(std::vector<unsigned char> const &message)
 {
 	if((message.size() < 1) || (message.size() > 3)){

@@ -7,6 +7,8 @@
 #include <vector>
 
 #include <QObject>
+#include <QtGlobal>
+#include <QString>
 #include <QStringList>
 
 class RtMidiIn;
@@ -20,6 +22,9 @@ public:
 
 	QStringList GetPortNameList(void) const;
 	bool OpenPort(unsigned int const port_index);
+#ifndef Q_OS_WIN
+	bool OpenVirtualPort(QString const &port_name);
+#endif
 	void ClosePort(void);
 
 signals:
