@@ -46,8 +46,8 @@ SOURCES += \
     $${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.c \
     $${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.c \
     $${CHIPTUNE_ROOT_DIR}/mid_reader/mid_reader.c \
-    $${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.cpp \
-    $${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.cpp \
+    $${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp \
+    $${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp \
     $${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.cpp \
     $${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.cpp \
     $${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.cpp \
@@ -75,8 +75,8 @@ HEADERS += \
     $${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.h \
     $${CHIPTUNE_ROOT_DIR}/chiptune_midi_define.h \
     $${CHIPTUNE_ROOT_DIR}/mid_reader/mid_reader.h \
-    $${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidget.h \
-    $${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidget.h \
+    $${CHIPTUNE_QT_DIR}/ChannelListWidget.h \
+    $${CHIPTUNE_QT_DIR}/ChannelNodeWidget.h \
     $${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.h \
     $${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.h \
     $${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.h \
@@ -91,8 +91,8 @@ HEADERS += \
     $${CHIPTUNE_ROOT_DIR}/mid_reader/qt/MidSong.h \
 
 FORMS += \
-    $${CHIPTUNE_QT_PLAYER_DIR}/ChannelListWidgetForm.ui \
-    $${CHIPTUNE_QT_PLAYER_DIR}/ChannelNodeWidgetForm.ui \
+    $${CHIPTUNE_QT_DIR}/ChannelListWidgetForm.ui \
+    $${CHIPTUNE_QT_DIR}/ChannelNodeWidgetForm.ui \
     $${CHIPTUNE_QT_DIR}/MelodicTimbreFrameForm.ui \
     $${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidgetForm.ui
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>960</width>
-    <height>640</height>
+    <width>1240</width>
+    <height>760</height>
    </rect>
   </property>
   <property name="font">
@@ -65,7 +65,7 @@ QSlider::handle {
     <rect>
      <x>4</x>
      <y>4</y>
-     <width>952</width>
+     <width>880</width>
      <height>64</height>
     </rect>
    </property>
@@ -79,14 +79,50 @@ color: rgb(208, 208, 208);
   <widget class="QPushButton" name="NotePushButton">
    <property name="geometry">
     <rect>
-     <x>432</x>
-     <y>296</y>
+     <x>396</x>
+     <y>356</y>
      <width>96</width>
      <height>48</height>
     </rect>
    </property>
    <property name="text">
     <string>Note</string>
+   </property>
+  </widget>
+  <widget class="QWidget" name="TimbreListWidget" native="true">
+   <property name="geometry">
+    <rect>
+     <x>888</x>
+     <y>40</y>
+     <width>348</width>
+     <height>716</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="LoadTimbresPushButton">
+   <property name="geometry">
+    <rect>
+     <x>888</x>
+     <y>8</y>
+     <width>168</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Load Timbres</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="StoreTimbresPushButton">
+   <property name="geometry">
+    <rect>
+     <x>1068</x>
+     <y>8</y>
+     <width>168</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Store Timbres</string>
    </property>
   </widget>
  </widget>

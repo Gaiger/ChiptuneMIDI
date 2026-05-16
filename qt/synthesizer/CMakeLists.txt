@@ -56,6 +56,8 @@ set(ENGINE
 
 set(APPLICATION_COMMON
     ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.cpp
+    ${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp
+    ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp
     ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.cpp
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.cpp
     ${CHIPTUNE_QT_DIR}/TuneManager.cpp
@@ -64,6 +66,8 @@ set(APPLICATION_COMMON
     ${CHIPTUNE_QT_DIR}/WaveChartView.cpp
 
     ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.h
+    ${CHIPTUNE_QT_DIR}/ChannelListWidget.h
+    ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.h
     ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.h
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h
     ${CHIPTUNE_QT_DIR}/TuneManager.h
@@ -93,6 +97,8 @@ set(SYNTHESIZER_FORMS
 )
 
 set(COMMON_FORMS
+    ${CHIPTUNE_QT_DIR}/ChannelListWidgetForm.ui
+    ${CHIPTUNE_QT_DIR}/ChannelNodeWidgetForm.ui
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrameForm.ui
 )
 
