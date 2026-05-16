@@ -32,7 +32,7 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_code,
 									  "background-color: " + background_color_string + ";"
 									"}";
 
-	ui->ColorWidget->setStyleSheet(style_sheet_string);
+	ui->ChannelColorWidget->setStyleSheet(style_sheet_string);
 	m_expanded_size = QWidget::size();
 	m_collapsed_size = QSize(m_expanded_size.width(), m_expanded_size.height() - ui->MelodicTimbreWidget->height());
 	QWidget::setFixedSize(m_collapsed_size);
@@ -230,7 +230,7 @@ void ChannelNodeWidget::on_OutputEnabledCheckBox_stateChanged(int state)
 								  "background-color: " + background_color_string + ";"
 								"}";
 	}while(0);
-	ui->ColorWidget->setStyleSheet(style_sheet_string);
+	ui->ChannelColorWidget->setStyleSheet(style_sheet_string);
 #endif
 	emit OutputEnabled(m_channel_index, (bool)state);
 }

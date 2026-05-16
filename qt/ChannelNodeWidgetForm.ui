@@ -61,7 +61,7 @@ color: rgb(208, 208, 208);
     </rect>
    </property>
   </widget>
-  <widget class="QWidget" name="ColorWidget" native="true">
+  <widget class="QWidget" name="ChannelColorWidget" native="true">
    <property name="geometry">
     <rect>
      <x>92</x>
