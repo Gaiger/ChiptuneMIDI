@@ -149,5 +149,5 @@ void MidiInputManager::HandleMessage(std::vector<unsigned char> const &message)
 		return;
 	}
 
-	emit MidiMessageReceived(MakeShortMidiMessage(message));
+	emit MidiMessageDelivered(MakeShortMidiMessage(message));
 }

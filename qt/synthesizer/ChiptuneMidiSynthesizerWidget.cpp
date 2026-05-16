@@ -210,7 +210,7 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 					   m_p_audio_player, &AudioPlayer::Play);
 
 	m_p_midi_input_manager = new MidiInputManager(this);
-	QObject::connect(m_p_midi_input_manager, &MidiInputManager::MidiMessageReceived,
+	QObject::connect(m_p_midi_input_manager, &MidiInputManager::MidiMessageDelivered,
 					 m_p_tune_manager, &TuneManager::SendMidiMessage, Qt::QueuedConnection);
 
 	QStringList const midi_input_port_name_list = m_p_midi_input_manager->GetPortNameList();

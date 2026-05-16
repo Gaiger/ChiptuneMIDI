@@ -28,7 +28,7 @@ public:
 	void ClosePort(void);
 
 signals:
-	void MidiMessageReceived(uint32_t const midi_message);
+	void MidiMessageDelivered(uint32_t const midi_message);
 
 private:
 	static void HandleRtMidiMessage(double time_stamp, std::vector<unsigned char> *p_message, void *p_user_data);
