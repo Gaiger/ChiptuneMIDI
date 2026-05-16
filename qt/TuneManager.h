@@ -32,11 +32,11 @@ public:
 						 QObject * parent = nullptr);
 	~TuneManager(void);
 	void SetMidiMessageProvider(MidiMessageProvider *p_midi_message_provider);
-
 public:
 	int GetNumberOfChannels(void);
 	int GetSamplingRate(void);
 	int GetSamplingSize(void);
+	int GetCurrentChannelInstrument(int const channel_index);
 
 public slots:
 	void RequestWave(int const size);
@@ -74,7 +74,6 @@ public:
 							  int8_t const envelope_damper_sustain_curve = EnvelopeCurveLinear,
 							  float const envelope_damper_sustain_duration_in_seconds = 8.0);
 
-	QList<QPair<int, int>> GetChannelInstrumentPairList(void);
 	void SetChannelOutputEnabled(int const channel_index, bool is_enabled);
 
 public slots:
@@ -93,6 +92,7 @@ public:
 
 	int SetStartTimeInSeconds(float const target_start_time_in_seconds);
 
+	QList<QPair<int, int>> GetChannelInstrumentPairList(void);
 private:
 	signals:
 	void GenerateWaveRequested(int const size);

@@ -1367,6 +1367,12 @@ float chiptune_get_playing_effective_tempo(void)
 /**********************************************************************************/
 int8_t chiptune_get_channel_instrument(int8_t const channel_index)
 {
+	if( 0 > channel_index || MIDI_MAX_CHANNEL_NUMBER <= channel_index){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: channel_index = %d is not acceptable for %s\r\n",
+						channel_index, __func__);
+		return CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL;
+	}
+
 	return get_channel_controller_pointer_from_index(channel_index)->instrument;
 }
 
@@ -1501,8 +1507,8 @@ int chiptune_set_melodic_channel_timbre(int8_t const channel_index, int8_t const
 		return -1;
 	}
 	if(MIDI_PERCUSSION_CHANNEL == channel_index){
-		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: channel_index = %d is MIDI_PERCUSSION_CHANNEL %s\r\n",
-						MIDI_PERCUSSION_CHANNEL , __func__);
+		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: channel_index = %d is MIDI_PERCUSSION_CHANNEL, ignored in %s\r\n",
+						channel_index, __func__);
 		return 1;
 	}
 

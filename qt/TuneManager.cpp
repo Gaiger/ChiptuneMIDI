@@ -84,13 +84,6 @@ public:
 
 		m_wave_bytearray += generated_bytearray;
 	}
-
-	void ResetSongResources(void)
-	{
-		m_wave_bytearray.clear();
-		m_wave_prebuffer_size = 0;
-		m_channel_instrument_pair_list.clear();
-	}
 	bool IsPushMode(void) const
 	{
 		return (nullptr == m_p_midi_message_provider);
@@ -197,7 +190,7 @@ void TuneManager::SetMidiMessageProvider(MidiMessageProvider *p_midi_message_pro
 {
 	QMutexLocker locker(&m_p_private->m_tune_manager_mutex);
 	m_p_private->m_p_midi_message_provider = p_midi_message_provider;
-
+	m_p_private->m_channel_instrument_pair_list.clear();
 	do
 	{
 		if(nullptr == p_midi_message_provider){
@@ -208,9 +201,18 @@ void TuneManager::SetMidiMessageProvider(MidiMessageProvider *p_midi_message_pro
 
 		chiptune_set_pull_message_callback(get_midi_message);
 		chiptune_prepare_session((uint32_t)p_midi_message_provider->GetMidSongPointer()->GetResolution());
+
+		int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER];
+		chiptune_get_ending_instruments(&instrument_array[0]);
+		for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
+			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL != instrument_array[voice]){
+				m_p_private->m_channel_instrument_pair_list.append(QPair<int, int>(voice, instrument_array[voice]));
+			}
+		}
 	} while(0);
 
-	m_p_private->ResetSongResources();
+	m_p_private->m_wave_bytearray.clear();
+	m_p_private->m_wave_prebuffer_size = 0;
 }
 
 /**********************************************************************************/
@@ -532,44 +534,27 @@ int TuneManager::SetStartTimeInSeconds(float const target_start_time_in_seconds)
 }
 
 /**********************************************************************************/
-
 QList<QPair<int, int>> TuneManager::GetChannelInstrumentPairList(void)
 {
 	QMutexLocker locker(&m_p_private->m_tune_manager_mutex);
-	do {
-		if(0 != m_p_private->m_channel_instrument_pair_list.size()){
-			break;
-		}
-
-		int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER];
-		chiptune_get_ending_instruments(&instrument_array[0]);
-		m_p_private->m_channel_instrument_pair_list.clear();
-		for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL != instrument_array[voice]){
-				m_p_private->m_channel_instrument_pair_list.append(QPair<int, int>(voice, instrument_array[voice]));
-			}
-		}
-	} while(0);
 	return m_p_private->m_channel_instrument_pair_list;
 }
 
 /**********************************************************************************/
-
-void TuneManager::SetChannelOutputEnabled(int const channel_index, bool const is_enabled)
+int TuneManager::GetCurrentChannelInstrument(int const channel_index)
 {
 	QMutexLocker locker(&m_p_private->m_tune_manager_mutex);
-	do
-	{
-		if(channel_index < 0 || channel_index >= MIDI_MAX_CHANNEL_NUMBER){
-			break;
-		}
-
-		chiptune_set_channel_output_enabled((int8_t)channel_index, is_enabled);
-	} while(0);
+	return chiptune_get_channel_instrument(channel_index);
 }
 
 /**********************************************************************************/
+void TuneManager::SetChannelOutputEnabled(int const channel_index, bool const is_enabled)
+{
+	QMutexLocker locker(&m_p_private->m_tune_manager_mutex);
+	chiptune_set_channel_output_enabled((int8_t)channel_index, is_enabled);
+}
 
+/**********************************************************************************/
 int TuneManager::SetMelodicChannelTimbre(int8_t const channel_index,
 						   int8_t const waveform,
 						   int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
@@ -581,23 +566,13 @@ int TuneManager::SetMelodicChannelTimbre(int8_t const channel_index,
 						   float const envelope_damper_sustain_duration_in_seconds)
 {
 	QMutexLocker locker(&m_p_private->m_tune_manager_mutex);
-
-	int ret = -1;
-	do
-	{
-		if(MIDI_PERCUSSION_CHANNEL == channel_index){
-			qDebug() << "WARNING :: MIDI_PERCUSSION_CHANNEL timbre is unsettable, ignored";
-			break;
-		}
-		ret = chiptune_set_melodic_channel_timbre(channel_index, waveform,
-												envelope_attack_curve, envelope_attack_duration_in_seconds,
-												envelope_decay_curve, envelope_decay_duration_in_seconds,
-												envelope_note_on_sustain_level,
-												envelope_release_curve, envelope_release_duration_in_seconds,
-												envelope_damper_sustain_level,
-												envelope_damper_sustain_curve,
-												envelope_damper_sustain_duration_in_seconds);
-	} while(0);
-	return ret;
+	return chiptune_set_melodic_channel_timbre(channel_index, waveform,
+											  envelope_attack_curve, envelope_attack_duration_in_seconds,
+											  envelope_decay_curve, envelope_decay_duration_in_seconds,
+											  envelope_note_on_sustain_level,
+											  envelope_release_curve, envelope_release_duration_in_seconds,
+											  envelope_damper_sustain_level,
+											  envelope_damper_sustain_curve,
+											  envelope_damper_sustain_duration_in_seconds);
 }
 

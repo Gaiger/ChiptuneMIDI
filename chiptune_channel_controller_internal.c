@@ -229,8 +229,8 @@ static void reset_melodic_channel_to_defaults(int8_t const channel_index,
 											  bool is_instrument_to_be_not_specified)
 {
 	if(MIDI_PERCUSSION_CHANNEL == channel_index){
-		CHIPTUNE_PRINTF(cMidiControlChange, "ignore channel MIDI_PERCUSSION_CHANNEL in %s\r\n",
-						__func__);
+		CHIPTUNE_PRINTF(cMidiControlChange, "WARNING :: channel_index = %d is MIDI_PERCUSSION_CHANNEL, ignored in %s\r\n",
+						channel_index, __func__);
 		return ;
 	}
 #define DEFAULT_WAVEFORM							(WaveformTriangle)
