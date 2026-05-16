@@ -15,10 +15,12 @@ class ChannelNodeWidget : public QWidget
 	Q_OBJECT
 
 public:
-	explicit ChannelNodeWidget(int channel_index, int instrument_index,
+	explicit ChannelNodeWidget(int channel_index, int instrument_code,
+							   bool is_displayed_channel_index_start_from_one = false,
 							   QWidget *parent = nullptr);
 	~ChannelNodeWidget();
 
+	void SetInstrument(int instrument_code);
 	void GetMelodicChannelTimbre(int *p_waveform,
 				   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,
 				   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
@@ -65,6 +67,7 @@ private slots:
 											   double envelope_damper_sustain_duration_in_seconds);
 private:
 	int const m_channel_index;
+	bool const m_is_displayed_channel_index_start_from_one;
 	QSize m_expanded_size;
 	QSize m_collapsed_size;
 	QString m_expand_collapse_push_button_original_style_sheet;

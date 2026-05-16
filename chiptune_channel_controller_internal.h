@@ -46,7 +46,7 @@ enum EnvelopeCurve
 
 typedef struct _channel_controller
 {
-	midi_value_t				instrument;
+	midi_value_t				instrument_code;
 	midi_value_t				coarse_tuning_value;
 	int16_t						fine_tuning_value;
 	float						tuning_in_semitones;

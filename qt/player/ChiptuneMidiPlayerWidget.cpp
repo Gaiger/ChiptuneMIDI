@@ -362,8 +362,8 @@ int ChiptuneMidiPlayerWidget::LoadAndPlayMidiFile(QString filename_string)
 		int channel_number = m_p_tune_manager->GetChannelInstrumentPairList().size();
 		for(int i = 0; i < channel_number; i++){
 			int channel_index = m_p_tune_manager->GetChannelInstrumentPairList().at(i).first;
-			int instrument = m_p_tune_manager->GetChannelInstrumentPairList().at(i).second;
-			p_channel_list_widget->AddChannel(channel_index, instrument);
+			int instrument_code = m_p_tune_manager->GetChannelInstrumentPairList().at(i).second;
+			p_channel_list_widget->AddChannel(channel_index, instrument_code);
 
 			if(MIDI_PERCUSSION_CHANNEL == channel_index){
 				continue;

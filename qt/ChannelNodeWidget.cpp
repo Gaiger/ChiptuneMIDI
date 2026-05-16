@@ -12,10 +12,11 @@
 #include "ui_ChannelNodeWidgetForm.h"
 
 /**********************************************************************************/
-
-ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QWidget *parent) :
+ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_code,
+									 bool is_displayed_channel_index_start_from_one, QWidget *parent) :
 	QWidget(parent),
 	m_channel_index(channel_index),
+	m_is_displayed_channel_index_start_from_one(is_displayed_channel_index_start_from_one),
 	m_p_melodic_timbre_frame(nullptr),
 	ui(new Ui::ChannelNodeWidget)
 {
@@ -36,15 +37,12 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 	m_collapsed_size = QSize(m_expanded_size.width(), m_expanded_size.height() - ui->MelodicTimbreWidget->height());
 	QWidget::setFixedSize(m_collapsed_size);
 
-	QString instrument_name = QString("Unknown");
 	do
 	{
 		if(MIDI_PERCUSSION_CHANNEL == channel_index){
-			instrument_name = QString("Percussion");
 			ui->ExpandCollapsePushButton->setEnabled(false);
 			break;
 		}
-		instrument_name = GetInstrumentNameString(instrument_index);
 
 		m_p_melodic_timbre_frame = new MelodicTimbreFrame(this);
 		QGridLayout *p_layout = new QGridLayout(ui->MelodicTimbreWidget);
@@ -56,10 +54,9 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 						 &ChannelNodeWidget::HandleMelodicTimbreFrameTimbreChanged);
 	} while(0);
 
-	QString string = "#"+ QString::number(channel_index) +" " + instrument_name;
 	ui->ExpandCollapsePushButton->setStyleSheet("text-align:left;");
-	ui->ExpandCollapsePushButton->setText(string);
 	m_expand_collapse_push_button_original_style_sheet = ui->ExpandCollapsePushButton->styleSheet();
+	SetInstrument(instrument_code);
 }
 
 /**********************************************************************************/
@@ -68,6 +65,24 @@ ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_index, QW
 ChannelNodeWidget::~ChannelNodeWidget()
 {
 	delete ui;
+}
+
+/**********************************************************************************/
+void ChannelNodeWidget::SetInstrument(int instrument_code)
+{
+	QString instrument_name = QString("Unknown");
+	do
+	{
+		if(MIDI_PERCUSSION_CHANNEL == m_channel_index){
+			instrument_name = QString("Percussion");
+			break;
+		}
+		instrument_name = GetInstrumentNameString(instrument_code);
+	} while(0);
+
+	int const displayed_channel_index = m_channel_index
+			+ (true == m_is_displayed_channel_index_start_from_one ? 1 : 0);
+	ui->ExpandCollapsePushButton->setText("#"+ QString::number(displayed_channel_index) +" " + instrument_name);
 }
 
 /**********************************************************************************/

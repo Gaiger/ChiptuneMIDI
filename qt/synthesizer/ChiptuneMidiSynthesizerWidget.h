@@ -8,6 +8,7 @@
 
 class WaveChartView;
 class QKeyEvent;
+class QTimerEvent;
 class MidiInputManager;
 
 namespace Ui {
@@ -37,6 +38,8 @@ private slots:
 										   int envelope_damper_sustain_curve,
 										   double envelope_damper_sustain_duration_in_seconds);
 private:
+	void timerEvent(QTimerEvent *event) Q_DECL_OVERRIDE;
+
 	void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 	void keyReleaseEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 private:
@@ -46,6 +49,7 @@ private:
 	MidiInputManager *	m_p_midi_input_manager;
 
 	int					m_audio_player_buffer_in_milliseconds;
+	int					m_inquiry_instrument_timer_id;
 private:
 	Ui::ChiptuneMidiSynthesizerWidget *ui;
 };

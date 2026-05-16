@@ -214,7 +214,7 @@ color: rgb(208, 208, 208);
   <widget class="QPushButton" name="AllOutputDisabledPushButton">
    <property name="geometry">
     <rect>
-     <x>984</x>
+     <x>976</x>
      <y>732</y>
      <width>80</width>
      <height>24</height>
@@ -227,7 +227,7 @@ color: rgb(208, 208, 208);
   <widget class="QPushButton" name="AllOutputEnabledPushButton">
    <property name="geometry">
     <rect>
-     <x>892</x>
+     <x>884</x>
      <y>732</y>
      <width>80</width>
      <height>24</height>
@@ -240,9 +240,9 @@ color: rgb(208, 208, 208);
   <widget class="QWidget" name="TimbreListWidget" native="true">
    <property name="geometry">
     <rect>
-     <x>888</x>
+     <x>880</x>
      <y>40</y>
-     <width>348</width>
+     <width>356</width>
      <height>684</height>
     </rect>
    </property>
@@ -250,7 +250,7 @@ color: rgb(208, 208, 208);
   <widget class="QPushButton" name="LoadTimbresPushButton">
    <property name="geometry">
     <rect>
-     <x>888</x>
+     <x>884</x>
      <y>8</y>
      <width>168</width>
      <height>24</height>
@@ -263,7 +263,7 @@ color: rgb(208, 208, 208);
   <widget class="QPushButton" name="StoreTimbresPushButton">
    <property name="geometry">
     <rect>
-     <x>1068</x>
+     <x>1064</x>
      <y>8</y>
      <width>168</width>
      <height>24</height>

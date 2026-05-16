@@ -17,9 +17,11 @@ public :
 	explicit ChannelListWidget(QWidget *parent = nullptr);
 	~ChannelListWidget();
 
-	void AddChannel(int channel_index, int instrument_index);
+	void AddChannel(int channel_index, int instrument_code,
+					bool is_displayed_channel_index_start_from_one = false);
 	void SetAllOutputEnabled(bool is_enabled);
 	bool IsOutputEnabled(int channel_index);
+	void SetMelodicChannelInstrument(int channel_index, int instrument_code);
 	void GetMelodicChannelTimbre(int channel_index, int *p_waveform,
 				   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,
 				   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,

@@ -8,6 +8,7 @@
 #include <QPair>
 #include <QStringList>
 #include <QTimer>
+#include <QTimerEvent>
 
 #include "ui_ChiptuneMidiSynthesizerWidgetForm.h"
 
@@ -50,6 +51,8 @@ static void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
 #define SYNTHESIZER_AUDIO_PLAYER_BUFFER_IN_MILLISECONDS						\
 	(SYNTHESIZER_AUDIO_BUFFER_TIME_FACTOR * SYNTHESIZER_PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS)
 
+#define SYNTHESIZER_INQUIRY_INSTRUMENT_INTERVAL_IN_MILLISECONDS			(100)
+
 #define INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING	QStringLiteral("instrument_timbres.ini")
 
 /**********************************************************************************/
@@ -57,7 +60,7 @@ static void SetupChannelListWidget(ChannelListWidget * const p_channel_list_widg
 {
 	instrument_timbre_t const default_instrument_timbre = GetDefaultInstrumentTimbre();
 	for(int channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; ++channel_index){
-		p_channel_list_widget->AddChannel(channel_index, 0);
+		p_channel_list_widget->AddChannel(channel_index, 0, true);
 
 		if(MIDI_PERCUSSION_CHANNEL == channel_index){
 			continue;
@@ -156,6 +159,7 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 	  m_p_wave_chartview(nullptr),
 	  m_p_midi_input_manager(nullptr),
 	  m_audio_player_buffer_in_milliseconds(SYNTHESIZER_AUDIO_PLAYER_BUFFER_IN_MILLISECONDS),
+	  m_inquiry_instrument_timer_id(-1),
 	  ui(new Ui::ChiptuneMidiSynthesizerWidget)
 {
 	ui->setupUi(this);
@@ -198,6 +202,8 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 					 this, &ChiptuneMidiSynthesizerWidget::HandleMelodicChannelTimbreChanged);
 	FillWidget(p_channel_list_widget, ui->TimbreListWidget);
 	SetupChannelListWidget(p_channel_list_widget, m_p_tune_manager);
+	m_inquiry_instrument_timer_id =
+			QObject::startTimer(SYNTHESIZER_INQUIRY_INSTRUMENT_INTERVAL_IN_MILLISECONDS);
 
 #define SYNTHESIZER_AUDIO_PLAYER_THREAD_STARTUP_DELAY_IN_MILLISECONDS	(50)
 	QTimer::singleShot(SYNTHESIZER_AUDIO_PLAYER_THREAD_STARTUP_DELAY_IN_MILLISECONDS,
@@ -217,6 +223,11 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 /**********************************************************************************/
 ChiptuneMidiSynthesizerWidget::~ChiptuneMidiSynthesizerWidget()
 {
+	if(-1 != m_inquiry_instrument_timer_id){
+		QObject::killTimer(m_inquiry_instrument_timer_id);
+		m_inquiry_instrument_timer_id = -1;
+	}
+
 	if(nullptr != m_p_midi_input_manager){
 		m_p_midi_input_manager->ClosePort();
 		//delete m_p_midi_input_manager;
@@ -236,6 +247,25 @@ ChiptuneMidiSynthesizerWidget::~ChiptuneMidiSynthesizerWidget()
 	}while(0);
 	m_p_audio_player = nullptr;
 	delete ui;
+}
+
+/**********************************************************************************/
+void ChiptuneMidiSynthesizerWidget::timerEvent(QTimerEvent *event)
+{
+	QWidget::timerEvent(event);
+
+	if(event->timerId() == m_inquiry_instrument_timer_id){
+		do {
+			ChannelListWidget * const p_channel_list_widget = ui->TimbreListWidget->findChild<ChannelListWidget*>();
+			if(nullptr == p_channel_list_widget){
+				break;
+			}
+			for(int channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; ++channel_index){
+				int const instrument_code = m_p_tune_manager->GetCurrentChannelInstrument(channel_index);
+				p_channel_list_widget->SetMelodicChannelInstrument(channel_index, instrument_code);
+			}
+		}while(0);
+	}
 }
 
 /**********************************************************************************/

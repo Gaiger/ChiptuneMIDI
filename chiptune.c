@@ -198,12 +198,12 @@ static inline void swap_processing_channel() { s_is_processing_left_channel = !s
 static int process_program_change_message(uint32_t const tick, int8_t const voice, midi_value_t const number)
 {
 	do {
-		if(CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED != get_channel_controller_pointer_from_index(voice)->instrument){
-			if(number != get_channel_controller_pointer_from_index(voice)->instrument){
+		if(CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED != get_channel_controller_pointer_from_index(voice)->instrument_code){
+			if(number != get_channel_controller_pointer_from_index(voice)->instrument_code){
 				CHIPTUNE_PRINTF(cMidiProgramChange, "tick = %u, voice = %d, MIDI_MESSAGE_PROGRAM_CHANGE: from %s(%d) to %s(%d)\r\n",
 								tick, voice,
-								get_instrument_name_string(get_channel_controller_pointer_from_index(voice)->instrument),
-								get_channel_controller_pointer_from_index(voice)->instrument,
+								get_instrument_name_string(get_channel_controller_pointer_from_index(voice)->instrument_code),
+								get_channel_controller_pointer_from_index(voice)->instrument_code,
 								get_instrument_name_string(number),
 								number);
 			}
@@ -213,7 +213,7 @@ static int process_program_change_message(uint32_t const tick, int8_t const voic
 						tick, voice, get_instrument_name_string(number), number);
 	}while(0);
 
-	get_channel_controller_pointer_from_index(voice)->instrument = number;
+	get_channel_controller_pointer_from_index(voice)->instrument_code = number;
 	return 0;
 }
 
@@ -269,7 +269,7 @@ struct _tick_message
 
 #define SEVEN_BITS_VALID(VALUE)						((0x7F) & (VALUE))
 
-int8_t s_ending_instrument_array[MIDI_MAX_CHANNEL_NUMBER];
+int8_t s_ending_instrument_code_array[MIDI_MAX_CHANNEL_NUMBER];
 
 static int process_midi_message(struct _tick_message const tick_message)
 {
@@ -1276,10 +1276,10 @@ void chiptune_prepare_session(uint32_t const resolution)
 		reset_all_channels_to_defaults(true);
 		chase_midi_messages(TO_LAST_MESSAGE_INDEX, &is_channel_has_note_array[0]);
 		for(int8_t voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-			s_ending_instrument_array[voice] = get_channel_controller_pointer_from_index(voice)->instrument;
-			if(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED == s_ending_instrument_array[voice]){
+			s_ending_instrument_code_array[voice] = get_channel_controller_pointer_from_index(voice)->instrument_code;
+			if(CHIPTUNE_INSTRUMENT_NOT_SPECIFIED == s_ending_instrument_code_array[voice]){
 				if(false == is_channel_has_note_array[voice]){
-					s_ending_instrument_array[voice] = CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL;
+					s_ending_instrument_code_array[voice] = CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL;
 				}
 			}
 		}
@@ -1373,16 +1373,16 @@ int8_t chiptune_get_channel_instrument(int8_t const channel_index)
 		return CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL;
 	}
 
-	return get_channel_controller_pointer_from_index(channel_index)->instrument;
+	return get_channel_controller_pointer_from_index(channel_index)->instrument_code;
 }
 
 /**********************************************************************************/
-int chiptune_get_ending_instruments(int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER])
+int chiptune_get_ending_instruments(int8_t instrument_code_array[MIDI_MAX_CHANNEL_NUMBER])
 {
 	if(true == is_push_mode()){
 		return INT_MIN;
 	}
-	memcpy(&instrument_array[0], &s_ending_instrument_array[0], MIDI_MAX_CHANNEL_NUMBER * sizeof(int8_t));
+	memcpy(&instrument_code_array[0], &s_ending_instrument_code_array[0], MIDI_MAX_CHANNEL_NUMBER * sizeof(int8_t));
 	return 0;
 }
 

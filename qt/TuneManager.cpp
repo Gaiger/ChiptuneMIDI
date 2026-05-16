@@ -202,11 +202,11 @@ void TuneManager::SetMidiMessageProvider(MidiMessageProvider *p_midi_message_pro
 		chiptune_set_pull_message_callback(get_midi_message);
 		chiptune_prepare_session((uint32_t)p_midi_message_provider->GetMidSongPointer()->GetResolution());
 
-		int8_t instrument_array[MIDI_MAX_CHANNEL_NUMBER];
-		chiptune_get_ending_instruments(&instrument_array[0]);
+		int8_t instrument_code_array[MIDI_MAX_CHANNEL_NUMBER];
+		chiptune_get_ending_instruments(&instrument_code_array[0]);
 		for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
-			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL != instrument_array[voice]){
-				m_p_private->m_channel_instrument_pair_list.append(QPair<int, int>(voice, instrument_array[voice]));
+			if(CHIPTUNE_INSTRUMENT_UNUSED_CHANNEL != instrument_code_array[voice]){
+				m_p_private->m_channel_instrument_pair_list.append(QPair<int, int>(voice, instrument_code_array[voice]));
 			}
 		}
 	} while(0);
