@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+#include "chiptune_midi_define.h"
+
 #include "TuneManager.h"
 #include "AudioPlayer.h"
 
@@ -10,6 +12,7 @@ class WaveChartView;
 class QKeyEvent;
 class QTimerEvent;
 class MidiInputManager;
+class ChannelListWidget;
 
 namespace Ui {
 class ChiptuneMidiSynthesizerWidget;
@@ -26,6 +29,7 @@ private slots:
 	void on_NotePushButton_released(void);
 	void on_LoadTimbresPushButton_released(void);
 	void on_StoreTimbresPushButton_released(void);
+	void HandleMidiMessageDelivered(uint32_t midi_message);
 	void HandleAudioPlayerStateChanged(AudioPlayer::PlaybackState state);
 	void HandleChannelOutputEnabled(int channel_index, bool is_enabled);
 	void HandleMelodicChannelTimbreChanged(int channel_index,
@@ -47,9 +51,11 @@ private:
 	AudioPlayer *		m_p_audio_player;
 	WaveChartView *		m_p_wave_chartview;
 	MidiInputManager *	m_p_midi_input_manager;
+	ChannelListWidget *	m_p_channel_list_widget;
 
 	int					m_audio_player_buffer_in_milliseconds;
 	int					m_inquiry_instrument_timer_id;
+	int					m_channel_note_on_count_array[MIDI_MAX_CHANNEL_NUMBER];
 private:
 	Ui::ChiptuneMidiSynthesizerWidget *ui;
 };

@@ -65,7 +65,7 @@ QSlider::handle {
     <rect>
      <x>4</x>
      <y>4</y>
-     <width>880</width>
+     <width>872</width>
      <height>64</height>
     </rect>
    </property>

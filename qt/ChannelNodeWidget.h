@@ -17,10 +17,13 @@ class ChannelNodeWidget : public QWidget
 public:
 	explicit ChannelNodeWidget(int channel_index, int instrument_code,
 							   bool is_displayed_channel_index_start_from_one = false,
+							   bool is_channel_indicator_enabled = false,
 							   QWidget *parent = nullptr);
 	~ChannelNodeWidget();
 
 	void SetInstrument(int instrument_code);
+	int GetInstrument(void);
+	void SetIndicator(bool is_to_highlight);
 	void GetMelodicChannelTimbre(int *p_waveform,
 				   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,
 				   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
@@ -66,13 +69,19 @@ private slots:
 											   int envelope_damper_sustain_curve,
 											   double envelope_damper_sustain_duration_in_seconds);
 private:
+	void SetupChannelIndicatorLayout(void);
+
 	int const m_channel_index;
+	int m_instrument_code;
 	bool const m_is_displayed_channel_index_start_from_one;
 	QSize m_expanded_size;
 	QSize m_collapsed_size;
 	QString m_expand_collapse_push_button_original_style_sheet;
+	QString m_channel_indicator_widget_plain_style_sheet;
+	QString m_channel_indicator_widget_highlight_style_sheet;
 
 	MelodicTimbreFrame *m_p_melodic_timbre_frame;
+	QWidget *m_p_channel_indicator_widget;
 private:
 	Ui::ChannelNodeWidget *ui;
 };

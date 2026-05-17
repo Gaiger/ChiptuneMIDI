@@ -32,10 +32,12 @@ ChannelListWidget::~ChannelListWidget()
 
 /**********************************************************************************/
 void ChannelListWidget::AddChannel(int channel_index, int instrument_code,
-								   bool is_displayed_channel_index_start_from_one)
+								   bool is_displayed_channel_index_start_from_one,
+								   bool is_channel_indicator_enabled)
 {
 	ChannelNodeWidget *p_channelnode_widget = new ChannelNodeWidget(channel_index, instrument_code,
 																	is_displayed_channel_index_start_from_one,
+																	is_channel_indicator_enabled,
 																	this);
 	m_p_vboxlayout->addWidget(p_channelnode_widget);
 	QObject::connect(p_channelnode_widget, &ChannelNodeWidget::OutputEnabled, this,
@@ -51,6 +53,22 @@ void ChannelListWidget::SetMelodicChannelInstrument(int channel_index, int instr
 	ChannelNodeWidget *p_channel_node_widget
 			= (ChannelNodeWidget*)m_p_vboxlayout->itemAt(m_channel_position_map.value(channel_index))->widget();
 	p_channel_node_widget->SetInstrument(instrument_code);
+}
+
+/**********************************************************************************/
+int ChannelListWidget::GetMelodicChannelInstrument(int channel_index)
+{
+	ChannelNodeWidget *p_channel_node_widget
+			= (ChannelNodeWidget*)m_p_vboxlayout->itemAt(m_channel_position_map.value(channel_index))->widget();
+	return p_channel_node_widget->GetInstrument();
+}
+
+/**********************************************************************************/
+void ChannelListWidget::SetChannelNodeIndicator(int channel_index, bool is_to_highlight)
+{
+	ChannelNodeWidget *p_channel_node_widget
+			= (ChannelNodeWidget*)m_p_vboxlayout->itemAt(m_channel_position_map.value(channel_index))->widget();
+	p_channel_node_widget->SetIndicator(is_to_highlight);
 }
 
 /**********************************************************************************/

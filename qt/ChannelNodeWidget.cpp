@@ -1,6 +1,8 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QDebug>
+#include <QColor>
+#include <QRect>
 #include <QTimer>
 
 #include "chiptune_midi_define.h"
@@ -11,28 +13,40 @@
 #include "ChannelNodeWidget.h"
 #include "ui_ChannelNodeWidgetForm.h"
 
+
 /**********************************************************************************/
 ChannelNodeWidget::ChannelNodeWidget(int channel_index, int instrument_code,
-									 bool is_displayed_channel_index_start_from_one, QWidget *parent) :
+									 bool is_displayed_channel_index_start_from_one,
+									 bool is_channel_indicator_enabled, QWidget *parent) :
 	QWidget(parent),
 	m_channel_index(channel_index),
+	m_instrument_code(instrument_code),
 	m_is_displayed_channel_index_start_from_one(is_displayed_channel_index_start_from_one),
 	m_p_melodic_timbre_frame(nullptr),
+	m_p_channel_indicator_widget(nullptr),
 	ui(new Ui::ChannelNodeWidget)
 {
 	ui->setupUi(this);
 
-	QColor color = GetChannelColor(channel_index);
-	QString background_color_string = QString::asprintf("rgba(%d, %d, %d, %f%%)", color.red(), color.green(), color.blue(),
-											 color.alpha() * 100/(double)UINT8_MAX);
-	QString style_sheet_string = "QWidget { "
-									  "border-width: 1px;"
-									  "border-style: solid;"
-									  "border-color: rgba(255, 255, 255, 75%);"
-									  "background-color: " + background_color_string + ";"
-									"}";
+	{
+		QColor channel_color = GetChannelColor(channel_index);
+		QString const background_color_string
+				= QString::asprintf("rgba(%d, %d, %d, %f%%)",
+									channel_color.red(), channel_color.green(), channel_color.blue(),
+									channel_color.alpha() * 100/(double)UINT8_MAX);
+		QString const style_sheet_string = "QWidget { "
+										  "border-width: 1px;"
+										  "border-style: solid;"
+										  "border-color: rgba(255, 255, 255, 75%);"
+										  "background-color: " + background_color_string + ";"
+										"}";
+		ui->ChannelColorWidget->setStyleSheet(style_sheet_string);
+	}
 
-	ui->ChannelColorWidget->setStyleSheet(style_sheet_string);
+	if(true == is_channel_indicator_enabled){
+		SetupChannelIndicatorLayout();
+	}
+
 	m_expanded_size = QWidget::size();
 	m_collapsed_size = QSize(m_expanded_size.width(), m_expanded_size.height() - ui->MelodicTimbreWidget->height());
 	QWidget::setFixedSize(m_collapsed_size);
@@ -68,8 +82,59 @@ ChannelNodeWidget::~ChannelNodeWidget()
 }
 
 /**********************************************************************************/
+void ChannelNodeWidget::SetupChannelIndicatorLayout(void)
+{
+	ui->OutputEnabledCheckBox->setVisible(false);
+
+	QRect const original_output_enabled_check_box_geometry = ui->OutputEnabledCheckBox->geometry();
+
+	QRect const original_channel_color_widget_geometry = ui->ChannelColorWidget->geometry();
+	QRect const original_expand_collapse_push_button_geometry = ui->ExpandCollapsePushButton->geometry();
+#define CHANNEL_INDICATOR_WIDGET_SPACING				(4)
+
+	ui->ChannelColorWidget->setGeometry(original_output_enabled_check_box_geometry.x(),
+										original_output_enabled_check_box_geometry.y(),
+										original_channel_color_widget_geometry.width(),
+										original_channel_color_widget_geometry.height());
+
+	m_p_channel_indicator_widget = new QWidget(this);
+	m_p_channel_indicator_widget->setObjectName(QStringLiteral("ChannelIndicatorWidget"));
+	int const channel_indicator_widget_x = original_output_enabled_check_box_geometry.x()
+			+ original_channel_color_widget_geometry.width() + CHANNEL_INDICATOR_WIDGET_SPACING;
+	m_p_channel_indicator_widget->setGeometry(channel_indicator_widget_x,
+											 original_output_enabled_check_box_geometry.y(),
+											 original_channel_color_widget_geometry.width(),
+											 original_channel_color_widget_geometry.height());
+	{
+		int const changed_expand_collapse_push_button_x = channel_indicator_widget_x
+				+ original_channel_color_widget_geometry.width() + CHANNEL_INDICATOR_WIDGET_SPACING;
+
+		int const changed_expand_collapse_push_button_width =
+				original_expand_collapse_push_button_geometry.right() - changed_expand_collapse_push_button_x + 1;
+		ui->ExpandCollapsePushButton->setGeometry(changed_expand_collapse_push_button_x,
+												  original_expand_collapse_push_button_geometry.y(),
+												  changed_expand_collapse_push_button_width,
+												  original_expand_collapse_push_button_geometry.height());
+	}
+
+	m_channel_indicator_widget_plain_style_sheet = m_p_channel_indicator_widget->styleSheet();
+	QColor const indicator_widget_color(0xA0, 0xA0, 0xA0);
+	QString const indicator_widget_background_color_string
+			= QString::asprintf("rgba(%d, %d, %d, %f%%)",
+					indicator_widget_color.red(), indicator_widget_color.green(), indicator_widget_color.blue(),
+					indicator_widget_color.alpha() * 100/(double)UINT8_MAX);
+	m_channel_indicator_widget_highlight_style_sheet =
+			"QWidget { "
+			  "border-width: 0px;"
+			  "background-color: " + indicator_widget_background_color_string + ";"
+			"}";
+}
+
+/**********************************************************************************/
 void ChannelNodeWidget::SetInstrument(int instrument_code)
 {
+	m_instrument_code = instrument_code;
+
 	QString instrument_name = QString("Unknown");
 	do
 	{
@@ -83,6 +148,29 @@ void ChannelNodeWidget::SetInstrument(int instrument_code)
 	int const displayed_channel_index = m_channel_index
 			+ (true == m_is_displayed_channel_index_start_from_one ? 1 : 0);
 	ui->ExpandCollapsePushButton->setText("#"+ QString::number(displayed_channel_index) +" " + instrument_name);
+}
+
+/**********************************************************************************/
+int ChannelNodeWidget::GetInstrument(void)
+{
+	return m_instrument_code;
+}
+
+/**********************************************************************************/
+void ChannelNodeWidget::SetIndicator(bool is_to_highlight)
+{
+	do
+	{
+		if(nullptr == m_p_channel_indicator_widget){
+			break;
+		}
+
+		if(true == is_to_highlight){
+			m_p_channel_indicator_widget->setStyleSheet(m_channel_indicator_widget_highlight_style_sheet);
+			break;
+		}
+		m_p_channel_indicator_widget->setStyleSheet(m_channel_indicator_widget_plain_style_sheet);
+	} while(0);
 }
 
 /**********************************************************************************/

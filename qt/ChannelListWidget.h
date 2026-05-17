@@ -18,10 +18,13 @@ public :
 	~ChannelListWidget();
 
 	void AddChannel(int channel_index, int instrument_code,
-					bool is_displayed_channel_index_start_from_one = false);
+					bool is_displayed_channel_index_start_from_one = false,
+					bool is_channel_indicator_enabled = false);
 	void SetAllOutputEnabled(bool is_enabled);
 	bool IsOutputEnabled(int channel_index);
 	void SetMelodicChannelInstrument(int channel_index, int instrument_code);
+	int GetMelodicChannelInstrument(int channel_index);
+	void SetChannelNodeIndicator(int channel_index, bool is_to_highlight);
 	void GetMelodicChannelTimbre(int channel_index, int *p_waveform,
 				   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,
 				   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
