@@ -1408,7 +1408,6 @@ int16_t chiptune_fetch_16bit_wave(void)
 
 			do
 			{
-
 				if(AMPLITUDE_NORMALIZATION_DIVISOR() != original_amplitude_normalization_divisor){
 #ifdef _REPORT_AMPLITUDE_NORMALIZAION
 					CHIPTUNE_PRINTF(cDeveloping, "raise AMPLITUDE_NORMALIZATION_DIVISOR to %d\r\n",
@@ -1421,6 +1420,14 @@ int16_t chiptune_fetch_16bit_wave(void)
 					if(true == IS_TO_REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR()){
 						int32_t updated_amplitude_normalization_divisor
 								= AMPLITUDE_NORMALIZATION_DIVISOR() - AMPLITUDE_NORMALIZATION_DIVISOR_DECREMENT;
+
+#define IS_NO_MORE_EVENT()							((NULL_TICK == get_next_event_triggering_tick()) ? true : false)
+						bool const is_to_reduce_to_lower_bound_directly =
+								(true == IS_NO_MORE_EVENT() && (int32_t)0 == wave_32bit);
+						if(true == is_to_reduce_to_lower_bound_directly){
+							updated_amplitude_normalization_divisor = AMPLITUDE_NORMALIZATION_DIVISOR_RECOVERY_LOWER_BOUND;
+						}
+
 						if(AMPLITUDE_NORMALIZATION_DIVISOR_RECOVERY_LOWER_BOUND > updated_amplitude_normalization_divisor){
 							updated_amplitude_normalization_divisor = AMPLITUDE_NORMALIZATION_DIVISOR_RECOVERY_LOWER_BOUND;
 						}
@@ -1432,7 +1439,10 @@ int16_t chiptune_fetch_16bit_wave(void)
 								* log10f((float)original_amplitude_normalization_divisor
 										/ (float)updated_amplitude_normalization_divisor);
 						CHIPTUNE_PRINTF(cDeveloping,
-										"reduce AMPLITUDE_NORMALIZATION_DIVISOR to %d (%+1.2f dB)\r\n",
+										"%sreduce AMPLITUDE_NORMALIZATION_DIVISOR to %d (%+1.2f dB)\r\n",
+										(true == is_to_reduce_to_lower_bound_directly)
+											? "directly "
+											: "",
 										AMPLITUDE_NORMALIZATION_DIVISOR(), recovery_step_in_db);
 #endif
 						break;
