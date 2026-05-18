@@ -67,6 +67,16 @@ QStringList MidiInputManager::GetPortNameList(void) const
 }
 
 /**********************************************************************************/
+bool MidiInputManager::IsPortOpen(void) const
+{
+	if(nullptr == m_p_midi_in){
+		return false;
+	}
+
+	return m_p_midi_in->isPortOpen();
+}
+
+/**********************************************************************************/
 bool MidiInputManager::OpenPort(unsigned int const port_index)
 {
 	if(nullptr == m_p_midi_in){

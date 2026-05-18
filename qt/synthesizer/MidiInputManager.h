@@ -21,6 +21,7 @@ public:
 	~MidiInputManager(void) Q_DECL_OVERRIDE;
 
 	QStringList GetPortNameList(void) const;
+	bool IsPortOpen(void) const;
 	bool OpenPort(unsigned int const port_index);
 #ifndef Q_OS_WIN
 	bool OpenVirtualPort(QString const &port_name);

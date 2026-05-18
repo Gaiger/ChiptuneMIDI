@@ -23,7 +23,6 @@ public :
 	void SetAllOutputEnabled(bool is_enabled);
 	bool IsOutputEnabled(int channel_index);
 	void SetMelodicChannelInstrument(int channel_index, int instrument_code);
-	int GetMelodicChannelInstrument(int channel_index);
 	void SetChannelNodeIndicator(int channel_index, bool is_to_highlight);
 	void GetMelodicChannelTimbre(int channel_index, int *p_waveform,
 				   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,

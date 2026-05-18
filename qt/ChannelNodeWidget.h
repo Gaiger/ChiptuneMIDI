@@ -22,7 +22,6 @@ public:
 	~ChannelNodeWidget();
 
 	void SetInstrument(int instrument_code);
-	int GetInstrument(void);
 	void SetIndicator(bool is_to_highlight);
 	void GetMelodicChannelTimbre(int *p_waveform,
 				   int *p_envelope_attack_curve, double *p_envelope_attack_duration_in_seconds,

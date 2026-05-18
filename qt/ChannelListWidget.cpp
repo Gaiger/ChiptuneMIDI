@@ -56,14 +56,6 @@ void ChannelListWidget::SetMelodicChannelInstrument(int channel_index, int instr
 }
 
 /**********************************************************************************/
-int ChannelListWidget::GetMelodicChannelInstrument(int channel_index)
-{
-	ChannelNodeWidget *p_channel_node_widget
-			= (ChannelNodeWidget*)m_p_vboxlayout->itemAt(m_channel_position_map.value(channel_index))->widget();
-	return p_channel_node_widget->GetInstrument();
-}
-
-/**********************************************************************************/
 void ChannelListWidget::SetChannelNodeIndicator(int channel_index, bool is_to_highlight)
 {
 	ChannelNodeWidget *p_channel_node_widget

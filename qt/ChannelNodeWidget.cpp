@@ -151,12 +151,6 @@ void ChannelNodeWidget::SetInstrument(int instrument_code)
 }
 
 /**********************************************************************************/
-int ChannelNodeWidget::GetInstrument(void)
-{
-	return m_instrument_code;
-}
-
-/**********************************************************************************/
 void ChannelNodeWidget::SetIndicator(bool is_to_highlight)
 {
 	do

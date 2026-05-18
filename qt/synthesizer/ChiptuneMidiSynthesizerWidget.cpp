@@ -40,6 +40,13 @@ static void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
 }
 
 /**********************************************************************************/
+
+#define EXPAND_ENUM(ITEM, VAL)						ITEM = VAL,
+enum MidiInstrumentCode
+{
+	MIDI_INSTRUMENT_CODE_LIST(EXPAND_ENUM)
+};
+
 #define SYNTHESIZER_PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS		(30)
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -51,7 +58,6 @@ static void FillWidget(QWidget *p_widget, QWidget *p_filled_widget)
 #define SYNTHESIZER_AUDIO_PLAYER_BUFFER_IN_MILLISECONDS						\
 	(SYNTHESIZER_AUDIO_BUFFER_TIME_FACTOR * SYNTHESIZER_PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS)
 
-#define SYNTHESIZER_INQUIRY_INSTRUMENT_INTERVAL_IN_MILLISECONDS			(100)
 #define SYNTHESIZER_INSTRUMENT_CHANGED_INDICATOR_DURATION_IN_MILLISECONDS		(5000)
 
 #define INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING	QStringLiteral("instrument_timbres.ini")
@@ -61,7 +67,7 @@ static void SetupChannelListWidget(ChannelListWidget * const p_channel_list_widg
 {
 	instrument_timbre_t const default_instrument_timbre = GetDefaultInstrumentTimbre();
 	for(int channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; ++channel_index){
-		p_channel_list_widget->AddChannel(channel_index, 0, true, true);
+		p_channel_list_widget->AddChannel(channel_index, AcousticGrandPiano, true, true);
 
 		if(MIDI_PERCUSSION_CHANNEL == channel_index){
 			continue;
@@ -161,12 +167,12 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 	  m_p_midi_input_manager(nullptr),
 	  m_p_channel_list_widget(nullptr),
 	  m_audio_player_buffer_in_milliseconds(SYNTHESIZER_AUDIO_PLAYER_BUFFER_IN_MILLISECONDS),
-	  m_inquiry_instrument_timer_id(-1),
+	  m_inquiry_midi_input_port_timer_id(-1),
 	  ui(new Ui::ChiptuneMidiSynthesizerWidget)
 {
 	ui->setupUi(this);
 
-	for(int channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; ++channel_index){
+	for(int channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; channel_index++){
 		m_channel_note_on_count_array[channel_index] = 0;
 	}
 
@@ -208,12 +214,6 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 					 this, &ChiptuneMidiSynthesizerWidget::HandleMelodicChannelTimbreChanged);
 	FillWidget(m_p_channel_list_widget, ui->TimbreListWidget);
 	SetupChannelListWidget(m_p_channel_list_widget, m_p_tune_manager);
-	for(int channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; ++channel_index){
-		int const instrument_code = m_p_tune_manager->GetCurrentChannelInstrument(channel_index);
-		m_p_channel_list_widget->SetMelodicChannelInstrument(channel_index, instrument_code);
-	}
-	m_inquiry_instrument_timer_id =
-			QObject::startTimer(SYNTHESIZER_INQUIRY_INSTRUMENT_INTERVAL_IN_MILLISECONDS);
 
 #define SYNTHESIZER_AUDIO_PLAYER_THREAD_STARTUP_DELAY_IN_MILLISECONDS	(50)
 	QTimer::singleShot(SYNTHESIZER_AUDIO_PLAYER_THREAD_STARTUP_DELAY_IN_MILLISECONDS,
@@ -235,9 +235,9 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 /**********************************************************************************/
 ChiptuneMidiSynthesizerWidget::~ChiptuneMidiSynthesizerWidget()
 {
-	if(-1 != m_inquiry_instrument_timer_id){
-		QObject::killTimer(m_inquiry_instrument_timer_id);
-		m_inquiry_instrument_timer_id = -1;
+	if(-1 != m_inquiry_midi_input_port_timer_id){
+		QObject::killTimer(m_inquiry_midi_input_port_timer_id);
+		m_inquiry_midi_input_port_timer_id = -1;
 	}
 
 	if(nullptr != m_p_midi_input_manager){
@@ -272,6 +272,13 @@ void ChiptuneMidiSynthesizerWidget::HandleMidiMessageDelivered(uint32_t midi_mes
 			= (0 != m_channel_note_on_count_array[channel_index]) ? true : false;
 	do
 	{
+		if(MIDI_MESSAGE_NOTE_OFF == midi_message_type){
+			if(m_channel_note_on_count_array[channel_index] > 0){
+				m_channel_note_on_count_array[channel_index] -= 1;
+			}
+			break;
+		}
+
 		if(MIDI_MESSAGE_NOTE_ON == midi_message_type){
 			m_channel_note_on_count_array[channel_index] += 1;
 			break;
@@ -286,12 +293,24 @@ void ChiptuneMidiSynthesizerWidget::HandleMidiMessageDelivered(uint32_t midi_mes
 			break;
 		}
 
-		if(MIDI_MESSAGE_NOTE_OFF != midi_message_type){
+		if(MIDI_MESSAGE_PROGRAM_CHANGE == midi_message_type){
+			int const instrument_code = (uint8_t)((midi_message >> 8) & 0xFF);
+			if(nullptr != m_p_channel_list_widget){
+				m_p_channel_list_widget->SetMelodicChannelInstrument(channel_index, instrument_code);
+				m_p_channel_list_widget->SetChannelNodeIndicator(channel_index, true);
+				QTimer::singleShot(SYNTHESIZER_INSTRUMENT_CHANGED_INDICATOR_DURATION_IN_MILLISECONDS,
+								   this,
+								   [this, channel_index](){
+					if(0 != m_channel_note_on_count_array[channel_index]){
+						return;
+					}
+					if(nullptr == m_p_channel_list_widget){
+						return;
+					}
+					m_p_channel_list_widget->SetChannelNodeIndicator(channel_index, false);
+				});
+			}
 			break;
-		}
-
-		if(m_channel_note_on_count_array[channel_index] > 0){
-			m_channel_note_on_count_array[channel_index] -= 1;
 		}
 	} while(0);
 
@@ -310,32 +329,11 @@ void ChiptuneMidiSynthesizerWidget::timerEvent(QTimerEvent *event)
 {
 	QWidget::timerEvent(event);
 
-	if(event->timerId() == m_inquiry_instrument_timer_id){
-		do {
-			if(nullptr == m_p_channel_list_widget){
-				break;
-			}
-			for(int channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; ++channel_index){
-				int const instrument_code = m_p_tune_manager->GetCurrentChannelInstrument(channel_index);
-				if(m_p_channel_list_widget->GetMelodicChannelInstrument(channel_index) == instrument_code){
-					continue;
-				}
-
-				m_p_channel_list_widget->SetMelodicChannelInstrument(channel_index, instrument_code);
-				m_p_channel_list_widget->SetChannelNodeIndicator(channel_index, true);
-				QTimer::singleShot(SYNTHESIZER_INSTRUMENT_CHANGED_INDICATOR_DURATION_IN_MILLISECONDS,
-								   this,
-								   [this, channel_index](){
-					if(0 != m_channel_note_on_count_array[channel_index]){
-						return;
-					}
-					if(nullptr == m_p_channel_list_widget){
-						return;
-					}
-					m_p_channel_list_widget->SetChannelNodeIndicator(channel_index, false);
-				});
-			}
-		}while(0);
+	if(event->timerId() == m_inquiry_midi_input_port_timer_id){
+		if(nullptr != m_p_midi_input_manager){
+			QStringList const midi_input_port_name_list = m_p_midi_input_manager->GetPortNameList();
+			qInfo() << "MIDI input ports:" << midi_input_port_name_list;
+		}
 	}
 }
 
