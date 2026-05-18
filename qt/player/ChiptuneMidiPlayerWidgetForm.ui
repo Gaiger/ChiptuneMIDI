@@ -66,7 +66,7 @@ QSlider::handle {
    </property>
    <property name="geometry">
     <rect>
-     <x>140</x>
+     <x>72</x>
      <y>16</y>
      <width>48</width>
      <height>48</height>
@@ -130,9 +130,9 @@ QSlider::handle {
   <widget class="QWidget" name="WaveWidget" native="true">
    <property name="geometry">
     <rect>
-     <x>208</x>
+     <x>128</x>
      <y>8</y>
-     <width>668</width>
+     <width>748</width>
      <height>64</height>
     </rect>
    </property>
