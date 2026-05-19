@@ -29,6 +29,8 @@ private slots:
 	void on_NotePushButton_released(void);
 	void on_LoadTimbresPushButton_released(void);
 	void on_StoreTimbresPushButton_released(void);
+	void on_OpenCloseInputPortPushButton_toggled(bool is_checked);
+	void on_InputPortComboBox_currentIndexChanged(int index);
 	void HandleMidiMessageDelivered(uint32_t midi_message);
 	void HandleAudioPlayerStateChanged(AudioPlayer::PlaybackState state);
 	void HandleChannelOutputEnabled(int channel_index, bool is_enabled);
@@ -43,6 +45,7 @@ private slots:
 										   double envelope_damper_sustain_duration_in_seconds);
 private:
 	void timerEvent(QTimerEvent *event) Q_DECL_OVERRIDE;
+	void UpdateInputPortComboBoxItems(void);
 
 	void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 	void keyReleaseEvent(QKeyEvent *event) Q_DECL_OVERRIDE;

@@ -63,9 +63,9 @@ QSlider::handle {
   <widget class="QWidget" name="WaveWidget" native="true">
    <property name="geometry">
     <rect>
-     <x>4</x>
+     <x>172</x>
      <y>4</y>
-     <width>872</width>
+     <width>704</width>
      <height>64</height>
     </rect>
    </property>
@@ -74,6 +74,55 @@ QSlider::handle {
 background-color: rgb(56, 56, 56);
 color: rgb(208, 208, 208);
 }</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="InputPortComboBox">
+   <property name="geometry">
+    <rect>
+     <x>4</x>
+     <y>48</y>
+     <width>160</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QWidget {
+background-color: rgb(56, 56, 56);
+color: rgb(208, 208, 208);
+}
+ QComboBox:disabled {
+ background-color: rgb(40, 40, 40);
+color: rgb(168, 168, 168);
+ }</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="InputPortLabel">
+   <property name="geometry">
+    <rect>
+     <x>4</x>
+     <y>4</y>
+     <width>160</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Input Port</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="OpenCloseInputPortPushButton">
+   <property name="geometry">
+    <rect>
+     <x>4</x>
+     <y>24</y>
+     <width>160</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+   <property name="checkable">
+    <bool>true</bool>
    </property>
   </widget>
   <widget class="QPushButton" name="NotePushButton">
