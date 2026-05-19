@@ -351,7 +351,6 @@ static int fetch_midi_tick_message(uint32_t const message_index, struct _tick_me
 }
 
 /**********************************************************************************/
-#if 1 //PUSH_MODE
 int chiptune_push_midi_message(uint32_t const message)
 {
 	if(false == is_push_mode()){
@@ -370,7 +369,7 @@ int chiptune_push_midi_message(uint32_t const message)
 
 	return ret;
 }
-#endif
+
 /**********************************************************************************/
 
 static int force_free_note_off_but_damper_pedal_on_oscillators(uint32_t const tick)
@@ -534,7 +533,6 @@ static int process_timely_midi_message_and_events(void)
 	return ret;
 }
 
-#if 1 //PUSH_MODE
 /**********************************************************************************/
 static int process_timely_midi_events(void)
 {
@@ -557,7 +555,6 @@ static int process_timely_midi_events(void)
 	}
 	return ret;
 }
-#endif
 
 /**********************************************************************************/
 #define NORMALIZE_VIBRATO_PHASE_INCREMENT(VALUE)	DIVIDE_BY_128(DIVIDE_BY_128(((int32_t)(VALUE))))
@@ -792,8 +789,7 @@ static int32_t generate_32bit_wave(void)
 			break;
 		}
 
-		//PUSH_MODE
-		if(NULL == s_handler_pull_midi_message){
+		if(true == is_push_mode()){
 			if(-1 == process_timely_midi_events()){
 				is_all_events_processed = true;
 			}
@@ -843,8 +839,7 @@ static int32_t generate_32bit_wave(void)
 			break;
 		}
 
-		//PUSH_MODE
-		if(NULL == s_handler_pull_midi_message){
+		if(true == is_push_mode()){
 			if(true == is_all_events_processed){
 				RESET_CURRENT_TICK();
 				break;
@@ -901,7 +896,7 @@ static void destroy_all_oscillators_and_events(void)
 static int chase_midi_messages(uint32_t const end_midi_message_index,
 								bool is_channel_has_note_array[MIDI_MAX_CHANNEL_NUMBER])
 {
-	if(NULL == s_handler_pull_midi_message){
+	if(true == is_push_mode()){
 		return INT_MIN;
 	}
 
@@ -1268,7 +1263,7 @@ void chiptune_prepare_session(uint32_t const resolution)
 	bool is_instrument_to_be_not_specified = false;
 	do
 	{
-		if(NULL == s_handler_pull_midi_message){
+		if(true == is_push_mode()){
 			break;
 		}
 		is_instrument_to_be_not_specified = true;
