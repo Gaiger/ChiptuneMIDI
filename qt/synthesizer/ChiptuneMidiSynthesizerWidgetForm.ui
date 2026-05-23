@@ -160,6 +160,9 @@ color: rgb(168, 168, 168);
    <property name="text">
     <string>Load Timbres</string>
    </property>
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
   </widget>
   <widget class="QPushButton" name="StoreTimbresPushButton">
    <property name="geometry">

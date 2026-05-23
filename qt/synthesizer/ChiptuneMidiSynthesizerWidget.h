@@ -1,12 +1,14 @@
 #ifndef _CHIPTUNEMIDISYNTHESIZERWIDGET_H_
 #define _CHIPTUNEMIDISYNTHESIZERWIDGET_H_
 
+#include <QMap>
 #include <QWidget>
 
 #include "chiptune_midi_define.h"
 
 #include "TuneManager.h"
 #include "AudioPlayer.h"
+#include "ChiptuneMidiValues.h"
 
 class WaveChartView;
 class QKeyEvent;
@@ -27,7 +29,7 @@ public:
 private slots:
 	void on_NotePushButton_pressed(void);
 	void on_NotePushButton_released(void);
-	void on_LoadTimbresPushButton_released(void);
+	void on_LoadTimbresPushButton_toggled(bool is_checked);
 	void on_StoreTimbresPushButton_released(void);
 	void on_OpenCloseInputPortPushButton_toggled(bool is_checked);
 	void on_InputPortComboBox_currentIndexChanged(int index);
@@ -46,6 +48,9 @@ private slots:
 private:
 	void timerEvent(QTimerEvent *event) Q_DECL_OVERRIDE;
 	void UpdateInputPortComboBoxItems(void);
+	int LoadAndApplyTimbres(void);
+	void ApplyMelodicChannelInstrumentTimbre(int channel_index, int instrument_code,
+											 bool is_to_darker_title_for_a_while);
 
 	void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 	void keyReleaseEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
@@ -59,6 +64,7 @@ private:
 	int					m_audio_player_buffer_in_milliseconds;
 	int					m_inquiry_midi_input_port_timer_id;
 	int					m_channel_note_on_count_array[MIDI_MAX_CHANNEL_NUMBER];
+	QMap<int8_t, instrument_timbre_t> m_ini_instrument_timbre_map;
 private:
 	Ui::ChiptuneMidiSynthesizerWidget *ui;
 };
