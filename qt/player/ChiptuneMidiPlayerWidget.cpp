@@ -393,6 +393,16 @@ int ChiptuneMidiPlayerWidget::LoadAndPlayMidiFile(QString filename_string)
 													default_instrument_timbre.envelope_damper_sustain_curve,
 													default_instrument_timbre.envelope_damper_sustain_duration_in_seconds);
 		}
+
+		if(true == ui->LoadTimbresPushButton->isChecked()){
+			int const load_timbres_ret = LoadAndApplyTimbres();
+			if(-1 == load_timbres_ret){
+				m_ini_instrument_timbre_map.clear();
+				ui->LoadTimbresPushButton->setChecked(false);
+				QMessageBox::warning(this, QStringLiteral("Load Timbres"),
+									 tr("%1 not found.").arg(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING));
+			}
+		}
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 		SetFontSizeForWidgetSubtree(p_channel_list_widget,
 										p_channel_list_widget->QWidget::font().pointSize() + 3, false);
@@ -961,81 +971,145 @@ static instrument_timbre_t GetChannelInstrumentTimbre(ChannelListWidget * const 
 }
 
 /**********************************************************************************/
-void ChiptuneMidiPlayerWidget::on_LoadTimbresPushButton_released(void)
+void ChiptuneMidiPlayerWidget::ApplyMelodicChannelInstrumentTimbre(
+		ChannelListWidget * const p_channel_list_widget,
+		int channel_index, int instrument_code, bool is_to_darker_title_for_a_while)
+{
+	do
+	{
+		if(nullptr == p_channel_list_widget){
+			break;
+		}
+		if(MIDI_PERCUSSION_CHANNEL == channel_index){
+			break;
+		}
+
+		instrument_timbre_t instrument_timbre = GetDefaultInstrumentTimbre();
+		if(true == m_ini_instrument_timbre_map.contains((int8_t)instrument_code)){
+			instrument_timbre = m_ini_instrument_timbre_map.value((int8_t)instrument_code);
+		}
+
+		instrument_timbre_t const channel_instrument_timbre
+				= GetChannelInstrumentTimbre(p_channel_list_widget, channel_index);
+		if(true == IsInstrumentTimbreIdentical(&instrument_timbre, &channel_instrument_timbre)){
+			break;
+		}
+
+		p_channel_list_widget->SetMelodicChannelTimbre(
+					channel_index,
+					instrument_timbre.waveform,
+					instrument_timbre.envelope_attack_curve,
+					instrument_timbre.envelope_attack_duration_in_seconds,
+					instrument_timbre.envelope_decay_curve,
+					instrument_timbre.envelope_decay_duration_in_seconds,
+					instrument_timbre.envelope_note_on_sustain_level,
+					instrument_timbre.envelope_release_curve,
+					instrument_timbre.envelope_release_duration_in_seconds,
+					instrument_timbre.envelope_damper_sustain_level,
+					instrument_timbre.envelope_damper_sustain_curve,
+					instrument_timbre.envelope_damper_sustain_duration_in_seconds,
+					is_to_darker_title_for_a_while);
+		m_p_tune_manager->SetMelodicChannelTimbre(
+					(int8_t)channel_index,
+					instrument_timbre.waveform,
+					instrument_timbre.envelope_attack_curve,
+					instrument_timbre.envelope_attack_duration_in_seconds,
+					instrument_timbre.envelope_decay_curve,
+					instrument_timbre.envelope_decay_duration_in_seconds,
+					instrument_timbre.envelope_note_on_sustain_level,
+					instrument_timbre.envelope_release_curve,
+					instrument_timbre.envelope_release_duration_in_seconds,
+					instrument_timbre.envelope_damper_sustain_level,
+					instrument_timbre.envelope_damper_sustain_curve,
+					instrument_timbre.envelope_damper_sustain_duration_in_seconds);
+	}while(0);
+}
+
+/**********************************************************************************/
+int ChiptuneMidiPlayerWidget::LoadAndApplyTimbres(void)
 {
 	InstrumentTimbreIniFile timbre_ini_file(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING);
-	QMap<int8_t, instrument_timbre_t> ini_instrument_timbre_map;
-	int const ret = timbre_ini_file.ReadTimbres(&ini_instrument_timbre_map);
+	int const ret = timbre_ini_file.ReadTimbres(&m_ini_instrument_timbre_map);
 
 	do {
 		if(-1 == ret){
+			break;
+		}
+
+		ChannelListWidget * const p_channel_list_widget =
+				ui->TimbreListWidget->findChild<ChannelListWidget*>();
+		if(nullptr == p_channel_list_widget){
+			break;
+		}
+
+		QList<QPair<int, int>> const channel_instrument_pair_list =
+				m_p_tune_manager->GetChannelInstrumentPairList();
+		for(int i = 0; i < channel_instrument_pair_list.size(); i++){
+			int const channel_index = channel_instrument_pair_list.at(i).first;
+			int const channel_instrument_code = channel_instrument_pair_list.at(i).second;
+			do
+			{
+				if(MIDI_PERCUSSION_CHANNEL == channel_index){
+					break;
+				}
+
+				instrument_timbre_t const channel_instrument_timbre
+						= GetChannelInstrumentTimbre(p_channel_list_widget, channel_index);
+				ApplyMelodicChannelInstrumentTimbre(p_channel_list_widget,
+													channel_index,
+													channel_instrument_code,
+													true);
+				instrument_timbre_t const applied_instrument_timbre
+						= GetChannelInstrumentTimbre(p_channel_list_widget, channel_index);
+				if(true == IsInstrumentTimbreIdentical(&applied_instrument_timbre, &channel_instrument_timbre)){
+					break;
+				}
+				qInfo() << Q_FUNC_INFO
+						<< "applied timbre,"
+						<< "channel =" << channel_index
+						<< "instrument =" << GetInstrumentNameString(channel_instrument_code);
+			}while(0);
+		}
+	} while(0);
+
+	return ret;
+}
+
+/**********************************************************************************/
+void ChiptuneMidiPlayerWidget::on_LoadTimbresPushButton_toggled(bool is_checked)
+{
+	ChannelListWidget * const p_channel_list_widget = ui->TimbreListWidget->findChild<ChannelListWidget*>();
+	do {
+		if(false == is_checked){
+			m_ini_instrument_timbre_map.clear();
+			do
+			{
+				if(nullptr == p_channel_list_widget){
+					break;
+				}
+				QList<QPair<int, int>> const channel_instrument_pair_list =
+						m_p_tune_manager->GetChannelInstrumentPairList();
+				for(int i = 0; i < channel_instrument_pair_list.size(); i++){
+					int const channel_index = channel_instrument_pair_list.at(i).first;
+					int const channel_instrument_code = channel_instrument_pair_list.at(i).second;
+					ApplyMelodicChannelInstrumentTimbre(p_channel_list_widget,
+														channel_index,
+														channel_instrument_code,
+														true);
+				}
+			}while(0);
+			break;
+		}
+
+		int const ret = LoadAndApplyTimbres();
+		if(-1 == ret){
+			m_ini_instrument_timbre_map.clear();
+			ui->LoadTimbresPushButton->setChecked(false);
 			QMessageBox::warning(this, QStringLiteral("Load Timbres"),
 								 tr("%1 not found.").arg(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING));
 			break;
 		}
-
-		ChannelListWidget * const p_channel_list_widget = ui->TimbreListWidget->findChild<ChannelListWidget*>();
-		do{
-			if(nullptr == p_channel_list_widget){
-				break;
-			}
-			QList<QPair<int, int>> const channel_instrument_pair_list =
-					m_p_tune_manager->GetChannelInstrumentPairList();
-			for(int i = 0; i < channel_instrument_pair_list.size(); i++){
-				int const channel_index = channel_instrument_pair_list.at(i).first;
-				int const channel_instrument_code = channel_instrument_pair_list.at(i).second;
-				do
-				{
-					if(MIDI_PERCUSSION_CHANNEL == channel_index){
-						break;
-					}
-					if(false == ini_instrument_timbre_map.contains((int8_t)channel_instrument_code)){
-						break;
-					}
-
-					instrument_timbre_t const loaded_instrument_timbre
-							= ini_instrument_timbre_map.value((int8_t)channel_instrument_code);
-					instrument_timbre_t const channel_instrument_timbre
-							= GetChannelInstrumentTimbre(p_channel_list_widget, channel_index);
-					if(true == IsInstrumentTimbreIdentical(&loaded_instrument_timbre, &channel_instrument_timbre)){
-						break;
-					}
-					p_channel_list_widget->SetMelodicChannelTimbre(
-								channel_index,
-								loaded_instrument_timbre.waveform,
-								loaded_instrument_timbre.envelope_attack_curve,
-								loaded_instrument_timbre.envelope_attack_duration_in_seconds,
-								loaded_instrument_timbre.envelope_decay_curve,
-								loaded_instrument_timbre.envelope_decay_duration_in_seconds,
-								loaded_instrument_timbre.envelope_note_on_sustain_level,
-								loaded_instrument_timbre.envelope_release_curve,
-								loaded_instrument_timbre.envelope_release_duration_in_seconds,
-								loaded_instrument_timbre.envelope_damper_sustain_level,
-								loaded_instrument_timbre.envelope_damper_sustain_curve,
-								loaded_instrument_timbre.envelope_damper_sustain_duration_in_seconds,
-								true);
-					m_p_tune_manager->SetMelodicChannelTimbre(
-								(int8_t)channel_index,
-								loaded_instrument_timbre.waveform,
-								loaded_instrument_timbre.envelope_attack_curve,
-								loaded_instrument_timbre.envelope_attack_duration_in_seconds,
-								loaded_instrument_timbre.envelope_decay_curve,
-								loaded_instrument_timbre.envelope_decay_duration_in_seconds,
-								loaded_instrument_timbre.envelope_note_on_sustain_level,
-								loaded_instrument_timbre.envelope_release_curve,
-								loaded_instrument_timbre.envelope_release_duration_in_seconds,
-								loaded_instrument_timbre.envelope_damper_sustain_level,
-								loaded_instrument_timbre.envelope_damper_sustain_curve,
-								loaded_instrument_timbre.envelope_damper_sustain_duration_in_seconds);
-					qInfo() << Q_FUNC_INFO
-							<< "loaded timbre,"
-							<< "channel =" << channel_index
-							<< "instrument =" << GetInstrumentNameString(channel_instrument_code);
-				}while(0);
-			}
-		}while(0);
-
-	} while(0);
+	}while(0);
 }
 
 /**********************************************************************************/
@@ -1153,6 +1227,10 @@ void ChiptuneMidiPlayerWidget::on_StoreTimbresPushButton_released(void)
 						<< "channel =" << channel_index
 						<< "instrument =" << GetInstrumentNameString(channel_instrument_code);
 			}while(0);
+		}
+
+		if(true == ui->LoadTimbresPushButton->isChecked()){
+			LoadAndApplyTimbres();
 		}
 	} while(0);
 }

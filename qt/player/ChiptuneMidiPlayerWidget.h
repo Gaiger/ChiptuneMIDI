@@ -1,5 +1,6 @@
 #ifndef _CHIPTUNEMIDIPLAYERWIDGET_H_
 #define _CHIPTUNEMIDIPLAYERWIDGET_H_
+#include <QMap>
 #include <QTimer>
 #include <QWidget>
 #include <QToolBox>
@@ -7,6 +8,7 @@
 
 #include "TuneManager.h"
 #include "AudioPlayer.h"
+#include "ChiptuneMidiValues.h"
 
 
 namespace Ui {
@@ -16,6 +18,7 @@ class ChiptuneMidiPlayerWidget;
 class WaveChartView;
 class SequencerWidget;
 class MidSongManager;
+class ChannelListWidget;
 
 class ChiptuneMidiPlayerWidget : public QWidget
 {
@@ -39,7 +42,7 @@ private:
 private slots:
 	void on_OpenMidiFilePushButton_released(void);
 	void on_SaveWavFilePushButton_released(void);
-	void on_LoadTimbresPushButton_released(void);
+	void on_LoadTimbresPushButton_toggled(bool is_checked);
 	void on_StoreTimbresPushButton_released(void);
 
 	void on_EjectPushButton_released(void);
@@ -70,6 +73,10 @@ private:
 	void EjectMidiFile(void);
 	void UpdateTempoLabelText(void);
 	void SetTimbresFileButtonsEnabled(bool is_enabled);
+	void ApplyMelodicChannelInstrumentTimbre(ChannelListWidget * const p_channel_list_widget,
+											 int channel_index, int instrument_code,
+											 bool is_to_darker_title_for_a_while);
+	int LoadAndApplyTimbres(void);
 
 private:
 	bool IsPlayPauseButtonInPlayState(void);
@@ -89,6 +96,7 @@ private :
 	QTimer				m_defer_start_play_timer;
 
 	int					m_audio_player_buffer_in_milliseconds;
+	QMap<int8_t, instrument_timbre_t> m_ini_instrument_timbre_map;
 private:
 	WaveChartView *		m_p_wave_chartview;
 	SequencerWidget *	m_p_sequencer_widget;
