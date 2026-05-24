@@ -54,7 +54,7 @@ SOURCES += \
     $${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.cpp \
     $${CHIPTUNE_QT_PLAYER_DIR}/MidSongManager.cpp \
     $${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.cpp \
-    $${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.cpp \
+    $${CHIPTUNE_QT_PLAYER_DIR}/PlayerSequencerWidget.cpp \
     $${CHIPTUNE_QT_DIR}/TuneManager.cpp \
     $${CHIPTUNE_QT_DIR}/AudioPlayer.cpp \
     $${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp \
@@ -83,7 +83,7 @@ HEADERS += \
     $${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h \
     $${CHIPTUNE_QT_PLAYER_DIR}/MidSongManager.h \
     $${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.h \
-    $${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.h \
+    $${CHIPTUNE_QT_PLAYER_DIR}/PlayerSequencerWidget.h \
     $${CHIPTUNE_QT_DIR}/TuneManager.h \
     $${CHIPTUNE_QT_DIR}/AudioPlayer.h \
     $${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.h \

@@ -1,5 +1,5 @@
-#ifndef _SEQUENCERWIDGET_H_
-#define _SEQUENCERWIDGET_H_
+#ifndef _PLAYERSEQUENCERWIDGET_H_
+#define _PLAYERSEQUENCERWIDGET_H_
 
 #include <QWidget>
 #include <QScrollArea>
@@ -9,14 +9,14 @@ class TuneManager;
 class NoteNameWidget;
 class NoteDurationWidget;
 
-class SequencerWidget : public QWidget
+class PlayerSequencerWidget : public QWidget
 {
 	Q_OBJECT
 public :
-	explicit SequencerWidget(MidSongManager *p_mid_song_manager, TuneManager *p_tune_manager,
+	explicit PlayerSequencerWidget(MidSongManager *p_mid_song_manager, TuneManager *p_tune_manager,
 							 double audio_out_latency_in_seconds,
 							 QScrollArea *p_parent_scroll_area);
-	~SequencerWidget(void);
+	~PlayerSequencerWidget(void);
 	void Prepare(int tick_in_center);
 	void Update(void);
 	void SetChannelDrawAsEnabled(int channel_index, bool is_enabled);
@@ -28,4 +28,4 @@ private:
 	int m_vertical_scrolling_shift;
 };
 
-#endif // _SEQUENCERWIDGET_H_
+#endif // _PLAYERSEQUENCERWIDGET_H_

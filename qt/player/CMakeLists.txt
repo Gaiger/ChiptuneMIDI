@@ -74,12 +74,12 @@ set(APPLICATION_PLAYER
     ${CHIPTUNE_QT_PLAYER_DIR}/MidSongManager.cpp
     ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.cpp
     ${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.cpp
-    ${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/PlayerSequencerWidget.cpp
 
     ${CHIPTUNE_QT_PLAYER_DIR}/MidSongManager.h
     ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.h
     ${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.h
-    ${CHIPTUNE_QT_PLAYER_DIR}/SequencerWidget.h
+    ${CHIPTUNE_QT_PLAYER_DIR}/PlayerSequencerWidget.h
 
     ${CHIPTUNE_QT_PLAYER_DIR}/main.cpp
 )

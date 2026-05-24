@@ -16,7 +16,7 @@ class ChiptuneMidiPlayerWidget;
 }
 
 class WaveChartView;
-class SequencerWidget;
+class PlayerSequencerWidget;
 class MidSongManager;
 class ChannelListWidget;
 
@@ -99,7 +99,7 @@ private :
 	QMap<int8_t, instrument_timbre_t> m_ini_instrument_timbre_map;
 private:
 	WaveChartView *		m_p_wave_chartview;
-	SequencerWidget *	m_p_sequencer_widget;
+	PlayerSequencerWidget *	m_p_sequencer_widget;
 private:
 	Ui::ChiptuneMidiPlayerWidget *ui;
 };

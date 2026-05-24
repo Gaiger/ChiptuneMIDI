@@ -29,7 +29,7 @@
 #include "ProgressSlider.h"
 
 #include "WaveChartView.h"
-#include "SequencerWidget.h"
+#include "PlayerSequencerWidget.h"
 #include "ChannelListWidget.h"
 
 #include "ChiptuneMidiPlayerWidget.h"
@@ -407,7 +407,7 @@ int ChiptuneMidiPlayerWidget::LoadAndPlayMidiFile(QString filename_string)
 		SetFontSizeForWidgetSubtree(p_channel_list_widget,
 										p_channel_list_widget->QWidget::font().pointSize() + 3, false);
 #endif
-		m_p_sequencer_widget = new SequencerWidget(m_p_mid_song_manager, m_p_tune_manager,
+		m_p_sequencer_widget = new PlayerSequencerWidget(m_p_mid_song_manager, m_p_tune_manager,
 											   m_audio_player_buffer_in_milliseconds/1000.0,
 											   ui->SequencerScrollArea);
 

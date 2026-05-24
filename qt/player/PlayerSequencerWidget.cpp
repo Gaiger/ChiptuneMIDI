@@ -11,7 +11,7 @@
 #include "MidSongManager.h"
 #include "TuneManager.h"
 
-#include "SequencerWidget.h"
+#include "PlayerSequencerWidget.h"
 
 
 #define A0											(21)
@@ -472,7 +472,7 @@ void NoteDurationWidget::Update(void)
 /**********************************************************************************/
 /**********************************************************************************/
 
-SequencerWidget::SequencerWidget(MidSongManager *p_mid_song_manager, TuneManager *p_tune_manager,
+PlayerSequencerWidget::PlayerSequencerWidget(MidSongManager *p_mid_song_manager, TuneManager *p_tune_manager,
 						 double audio_out_latency_in_seconds,
 						 QScrollArea *p_parent_scroll_area)
 	: QWidget(p_parent_scroll_area),
@@ -542,7 +542,7 @@ SequencerWidget::SequencerWidget(MidSongManager *p_mid_song_manager, TuneManager
 
 /**********************************************************************************/
 
-SequencerWidget::~SequencerWidget(void)
+PlayerSequencerWidget::~PlayerSequencerWidget(void)
 {
 	delete m_p_note_name_widget;
 	delete m_p_note_duration_widget;
@@ -553,14 +553,14 @@ SequencerWidget::~SequencerWidget(void)
 
 /**********************************************************************************/
 
-void SequencerWidget::Prepare(int tick_in_center)
+void PlayerSequencerWidget::Prepare(int tick_in_center)
 {
 	m_p_note_duration_widget->Prepare(tick_in_center);
 }
 
 /**********************************************************************************/
 
-void SequencerWidget::Update(void)
+void PlayerSequencerWidget::Update(void)
 {
 	if(0 != m_vertical_scrolling_shift){
 		m_p_parent_scroll_area->verticalScrollBar()->setValue((0xFFFF & m_vertical_scrolling_shift));
@@ -580,7 +580,7 @@ void SequencerWidget::Update(void)
 
 /**********************************************************************************/
 
-void SequencerWidget::SetChannelDrawAsEnabled(int channel_index, bool is_enabled)
+void PlayerSequencerWidget::SetChannelDrawAsEnabled(int channel_index, bool is_enabled)
 {
 	m_p_note_duration_widget->SetChannelDrawAsEnabled(channel_index, is_enabled);
 }
