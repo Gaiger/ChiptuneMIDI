@@ -4,6 +4,7 @@
 #include <QColor>
 #include <QRect>
 #include <QTimer>
+#include <functional>
 
 #include "chiptune_midi_define.h"
 
@@ -254,9 +255,10 @@ void ChannelNodeWidget::SetMelodicChannelTimbre(int waveform,
 									dark24_color.red(),
 									dark24_color.green(),
 									dark24_color.blue()));
-		QTimer::singleShot(5000, this, [this]() {
+		std::function<void()> recover_background_color_function = [this]() {
 			ui->ExpandCollapsePushButton->setStyleSheet(m_expand_collapse_push_button_original_style_sheet);
-		});
+		};
+		QTimer::singleShot(5000, this, recover_background_color_function);
 	}while(0);
 }
 

@@ -10,6 +10,7 @@
 #include <QStringList>
 #include <QTimer>
 #include <QTimerEvent>
+#include <functional>
 
 #include "ui_ChiptuneMidiSynthesizerWidgetForm.h"
 
@@ -288,17 +289,21 @@ void ChiptuneMidiSynthesizerWidget::HandleMidiMessageDelivered(uint32_t midi_mes
 				ApplyMelodicChannelInstrumentTimbre(channel_index, instrument_code, true);
 
 				m_p_channel_list_widget->SetChannelNodeIndicator(channel_index, true);
+				std::function<void()> set_indicator_not_highlight_function = [this, channel_index](){
+					do
+					{
+						if(0 != m_channel_note_on_count_array[channel_index]){
+							break;
+						}
+						if(nullptr == m_p_channel_list_widget){
+							break;
+						}
+						m_p_channel_list_widget->SetChannelNodeIndicator(channel_index, false);
+					}while(0);
+				};
 				QTimer::singleShot(SYNTHESIZER_INSTRUMENT_CHANGED_INDICATOR_DURATION_IN_MILLISECONDS,
 								   this,
-								   [this, channel_index](){
-					if(0 != m_channel_note_on_count_array[channel_index]){
-						return;
-					}
-					if(nullptr == m_p_channel_list_widget){
-						return;
-					}
-					m_p_channel_list_widget->SetChannelNodeIndicator(channel_index, false);
-				});
+								   set_indicator_not_highlight_function);
 			}
 			break;
 		}
