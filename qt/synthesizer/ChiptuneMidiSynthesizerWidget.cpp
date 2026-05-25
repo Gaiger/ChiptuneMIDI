@@ -21,6 +21,7 @@
 #include "InstrumentTimbreIniFile.h"
 #include "WaveChartView.h"
 #include "MidiInputManager.h"
+#include "SynthesizerSequencerWidget.h"
 
 #include "ChiptuneMidiSynthesizerWidget.h"
 
@@ -160,6 +161,8 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 					 this, &ChiptuneMidiSynthesizerWidget::HandleMelodicChannelTimbreChanged);
 	FillWidget(m_p_channel_list_widget, ui->TimbreListWidget);
 	SetupChannelListWidget(m_p_channel_list_widget, m_p_tune_manager);
+
+	new SynthesizerSequencerWidget(ui->SequencerScrollArea);
 
 #define SYNTHESIZER_AUDIO_PLAYER_THREAD_STARTUP_DELAY_IN_MILLISECONDS	(50)
 	QTimer::singleShot(SYNTHESIZER_AUDIO_PLAYER_THREAD_STARTUP_DELAY_IN_MILLISECONDS,

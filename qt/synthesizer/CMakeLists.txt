@@ -81,6 +81,8 @@ set(APPLICATION_SYNTHESIZER
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/ChiptuneMidiSynthesizerWidget.h
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/MidiInputManager.cpp
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/MidiInputManager.h
+    ${CHIPTUNE_QT_SYNTHESIZER_DIR}/SynthesizerSequencerWidget.cpp
+    ${CHIPTUNE_QT_SYNTHESIZER_DIR}/SynthesizerSequencerWidget.h
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/main.cpp
 )
 

@@ -128,15 +128,44 @@ color: rgb(168, 168, 168);
   <widget class="QPushButton" name="NotePushButton">
    <property name="geometry">
     <rect>
-     <x>396</x>
-     <y>356</y>
-     <width>96</width>
-     <height>48</height>
+     <x>4</x>
+     <y>76</y>
+     <width>64</width>
+     <height>24</height>
     </rect>
    </property>
    <property name="text">
     <string>Note</string>
    </property>
+  </widget>
+  <widget class="QScrollArea" name="SequencerScrollArea">
+   <property name="geometry">
+    <rect>
+     <x>4</x>
+     <y>112</y>
+     <width>872</width>
+     <height>608</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QWidget {
+background-color: rgb(56, 56, 56);
+color: rgb(208, 208, 208);
+}</string>
+   </property>
+   <property name="widgetResizable">
+    <bool>true</bool>
+   </property>
+   <widget class="QWidget" name="scrollAreaWidgetContents">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>870</width>
+      <height>606</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <widget class="QWidget" name="TimbreListWidget" native="true">
    <property name="geometry">
