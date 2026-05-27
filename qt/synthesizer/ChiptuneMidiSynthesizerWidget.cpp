@@ -1,6 +1,7 @@
 #include <QThread>
 #include <QDebug>
 #include <QComboBox>
+#include <QDateTime>
 #include <QGridLayout>
 #include <QKeyEvent>
 #include <QList>
@@ -50,7 +51,8 @@ enum MidiInstrumentCode
 	MIDI_INSTRUMENT_CODE_LIST(EXPAND_ENUM)
 };
 
-#define SYNTHESIZER_PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS		(30)
+#define SYNTHESIZER_AUDIO_BUFFER_UNIT_IN_MILLISECONDS					(30)
+#define SYNTHESIZER_SEQUENCER_UPDATE_INTERVAL_IN_MILLISECONDS			(30)
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 	#define SYNTHESIZER_AUDIO_BUFFER_TIME_FACTOR    					(2)
@@ -59,7 +61,7 @@ enum MidiInstrumentCode
 #endif
 
 #define SYNTHESIZER_AUDIO_PLAYER_BUFFER_IN_MILLISECONDS						\
-	(SYNTHESIZER_AUDIO_BUFFER_TIME_FACTOR * SYNTHESIZER_PLAYBACK_TICK_INQUIRY_INTERVAL_IN_MILLISECONDS)
+	(SYNTHESIZER_AUDIO_BUFFER_TIME_FACTOR * SYNTHESIZER_AUDIO_BUFFER_UNIT_IN_MILLISECONDS)
 
 #define SYNTHESIZER_MIDI_INPUT_PORT_INQUIRY_INTERVAL_IN_MILLISECONDS			(2000)
 #define SYNTHESIZER_INSTRUMENT_CHANGED_INDICATOR_DURATION_IN_MILLISECONDS		(5000)
@@ -113,8 +115,10 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 	  m_p_wave_chartview(nullptr),
 	  m_p_midi_input_manager(nullptr),
 	  m_p_channel_list_widget(nullptr),
+	  m_p_synthesizer_sequencer_widget(nullptr),
 	  m_audio_player_buffer_in_milliseconds(SYNTHESIZER_AUDIO_PLAYER_BUFFER_IN_MILLISECONDS),
 	  m_inquiry_midi_input_port_timer_id(-1),
+	  m_synthesizer_sequencer_update_timer_id(-1),
 	  ui(new Ui::ChiptuneMidiSynthesizerWidget)
 {
 	ui->setupUi(this);
@@ -162,7 +166,9 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 	FillWidget(m_p_channel_list_widget, ui->TimbreListWidget);
 	SetupChannelListWidget(m_p_channel_list_widget, m_p_tune_manager);
 
-	new SynthesizerSequencerWidget(ui->SequencerScrollArea);
+	m_p_synthesizer_sequencer_widget = new SynthesizerSequencerWidget(ui->SequencerScrollArea);
+	m_synthesizer_sequencer_update_timer_id =
+			QObject::startTimer(SYNTHESIZER_SEQUENCER_UPDATE_INTERVAL_IN_MILLISECONDS);
 
 #define SYNTHESIZER_AUDIO_PLAYER_THREAD_STARTUP_DELAY_IN_MILLISECONDS	(50)
 	QTimer::singleShot(SYNTHESIZER_AUDIO_PLAYER_THREAD_STARTUP_DELAY_IN_MILLISECONDS,
@@ -184,6 +190,11 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 /**********************************************************************************/
 ChiptuneMidiSynthesizerWidget::~ChiptuneMidiSynthesizerWidget()
 {
+	if(-1 != m_synthesizer_sequencer_update_timer_id){
+		QObject::killTimer(m_synthesizer_sequencer_update_timer_id);
+		m_synthesizer_sequencer_update_timer_id = -1;
+	}
+
 	if(-1 != m_inquiry_midi_input_port_timer_id){
 		QObject::killTimer(m_inquiry_midi_input_port_timer_id);
 		m_inquiry_midi_input_port_timer_id = -1;
@@ -207,6 +218,10 @@ ChiptuneMidiSynthesizerWidget::~ChiptuneMidiSynthesizerWidget()
 		m_p_audio_player->QObject::deleteLater();
 	}while(0);
 	m_p_audio_player = nullptr;
+
+	//delete m_p_synthesizer_sequencer_widget
+	m_p_synthesizer_sequencer_widget = nullptr;
+
 	delete ui;
 }
 
@@ -264,15 +279,28 @@ void ChiptuneMidiSynthesizerWidget::HandleMidiMessageDelivered(uint32_t midi_mes
 			= (0 != m_channel_note_on_count_array[channel_index]) ? true : false;
 	do
 	{
-		if(MIDI_MESSAGE_NOTE_OFF == midi_message_type){
-			if(m_channel_note_on_count_array[channel_index] > 0){
-				m_channel_note_on_count_array[channel_index] -= 1;
-			}
-			break;
-		}
+		if(MIDI_MESSAGE_NOTE_OFF == midi_message_type
+				|| MIDI_MESSAGE_NOTE_ON == midi_message_type){
+			do
+			{
+				if(MIDI_MESSAGE_NOTE_OFF == midi_message_type){
+					if(m_channel_note_on_count_array[channel_index] > 0){
+						m_channel_note_on_count_array[channel_index] -= 1;
+					}
+					break;
+				}
+				m_channel_note_on_count_array[channel_index] += 1;
+			}while(0);
 
-		if(MIDI_MESSAGE_NOTE_ON == midi_message_type){
-			m_channel_note_on_count_array[channel_index] += 1;
+			int const note_number = (uint8_t)((midi_message >> 8) & 0xFF);
+			m_p_synthesizer_sequencer_widget->SendNoteEvent(
+						SynthesizerSequencerNoteEvent(
+							(MIDI_MESSAGE_NOTE_OFF == midi_message_type)
+							? SynthesizerSequencerNoteEvent::NoteOff
+							: SynthesizerSequencerNoteEvent::NoteOn,
+							channel_index,
+							note_number,
+							QDateTime::currentMSecsSinceEpoch()));
 			break;
 		}
 
@@ -281,6 +309,9 @@ void ChiptuneMidiSynthesizerWidget::HandleMidiMessageDelivered(uint32_t midi_mes
 			if(MIDI_CC_ALL_SOUND_OFF == control_code
 					|| MIDI_CC_ALL_NOTES_OFF == control_code){
 				m_channel_note_on_count_array[channel_index] = 0;
+				m_p_synthesizer_sequencer_widget->SendAllNotesOffEvent(
+							channel_index,
+							QDateTime::currentMSecsSinceEpoch());
 			}
 			break;
 		}
@@ -329,6 +360,13 @@ void ChiptuneMidiSynthesizerWidget::timerEvent(QTimerEvent *event)
 
 	if(event->timerId() == m_inquiry_midi_input_port_timer_id){
 		UpdateInputPortComboBoxItems();
+	}
+
+	if(event->timerId() == m_synthesizer_sequencer_update_timer_id){
+		if(nullptr != m_p_synthesizer_sequencer_widget){
+			m_p_synthesizer_sequencer_widget->Update();
+			m_p_synthesizer_sequencer_widget->Prepare();
+		}
 	}
 }
 
@@ -738,6 +776,7 @@ static uint32_t MakeShortMidiMessage(uint8_t const status_byte, uint8_t const da
 }
 
 /**********************************************************************************/
+/* This note button is only a temporary test scaffold. */
 void ChiptuneMidiSynthesizerWidget::on_NotePushButton_pressed(void)
 {
 	uint32_t const midi_message = MakeShortMidiMessage(MIDI_MESSAGE_NOTE_ON | SYNTHESIZER_NOTE_MIDI_CHANNEL,
@@ -745,9 +784,11 @@ void ChiptuneMidiSynthesizerWidget::on_NotePushButton_pressed(void)
 													   SYNTHESIZER_NOTE_ON_VELOCITY);
 	qDebug() << "midi message =" << Qt::hex << midi_message;
 	m_p_tune_manager->SendMidiMessage(midi_message);
+	HandleMidiMessageDelivered(midi_message);
 }
 
 /**********************************************************************************/
+/* This note button is only a temporary test scaffold. */
 void ChiptuneMidiSynthesizerWidget::on_NotePushButton_released(void)
 {
 	uint32_t const midi_message = MakeShortMidiMessage(MIDI_MESSAGE_NOTE_OFF | SYNTHESIZER_NOTE_MIDI_CHANNEL,
@@ -755,6 +796,7 @@ void ChiptuneMidiSynthesizerWidget::on_NotePushButton_released(void)
 													   SYNTHESIZER_NOTE_OFF_VELOCITY);
 	qDebug() << "midi message =" << Qt::hex << midi_message;
 	m_p_tune_manager->SendMidiMessage(midi_message);
+	HandleMidiMessageDelivered(midi_message);
 }
 
 /**********************************************************************************/

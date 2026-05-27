@@ -9,6 +9,7 @@
 #include "TuneManager.h"
 #include "AudioPlayer.h"
 #include "ChiptuneMidiValues.h"
+#include "SynthesizerSequencerWidget.h"
 
 class WaveChartView;
 class QKeyEvent;
@@ -60,9 +61,11 @@ private:
 	WaveChartView *		m_p_wave_chartview;
 	MidiInputManager *	m_p_midi_input_manager;
 	ChannelListWidget *	m_p_channel_list_widget;
+	SynthesizerSequencerWidget *m_p_synthesizer_sequencer_widget;
 
 	int					m_audio_player_buffer_in_milliseconds;
 	int					m_inquiry_midi_input_port_timer_id;
+	int					m_synthesizer_sequencer_update_timer_id;
 	int					m_channel_note_on_count_array[MIDI_MAX_CHANNEL_NUMBER];
 	QMap<int8_t, instrument_timbre_t> m_ini_instrument_timbre_map;
 private:
