@@ -21,6 +21,7 @@
 #define ONE_NAME_WIDTH								(64)
 #define ONE_NAME_HEIGHT								(12)
 
+#define NOTE_NAME_PAINT_MARGIN_WIDTH				(2)
 
 class NoteNameWidget : public QWidget
 {
@@ -40,7 +41,8 @@ NoteNameWidget::NoteNameWidget(int drawn_highest_pitch, QWidget *parent)
 	: QWidget(parent),
 	m_drawn_highest_pitch(drawn_highest_pitch)
 {
-	QSize size = QSize(ONE_NAME_WIDTH + 2, (m_drawn_highest_pitch - A0 + 1) * ONE_NAME_HEIGHT);
+	QSize size = QSize(ONE_NAME_WIDTH + NOTE_NAME_PAINT_MARGIN_WIDTH,
+					   (m_drawn_highest_pitch - A0 + 1) * ONE_NAME_HEIGHT);
 	setFixedSize(size);
 }
 
@@ -166,7 +168,8 @@ NoteDurationWidget::NoteDurationWidget(MidSongManager *p_mid_song_manager, TuneM
 	m_last_sought_index(0),
 	m_last_tick_in_center(0)
 {
-	QSize size = QSize(parent->width() - ONE_NAME_WIDTH * 3 / 2, (m_drawn_highest_pitch - A0 + 1) * ONE_NAME_HEIGHT);
+	QSize size = QSize(parent->width() - (ONE_NAME_WIDTH + NOTE_NAME_PAINT_MARGIN_WIDTH),
+					   (m_drawn_highest_pitch - A0 + 1) * ONE_NAME_HEIGHT);
 	QWidget::setFixedSize(size);
 
 	for(int j = 0; j < 2; j++){
@@ -233,10 +236,10 @@ bool NoteDurationWidget::IsTickOutOfRightBound(int tick, int tick_in_center)
 }
 
 /**********************************************************************************/
-
 void NoteDurationWidget::ReduceRectangles(int preparing_channel_rectangle_list_index)
 {
-	// Reduce the rectangles from out of the widget boundary.
+	// Trim note duration rectangles at the widget bounds with a small left overscan.
+#define NOTE_DURATION_RECTANGLE_LEFT_OVERSCAN_X		(-4)
 	int const right_endpoint = QWidget::width() - 1;
 	for(int voice = 0; voice < MIDI_MAX_CHANNEL_NUMBER; voice++){
 		QMutableListIterator<QRect> rect_list_iterator(m_channel_rectangle_list[preparing_channel_rectangle_list_index][voice]);
@@ -244,15 +247,15 @@ void NoteDurationWidget::ReduceRectangles(int preparing_channel_rectangle_list_i
 			rect_list_iterator.next();
 			QRect rect = rect_list_iterator.value();
 
-			if(rect.right() < 0){
+			if(rect.right() < NOTE_DURATION_RECTANGLE_LEFT_OVERSCAN_X){
 				rect_list_iterator.remove();
 				continue;
 			}
 
 			bool is_reduced = false;
 			do{
-				if(rect.left() < 0){
-					rect.setLeft(0);
+				if(rect.left() < NOTE_DURATION_RECTANGLE_LEFT_OVERSCAN_X){
+					rect.setLeft(NOTE_DURATION_RECTANGLE_LEFT_OVERSCAN_X);
 					is_reduced = true;
 				}
 
