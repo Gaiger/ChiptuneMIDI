@@ -219,7 +219,7 @@ QPushButton#SequencerRollPushButton {
      <x>4</x>
      <y>112</y>
      <width>872</width>
-     <height>608</height>
+     <height>644</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -237,7 +237,7 @@ color: rgb(208, 208, 208);
       <x>0</x>
       <y>0</y>
       <width>870</width>
-      <height>606</height>
+      <height>642</height>
      </rect>
     </property>
    </widget>

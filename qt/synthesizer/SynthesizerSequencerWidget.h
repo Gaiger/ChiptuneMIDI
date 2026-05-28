@@ -7,6 +7,7 @@
 
 class NoteNameWidget;
 class NoteDurationWidget;
+class QGridLayout;
 
 class SynthesizerSequencerNoteEvent
 {
@@ -57,6 +58,8 @@ private:
 private:
 	NoteNameWidget *m_p_note_name_widget;
 	NoteDurationWidget *m_p_note_duration_widget;
+	QScrollArea * const m_p_parent_scroll_area;
+	QGridLayout *m_p_layout;
 	ViewMode m_view_mode;
 };
 
