@@ -16,10 +16,10 @@ public:
 		NoteOff,
 	};
 
-	SynthesizerSequencerNoteEvent(NoteState note_state,
-								  int channel_index,
-								  int note_number,
-								  qint64 timestamp_in_milliseconds)
+	SynthesizerSequencerNoteEvent(NoteState const note_state,
+								  int const channel_index,
+								  int const note_number,
+								  qint64 const timestamp_in_milliseconds)
 		: m_note_state(note_state),
 		  m_channel_index(channel_index),
 		  m_note_number(note_number),
@@ -40,15 +40,24 @@ class SynthesizerSequencerWidget : public QWidget
 {
 	Q_OBJECT
 public:
-	explicit SynthesizerSequencerWidget(QScrollArea *p_parent_scroll_area);
+	enum ViewMode {
+		ViewModeWaterfall,
+		ViewModeRoll,
+	};
+
+	explicit SynthesizerSequencerWidget(QScrollArea * const p_parent_scroll_area);
 	~SynthesizerSequencerWidget(void);
 	void SendNoteEvent(SynthesizerSequencerNoteEvent const &note_event);
-	void SendAllNotesOffEvent(int channel_index, qint64 timestamp_in_ms);
+	void SendAllNotesOffEvent(int const channel_index, qint64 const timestamp_in_ms);
+	void SetViewMode(ViewMode const view_mode);
 	void Update(void);
 	void Prepare(void);
 private:
+	void ApplyViewModeLayout(void);
+private:
 	NoteNameWidget *m_p_note_name_widget;
 	NoteDurationWidget *m_p_note_duration_widget;
+	ViewMode m_view_mode;
 };
 
 #endif // _SYNTHESIZERSEQUENCERWIDGET_H_

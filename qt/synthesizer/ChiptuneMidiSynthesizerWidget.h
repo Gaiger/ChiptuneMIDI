@@ -34,6 +34,8 @@ private slots:
 	void on_StoreTimbresPushButton_released(void);
 	void on_OpenCloseInputPortPushButton_toggled(bool is_checked);
 	void on_InputPortComboBox_currentIndexChanged(int index);
+	void on_SequencerRollPushButton_toggled(bool is_checked);
+	void on_SequencerWaterfallPushButton_toggled(bool is_checked);
 	void HandleMidiMessageDelivered(uint32_t midi_message);
 	void HandleAudioPlayerStateChanged(AudioPlayer::PlaybackState state);
 	void HandleChannelOutputEnabled(int channel_index, bool is_enabled);

@@ -167,6 +167,12 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 	SetupChannelListWidget(m_p_channel_list_widget, m_p_tune_manager);
 
 	m_p_synthesizer_sequencer_widget = new SynthesizerSequencerWidget(ui->SequencerScrollArea);
+	SynthesizerSequencerWidget::ViewMode sequencer_view_mode =
+			SynthesizerSequencerWidget::ViewModeWaterfall;
+	if(true == ui->SequencerRollPushButton->isChecked()){
+		sequencer_view_mode = SynthesizerSequencerWidget::ViewModeRoll;
+	}
+	m_p_synthesizer_sequencer_widget->SetViewMode(sequencer_view_mode);
 	m_synthesizer_sequencer_update_timer_id =
 			QObject::startTimer(SYNTHESIZER_SEQUENCER_UPDATE_INTERVAL_IN_MILLISECONDS);
 
@@ -762,6 +768,31 @@ void ChiptuneMidiSynthesizerWidget::on_InputPortComboBox_currentIndexChanged(int
 }
 
 
+/**********************************************************************************/
+void ChiptuneMidiSynthesizerWidget::on_SequencerRollPushButton_toggled(bool is_checked)
+{
+	do
+	{
+		if(false == is_checked){
+			break;
+		}
+		m_p_synthesizer_sequencer_widget->SetViewMode(
+					SynthesizerSequencerWidget::ViewModeRoll);
+	}while(0);
+}
+
+/**********************************************************************************/
+void ChiptuneMidiSynthesizerWidget::on_SequencerWaterfallPushButton_toggled(bool is_checked)
+{
+	do
+	{
+		if(false == is_checked){
+			break;
+		}
+		m_p_synthesizer_sequencer_widget->SetViewMode(
+					SynthesizerSequencerWidget::ViewModeWaterfall);
+	}while(0);
+}
 
 #define SYNTHESIZER_NOTE_MIDI_CHANNEL				(0)
 #define SYNTHESIZER_NOTE_NUMBER						(69)

@@ -20,30 +20,48 @@
 #define A4											(69)
 #define G9											(127)
 
-#define ONE_NAME_WIDTH								(20)
-#define ONE_NAME_HEIGHT								(32)
-#define NOTE_DURATION_WIDGET_HEIGHT					(552)
+#define WATERFALL_ONE_NAME_WIDTH					(20)
+#define WATERFALL_ONE_NAME_HEIGHT					(32)
+#define WATERFALL_NOTE_DURATION_WIDGET_HEIGHT		(552)
+
+#define ROLL_ONE_NAME_WIDTH							(64)
+#define ROLL_ONE_NAME_HEIGHT						(12)
+#define ROLL_ONE_SECOND_WIDTH						(128)
 
 class NoteNameWidget : public QWidget
 {
 public:
-	explicit NoteNameWidget(QWidget *parent = nullptr);
+	explicit NoteNameWidget(QWidget * const parent = nullptr);
 	~NoteNameWidget(void);
+	void SetViewMode(SynthesizerSequencerWidget::ViewMode const view_mode);
 private:
-	void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
+	void paintEvent(QPaintEvent * const event) Q_DECL_OVERRIDE;
+	void WaterfallPaintEvent(QPaintEvent * const event);
+	void RollPaintEvent(QPaintEvent * const event);
+private:
+	SynthesizerSequencerWidget::ViewMode m_view_mode;
 };
 
 /**********************************************************************************/
-NoteNameWidget::NoteNameWidget(QWidget *parent)
-	: QWidget(parent)
+NoteNameWidget::NoteNameWidget(QWidget * const parent)
+	: QWidget(parent),
+	  m_view_mode(SynthesizerSequencerWidget::ViewModeWaterfall)
 {
-	QSize size = QSize((G9 - A0 + 1) * ONE_NAME_WIDTH, ONE_NAME_HEIGHT + 2);
+	QSize const size = QSize((G9 - A0 + 1) * WATERFALL_ONE_NAME_WIDTH,
+							 WATERFALL_ONE_NAME_HEIGHT + 2);
 	setFixedSize(size);
 }
 
 /**********************************************************************************/
 
 NoteNameWidget::~NoteNameWidget(void){}
+
+/**********************************************************************************/
+void NoteNameWidget::SetViewMode(SynthesizerSequencerWidget::ViewMode const view_mode)
+{
+	m_view_mode = view_mode;
+	QWidget::update();
+}
 
 /**********************************************************************************/
 static QString GetNoteNameString(int const note_number)
@@ -68,7 +86,20 @@ static QString GetNoteNameString(int const note_number)
 }
 
 /**********************************************************************************/
-void NoteNameWidget::paintEvent(QPaintEvent *event)
+void NoteNameWidget::paintEvent(QPaintEvent * const event)
+{
+	do
+	{
+		if(SynthesizerSequencerWidget::ViewModeRoll == m_view_mode){
+			RollPaintEvent(event);
+			break;
+		}
+		WaterfallPaintEvent(event);
+	}while(0);
+}
+
+/**********************************************************************************/
+void NoteNameWidget::WaterfallPaintEvent(QPaintEvent * const event)
 {
 	QWidget::paintEvent(event);
 	QPainter painter(this);
@@ -78,7 +109,8 @@ void NoteNameWidget::paintEvent(QPaintEvent *event)
 	QColor const parent_background_color
 			= QWidget::parentWidget()->palette().color(QWidget::parentWidget()->backgroundRole());
 	for(int i = 0; i < (G9 - A0 + 1); i++){
-		QRect const note_name_rect(i * ONE_NAME_WIDTH, 0, ONE_NAME_WIDTH, ONE_NAME_HEIGHT);
+		QRect const note_name_rect(i * WATERFALL_ONE_NAME_WIDTH, 0,
+								   WATERFALL_ONE_NAME_WIDTH, WATERFALL_ONE_NAME_HEIGHT);
 		if(i == index_of_A4){
 			painter.setBrush(QBrush(parent_background_color.lighter(200)));
 			painter.drawRect(note_name_rect);
@@ -89,28 +121,29 @@ void NoteNameWidget::paintEvent(QPaintEvent *event)
 	}
 
 	QFont font = painter.font();
-	font.setPointSize(ONE_NAME_WIDTH / 2);
+	font.setPointSize(WATERFALL_ONE_NAME_WIDTH / 2);
 	painter.setFont(font);
 
 	for(int note_number = A0; note_number <= G9; note_number++){
 		int const note_index = note_number - A0;
 		QString const note_name_string = GetNoteNameString(note_number);
 		if(true == note_name_string.contains("\n")){
-			font.setPointSize(ONE_NAME_WIDTH / 2 - 3);
+			font.setPointSize(WATERFALL_ONE_NAME_WIDTH / 2 - 3);
 			painter.setFont(font);
 		}
-		painter.drawText(QRect(note_index * ONE_NAME_WIDTH, 0, ONE_NAME_WIDTH, ONE_NAME_HEIGHT),
+		painter.drawText(QRect(note_index * WATERFALL_ONE_NAME_WIDTH, 0,
+							   WATERFALL_ONE_NAME_WIDTH, WATERFALL_ONE_NAME_HEIGHT),
 						 Qt::AlignCenter,
 						 note_name_string);
 		if(true == note_name_string.contains("\n")){
-			font.setPointSize(ONE_NAME_WIDTH / 2);
+			font.setPointSize(WATERFALL_ONE_NAME_WIDTH / 2);
 			painter.setFont(font);
 		}
 	}
 }
 
 /**********************************************************************************/
-#define ONE_SECOND_HEIGHT							(128)
+#define WATERFALL_ONE_SECOND_HEIGHT					(128)
 #define DRAW_NOTE_UNBOUNDED_END_TIMESTAMP_IN_MS		(INT64_MAX)
 
 typedef struct
@@ -124,30 +157,37 @@ typedef struct
 class NoteDurationWidget : public QWidget
 {
 public:
-	explicit NoteDurationWidget(QWidget *parent = nullptr);
+	explicit NoteDurationWidget(QWidget * const parent = nullptr);
 	~NoteDurationWidget(void);
 	void AddIncomingNoteEvent(SynthesizerSequencerNoteEvent const &note_event);
-	void ApplyAllNotesOff(int channel_index, qint64 timestamp_in_ms);
+	void ApplyAllNotesOff(int const channel_index, qint64 const timestamp_in_ms);
+	void SetViewMode(SynthesizerSequencerWidget::ViewMode const view_mode);
 	void Update(void);
 	void Prepare(void);
 private:
-	int TimestampToY(qint64 timestamp_in_ms) const;
-	QRect NoteToQRect(draw_note_t const &draw_note) const;
-	void DrawChannelRectangles(QPainter *p_painter);
-	void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
+	void ProcessIncomingNoteEvents(void);
+	void WaterfallPrepare(int const preparing_channel_rectangle_list_index);
+	void RollPrepare(int const preparing_channel_rectangle_list_index);
+	int WaterfallTimestampToY(qint64 const timestamp_in_ms) const;
+	QRect WaterfallNoteToQRect(draw_note_t const &draw_note) const;
+	void DrawChannelRectangles(QPainter * const p_painter);
+	void paintEvent(QPaintEvent * const event) Q_DECL_OVERRIDE;
 private:
 	QList<SynthesizerSequencerNoteEvent> m_incoming_note_event_list;
 	QList<draw_note_t> m_draw_note_list;
 	QList<QRect> m_channel_rectangle_list[2][MIDI_MAX_CHANNEL_NUMBER];
 	int m_drawing_channel_rectangle_list_index;
+	SynthesizerSequencerWidget::ViewMode m_view_mode;
 };
 
 /**********************************************************************************/
-NoteDurationWidget::NoteDurationWidget(QWidget *parent)
+NoteDurationWidget::NoteDurationWidget(QWidget * const parent)
 	: QWidget(parent),
-	  m_drawing_channel_rectangle_list_index(0)
+	  m_drawing_channel_rectangle_list_index(0),
+	  m_view_mode(SynthesizerSequencerWidget::ViewModeWaterfall)
 {
-	QSize size = QSize((G9 - A0 + 1) * ONE_NAME_WIDTH, NOTE_DURATION_WIDGET_HEIGHT);
+	QSize const size = QSize((G9 - A0 + 1) * WATERFALL_ONE_NAME_WIDTH,
+							 WATERFALL_NOTE_DURATION_WIDGET_HEIGHT);
 	setFixedSize(size);
 
 	for(int j = 0; j < 2; j++){
@@ -162,7 +202,7 @@ NoteDurationWidget::NoteDurationWidget(QWidget *parent)
 NoteDurationWidget::~NoteDurationWidget(void){}
 
 /**********************************************************************************/
-int NoteDurationWidget::TimestampToY(qint64 timestamp_in_ms) const
+int NoteDurationWidget::WaterfallTimestampToY(qint64 const timestamp_in_ms) const
 {
 #define DRAW_NOTE_UNBOUNDED_TOP_Y					(-4)
 	if(DRAW_NOTE_UNBOUNDED_END_TIMESTAMP_IN_MS == timestamp_in_ms){
@@ -171,17 +211,17 @@ int NoteDurationWidget::TimestampToY(qint64 timestamp_in_ms) const
 
 	qint64 const current_timestamp_in_ms = QDateTime::currentMSecsSinceEpoch();
 	qint64 const elapsed_timestamp_in_ms = current_timestamp_in_ms - timestamp_in_ms;
-	int const y = (int)(elapsed_timestamp_in_ms * ONE_SECOND_HEIGHT / 1000);
+	int const y = (int)(elapsed_timestamp_in_ms * WATERFALL_ONE_SECOND_HEIGHT / 1000);
 	return y;
 }
 
 /**********************************************************************************/
-QRect NoteDurationWidget::NoteToQRect(draw_note_t const &draw_note) const
+QRect NoteDurationWidget::WaterfallNoteToQRect(draw_note_t const &draw_note) const
 {
-	int const x = (draw_note.note_number - A0) * ONE_NAME_WIDTH;
-	int const start_y = TimestampToY(draw_note.start_timestamp_in_ms);
-	int const end_y = TimestampToY(draw_note.end_timestamp_in_ms);
-	return QRect(x, end_y, ONE_NAME_WIDTH, start_y - end_y);
+	int const x = (draw_note.note_number - A0) * WATERFALL_ONE_NAME_WIDTH;
+	int const start_y = WaterfallTimestampToY(draw_note.start_timestamp_in_ms);
+	int const end_y = WaterfallTimestampToY(draw_note.end_timestamp_in_ms);
+	return QRect(x, end_y, WATERFALL_ONE_NAME_WIDTH, start_y - end_y);
 }
 
 /**********************************************************************************/
@@ -191,7 +231,7 @@ void NoteDurationWidget::AddIncomingNoteEvent(SynthesizerSequencerNoteEvent cons
 }
 
 /**********************************************************************************/
-void NoteDurationWidget::ApplyAllNotesOff(int channel_index, qint64 timestamp_in_ms)
+void NoteDurationWidget::ApplyAllNotesOff(int const channel_index, qint64 const timestamp_in_ms)
 {
 	Prepare();
 
@@ -208,6 +248,13 @@ void NoteDurationWidget::ApplyAllNotesOff(int channel_index, qint64 timestamp_in
 }
 
 /**********************************************************************************/
+void NoteDurationWidget::SetViewMode(SynthesizerSequencerWidget::ViewMode const view_mode)
+{
+	m_view_mode = view_mode;
+	QWidget::update();
+}
+
+/**********************************************************************************/
 void NoteDurationWidget::Prepare(void)
 {
 	int const preparing_channel_rectangle_list_index
@@ -216,6 +263,20 @@ void NoteDurationWidget::Prepare(void)
 		m_channel_rectangle_list[preparing_channel_rectangle_list_index][channel_index].clear();
 	}
 
+	ProcessIncomingNoteEvents();
+	bool const is_view_mode_roll = (SynthesizerSequencerWidget::ViewModeRoll == m_view_mode);
+	if(true == is_view_mode_roll){
+		RollPrepare(preparing_channel_rectangle_list_index);
+	}
+	if(false == is_view_mode_roll){
+		WaterfallPrepare(preparing_channel_rectangle_list_index);
+	}
+	m_drawing_channel_rectangle_list_index = preparing_channel_rectangle_list_index;
+}
+
+/**********************************************************************************/
+void NoteDurationWidget::ProcessIncomingNoteEvents(void)
+{
 	while(false == m_incoming_note_event_list.isEmpty()){
 		SynthesizerSequencerNoteEvent const note_event = m_incoming_note_event_list.takeFirst();
 		do
@@ -248,7 +309,17 @@ void NoteDurationWidget::Prepare(void)
 			}
 		}while(0);
 	}
+}
 
+/**********************************************************************************/
+void NoteNameWidget::RollPaintEvent(QPaintEvent * const event)
+{
+	Q_UNUSED(event);
+}
+
+/**********************************************************************************/
+void NoteDurationWidget::WaterfallPrepare(int const preparing_channel_rectangle_list_index)
+{
 	QMutableListIterator<draw_note_t> draw_note_iterator(m_draw_note_list);
 	while(draw_note_iterator.hasNext()){
 		draw_note_t const draw_note = draw_note_iterator.next();
@@ -259,7 +330,7 @@ void NoteDurationWidget::Prepare(void)
 				break;
 			}
 
-			QRect const note_rect = NoteToQRect(draw_note);
+			QRect const note_rect = WaterfallNoteToQRect(draw_note);
 			if(note_rect.top() > QWidget::height()){
 				draw_note_iterator.remove();
 				break;
@@ -268,7 +339,12 @@ void NoteDurationWidget::Prepare(void)
 					.append(note_rect);
 		}while(0);
 	}
-	m_drawing_channel_rectangle_list_index = preparing_channel_rectangle_list_index;
+}
+
+/**********************************************************************************/
+void NoteDurationWidget::RollPrepare(int const preparing_channel_rectangle_list_index)
+{
+	Q_UNUSED(preparing_channel_rectangle_list_index);
 }
 
 /**********************************************************************************/
@@ -281,28 +357,28 @@ void NoteDurationWidget::Update(void)
 }
 
 /**********************************************************************************/
-void NoteDurationWidget::DrawChannelRectangles(QPainter *p_painter)
+void NoteDurationWidget::DrawChannelRectangles(QPainter * const p_painter)
 {
 	for(int channel_index = MIDI_MAX_CHANNEL_NUMBER - 1; channel_index >= 0; channel_index -= 1){
-		QColor channel_color = GetChannelColor(channel_index);
+		QColor const channel_color = GetChannelColor(channel_index);
 		QColor const pen_color = QColor(0xFF, 0xFF, 0xFF, 0xC0);
 		p_painter->setBrush(channel_color);
 		p_painter->setPen(pen_color);
 
 #if QT_VERSION  >= QT_VERSION_CHECK(6, 0, 0)
-		const QList<QRect> &rectangles
+		QList<QRect> const &rectangles
 				= m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][channel_index];
 #else
-		const QList<QRect> &ref_rectangles_list =
+		QList<QRect> const &ref_rectangles_list =
 			m_channel_rectangle_list[m_drawing_channel_rectangle_list_index][channel_index];
-		const QVector<QRect> rectangles = QVector<QRect>::fromList(ref_rectangles_list);
+		QVector<QRect> const rectangles = QVector<QRect>::fromList(ref_rectangles_list);
 #endif
 		p_painter->drawRects(rectangles.constData(), rectangles.size());
 	}
 }
 
 /**********************************************************************************/
-void NoteDurationWidget::paintEvent(QPaintEvent *event)
+void NoteDurationWidget::paintEvent(QPaintEvent * const event)
 {
 	QWidget::paintEvent(event);
 
@@ -311,13 +387,14 @@ void NoteDurationWidget::paintEvent(QPaintEvent *event)
 }
 
 /**********************************************************************************/
-SynthesizerSequencerWidget::SynthesizerSequencerWidget(QScrollArea *p_parent_scroll_area)
+SynthesizerSequencerWidget::SynthesizerSequencerWidget(QScrollArea * const p_parent_scroll_area)
 	: QWidget(p_parent_scroll_area),
 	  m_p_note_name_widget(nullptr),
-	  m_p_note_duration_widget(nullptr)
+	  m_p_note_duration_widget(nullptr),
+	  m_view_mode(ViewModeWaterfall)
 {
 	p_parent_scroll_area->setWidget(this);
-	QVBoxLayout *p_layout = new QVBoxLayout(this);
+	QVBoxLayout * const p_layout = new QVBoxLayout(this);
 	p_layout->setContentsMargins(0, 0, 0, 0);
 	p_layout->setSpacing(0);
 
@@ -327,8 +404,9 @@ SynthesizerSequencerWidget::SynthesizerSequencerWidget(QScrollArea *p_parent_scr
 	p_layout->addWidget(m_p_note_name_widget);
 	p_layout->addWidget(m_p_note_duration_widget);
 
-	std::function<void()> set_A4_center_function = [p_parent_scroll_area]() {
-		int const A4_center_x = (A4 - A0) * ONE_NAME_WIDTH + ONE_NAME_WIDTH / 2;
+	std::function<void()> const set_A4_center_function = [p_parent_scroll_area]() {
+		int const A4_center_x = (A4 - A0) * WATERFALL_ONE_NAME_WIDTH
+				+ WATERFALL_ONE_NAME_WIDTH / 2;
 		int const horizontal_scroll_value = A4_center_x - p_parent_scroll_area->viewport()->width() / 2;
 		p_parent_scroll_area->horizontalScrollBar()->setValue(horizontal_scroll_value);
 	};
@@ -352,9 +430,30 @@ void SynthesizerSequencerWidget::SendNoteEvent(SynthesizerSequencerNoteEvent con
 }
 
 /**********************************************************************************/
-void SynthesizerSequencerWidget::SendAllNotesOffEvent(int channel_index, qint64 timestamp_in_ms)
+void SynthesizerSequencerWidget::SendAllNotesOffEvent(int const channel_index, qint64 const timestamp_in_ms)
 {
 	m_p_note_duration_widget->ApplyAllNotesOff(channel_index, timestamp_in_ms);
+}
+
+/**********************************************************************************/
+void SynthesizerSequencerWidget::SetViewMode(ViewMode const view_mode)
+{
+	do
+	{
+		if(m_view_mode == view_mode){
+			break;
+		}
+
+		m_view_mode = view_mode;
+		m_p_note_name_widget->SetViewMode(view_mode);
+		m_p_note_duration_widget->SetViewMode(view_mode);
+		ApplyViewModeLayout();
+	}while(0);
+}
+
+/**********************************************************************************/
+void SynthesizerSequencerWidget::ApplyViewModeLayout(void)
+{
 }
 
 /**********************************************************************************/
