@@ -158,6 +158,13 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 	QWidget::setFocusPolicy(Qt::StrongFocus);
 	QWidget::setFixedSize(QWidget::size());
 
+	ui->SequencerWaterfallPushButton->setToolTip(tr("Show the live sequencer in waterfall mode"));
+	ui->SequencerRollPushButton->setToolTip(tr("Show the live sequencer in roll mode"));
+	ui->LoadTimbresPushButton->setToolTip(tr("Load instrument timbre parameters from %1")
+										  .arg(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING));
+	ui->StoreTimbresPushButton->setToolTip(tr("Store instrument timbre parameters for output-enabled channels to %1")
+										   .arg(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING));
+
 	m_p_channel_list_widget = new ChannelListWidget(ui->TimbreListWidget);
 	QObject::connect(m_p_channel_list_widget, &ChannelListWidget::OutputEnabled,
 					 this, &ChiptuneMidiSynthesizerWidget::HandleChannelOutputEnabled);

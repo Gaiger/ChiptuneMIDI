@@ -160,6 +160,10 @@ QPushButton:checked {
 	color: rgb(232, 232, 232);
 }
 
+QPushButton:hover:!checked {
+	background-color: rgb(84, 84, 84);
+}
+
 QPushButton#SequencerWaterfallPushButton {
 	border-top-left-radius: 3px;
 	border-bottom-left-radius: 3px;
