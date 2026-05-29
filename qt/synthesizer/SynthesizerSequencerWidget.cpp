@@ -1,5 +1,4 @@
 #include <QColor>
-#include <QDateTime>
 #include <functional>
 #include <QGridLayout>
 #include <QList>
@@ -170,16 +169,20 @@ public:
 	explicit NoteDurationWidget(QWidget * const parent = nullptr);
 	~NoteDurationWidget(void);
 	void AddIncomingNoteEvent(SynthesizerSequencerNoteEvent const &note_event);
-	void ApplyAllNotesOff(int const channel_index, qint64 const timestamp_in_ms);
+	void ApplyAllNotesOff(int const channel_index, qint64 const current_timestamp_in_ms);
 	void SetViewMode(SynthesizerSequencerWidget::ViewMode const view_mode);
 	void Update(void);
-	void Prepare(void);
+	void Prepare(qint64 const current_timestamp_in_ms);
 private:
 	void ProcessIncomingNoteEvents(void);
-	int WaterfallTimestampToY(qint64 const timestamp_in_ms) const;
-	int RollTimestampToX(qint64 const timestamp_in_ms) const;
-	QRect WaterfallNoteToQRect(draw_note_t const &draw_note) const;
-	QRect RollNoteToQRect(draw_note_t const &draw_note) const;
+	int WaterfallTimestampToY(qint64 const mapped_timestamp_in_ms,
+							  qint64 const current_timestamp_in_ms) const;
+	int RollTimestampToX(qint64 const mapped_timestamp_in_ms,
+						 qint64 const current_timestamp_in_ms) const;
+	QRect WaterfallNoteToQRect(draw_note_t const &draw_note,
+							   qint64 const current_timestamp_in_ms) const;
+	QRect RollNoteToQRect(draw_note_t const &draw_note,
+						  qint64 const current_timestamp_in_ms) const;
 	void DrawChannelRectangles(QPainter * const p_painter);
 	void paintEvent(QPaintEvent * const event) Q_DECL_OVERRIDE;
 private:
@@ -210,47 +213,55 @@ NoteDurationWidget::NoteDurationWidget(QWidget * const parent)
 NoteDurationWidget::~NoteDurationWidget(void){}
 
 /**********************************************************************************/
-int NoteDurationWidget::WaterfallTimestampToY(qint64 const timestamp_in_ms) const
+int NoteDurationWidget::WaterfallTimestampToY(qint64 const mapped_timestamp_in_ms,
+											  qint64 const current_timestamp_in_ms) const
 {
-	if(DRAW_NOTE_UNBOUNDED_END_TIMESTAMP_IN_MS == timestamp_in_ms){
+	if(DRAW_NOTE_UNBOUNDED_END_TIMESTAMP_IN_MS == mapped_timestamp_in_ms){
 		return -NOTE_DURATION_RECTANGLE_OVERSCAN;
 	}
 
-	qint64 const current_timestamp_in_ms = QDateTime::currentMSecsSinceEpoch();
-	qint64 const elapsed_timestamp_in_ms = current_timestamp_in_ms - timestamp_in_ms;
+	qint64 const elapsed_timestamp_in_ms = current_timestamp_in_ms - mapped_timestamp_in_ms;
 	int const y = (int)(elapsed_timestamp_in_ms * WATERFALL_ONE_SECOND_HEIGHT / 1000);
 	return y;
 }
 
 /**********************************************************************************/
-QRect NoteDurationWidget::WaterfallNoteToQRect(draw_note_t const &draw_note) const
+QRect NoteDurationWidget::WaterfallNoteToQRect(
+		draw_note_t const &draw_note,
+		qint64 const current_timestamp_in_ms) const
 {
 	int const x = (draw_note.note_number - A0) * WATERFALL_ONE_NAME_WIDTH;
-	int const start_timestamp_y = WaterfallTimestampToY(draw_note.start_timestamp_in_ms);
-	int const end_timestamp_y = WaterfallTimestampToY(draw_note.end_timestamp_in_ms);
+	int const start_timestamp_y = WaterfallTimestampToY(draw_note.start_timestamp_in_ms,
+														current_timestamp_in_ms);
+	int const end_timestamp_y = WaterfallTimestampToY(draw_note.end_timestamp_in_ms,
+													  current_timestamp_in_ms);
 	return QRect(x, end_timestamp_y,
 				 WATERFALL_ONE_NAME_WIDTH, start_timestamp_y - end_timestamp_y);
 }
 
 /**********************************************************************************/
-int NoteDurationWidget::RollTimestampToX(qint64 const timestamp_in_ms) const
+int NoteDurationWidget::RollTimestampToX(qint64 const mapped_timestamp_in_ms,
+										 qint64 const current_timestamp_in_ms) const
 {
-	if(DRAW_NOTE_UNBOUNDED_END_TIMESTAMP_IN_MS == timestamp_in_ms){
+	if(DRAW_NOTE_UNBOUNDED_END_TIMESTAMP_IN_MS == mapped_timestamp_in_ms){
 		return QWidget::width() + NOTE_DURATION_RECTANGLE_OVERSCAN;
 	}
 
-	qint64 const current_timestamp_in_ms = QDateTime::currentMSecsSinceEpoch();
-	qint64 const elapsed_timestamp_in_ms = current_timestamp_in_ms - timestamp_in_ms;
+	qint64 const elapsed_timestamp_in_ms = current_timestamp_in_ms - mapped_timestamp_in_ms;
 	int const x = QWidget::width()
 			- (int)(elapsed_timestamp_in_ms * ROLL_ONE_SECOND_WIDTH / 1000);
 	return x;
 }
 
 /**********************************************************************************/
-QRect NoteDurationWidget::RollNoteToQRect(draw_note_t const &draw_note) const
+QRect NoteDurationWidget::RollNoteToQRect(
+		draw_note_t const &draw_note,
+		qint64 const current_timestamp_in_ms) const
 {
-	int const end_timestamp_x = RollTimestampToX(draw_note.end_timestamp_in_ms);
-	int const start_timestamp_x = RollTimestampToX(draw_note.start_timestamp_in_ms);
+	int const end_timestamp_x = RollTimestampToX(draw_note.end_timestamp_in_ms,
+												 current_timestamp_in_ms);
+	int const start_timestamp_x = RollTimestampToX(draw_note.start_timestamp_in_ms,
+												   current_timestamp_in_ms);
 	int const y = (G9 - draw_note.note_number) * ROLL_ONE_NAME_HEIGHT;
 	return QRect(start_timestamp_x, y,
 				 end_timestamp_x - start_timestamp_x, ROLL_ONE_NAME_HEIGHT);
@@ -263,7 +274,8 @@ void NoteDurationWidget::AddIncomingNoteEvent(SynthesizerSequencerNoteEvent cons
 }
 
 /**********************************************************************************/
-void NoteDurationWidget::ApplyAllNotesOff(int const channel_index, qint64 const timestamp_in_ms)
+void NoteDurationWidget::ApplyAllNotesOff(int const channel_index,
+										  qint64 const current_timestamp_in_ms)
 {
 	ProcessIncomingNoteEvents();
 	for(int i = 0; i < m_draw_note_list.size(); i++){
@@ -274,7 +286,7 @@ void NoteDurationWidget::ApplyAllNotesOff(int const channel_index, qint64 const 
 		if(DRAW_NOTE_UNBOUNDED_END_TIMESTAMP_IN_MS != p_draw_note->end_timestamp_in_ms){
 			continue;
 		}
-		p_draw_note->end_timestamp_in_ms = timestamp_in_ms;
+		p_draw_note->end_timestamp_in_ms = current_timestamp_in_ms;
 	}
 }
 
@@ -361,7 +373,7 @@ void NoteDurationWidget::ProcessIncomingNoteEvents(void)
 }
 
 /**********************************************************************************/
-void NoteDurationWidget::Prepare(void)
+void NoteDurationWidget::Prepare(qint64 const current_timestamp_in_ms)
 {
 	int const preparing_channel_rectangle_list_index
 			= (m_drawing_channel_rectangle_list_index + 1) % 2;
@@ -385,13 +397,13 @@ void NoteDurationWidget::Prepare(void)
 			do
 			{
 				if(SynthesizerSequencerWidget::ViewModeRoll == m_view_mode){
-					note_rect = RollNoteToQRect(draw_note);
+					note_rect = RollNoteToQRect(draw_note, current_timestamp_in_ms);
 					if(-NOTE_DURATION_RECTANGLE_OVERSCAN > note_rect.right()){
 						is_note_out_of_boundary = true;
 					}
 					break;
 				}
-				note_rect = WaterfallNoteToQRect(draw_note);
+				note_rect = WaterfallNoteToQRect(draw_note, current_timestamp_in_ms);
 				if(QWidget::height() + NOTE_DURATION_RECTANGLE_OVERSCAN < note_rect.top()){
 					is_note_out_of_boundary = true;
 				}
@@ -499,9 +511,10 @@ void SynthesizerSequencerWidget::SendNoteEvent(SynthesizerSequencerNoteEvent con
 }
 
 /**********************************************************************************/
-void SynthesizerSequencerWidget::SendAllNotesOffEvent(int const channel_index, qint64 const timestamp_in_ms)
+void SynthesizerSequencerWidget::SendAllNotesOffEvent(int const channel_index,
+													  qint64 const current_timestamp_in_ms)
 {
-	m_p_note_duration_widget->ApplyAllNotesOff(channel_index, timestamp_in_ms);
+	m_p_note_duration_widget->ApplyAllNotesOff(channel_index, current_timestamp_in_ms);
 }
 
 /**********************************************************************************/
@@ -590,7 +603,7 @@ void SynthesizerSequencerWidget::Update(void)
 }
 
 /**********************************************************************************/
-void SynthesizerSequencerWidget::Prepare(void)
+void SynthesizerSequencerWidget::Prepare(qint64 const current_timestamp_in_ms)
 {
-	m_p_note_duration_widget->Prepare();
+	m_p_note_duration_widget->Prepare(current_timestamp_in_ms);
 }

@@ -49,10 +49,10 @@ public:
 	explicit SynthesizerSequencerWidget(QScrollArea * const p_parent_scroll_area);
 	~SynthesizerSequencerWidget(void);
 	void SendNoteEvent(SynthesizerSequencerNoteEvent const &note_event);
-	void SendAllNotesOffEvent(int const channel_index, qint64 const timestamp_in_ms);
+	void SendAllNotesOffEvent(int const channel_index, qint64 const current_timestamp_in_ms);
 	void SetViewMode(ViewMode const view_mode);
 	void Update(void);
-	void Prepare(void);
+	void Prepare(qint64 const current_timestamp_in_ms);
 private:
 	void ApplyViewModeLayout(void);
 private:

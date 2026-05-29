@@ -284,6 +284,7 @@ void ChiptuneMidiSynthesizerWidget::HandleAudioPlayerStateChanged(AudioPlayer::P
 /**********************************************************************************/
 void ChiptuneMidiSynthesizerWidget::HandleMidiMessageDelivered(uint32_t midi_message)
 {
+	qint64 const current_timestamp_in_ms = QDateTime::currentMSecsSinceEpoch();
 	uint8_t const status_byte = (uint8_t)(midi_message & 0xFF);
 	uint8_t const midi_message_type = (uint8_t)(status_byte & 0xF0);
 	int const channel_index = status_byte & 0x0F;
@@ -313,7 +314,7 @@ void ChiptuneMidiSynthesizerWidget::HandleMidiMessageDelivered(uint32_t midi_mes
 							: SynthesizerSequencerNoteEvent::NoteOn,
 							channel_index,
 							note_number,
-							QDateTime::currentMSecsSinceEpoch()));
+							current_timestamp_in_ms));
 			break;
 		}
 
@@ -324,7 +325,7 @@ void ChiptuneMidiSynthesizerWidget::HandleMidiMessageDelivered(uint32_t midi_mes
 				m_channel_note_on_count_array[channel_index] = 0;
 				m_p_synthesizer_sequencer_widget->SendAllNotesOffEvent(
 							channel_index,
-							QDateTime::currentMSecsSinceEpoch());
+							current_timestamp_in_ms);
 			}
 			break;
 		}
@@ -377,8 +378,9 @@ void ChiptuneMidiSynthesizerWidget::timerEvent(QTimerEvent *event)
 
 	if(event->timerId() == m_synthesizer_sequencer_update_timer_id){
 		if(nullptr != m_p_synthesizer_sequencer_widget){
+			qint64 const current_timestamp_in_ms = QDateTime::currentMSecsSinceEpoch();
 			m_p_synthesizer_sequencer_widget->Update();
-			m_p_synthesizer_sequencer_widget->Prepare();
+			m_p_synthesizer_sequencer_widget->Prepare(current_timestamp_in_ms);
 		}
 	}
 }
