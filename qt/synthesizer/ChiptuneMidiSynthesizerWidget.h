@@ -12,7 +12,6 @@
 #include "SynthesizerSequencerWidget.h"
 
 class WaveChartView;
-class QKeyEvent;
 class QTimerEvent;
 class MidiInputManager;
 class ChannelListWidget;
@@ -28,12 +27,9 @@ public:
 	explicit ChiptuneMidiSynthesizerWidget(TuneManager * p_tune_manager, QWidget *parent = nullptr);
 	~ChiptuneMidiSynthesizerWidget() Q_DECL_OVERRIDE;
 private slots:
-	void on_NotePushButton_pressed(void);
-	void on_NotePushButton_released(void);
 	void on_LoadTimbresPushButton_toggled(bool is_checked);
 	void on_StoreTimbresPushButton_released(void);
 	void on_OpenCloseInputPortPushButton_toggled(bool is_checked);
-	void on_InputPortComboBox_currentIndexChanged(int index);
 	void on_SequencerRollPushButton_toggled(bool is_checked);
 	void on_SequencerWaterfallPushButton_toggled(bool is_checked);
 	void HandleMidiMessageDelivered(uint32_t midi_message);
@@ -54,9 +50,6 @@ private:
 	int LoadAndApplyTimbres(void);
 	void ApplyMelodicChannelInstrumentTimbre(int channel_index, int instrument_code,
 											 bool is_to_darker_title_for_a_while);
-
-	void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
-	void keyReleaseEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 private:
 	TuneManager * const	m_p_tune_manager;
 	AudioPlayer *		m_p_audio_player;

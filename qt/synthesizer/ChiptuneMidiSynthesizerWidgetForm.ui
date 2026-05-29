@@ -125,23 +125,10 @@ color: rgb(168, 168, 168);
     <bool>true</bool>
    </property>
   </widget>
-  <widget class="QPushButton" name="NotePushButton">
-   <property name="geometry">
-    <rect>
-     <x>4</x>
-     <y>76</y>
-     <width>64</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Note</string>
-   </property>
-  </widget>
   <widget class="QWidget" name="SequencerViewModeWidget" native="true">
    <property name="geometry">
     <rect>
-     <x>76</x>
+     <x>4</x>
      <y>76</y>
      <width>176</width>
      <height>24</height>
@@ -180,7 +167,7 @@ QPushButton#SequencerRollPushButton {
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>104</width>
+      <width>88</width>
       <height>24</height>
      </rect>
     </property>
@@ -200,9 +187,9 @@ QPushButton#SequencerRollPushButton {
    <widget class="QPushButton" name="SequencerRollPushButton">
     <property name="geometry">
      <rect>
-      <x>104</x>
+      <x>88</x>
       <y>0</y>
-      <width>72</width>
+      <width>88</width>
       <height>24</height>
      </rect>
     </property>

@@ -24,11 +24,9 @@
 
 #define ROLL_ONE_NAME_WIDTH							(64)
 #define ROLL_ONE_NAME_HEIGHT						(12)
-#define ROLL_ONE_SECOND_WIDTH						(128)
-#define ROLL_ADDITIONAL_FONT_POINT_SIZE				(2)
 
+#define ROLL_ADDITIONAL_FONT_POINT_SIZE				(2)
 #define NOTE_NAME_PAINT_MARGIN						(2)
-#define NOTE_DURATION_RECTANGLE_OVERSCAN			(4)
 
 class NoteNameWidget : public QWidget
 {
@@ -152,8 +150,12 @@ void NoteNameWidget::paintEvent(QPaintEvent * const event)
 }
 
 /**********************************************************************************/
-#define WATERFALL_ONE_SECOND_HEIGHT					(128)
 #define DRAW_NOTE_UNBOUNDED_END_TIMESTAMP_IN_MS		(INT64_MAX)
+
+#define WATERFALL_ONE_SECOND_HEIGHT					(128)
+#define ROLL_ONE_SECOND_WIDTH						(128)
+
+#define NOTE_DURATION_RECTANGLE_OVERSCAN			(4)
 
 typedef struct
 {

@@ -1,9 +1,7 @@
 #include <QThread>
-#include <QDebug>
 #include <QComboBox>
 #include <QDateTime>
 #include <QGridLayout>
-#include <QKeyEvent>
 #include <QList>
 #include <QMap>
 #include <QMessageBox>
@@ -772,12 +770,6 @@ void ChiptuneMidiSynthesizerWidget::on_OpenCloseInputPortPushButton_toggled(bool
 }
 
 /**********************************************************************************/
-void ChiptuneMidiSynthesizerWidget::on_InputPortComboBox_currentIndexChanged(int)
-{
-}
-
-
-/**********************************************************************************/
 void ChiptuneMidiSynthesizerWidget::on_SequencerRollPushButton_toggled(bool is_checked)
 {
 	do
@@ -801,80 +793,4 @@ void ChiptuneMidiSynthesizerWidget::on_SequencerWaterfallPushButton_toggled(bool
 		m_p_synthesizer_sequencer_widget->SetViewMode(
 					SynthesizerSequencerWidget::ViewModeWaterfall);
 	}while(0);
-}
-
-#define SYNTHESIZER_NOTE_MIDI_CHANNEL				(0)
-#define SYNTHESIZER_NOTE_NUMBER						(69)
-#define SYNTHESIZER_NOTE_ON_VELOCITY				(127)
-#define SYNTHESIZER_NOTE_OFF_VELOCITY				(64)
-#define SYNTHESIZER_NOTE_SHORTCUT_KEY				(Qt::Key_H)
-
-/**********************************************************************************/
-static uint32_t MakeShortMidiMessage(uint8_t const status_byte, uint8_t const data_byte_1, uint8_t const data_byte_2)
-{
-	return (uint32_t)status_byte | ((uint32_t)data_byte_1 << 8) | ((uint32_t)data_byte_2 << 16);
-}
-
-/**********************************************************************************/
-/* This note button is only a temporary test scaffold. */
-void ChiptuneMidiSynthesizerWidget::on_NotePushButton_pressed(void)
-{
-	uint32_t const midi_message = MakeShortMidiMessage(MIDI_MESSAGE_NOTE_ON | SYNTHESIZER_NOTE_MIDI_CHANNEL,
-													   SYNTHESIZER_NOTE_NUMBER,
-													   SYNTHESIZER_NOTE_ON_VELOCITY);
-	qDebug() << "midi message =" << Qt::hex << midi_message;
-	m_p_tune_manager->SendMidiMessage(midi_message);
-	HandleMidiMessageDelivered(midi_message);
-}
-
-/**********************************************************************************/
-/* This note button is only a temporary test scaffold. */
-void ChiptuneMidiSynthesizerWidget::on_NotePushButton_released(void)
-{
-	uint32_t const midi_message = MakeShortMidiMessage(MIDI_MESSAGE_NOTE_OFF | SYNTHESIZER_NOTE_MIDI_CHANNEL,
-													   SYNTHESIZER_NOTE_NUMBER,
-													   SYNTHESIZER_NOTE_OFF_VELOCITY);
-	qDebug() << "midi message =" << Qt::hex << midi_message;
-	m_p_tune_manager->SendMidiMessage(midi_message);
-	HandleMidiMessageDelivered(midi_message);
-}
-
-/**********************************************************************************/
-void ChiptuneMidiSynthesizerWidget::keyPressEvent(QKeyEvent *event)
-{
-	do
-	{
-		if(SYNTHESIZER_NOTE_SHORTCUT_KEY != event->key()){
-			break;
-		}
-		if(true == event->isAutoRepeat()){
-			event->accept();
-			return;
-		}
-		ui->NotePushButton->setDown(true);
-		on_NotePushButton_pressed();
-		event->accept();
-		return;
-	} while(0);
-	QWidget::keyPressEvent(event);
-}
-
-/**********************************************************************************/
-void ChiptuneMidiSynthesizerWidget::keyReleaseEvent(QKeyEvent *event)
-{
-	do
-	{
-		if(SYNTHESIZER_NOTE_SHORTCUT_KEY != event->key()){
-			break;
-		}
-		if(true == event->isAutoRepeat()){
-			event->accept();
-			return;
-		}
-		ui->NotePushButton->setDown(false);
-		on_NotePushButton_released();
-		event->accept();
-		return;
-	} while(0);
-	QWidget::keyReleaseEvent(event);
 }
