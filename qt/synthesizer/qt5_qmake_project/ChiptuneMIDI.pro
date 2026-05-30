@@ -1,0 +1,122 @@
+TEMPLATE = app
+TARGET = ChiptuneMIDISynthesizer
+
+QT += widgets
+QT += charts
+QT += multimedia
+win32 {
+QT += winextras
+}
+
+CONFIG += c++11 #console
+CONFIG -= app_bundle
+win32 {
+CONFIG += windows
+}
+
+CONFIG(debug, release|debug) {
+    DEFINES += _DEBUG
+}
+# You can make your code fail to compile if it uses deprecated APIs.
+# In order to do so, uncomment the following line.
+#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+
+win32 {
+    QMAKE_CFLAGS   += /wd4819
+    QMAKE_CXXFLAGS += /wd4819
+}
+
+CHIPTUNE_ROOT_DIR = ../../..
+CHIPTUNE_QT_DIR = $${CHIPTUNE_ROOT_DIR}/qt
+CHIPTUNE_QT_SYNTHESIZER_DIR = $${CHIPTUNE_QT_DIR}/synthesizer
+RTMIDI_DIR = $${CHIPTUNE_QT_SYNTHESIZER_DIR}/rtmidi
+
+INCLUDEPATH += $${CHIPTUNE_ROOT_DIR}
+INCLUDEPATH += $${CHIPTUNE_QT_DIR}
+INCLUDEPATH += $${CHIPTUNE_QT_SYNTHESIZER_DIR}
+INCLUDEPATH += $${RTMIDI_DIR}
+
+SOURCES += \
+    $${CHIPTUNE_ROOT_DIR}/chiptune.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_midi_note_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_midi_effect_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_midi_control_change_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_envelope_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_event_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_oscillator_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_channel_controller_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.c \
+    $${CHIPTUNE_ROOT_DIR}/mid_reader/mid_reader.c \
+    $${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.cpp \
+    $${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp \
+    $${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp \
+    $${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.cpp \
+    $${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.cpp \
+    $${CHIPTUNE_QT_DIR}/TuneManager.cpp \
+    $${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp \
+    $${CHIPTUNE_QT_DIR}/AudioPlayer.cpp \
+    $${CHIPTUNE_QT_DIR}/WaveChartView.cpp \
+    $${CHIPTUNE_ROOT_DIR}/mid_reader/qt/MidSong.cpp \
+    $${CHIPTUNE_QT_SYNTHESIZER_DIR}/ChiptuneMidiSynthesizerWidget.cpp \
+    $${CHIPTUNE_QT_SYNTHESIZER_DIR}/MidiInputManager.cpp \
+    $${CHIPTUNE_QT_SYNTHESIZER_DIR}/SynthesizerSequencerWidget.cpp \
+    $${RTMIDI_DIR}/RtMidi.cpp \
+    $${RTMIDI_DIR}/rtmidi_c.cpp \
+    $${CHIPTUNE_QT_SYNTHESIZER_DIR}/main.cpp \
+
+HEADERS += \
+    $${CHIPTUNE_ROOT_DIR}/chiptune.h \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_midi_note_internal.h \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_midi_effect_internal.h \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_midi_control_change_internal.h \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_envelope_internal.h \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_event_internal.h \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_oscillator_internal.h \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_channel_controller_internal.h \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.h \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.h \
+    $${CHIPTUNE_ROOT_DIR}/chiptune_midi_define.h \
+    $${CHIPTUNE_ROOT_DIR}/mid_reader/mid_reader.h \
+    $${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.h \
+    $${CHIPTUNE_QT_DIR}/ChannelListWidget.h \
+    $${CHIPTUNE_QT_DIR}/ChannelNodeWidget.h \
+    $${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.h \
+    $${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h \
+    $${CHIPTUNE_QT_DIR}/TuneManager.h \
+    $${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.h \
+    $${CHIPTUNE_QT_DIR}/AudioPlayer.h \
+    $${CHIPTUNE_QT_DIR}/WaveChartView.h \
+    $${CHIPTUNE_ROOT_DIR}/mid_reader/qt/MidSong.h \
+    $${CHIPTUNE_QT_SYNTHESIZER_DIR}/ChiptuneMidiSynthesizerWidget.h \
+    $${CHIPTUNE_QT_SYNTHESIZER_DIR}/MidiInputManager.h \
+    $${CHIPTUNE_QT_SYNTHESIZER_DIR}/SynthesizerSequencerWidget.h \
+    $${RTMIDI_DIR}/RtMidi.h \
+    $${RTMIDI_DIR}/rtmidi_c.h \
+
+FORMS += \
+    $${CHIPTUNE_QT_DIR}/ChannelListWidgetForm.ui \
+    $${CHIPTUNE_QT_DIR}/ChannelNodeWidgetForm.ui \
+    $${CHIPTUNE_QT_DIR}/MelodicTimbreFrameForm.ui \
+    $${CHIPTUNE_QT_SYNTHESIZER_DIR}/ChiptuneMidiSynthesizerWidgetForm.ui
+
+
+# Default rules for deployment.
+qnx: target.path = /tmp/$${TARGET}/bin
+else: unix:!android: target.path = /opt/$${TARGET}/bin
+!isEmpty(target.path): INSTALLS += target
+
+win32{
+    RC_FILE = $${CHIPTUNE_QT_SYNTHESIZER_DIR}/ChiptuneMIDISynthesizer.rc
+    DEFINES += __WINDOWS_MM__
+    LIBS += -lwinmm
+    VERSION = 0.1.0.0
+    QMAKE_TARGET_PRODUCT = "ChiptuneMIDISynthesizer"
+    QMAKE_TARGET_DESCRIPTION = "ChiptuneMIDISynthesizer: Play live MIDI input as chiptune music"
+    QMAKE_TARGET_COPYRIGHT = "Copyright 2026 by Chen Gaiger"
+}
+
+ICONS_SRC = $$absolute_path($$CHIPTUNE_QT_DIR/icons, $$PWD)
+ICONS_DST = $$OUT_PWD/icons
+
+QMAKE_POST_LINK += $$QMAKE_COPY_DIR $$shell_path($$ICONS_SRC) $$shell_path($$ICONS_DST) && echo Copied icons directory

@@ -1,6 +1,7 @@
 #include <QThread>
 #include <QComboBox>
 #include <QDateTime>
+#include <QDebug>
 #include <QGridLayout>
 #include <QList>
 #include <QMap>

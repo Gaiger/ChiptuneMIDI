@@ -1,6 +1,6 @@
 #include <windows.h>
 
-IDI_ICON1	ICON	DISCARDABLE	"../chiptune.ico"
+IDI_ICON1	ICON	DISCARDABLE	"chiptune_player.ico"
 
 VS_VERSION_INFO VERSIONINFO
 	FILEVERSION 0,0,10,0
