@@ -262,7 +262,7 @@ void ChiptuneMidiSynthesizerWidget::UpdateInputPortComboBoxItems(void)
 			ui->InputPortComboBox->clear();
 			ui->InputPortComboBox->setEnabled(false);
 			if(true == is_input_port_still_checked){
-				SendAllSoundOffMessages();
+				SendAllNotesOffMessages();
 				m_p_midi_input_manager->ClosePort();
 			}
 			break;
@@ -282,12 +282,12 @@ void ChiptuneMidiSynthesizerWidget::UpdateInputPortComboBoxItems(void)
 }
 
 /**********************************************************************************/
-void ChiptuneMidiSynthesizerWidget::SendAllSoundOffMessages(void)
+void ChiptuneMidiSynthesizerWidget::SendAllNotesOffMessages(void)
 {
 	for(int channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; channel_index++){
 		uint32_t const midi_message =
 				(uint32_t)(MIDI_MESSAGE_CONTROL_CHANGE | channel_index)
-				| ((uint32_t)MIDI_CC_ALL_SOUND_OFF << 8);
+				| ((uint32_t)MIDI_CC_ALL_NOTES_OFF << 8);
 		m_p_tune_manager->SendMidiMessage(midi_message);
 		UpdateIndicatorsAndSequencerByMidiMessage(midi_message);
 	}
@@ -766,7 +766,7 @@ void ChiptuneMidiSynthesizerWidget::on_OpenCloseInputPortPushButton_toggled(bool
 		}
 
 		if(false == is_checked){
-			SendAllSoundOffMessages();
+			SendAllNotesOffMessages();
 			m_p_midi_input_manager->ClosePort();
 			break;
 		}
