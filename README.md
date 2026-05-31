@@ -4,9 +4,6 @@
 <!--- Short introduction of the project. -->
 ChiptuneMIDI is a chiptune engine that interprets MIDI messages as retro 8-bit-style sound, with pull and push modes for playback and live input, respectively.  
 It also provides Qt front-ends for MIDI file playback and live MIDI input, plus a Qt-based library for simple MIDI-message-driven sound output.
-![ChiptuneMIDI Screenshot](screenshot.png)
-
-<!-- TODO: add a synthesizer screenshot after the live MIDI input UI is ready for release. -->
 
 ## Demo
 - [梁靜茹 如果有一天 — ChiptuneMIDI cover](https://www.youtube.com/watch?v=3lz47rfHsxA)  
@@ -30,13 +27,20 @@ It also provides Qt front-ends for MIDI file playback and live MIDI input, plus 
 ### Applications (Qt GUI)
 Both Qt GUI applications can configure waveforms, ADSR envelopes, and melodic channel timbres, and can load/store melodic channel timbres through `instrument_timbres.ini`.
 
-- ChiptuneMIDI Player
-  - Plays MIDI files directly with retro 8-bit sound
-  - Shows a score-like visual note sequencer for loaded MIDI files
-  - Exports audio output as `.wav`
-- ChiptuneMIDI Synthesizer
-  - Plays live MIDI input from an external MIDI controller with retro 8-bit sound
-  - Shows live notes with waterfall and roll sequencer modes
+#### ChiptuneMIDI Player
+
+![ChiptuneMIDI Player screenshot](docs/images/player_screenshot.png)
+
+- Plays MIDI files directly with retro 8-bit sound
+- Shows a score-like visual note sequencer for loaded MIDI files
+- Exports audio output as `.wav`
+
+#### ChiptuneMIDI Synthesizer
+
+![ChiptuneMIDI Synthesizer screenshot](docs/images/synthesizer_screenshot.png)
+
+- Plays live MIDI input from an external MIDI controller with retro 8-bit sound
+- Shows live notes with waterfall and roll sequencer modes
 
 ### Convenience Qt MIDI Output Library
 - ChiptuneMIDI MidiOut
