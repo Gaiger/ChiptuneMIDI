@@ -11,6 +11,10 @@ extern "C"
 {
 #endif
 
+void chiptune_get_version(uint8_t * const p_major_version,
+						  uint8_t * const p_minor_version,
+						  uint8_t * const p_micro_version);
+
 typedef void (*chiptune_lock_callback_t)(bool const is_to_lock);
 void chiptune_set_lock_callback(chiptune_lock_callback_t const lock_callback);
 

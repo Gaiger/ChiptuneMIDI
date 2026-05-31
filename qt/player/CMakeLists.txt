@@ -44,6 +44,7 @@ set(ENGINE
     ${CHIPTUNE_ROOT_DIR}/chiptune_channel_controller_internal.h
     ${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.h
     ${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune_version_internal.h
     ${CHIPTUNE_ROOT_DIR}/chiptune_midi_define.h
 )
 

@@ -119,7 +119,6 @@ extern "C" int get_midi_message(uint32_t const message_index, uint32_t * const p
 }
 
 /**********************************************************************************/
-
 TuneManager::TuneManager(bool const is_stereo,
 						 int const sampling_rate, int const sampling_size,
 						 QObject *parent)
@@ -273,19 +272,15 @@ void TuneManager::SubmitWaveGeneration(int const size, bool const is_synchronize
 }
 
 /**********************************************************************************/
-
 int TuneManager::GetNumberOfChannels(void){return m_p_private->m_number_of_channels; }
 
 /**********************************************************************************/
-
 int TuneManager::GetSamplingRate(void){ return m_p_private->m_sampling_rate; }
 
 /**********************************************************************************/
-
 int TuneManager::GetSamplingSize(void){ return m_p_private->m_sampling_size; }
 
 /**********************************************************************************/
-
 QByteArray TuneManager::FetchWave(int const size)
 {
 	if(size > m_p_private->m_wave_prebuffer_size){
@@ -574,5 +569,16 @@ int TuneManager::SetMelodicChannelTimbre(int8_t const channel_index,
 											  envelope_damper_sustain_level,
 											  envelope_damper_sustain_curve,
 											  envelope_damper_sustain_duration_in_seconds);
+}
+
+/**********************************************************************************/
+QString TuneManager::GetChiptuneEngineVersionString(void)
+{
+	uint8_t major_version = 0;
+	uint8_t minor_version = 0;
+	uint8_t micro_version = 0;
+	chiptune_get_version(&major_version, &minor_version, &micro_version);
+
+	return QStringLiteral("%1.%2.%3").arg(major_version).arg(minor_version).arg(micro_version);
 }
 

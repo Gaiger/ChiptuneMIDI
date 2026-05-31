@@ -11,6 +11,7 @@
 #include "chiptune_channel_controller_internal.h"
 #include "chiptune_event_internal.h"
 #include "chiptune_envelope_internal.h"
+#include "chiptune_version_internal.h"
 
 #include "chiptune_midi_note_internal.h"
 #include "chiptune_midi_control_change_internal.h"
@@ -1222,6 +1223,23 @@ static uint32_t s_reduce_amplitude_normalization_divisor_sample_number = (UINT16
 													}while(0)
 #define REDUCE_AMPLITUDE_NORMALIZATION_DIVISOR_SAMPLE_NUMBER() \
 													((uint32_t const)s_reduce_amplitude_normalization_divisor_sample_number)
+
+/**********************************************************************************/
+
+void chiptune_get_version(uint8_t * const p_major_version,
+						  uint8_t * const p_minor_version,
+						  uint8_t * const p_micro_version)
+{
+	if(NULL != p_major_version){
+		*p_major_version = CHIPTUNE_VERSION_MAJOR;
+	}
+	if(NULL != p_minor_version){
+		*p_minor_version = CHIPTUNE_VERSION_MINOR;
+	}
+	if(NULL != p_micro_version){
+		*p_micro_version = CHIPTUNE_VERSION_MICRO;
+	}
+}
 
 /**********************************************************************************/
 

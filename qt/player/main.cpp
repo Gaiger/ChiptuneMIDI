@@ -35,6 +35,7 @@ int main(int argc, char* argv[])
 	_putenv("QT_AUTO_SCREEN_SCALE_FACTOR=0");
 #endif
 	QApplication app(argc, argv);
+	qInfo() << "ChiptuneMIDI engine version =" << TuneManager::GetChiptuneEngineVersionString();
 
 	int sampling_rate = 44100;
 #ifdef _DEBUG

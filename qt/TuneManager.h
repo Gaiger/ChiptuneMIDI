@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QMutex>
+#include <QString>
 
 class MidSong;
 class TuneManagerPrivate;
@@ -18,6 +19,9 @@ class MidiMessageProvider
 class TuneManager : public QObject
 {
 	Q_OBJECT
+public:
+	static QString GetChiptuneEngineVersionString(void);
+
 public:
 	enum SamplingSize
 	{
