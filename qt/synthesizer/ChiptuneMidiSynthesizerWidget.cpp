@@ -193,10 +193,8 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 					 this, &ChiptuneMidiSynthesizerWidget::HandleMidiMessageDelivered, Qt::QueuedConnection);
 
 	UpdateInputPortComboBoxItems();
-	if(false == m_p_midi_input_manager->IsPortOpen()){
-		m_inquiry_midi_input_port_timer_id =
-				QObject::startTimer(SYNTHESIZER_MIDI_INPUT_PORT_INQUIRY_INTERVAL_IN_MILLISECONDS);
-	}
+	m_inquiry_midi_input_port_timer_id =
+			QObject::startTimer(SYNTHESIZER_MIDI_INPUT_PORT_INQUIRY_INTERVAL_IN_MILLISECONDS);
 }
 
 /**********************************************************************************/
@@ -258,20 +256,15 @@ void ChiptuneMidiSynthesizerWidget::UpdateInputPortComboBoxItems(void)
 		if(true == midi_input_port_name_list.isEmpty()){
 			bool const is_input_port_still_checked =
 					ui->OpenCloseInputPortPushButton->isChecked();
-			if(true == is_input_port_still_checked){
-				for(int channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; channel_index++){
-					uint32_t const midi_message =
-							(uint32_t)(MIDI_MESSAGE_CONTROL_CHANGE | channel_index)
-							| ((uint32_t)MIDI_CC_ALL_SOUND_OFF << 8);
-					m_p_tune_manager->SendMidiMessage(midi_message);
-					UpdateIndicatorsAndSequencerByMidiMessage(midi_message);
-				}
-				m_p_midi_input_manager->ClosePort();
-			}
 			ui->OpenCloseInputPortPushButton->setChecked(false);
 			ui->OpenCloseInputPortPushButton->setText("Open");
 			ui->OpenCloseInputPortPushButton->setEnabled(false);
+			ui->InputPortComboBox->clear();
 			ui->InputPortComboBox->setEnabled(false);
+			if(true == is_input_port_still_checked){
+				SendAllSoundOffMessages();
+				m_p_midi_input_manager->ClosePort();
+			}
 			break;
 		}
 		if(GetComboBoxItemList(ui->InputPortComboBox) != midi_input_port_name_list){
@@ -286,6 +279,18 @@ void ChiptuneMidiSynthesizerWidget::UpdateInputPortComboBoxItems(void)
 		}
 		ui->OpenCloseInputPortPushButton->setEnabled(true);
 	}while(0);
+}
+
+/**********************************************************************************/
+void ChiptuneMidiSynthesizerWidget::SendAllSoundOffMessages(void)
+{
+	for(int channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; channel_index++){
+		uint32_t const midi_message =
+				(uint32_t)(MIDI_MESSAGE_CONTROL_CHANGE | channel_index)
+				| ((uint32_t)MIDI_CC_ALL_SOUND_OFF << 8);
+		m_p_tune_manager->SendMidiMessage(midi_message);
+		UpdateIndicatorsAndSequencerByMidiMessage(midi_message);
+	}
 }
 
 /**********************************************************************************/
@@ -761,6 +766,7 @@ void ChiptuneMidiSynthesizerWidget::on_OpenCloseInputPortPushButton_toggled(bool
 		}
 
 		if(false == is_checked){
+			SendAllSoundOffMessages();
 			m_p_midi_input_manager->ClosePort();
 			break;
 		}
@@ -776,19 +782,6 @@ void ChiptuneMidiSynthesizerWidget::on_OpenCloseInputPortPushButton_toggled(bool
 	if(nullptr != m_p_midi_input_manager){
 		if(true == m_p_midi_input_manager->IsPortOpen()){
 			is_port_opened = true;
-		}
-	}
-
-	if(true == is_port_opened){
-		if(-1 != m_inquiry_midi_input_port_timer_id){
-			QObject::killTimer(m_inquiry_midi_input_port_timer_id);
-			m_inquiry_midi_input_port_timer_id = -1;
-		}
-	}
-	else {
-		if(-1 == m_inquiry_midi_input_port_timer_id){
-			m_inquiry_midi_input_port_timer_id =
-					QObject::startTimer(SYNTHESIZER_MIDI_INPUT_PORT_INQUIRY_INTERVAL_IN_MILLISECONDS);
 		}
 	}
 
