@@ -255,6 +255,25 @@ void ChiptuneMidiSynthesizerWidget::UpdateInputPortComboBoxItems(void)
 			break;
 		}
 		QStringList const midi_input_port_name_list = m_p_midi_input_manager->GetPortNameList();
+		if(true == midi_input_port_name_list.isEmpty()){
+			bool const is_input_port_still_checked =
+					ui->OpenCloseInputPortPushButton->isChecked();
+			if(true == is_input_port_still_checked){
+				for(int channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; channel_index++){
+					uint32_t const midi_message =
+							(uint32_t)(MIDI_MESSAGE_CONTROL_CHANGE | channel_index)
+							| ((uint32_t)MIDI_CC_ALL_SOUND_OFF << 8);
+					m_p_tune_manager->SendMidiMessage(midi_message);
+					UpdateIndicatorsAndSequencerByMidiMessage(midi_message);
+				}
+				m_p_midi_input_manager->ClosePort();
+			}
+			ui->OpenCloseInputPortPushButton->setChecked(false);
+			ui->OpenCloseInputPortPushButton->setText("Open");
+			ui->OpenCloseInputPortPushButton->setEnabled(false);
+			ui->InputPortComboBox->setEnabled(false);
+			break;
+		}
 		if(GetComboBoxItemList(ui->InputPortComboBox) != midi_input_port_name_list){
 			qInfo() << "MIDI input ports:" << midi_input_port_name_list;
 			QString const selected_port_name_string = ui->InputPortComboBox->currentText();
@@ -265,6 +284,7 @@ void ChiptuneMidiSynthesizerWidget::UpdateInputPortComboBoxItems(void)
 				ui->InputPortComboBox->setCurrentIndex(selected_port_index);
 			}
 		}
+		ui->OpenCloseInputPortPushButton->setEnabled(true);
 	}while(0);
 }
 
@@ -282,6 +302,13 @@ void ChiptuneMidiSynthesizerWidget::HandleAudioPlayerStateChanged(AudioPlayer::P
 
 /**********************************************************************************/
 void ChiptuneMidiSynthesizerWidget::HandleMidiMessageDelivered(uint32_t midi_message)
+{
+	UpdateIndicatorsAndSequencerByMidiMessage(midi_message);
+}
+
+/**********************************************************************************/
+void ChiptuneMidiSynthesizerWidget::UpdateIndicatorsAndSequencerByMidiMessage(
+		uint32_t const midi_message)
 {
 	qint64 const current_timestamp_in_ms = QDateTime::currentMSecsSinceEpoch();
 	uint8_t const status_byte = (uint8_t)(midi_message & 0xFF);
