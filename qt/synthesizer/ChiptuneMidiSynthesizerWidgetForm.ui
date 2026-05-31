@@ -239,8 +239,62 @@ color: rgb(208, 208, 208);
      <x>880</x>
      <y>40</y>
      <width>356</width>
-     <height>716</height>
+     <height>684</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="PitchShiftSpinBox">
+   <property name="geometry">
+    <rect>
+     <x>1108</x>
+     <y>732</y>
+     <width>52</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::ClickFocus</enum>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
+   <property name="minimum">
+    <number>-12</number>
+   </property>
+   <property name="maximum">
+    <number>12</number>
+    </property>
+   </widget>
+  <widget class="QLabel" name="TransposeLabel">
+   <property name="geometry">
+    <rect>
+     <x>1016</x>
+     <y>732</y>
+     <width>88</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
+   <property name="text">
+    <string>Transpose</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="TransposeUnitLabel">
+   <property name="geometry">
+    <rect>
+     <x>1164</x>
+     <y>732</y>
+     <width>72</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+   </property>
+   <property name="text">
+    <string>semitones</string>
    </property>
   </widget>
   <widget class="QPushButton" name="LoadTimbresPushButton">

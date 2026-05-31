@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QGridLayout>
 #include <QList>
+#include <QLineEdit>
 #include <QMap>
 #include <QMessageBox>
 #include <QPair>
@@ -159,6 +160,8 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 
 	ui->SequencerWaterfallPushButton->setToolTip(tr("Show the live sequencer in waterfall mode"));
 	ui->SequencerRollPushButton->setToolTip(tr("Show the live sequencer in roll mode"));
+	QLineEdit *p_lineEdit = ui->PitchShiftSpinBox->findChild<QLineEdit *>();
+	p_lineEdit->setReadOnly(true);
 	ui->LoadTimbresPushButton->setToolTip(tr("Load instrument timbre parameters from %1")
 										  .arg(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING));
 	ui->StoreTimbresPushButton->setToolTip(tr("Store instrument timbre parameters for output-enabled channels to %1")
@@ -420,6 +423,17 @@ void ChiptuneMidiSynthesizerWidget::timerEvent(QTimerEvent *event)
 void ChiptuneMidiSynthesizerWidget::HandleChannelOutputEnabled(int channel_index, bool is_enabled)
 {
 	m_p_tune_manager->SetChannelOutputEnabled(channel_index, is_enabled);
+}
+
+/**********************************************************************************/
+void ChiptuneMidiSynthesizerWidget::on_PitchShiftSpinBox_valueChanged(int i)
+{
+	ui->PitchShiftSpinBox->setPrefix("");
+	if(i > 0){
+		ui->PitchShiftSpinBox->setPrefix("+");
+	}
+
+	m_p_tune_manager->SetPitchShift((int8_t)i);
 }
 
 /**********************************************************************************/
