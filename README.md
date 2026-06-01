@@ -25,7 +25,7 @@ It also provides Qt front-ends for MIDI file playback and live MIDI input, plus 
 - Exports audio samples (8-bit/16-bit) for any backend
 
 ### Applications (Qt GUI)
-Both Qt GUI applications can configure waveforms, ADSR envelopes, and melodic channel timbres, and can load/store melodic channel timbres through `instrument_timbres.ini`.
+The Qt Player and Synthesizer expose melodic timbre customization through the GUI and can load/store timbres with `instrument_timbres.ini`.
 
 #### ChiptuneMIDI Player
 
@@ -85,7 +85,6 @@ You can build the Qt applications in two ways:
 1. Open one of these projects in QtCreator:
    - `qt/player/qt5_qmake_project/ChiptuneMIDIPlayer.pro`
    - `qt/synthesizer/qt5_qmake_project/ChiptuneMIDISynthesizer.pro`
-   - `qt/midi_out/qt5_qmake_project/ChiptuneMidiOut.pro`
    - `qt/midi_out/example/qt5_qmake_project/ChiptuneMidiOutExample.pro`
 2. Build and run
 
