@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <stdio.h>
 #include <signal.h>
 
@@ -96,8 +100,21 @@ static void usage(char const *p_program_name)
 }
 
 /**********************************************************************************/
+#ifdef Q_OS_WIN
+// Place here to avoid GetMessage being replaced.
+#include <windows.h>
+#endif
+
 int main(int argc, char *argv[])
 {
+#ifdef Q_OS_WIN
+	if (AttachConsole(ATTACH_PARENT_PROCESS) /*|| AllocConsole()*/){
+		freopen("CONOUT$", "w", stdout);
+		freopen("CONOUT$", "w", stderr);
+		freopen("CONIN$", "r", stdin);
+	}
+	setvbuf(stdout, NULL, _IONBF, 0);
+#endif
 	QCoreApplication application(argc, argv);
 	qInfo() << "ChiptuneMIDI engine version ="
 			<< qPrintable(ChiptuneMidiOut::GetChiptuneEngineVersionString());

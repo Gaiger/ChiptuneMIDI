@@ -83,8 +83,10 @@ You can build the Qt applications in two ways:
 
 ### Option B: qmake (Qt5 only)
 1. Open one of these projects in QtCreator:
-   - `qt/player/qt5_qmake_project/ChiptuneMIDI.pro`
-   - `qt/synthesizer/qt5_qmake_project/ChiptuneMIDI.pro`
+   - `qt/player/qt5_qmake_project/ChiptuneMIDIPlayer.pro`
+   - `qt/synthesizer/qt5_qmake_project/ChiptuneMIDISynthesizer.pro`
+   - `qt/midi_out/qt5_qmake_project/ChiptuneMidiOut.pro`
+   - `qt/midi_out/example/qt5_qmake_project/ChiptuneMidiOutExample.pro`
 2. Build and run
 
 ## Usage
