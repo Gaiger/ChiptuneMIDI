@@ -26,6 +26,13 @@ public:
 
 /**********************************************************************************/
 
+QString ChiptuneMidiOut::GetChiptuneEngineVersionString(void)
+{
+	return TuneManager::GetChiptuneEngineVersionString();
+}
+
+/**********************************************************************************/
+
 ChiptuneMidiOut::ChiptuneMidiOut(bool const is_stereo,
 								 int const sampling_rate,
 								 int const sampling_size,

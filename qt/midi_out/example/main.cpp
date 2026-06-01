@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QFileInfo>
+#include <QDebug>
 #include <QtGlobal>
 #include <QString>
 #include <QStringList>
@@ -98,6 +99,9 @@ static void usage(char const *p_program_name)
 int main(int argc, char *argv[])
 {
 	QCoreApplication application(argc, argv);
+	qInfo() << "ChiptuneMIDI engine version ="
+			<< qPrintable(ChiptuneMidiOut::GetChiptuneEngineVersionString());
+
 	MidSong mid_song;
 	if(1 == argc){
 		usage(argv[0]);

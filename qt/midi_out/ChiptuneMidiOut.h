@@ -3,10 +3,15 @@
 
 #include <stdint.h>
 
+#include <QString>
+
 class ChiptuneMidiOutPrivate;
 
 class ChiptuneMidiOut
 {
+public:
+	static QString GetChiptuneEngineVersionString(void);
+
 public:
 	explicit ChiptuneMidiOut(bool const is_stereo = true,
 							 int const sampling_rate = 44100,
