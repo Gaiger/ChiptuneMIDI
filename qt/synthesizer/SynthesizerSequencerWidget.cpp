@@ -153,7 +153,7 @@ void NoteNameWidget::paintEvent(QPaintEvent * const event)
 #define DRAW_NOTE_UNBOUNDED_END_TIMESTAMP_IN_MS		(INT64_MAX)
 
 #define WATERFALL_ONE_SECOND_HEIGHT					(128)
-#define ROLL_ONE_SECOND_WIDTH						(128)
+#define ROLL_ONE_SECOND_WIDTH						(168)
 
 #define NOTE_DURATION_RECTANGLE_OVERSCAN			(4)
 
