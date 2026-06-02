@@ -51,6 +51,36 @@ NoteNameWidget::NoteNameWidget(int drawn_highest_pitch, QWidget *parent)
 NoteNameWidget::~NoteNameWidget(void) { }
 
 /**********************************************************************************/
+static QString GetNoteNameString(int const note_number,
+								 bool const is_enharmonic_separated_by_newline)
+{
+	char const * const p_note_name_format_list[12] = {
+		"C%1",
+		"C#%1%2Db%1",
+		"D%1",
+		"D#%1%2Eb%1",
+		"E%1",
+		"F%1",
+		"F#%1%2Gb%1",
+		"G%1",
+		"G#%1%2Ab%1",
+		"A%1",
+		"A#%1%2Bb%1",
+		"B%1",
+	};
+
+	int const note_index = note_number % 12;
+	int const octave_index = note_number / 12 - 1;
+	QString enharmonic_separator = "\n";
+	if(false == is_enharmonic_separated_by_newline){
+		enharmonic_separator = "/";
+	}
+	return QString(p_note_name_format_list[note_index])
+			.arg(octave_index)
+			.arg(enharmonic_separator);
+}
+
+/**********************************************************************************/
 
 void NoteNameWidget::paintEvent(QPaintEvent *event)
 {
@@ -82,32 +112,14 @@ void NoteNameWidget::paintEvent(QPaintEvent *event)
 	//font.setBold(true);
 	painter.setFont(font);
 
-	painter.drawText( QPoint(ONE_NAME_WIDTH*1/8, (QWidget::height() - ONE_NAME_HEIGHT + ONE_NAME_HEIGHT*2/3)), "A0");
-	painter.drawText( QPoint(ONE_NAME_WIDTH*1/8, (QWidget::height() - 2 * ONE_NAME_HEIGHT + ONE_NAME_HEIGHT*2/3)), "A#0/Bb0");
-	painter.drawText( QPoint(ONE_NAME_WIDTH*1/8, (QWidget::height() - 3 * ONE_NAME_HEIGHT + ONE_NAME_HEIGHT*2/3)), "B0");
-
-	QList<QString> note_name_string_list;
-	note_name_string_list.append("C1");
-	note_name_string_list.append("C#1/Db1");
-	note_name_string_list.append("D1");
-	note_name_string_list.append("D#1/Eb1");
-	note_name_string_list.append("E1");
-	note_name_string_list.append("F1");
-	note_name_string_list.append("F#1/Gb1");
-	note_name_string_list.append("G1");
-	note_name_string_list.append("G#1/Ab1");
-	note_name_string_list.append("A1");
-	note_name_string_list.append("A#1/Bb1");
-	note_name_string_list.append("B1");
-
-	int kk = 0;
-	for(int i = 3; i < (m_drawn_highest_pitch -  A0 + 1); i++){
-		QString note_name_string = note_name_string_list.at(kk % 12);
-		QString number_string = QString::number(kk / 12 + 1);
-		note_name_string.replace("1", number_string);
-		painter.drawText( QPoint(ONE_NAME_WIDTH*1/8, (QWidget::height() - (4 + kk) * ONE_NAME_HEIGHT + ONE_NAME_HEIGHT*3/4) + ADDITIONAL_FONT_POINT_SIZE/2),
-						  note_name_string);
-		kk += 1;
+	for(int note_number = A0; note_number <= m_drawn_highest_pitch; note_number++){
+		int const index = m_drawn_highest_pitch - note_number;
+		QString const note_name_string = GetNoteNameString(note_number, false);
+		painter.drawText(QPoint(ONE_NAME_WIDTH * 1 / 8,
+								index * ONE_NAME_HEIGHT
+								+ ONE_NAME_HEIGHT * 3 / 4
+								+ ADDITIONAL_FONT_POINT_SIZE / 2),
+						 note_name_string);
 	}
 }
 

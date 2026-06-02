@@ -71,25 +71,33 @@ void NoteNameWidget::SetViewMode(SynthesizerSequencerWidget::ViewMode const view
 }
 
 /**********************************************************************************/
-static QString GetNoteNameString(int const note_number)
+static QString GetNoteNameString(int const note_number,
+								 bool const is_enharmonic_separated_by_newline)
 {
-	QList<QString> note_name_string_list;
-	note_name_string_list.append("C%1");
-	note_name_string_list.append("C#%1\nDb%1");
-	note_name_string_list.append("D%1");
-	note_name_string_list.append("D#%1\nEb%1");
-	note_name_string_list.append("E%1");
-	note_name_string_list.append("F%1");
-	note_name_string_list.append("F#%1\nGb%1");
-	note_name_string_list.append("G%1");
-	note_name_string_list.append("G#%1\nAb%1");
-	note_name_string_list.append("A%1");
-	note_name_string_list.append("A#%1\nBb%1");
-	note_name_string_list.append("B%1");
+	char const * const p_note_name_format_list[12] = {
+		"C%1",
+		"C#%1%2Db%1",
+		"D%1",
+		"D#%1%2Eb%1",
+		"E%1",
+		"F%1",
+		"F#%1%2Gb%1",
+		"G%1",
+		"G#%1%2Ab%1",
+		"A%1",
+		"A#%1%2Bb%1",
+		"B%1",
+	};
 
 	int const note_index = note_number % 12;
 	int const octave_index = note_number / 12 - 1;
-	return note_name_string_list.at(note_index).arg(octave_index);
+	QString enharmonic_separator = "\n";
+	if(false == is_enharmonic_separated_by_newline){
+		enharmonic_separator = "/";
+	}
+	return QString(p_note_name_format_list[note_index])
+			.arg(octave_index)
+			.arg(enharmonic_separator);
 }
 
 
@@ -134,10 +142,12 @@ void NoteNameWidget::paintEvent(QPaintEvent * const event)
 		}
 		painter.drawRect(note_name_rect);
 
-		QString note_name_string = GetNoteNameString(note_number);
+		bool is_enharmonic_separated_by_newline = true;
 		if(SynthesizerSequencerWidget::ViewModeRoll == m_view_mode){
-			note_name_string.replace("\n", "/");
+			is_enharmonic_separated_by_newline = false;
 		}
+		QString const note_name_string = GetNoteNameString(note_number,
+														   is_enharmonic_separated_by_newline);
 
 		font.setPointSize(font_point_size);
 		if((SynthesizerSequencerWidget::ViewModeWaterfall == m_view_mode)
