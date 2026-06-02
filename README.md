@@ -106,7 +106,6 @@ You can build the Qt applications in two ways:
   - MIDI from another application: install a virtual MIDI loopback driver, such as [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html), and create or use a virtual port such as the default `loopMIDI Port`. Applications such as [TuxGuitar](https://www.tuxguitar.app/) or [VMPK](https://vmpk.sourceforge.io/) can act as MIDI message providers by sending their MIDI output to that virtual port.
 - Select the MIDI input port from the input port combo box.
 - Click **Open** to route incoming MIDI messages into the chiptune engine, produce chiptune audio in real time, and show live notes in the sequencer.
-- Use the channel timbre controls to adjust melodic channel waveforms and envelopes.
 - Use the sequencer Waterfall/Roll buttons to switch the live note visualization mode.
 
 **Note:** On some Windows systems, a newly created loopMIDI port may not appear until the Windows MIDI Service is restarted, even if it is already visible in the loopMIDI GUI. Open **Task Manager > Services**, restart **midisrv (Windows MIDI Service)**, then open **ChiptuneMIDI Synthesizer** and the application that provides MIDI messages.
