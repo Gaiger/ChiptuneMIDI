@@ -51,8 +51,7 @@ NoteNameWidget::NoteNameWidget(int drawn_highest_pitch, QWidget *parent)
 NoteNameWidget::~NoteNameWidget(void) { }
 
 /**********************************************************************************/
-static QString GetNoteNameString(int const note_number,
-								 bool const is_enharmonic_separated_by_newline)
+static QString GetNoteNameString(int const note_number)
 {
 	char const * const p_note_name_format_list[12] = {
 		"C%1",
@@ -71,13 +70,12 @@ static QString GetNoteNameString(int const note_number,
 
 	int const note_index = note_number % 12;
 	int const octave_index = note_number / 12 - 1;
-	QString enharmonic_separator = "\n";
-	if(false == is_enharmonic_separated_by_newline){
-		enharmonic_separator = "/";
+	QString note_name_string = QString(p_note_name_format_list[note_index])
+			.arg(octave_index);
+	if(true == note_name_string.contains("%2")){
+		note_name_string = note_name_string.arg("/");
 	}
-	return QString(p_note_name_format_list[note_index])
-			.arg(octave_index)
-			.arg(enharmonic_separator);
+	return note_name_string;
 }
 
 /**********************************************************************************/
@@ -114,7 +112,7 @@ void NoteNameWidget::paintEvent(QPaintEvent *event)
 
 	for(int note_number = A0; note_number <= m_drawn_highest_pitch; note_number++){
 		int const index = m_drawn_highest_pitch - note_number;
-		QString const note_name_string = GetNoteNameString(note_number, false);
+		QString const note_name_string = GetNoteNameString(note_number);
 		painter.drawText(QPoint(ONE_NAME_WIDTH * 1 / 8,
 								index * ONE_NAME_HEIGHT
 								+ ONE_NAME_HEIGHT * 3 / 4

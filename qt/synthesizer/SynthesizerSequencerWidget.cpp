@@ -91,13 +91,16 @@ static QString GetNoteNameString(int const note_number,
 
 	int const note_index = note_number % 12;
 	int const octave_index = note_number / 12 - 1;
-	QString enharmonic_separator = "\n";
-	if(false == is_enharmonic_separated_by_newline){
-		enharmonic_separator = "/";
+	QString note_name_string = QString(p_note_name_format_list[note_index])
+			.arg(octave_index);
+	if(true == note_name_string.contains("%2")){
+		QString enharmonic_separator = "\n";
+		if(false == is_enharmonic_separated_by_newline){
+			enharmonic_separator = "/";
+		}
+		note_name_string = note_name_string.arg(enharmonic_separator);
 	}
-	return QString(p_note_name_format_list[note_index])
-			.arg(octave_index)
-			.arg(enharmonic_separator);
+	return note_name_string;
 }
 
 
