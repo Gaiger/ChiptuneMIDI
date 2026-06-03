@@ -17,7 +17,7 @@
 
 #include "chiptune_midi_note_internal.h"
 
-
+/**********************************************************************************/
 static void finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const voice,
 											  midi_value_t const note, normalized_midi_level_t const velocity,
 											  oscillator_t * const p_oscillator)
@@ -31,6 +31,7 @@ static void finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const 
 
 		update_oscillator_phase_increment(p_oscillator);
 		p_oscillator->amplitude = 0;
+
 		p_oscillator->pitch_detune_in_semitones = 0.0;
 		p_oscillator->vibrato_table_index = 0;
 		p_oscillator->vibrato_same_index_count = 0;
@@ -39,7 +40,10 @@ static void finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const 
 		p_oscillator->envelope_same_index_count = 0;
 		p_oscillator->envelope_table_index = 0;
 		p_oscillator->envelope_reference_amplitude = 0;
+
 		p_oscillator->midi_effect_association = MidiEffectNone;
+
+		p_oscillator->is_sostenuto_latched = false;
 	} while(0);
 }
 
@@ -138,16 +142,17 @@ static int process_note_on_message(uint32_t const tick, int8_t const voice,
 }
 
 /**********************************************************************************/
-
 static int process_damper_on_note_off(int16_t const primary_oscillator_index)
 {
-	if(true == IS_PERCUSSION_OSCILLATOR(get_oscillator_pointer_from_index(primary_oscillator_index))){
+	oscillator_t const * const p_primary_oscillator = get_oscillator_pointer_from_index(primary_oscillator_index);
+	if(true == IS_PERCUSSION_OSCILLATOR(p_primary_oscillator)){
 		return -1;
 	}
 
 	channel_controller_t const * const p_channel_controller
-			= get_channel_controller_pointer_from_index(get_oscillator_pointer_from_index(primary_oscillator_index)->voice);
-	if(false == p_channel_controller->is_damper_pedal_on){
+			= get_channel_controller_pointer_from_index(p_primary_oscillator->voice);
+	if(false == p_channel_controller->is_damper_pedal_on
+			&& false == p_primary_oscillator->is_sostenuto_latched){
 		return 1;
 	}
 
@@ -174,7 +179,6 @@ static int process_damper_on_note_off(int16_t const primary_oscillator_index)
 }
 
 /**********************************************************************************/
-
 static int process_note_off_message(uint32_t const tick, int8_t const voice,
 								   midi_value_t const note, normalized_midi_level_t const velocity)
 {
@@ -204,13 +208,11 @@ static int process_note_off_message(uint32_t const tick, int8_t const voice,
 			bool is_damper_take_effect = false;
 			do
 			{
-				if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
-					break;
-				}
 				if(true == IS_RESTING_OR_PREPARE_TO_REST(p_oscillator->state_bits)){
 					break;
 				}
-				if(false == get_channel_controller_pointer_from_index(voice)->is_damper_pedal_on){
+				if(false == get_channel_controller_pointer_from_index(voice)->is_damper_pedal_on
+						&& false == p_oscillator->is_sostenuto_latched){
 					break;
 				}
 				process_damper_on_note_off(oscillator_index);

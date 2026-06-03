@@ -279,7 +279,6 @@ static void process_cc_expression(uint32_t const tick, int8_t const voice, midi_
 }
 
 /**********************************************************************************/
-
 static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	bool is_damper_pedal_on = (value < MIDI_SEVEN_BITS_CENTER_VALUE) ? false : true;
@@ -309,22 +308,76 @@ static void process_cc_damper_pedal(uint32_t const tick, int8_t const voice, mid
 			if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
 				break;
 			}
-
+			if(true == p_oscillator->is_sostenuto_latched){
+				break;
+			}
 			put_event(EventTypeFree, oscillator_index, tick);
-			int16_t expression_added_pressure = p_channel_controller->expression
-					+ EFFECTIVE_PRESSURE_LEVEL(p_channel_controller->pressure);
-
-			int32_t expression_added_pressure_multiply_volume = expression_added_pressure * p_channel_controller->volume;
 			process_effects(tick, EventTypeFree, voice, p_oscillator->note,
-							MULTIPLY_BY_128(p_oscillator->loudness) / ZERO_AS_ONE(expression_added_pressure_multiply_volume),
-							oscillator_index);
+							p_oscillator->velocity, oscillator_index);
 		} while(0);
 		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
 	}
 }
 
 /**********************************************************************************/
+static void process_cc_sostenuto_pedal(uint32_t const tick, int8_t const voice, midi_value_t const value)
+{
+	bool is_sostenuto_pedal_on = (value < MIDI_SEVEN_BITS_CENTER_VALUE) ? false : true;
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_SOSTENUTO_PEDAL(%d) :: voice = %d, %s\r\n",
+					tick, MIDI_CC_SOSTENUTO_PEDAL, voice, is_sostenuto_pedal_on? "on" : "off");
 
+	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	if(is_sostenuto_pedal_on == p_channel_controller->is_sostenuto_pedal_on){
+		return ;
+	}
+
+	p_channel_controller->is_sostenuto_pedal_on = is_sostenuto_pedal_on;
+	int16_t oscillator_index = get_occupied_oscillator_head_index();
+	int16_t const occupied_oscillator_number = get_occupied_oscillator_number();
+	for(int16_t i = 0; i < occupied_oscillator_number; i++){
+		oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(oscillator_index);
+
+		do {
+			if(voice != p_oscillator->voice){
+				break;
+			}
+			if(false == IS_PRIMARY_OSCILLATOR(p_oscillator)){
+				break;
+			}
+			if(true == IS_FREEING_OR_PREPARE_TO_FREE(p_oscillator->state_bits)){
+				break;
+			}
+			if(false == is_sostenuto_pedal_on){
+				do
+				{
+					if(true == p_channel_controller->is_damper_pedal_on){
+						break;
+					}
+					if(false == p_oscillator->is_sostenuto_latched){
+						break;
+					}
+					if(true == IS_NOTE_ON(p_oscillator->state_bits)){
+						break;
+					}
+					put_event(EventTypeFree, oscillator_index, tick);
+					process_effects(tick, EventTypeFree, voice, p_oscillator->note,
+									p_oscillator->velocity, oscillator_index);
+				}while(0);
+
+				p_oscillator->is_sostenuto_latched = false;
+				break;
+			}
+			if(false == IS_NOTE_ON(p_oscillator->state_bits)){
+				break;
+			}
+			p_oscillator->is_sostenuto_latched = true;
+		} while(0);
+
+		oscillator_index = get_occupied_oscillator_next_index(oscillator_index);
+	}
+}
+
+/**********************************************************************************/
 static void process_cc_soft_pedal(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	bool is_soft_pedal_on = (value < MIDI_SEVEN_BITS_CENTER_VALUE) ? false : true;
@@ -509,6 +562,9 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 		break;
 	case MIDI_CC_DAMPER_PEDAL:
 		process_cc_damper_pedal(tick, voice, value);
+		break;
+	case MIDI_CC_SOSTENUTO_PEDAL:
+		process_cc_sostenuto_pedal(tick, voice, value);
 		break;
 	case MIDI_CC_SOFT_PEDAL:
 		process_cc_soft_pedal(tick, voice, value);

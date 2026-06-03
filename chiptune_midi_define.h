@@ -35,6 +35,7 @@
 
 #define MIDI_CC_DAMPER_PEDAL						(64)
 
+#define MIDI_CC_SOSTENUTO_PEDAL						(66)
 #define MIDI_CC_SOFT_PEDAL							(67)
 
 #define MIDI_CC_EFFECT_1							(91)

@@ -32,6 +32,7 @@ typedef struct _oscillator
 union{
 	struct {
 		normalized_midi_level_t velocity;
+		bool			is_sostenuto_latched;
 		uint8_t			envelope_state;
 
 		int8_t const *  p_envelope_table;
