@@ -42,7 +42,7 @@ union{
 		uint16_t		shift_amplitude;
 
 		uint16_t	envelope_reference_amplitude;
-		//uint16_t	envelope_damper_start_amplitude;
+			//uint16_t	envelope_note_off_hold_start_amplitude;
 
 		uint16_t	max_vibrato_phase_increment;
 		uint16_t	vibrato_table_index;

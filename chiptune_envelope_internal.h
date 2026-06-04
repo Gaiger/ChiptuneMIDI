@@ -12,8 +12,8 @@ enum EnvelopeState
 	EnvelopeStateAttack = 0,
 	EnvelopeStateDecay,
 	EnvelopeStateNoteOnSustain,
-	EnvelopeStateDamperSustain,
-	EnvelopeStateDamperEntryRelease,
+	EnvelopeStateNoteOffHoldSustain,
+	EnvelopeStateNoteOffHoldEntryRelease,
 	EnvelopeStateFreeRelease,
 	EnvelopeStateMax,
 };

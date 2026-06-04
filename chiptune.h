@@ -76,9 +76,9 @@ int chiptune_set_melodic_channel_timbre(int8_t const channel_index, int8_t const
 									  int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
 									  uint8_t const envelope_note_on_sustain_level,
 									  int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
-									  uint8_t const envelope_damper_sustain_level,
-									  int8_t const envelope_damper_sustain_curve,
-									  float const envelope_damper_sustain_duration_in_seconds);
+									  uint8_t const envelope_note_off_hold_sustain_level,
+									  int8_t const envelope_note_off_hold_sustain_curve,
+									  float const envelope_note_off_hold_sustain_duration_in_seconds);
 
 #ifdef __cplusplus
 }

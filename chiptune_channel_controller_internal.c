@@ -127,15 +127,14 @@ static void set_decline_curve(int8_t const ** pp_phase_table, int8_t const curve
 }
 
 /**********************************************************************************/
-
 int set_melodic_channel_timbre(int8_t const channel_index, int8_t const waveform, uint16_t const dutycycle_critical_phase,
 									   int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
 									   int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
 									   uint8_t const envelope_note_on_sustain_level,
 									   int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
-									   uint8_t const envelope_damper_sustain_level,
-									   int8_t const envelope_damper_sustain_curve,
-									   float const envelope_damper_sustain_duration_in_seconds)
+									   uint8_t const envelope_note_off_hold_sustain_level,
+									   int8_t const envelope_note_off_hold_sustain_curve,
+									   float const envelope_note_off_hold_sustain_duration_in_seconds)
 {
 	if(MIDI_PERCUSSION_CHANNEL == channel_index){
 		return 1;
@@ -189,34 +188,34 @@ int set_melodic_channel_timbre(int8_t const channel_index, int8_t const waveform
 		ret |= 0x01 << 2;
 	}
 
-	pp_phase_table = &p_channel_controller->p_envelope_damper_sustain_table;
-	set_decline_curve(pp_phase_table, envelope_damper_sustain_curve);
-	p_channel_controller->envelop_damper_sustain_level
-			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(envelope_damper_sustain_level);
-	if(p_channel_controller->envelop_damper_sustain_level
+	pp_phase_table = &p_channel_controller->p_envelope_note_off_hold_sustain_table;
+	set_decline_curve(pp_phase_table, envelope_note_off_hold_sustain_curve);
+	p_channel_controller->envelope_note_off_hold_sustain_level
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(envelope_note_off_hold_sustain_level);
+	if(p_channel_controller->envelope_note_off_hold_sustain_level
 			> p_channel_controller->envelope_note_on_sustain_level){
-		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_sustain_level is greater than "
+		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_note_off_hold_sustain_level is greater than "
 									 "envelope_note_on_sustain_level; clamp to envelope_note_on_sustain_level\r\n");
-		p_channel_controller->envelop_damper_sustain_level
+		p_channel_controller->envelope_note_off_hold_sustain_level
 				= p_channel_controller->envelope_note_on_sustain_level;
 		ret |= 0x01 << 3;
 	}
 
 	do {
-		if(FLT_MAX == envelope_damper_sustain_duration_in_seconds){
-			p_channel_controller->envelope_damper_sustain_same_index_number = UINT16_MAX;
+		if(FLT_MAX == envelope_note_off_hold_sustain_duration_in_seconds){
+			p_channel_controller->envelope_note_off_hold_sustain_same_index_number = UINT16_MAX;
 			break;
 		}
-		uint32_t envelope_damper_sustain_same_index_number
-				= (uint32_t)((sampling_rate * envelope_damper_sustain_duration_in_seconds)
+		uint32_t envelope_note_off_hold_sustain_same_index_number
+				= (uint32_t)((sampling_rate * envelope_note_off_hold_sustain_duration_in_seconds)
 					 / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH + 0.5);
 
-		p_channel_controller->envelope_damper_sustain_same_index_number
-				= (uint16_t)envelope_damper_sustain_same_index_number;
+		p_channel_controller->envelope_note_off_hold_sustain_same_index_number
+				= (uint16_t)envelope_note_off_hold_sustain_same_index_number;
 	} while(0);
 #if(0)
-	if(FLT_MAX == p_channel_controller->envelope_damper_sustain_same_index_number){
-		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_damper_sustain_duration_in_seconds is forever\r\n");
+	if(FLT_MAX == p_channel_controller->envelope_note_off_hold_sustain_same_index_number){
+		CHIPTUNE_PRINTF(cDeveloping, "WARNING :: envelope_note_off_hold_sustain_duration_in_seconds is forever\r\n");
 		ret |= 0x01 << 3;
 	}
 #endif
@@ -225,7 +224,6 @@ int set_melodic_channel_timbre(int8_t const channel_index, int8_t const waveform
 }
 
 /**********************************************************************************/
-
 static void reset_melodic_channel_to_defaults(int8_t const channel_index,
 											  bool is_instrument_to_be_not_specified)
 {
@@ -243,17 +241,17 @@ static void reset_melodic_channel_to_defaults(int8_t const channel_index,
 #define DEFAULT_ENVELOPE_NOTE_ON_SUSTAIN_LEVEL		(96)
 #define DEFAULT_ENVELOPE_RELEASE_CURVE				(EnvelopeCurveExponential)
 #define DEFAULT_ENVELOPE_RELEASE_DURATION_IN_SECOND	(0.03f)
-#define DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_LEVEL	(72)
-#define DEFAULT_ENVELOPE_DAMPER_ON_CURVE			(EnvelopeCurveLinear)
-#define DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_DURATION_IN_SECOND (8.0f)
+#define DEFAULT_ENVELOPE_NOTE_OFF_HOLD_SUSTAIN_LEVEL	(72)
+#define DEFAULT_ENVELOPE_NOTE_OFF_HOLD_CURVE			(EnvelopeCurveLinear)
+#define DEFAULT_ENVELOPE_NOTE_OFF_HOLD_SUSTAIN_DURATION_IN_SECOND (8.0f)
 
 	set_melodic_channel_timbre(channel_index, DEFAULT_WAVEFORM, DEFAULT_WAVEFORM_DUTYCYCLE,
 									  DEFAULT_ENVELOPE_ATTACK_CURVE, DEFAULT_ENVELOPE_ATTACK_DURATION_IN_SECOND,
 									  DEFAULT_ENVELOPE_DECAY_CURVE, DEFAULT_ENVELOPE_DECAY_DURATION_IN_SECOND,
 									  DEFAULT_ENVELOPE_NOTE_ON_SUSTAIN_LEVEL,
 									  DEFAULT_ENVELOPE_RELEASE_CURVE, DEFAULT_ENVELOPE_RELEASE_DURATION_IN_SECOND,
-									  DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_LEVEL, DEFAULT_ENVELOPE_DAMPER_ON_CURVE,
-									  DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_DURATION_IN_SECOND);
+									  DEFAULT_ENVELOPE_NOTE_OFF_HOLD_SUSTAIN_LEVEL, DEFAULT_ENVELOPE_NOTE_OFF_HOLD_CURVE,
+									  DEFAULT_ENVELOPE_NOTE_OFF_HOLD_SUSTAIN_DURATION_IN_SECOND);
 
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[channel_index];
 	midi_value_t instrument_code = CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED;

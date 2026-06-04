@@ -142,7 +142,7 @@ static int process_note_on_message(uint32_t const tick, int8_t const voice,
 }
 
 /**********************************************************************************/
-static int process_damper_on_note_off(int16_t const primary_oscillator_index)
+static int process_note_off_hold(int16_t const primary_oscillator_index)
 {
 	oscillator_t const * const p_primary_oscillator = get_oscillator_pointer_from_index(primary_oscillator_index);
 	if(true == IS_PERCUSSION_OSCILLATOR(p_primary_oscillator)){
@@ -151,8 +151,7 @@ static int process_damper_on_note_off(int16_t const primary_oscillator_index)
 
 	channel_controller_t const * const p_channel_controller
 			= get_channel_controller_pointer_from_index(p_primary_oscillator->voice);
-	if(false == p_channel_controller->is_damper_pedal_on
-			&& false == p_primary_oscillator->is_sostenuto_latched){
+	if(false == IS_NOTE_OFF_HOLD(p_primary_oscillator)){
 		return 1;
 	}
 
@@ -169,9 +168,9 @@ static int process_damper_on_note_off(int16_t const primary_oscillator_index)
 	for(int16_t i = 0; i < cooperative_oscillator_number; i++){
 		oscillator_t * const p_oscillator = get_oscillator_pointer_from_index(cooperative_oscillator_indexes[i]);
 		SET_NOTE_OFF(p_oscillator->state_bits);
-		uint8_t evelope_state = EnvelopeStateDamperEntryRelease;
-		if(p_oscillator->amplitude < calculate_sustain_amplitude(p_oscillator->loudness, p_channel_controller->envelop_damper_sustain_level)){
-			evelope_state = EnvelopeStateDamperSustain;
+		uint8_t evelope_state = EnvelopeStateNoteOffHoldEntryRelease;
+		if(p_oscillator->amplitude < calculate_sustain_amplitude(p_oscillator->loudness, p_channel_controller->envelope_note_off_hold_sustain_level)){
+			evelope_state = EnvelopeStateNoteOffHoldSustain;
 		}
 		switch_melodic_envelope_state(p_oscillator, evelope_state);
 	}
@@ -205,20 +204,19 @@ static int process_note_off_message(uint32_t const tick, int8_t const voice,
 			}
 
 			is_found = true;
-			bool is_damper_take_effect = false;
+			bool is_note_off_hold_applied = false;
 			do
 			{
 				if(true == IS_RESTING_OR_PREPARE_TO_REST(p_oscillator->state_bits)){
 					break;
 				}
-				if(false == get_channel_controller_pointer_from_index(voice)->is_damper_pedal_on
-						&& false == p_oscillator->is_sostenuto_latched){
+				if(false == IS_NOTE_OFF_HOLD(p_oscillator)){
 					break;
 				}
-				process_damper_on_note_off(oscillator_index);
-				is_damper_take_effect = true;
+				process_note_off_hold(oscillator_index);
+				is_note_off_hold_applied = true;
 			}while(0);
-			if(true == is_damper_take_effect){
+			if(true == is_note_off_hold_applied){
 				break;
 			}
 

@@ -180,9 +180,9 @@ static void process_loudness_change(uint32_t const tick, int8_t const voice, mid
 					break;
 				}
 				/*
-				 * NOTE_OFF + damper tail: ignore loudness updates.
+				 * NOTE_OFF + note-off hold tail: ignore loudness updates.
 				 * Reason: loudness-driven envelope adjustment WILL leave the oscillator in a
-				 * state that cannot re-enter EnvelopeStateDamperSustain in the current design.
+				 * state that cannot re-enter EnvelopeStateNoteOffHoldSustain in the current design.
 				 */
 				if(false == IS_NOTE_ON(p_oscillator->state_bits)){
 					break;
@@ -367,7 +367,14 @@ static void process_cc_sostenuto_pedal(uint32_t const tick, int8_t const voice, 
 				p_oscillator->is_sostenuto_latched = false;
 				break;
 			}
+#if(0)
+			/* MIDI semantics: latch only notes that are still Note On. */
 			if(false == IS_NOTE_ON(p_oscillator->state_bits)){
+#else
+			/* Piano semantics: also latch notes currently held by damper. */
+			if(false == IS_NOTE_ON(p_oscillator->state_bits)
+					&& false == p_channel_controller->is_damper_pedal_on){
+#endif
 				break;
 			}
 			p_oscillator->is_sostenuto_latched = true;

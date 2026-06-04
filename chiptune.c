@@ -372,8 +372,7 @@ int chiptune_push_midi_message(uint32_t const message)
 }
 
 /**********************************************************************************/
-
-static int force_free_note_off_but_damper_pedal_on_oscillators(uint32_t const tick)
+static int force_free_note_off_hold_oscillators(uint32_t const tick)
 {
 	int ret = 0;
 	int16_t oscillator_index = get_occupied_oscillator_head_index();
@@ -385,9 +384,7 @@ static int force_free_note_off_but_damper_pedal_on_oscillators(uint32_t const ti
 				break;
 			}
 
-			channel_controller_t const * const p_channel_controller
-					= get_channel_controller_pointer_from_index(p_oscillator->voice);
-			if(false == p_channel_controller->is_damper_pedal_on){
+			if(false == IS_NOTE_OFF_HOLD(p_oscillator)){
 				break;
 			}
 
@@ -401,7 +398,6 @@ static int force_free_note_off_but_damper_pedal_on_oscillators(uint32_t const ti
 }
 
 /**********************************************************************************/
-
 static int force_free_remaining_oscillators(uint32_t const tick)
 {
 	int ret = 0;
@@ -416,9 +412,7 @@ static int force_free_remaining_oscillators(uint32_t const tick)
 				if(true == IS_FREEING(p_oscillator->state_bits)){
 					break;
 				}
-				channel_controller_t const * const p_channel_controller
-						= get_channel_controller_pointer_from_index(p_oscillator->voice);
-				if(true == p_channel_controller->is_damper_pedal_on){
+				if(true == IS_NOTE_OFF_HOLD(p_oscillator)){
 					break;
 				}
 
@@ -435,11 +429,10 @@ static int force_free_remaining_oscillators(uint32_t const tick)
 }
 
 /**********************************************************************************/
-
 int process_ending(uint32_t const tick)
 {
 	int ret = 0;
-	ret += force_free_note_off_but_damper_pedal_on_oscillators(tick);
+	ret += force_free_note_off_hold_oscillators(tick);
 	ret += force_free_remaining_oscillators(tick);
 	if(0 == ret){
 		if(0 != get_occupied_oscillator_number()){
@@ -944,9 +937,7 @@ static int chase_midi_messages(uint32_t const end_midi_message_index,
 					if(true == IS_NOTE_ON(p_oscillator->state_bits)){
 						break;
 					}
-					channel_controller_t const * const p_channel_controller
-							= get_channel_controller_pointer_from_index(p_oscillator->voice);
-					if(false == p_channel_controller->is_damper_pedal_on){
+					if(false == IS_NOTE_OFF_HOLD(p_oscillator)){
 						break;
 					}
 					put_event(EventTypeDeactivate, oscillator_index, CURRENT_TICK());
@@ -1514,15 +1505,14 @@ void chiptune_set_channel_output_enabled(int8_t const channel_index, bool const 
 }
 
 /**********************************************************************************/
-
 int chiptune_set_melodic_channel_timbre(int8_t const channel_index, int8_t const waveform,
 									  int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
 									  int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
 									  uint8_t const envelope_note_on_sustain_level,
 									  int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
-									  uint8_t const envelope_damper_sustain_level,
-									  int8_t const envelope_damper_sustain_curve,
-									  float const envelope_damper_sustain_duration_in_seconds)
+									  uint8_t const envelope_note_off_hold_sustain_level,
+									  int8_t const envelope_note_off_hold_sustain_curve,
+									  float const envelope_note_off_hold_sustain_duration_in_seconds)
 {
 	if( 0 > channel_index  || channel_index >= MIDI_MAX_CHANNEL_NUMBER){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: channel_index = %d is not acceptable for %s\r\n",
@@ -1568,9 +1558,9 @@ int chiptune_set_melodic_channel_timbre(int8_t const channel_index, int8_t const
 									  envelope_decay_curve, envelope_decay_duration_in_seconds,
 									  envelope_note_on_sustain_level,
 									  envelope_release_curve, envelope_release_duration_in_seconds,
-									  envelope_damper_sustain_level,
-									  envelope_damper_sustain_curve,
-									  envelope_damper_sustain_duration_in_seconds);
+									  envelope_note_off_hold_sustain_level,
+									  envelope_note_off_hold_sustain_curve,
+									  envelope_note_off_hold_sustain_duration_in_seconds);
 }
 
 /**********************************************************************************/

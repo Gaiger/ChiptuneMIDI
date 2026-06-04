@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include "chiptune_common_internal.h"
+#include "chiptune_oscillator_internal.h"
 
 #define CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH		(64)
 #define REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(INDEX) \
@@ -91,9 +92,9 @@ typedef struct _channel_controller
 	bool						is_sostenuto_pedal_on;
 	bool						is_soft_pedal_on;
 
-	normalized_midi_level_t 	envelop_damper_sustain_level;
-	int8_t const *				p_envelope_damper_sustain_table;
-	uint16_t					envelope_damper_sustain_same_index_number;
+	normalized_midi_level_t 	envelope_note_off_hold_sustain_level;
+	int8_t const *				p_envelope_note_off_hold_sustain_table;
+	uint16_t					envelope_note_off_hold_sustain_same_index_number;
 
 	uint16_t					registered_parameter_number;
 	uint16_t					registered_parameter_value;
@@ -128,13 +129,17 @@ void synchronize_channel_controllers_to_playing_tempo(void);
 channel_controller_t * get_channel_controller_pointer_from_index(int8_t const channel_index);
 percussion_t const * get_percussion_pointer_from_key(int8_t const percussion_key);
 
+#define IS_NOTE_OFF_HOLD(OSCILLATOR_POINTER) \
+	(get_channel_controller_pointer_from_index((OSCILLATOR_POINTER)->voice)->is_damper_pedal_on \
+	|| (OSCILLATOR_POINTER)->is_sostenuto_latched)
+
 int set_melodic_channel_timbre(int8_t const channel_index, int8_t const waveform, uint16_t const dutycycle_critical_phase,
 									   int8_t const envelope_attack_curve, float const envelope_attack_duration_in_seconds,
 									   int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
 									   uint8_t const envelope_note_on_sustain_level,
 									   int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
-									   uint8_t const envelope_damper_sustain_level,
-									   int8_t const envelope_damper_sustain_curve,
-									   float const envelope_damper_sustain_duration_in_seconds);
+									   uint8_t const envelope_note_off_hold_sustain_level,
+									   int8_t const envelope_note_off_hold_sustain_curve,
+									   float const envelope_note_off_hold_sustain_duration_in_seconds);
 
 #endif // _CHIPTUNE_CHANNEL_CONTROLLER_INTERNAL_H_

@@ -328,15 +328,13 @@ static inline char const * get_event_additional_string(int16_t const event_index
 {
 	oscillator_t const * const p_oscillator
 		= get_oscillator_pointer_from_index(get_event_pointer_from_index(event_index)->oscillator_index);
-	channel_controller_t const * const p_channel_controller =
-			get_channel_controller_pointer_from_index(p_oscillator->voice);
 	memset(s_event_additional_string, 0, sizeof(s_event_additional_string));
 	bool is_empty_string = false;
 	do {
 		if(false == IS_PRIMARY_OSCILLATOR(p_oscillator)){
 			break;
 		}
-		if(true == p_channel_controller->is_damper_pedal_on
+		if((true == IS_NOTE_OFF_HOLD(p_oscillator))
 				&& false == IS_NOTE_ON(p_oscillator->state_bits)){
 			break;
 		}
@@ -370,7 +368,7 @@ static inline char const * get_event_additional_string(int16_t const event_index
 			is_empty_content = false;
 		}
 
-		if(true == p_channel_controller->is_damper_pedal_on
+		if((true == IS_NOTE_OFF_HOLD(p_oscillator))
 				&& false == IS_NOTE_ON(p_oscillator->state_bits)){
 			if(false == is_empty_content){
 				size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
@@ -379,7 +377,7 @@ static inline char const * get_event_additional_string(int16_t const event_index
 			}
 			size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
 			snprintf(&s_event_additional_string[event_addition_string_length],
-					 sizeof(s_event_additional_string) - event_addition_string_length,"damper_on_note_off");
+					 sizeof(s_event_additional_string) - event_addition_string_length,"note_off_hold");
 		}
 
 		{
