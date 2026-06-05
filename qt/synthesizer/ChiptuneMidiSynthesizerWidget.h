@@ -42,9 +42,9 @@ private slots:
 										   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
 										   int envelope_note_on_sustain_level,
 										   int envelope_release_curve, double envelope_release_duration_in_seconds,
-										   int envelope_damper_sustain_level,
-										   int envelope_damper_sustain_curve,
-										   double envelope_damper_sustain_duration_in_seconds);
+										   int envelope_note_off_hold_sustain_level,
+										   int envelope_note_off_hold_sustain_curve,
+										   double envelope_note_off_hold_sustain_duration_in_seconds);
 private:
 	void timerEvent(QTimerEvent *event) Q_DECL_OVERRIDE;
 	void UpdateInputPortComboBoxItems(void);

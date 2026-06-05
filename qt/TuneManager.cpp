@@ -556,9 +556,9 @@ int TuneManager::SetMelodicChannelTimbre(int8_t const channel_index,
 						   int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
 						   uint8_t const envelope_note_on_sustain_level,
 						   int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
-						   uint8_t const envelope_damper_sustain_level,
-						   int8_t const envelope_damper_sustain_curve,
-						   float const envelope_damper_sustain_duration_in_seconds)
+						   uint8_t const envelope_note_off_hold_sustain_level,
+						   int8_t const envelope_note_off_hold_sustain_curve,
+						   float const envelope_note_off_hold_sustain_duration_in_seconds)
 {
 	QMutexLocker locker(&m_p_private->m_tune_manager_mutex);
 	return chiptune_set_melodic_channel_timbre(channel_index, waveform,
@@ -566,9 +566,9 @@ int TuneManager::SetMelodicChannelTimbre(int8_t const channel_index,
 											  envelope_decay_curve, envelope_decay_duration_in_seconds,
 											  envelope_note_on_sustain_level,
 											  envelope_release_curve, envelope_release_duration_in_seconds,
-											  envelope_damper_sustain_level,
-											  envelope_damper_sustain_curve,
-											  envelope_damper_sustain_duration_in_seconds);
+											  envelope_note_off_hold_sustain_level,
+											  envelope_note_off_hold_sustain_curve,
+											  envelope_note_off_hold_sustain_duration_in_seconds);
 }
 
 /**********************************************************************************/

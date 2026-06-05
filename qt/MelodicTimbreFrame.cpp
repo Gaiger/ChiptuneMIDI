@@ -30,7 +30,7 @@ MelodicTimbreFrame::MelodicTimbreFrame(QWidget *parent)
 	m_previous_dutycycle = 0;// dutycycle 50
 	m_previous_sustain_level = ui->SustainLevelSpinBox->value();
 
-	ui->DamperSustainLevelSpinBox->setMaximum(ui->SustainLevelSpinBox->value());
+	ui->NoteOffHoldSustainLevelSpinBox->setMaximum(ui->SustainLevelSpinBox->value());
 
 	QStandardItemModel *p_model =
 		  qobject_cast<QStandardItemModel *>(ui->DutyCycleComboBox->model());
@@ -89,9 +89,9 @@ void MelodicTimbreFrame::EmitMelodicChannelTimbreChanged(void)
 					   ui->DecayCurveComboBox->currentIndex(), ui->DecayTimeSpinBox->value()/1000.0,
 					   ui->SustainLevelSpinBox->value(),
 					   ui->ReleaseCurveComboBox->currentIndex(), ui->ReleaseTimeSpinBox->value()/1000.0,
-					   ui->DamperSustainLevelSpinBox->value(),
-					   ui->DamperSustainCurveComboBox->currentIndex(),
-					   ui->DamperSustainTimeDoubleSpinBox->value());
+					   ui->NoteOffHoldSustainLevelSpinBox->value(),
+					   ui->NoteOffHoldSustainCurveComboBox->currentIndex(),
+					   ui->NoteOffHoldSustainTimeDoubleSpinBox->value());
 }
 
 /**********************************************************************************/
@@ -101,9 +101,9 @@ void MelodicTimbreFrame::GetTimbre(int *p_waveform,
 			   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
 			   int *p_envelope_note_on_sustain_level,
 			   int *p_envelope_release_curve, double *p_envelope_release_duration_in_seconds,
-			   int *p_envelope_damper_sustain_level,
-			   int *p_envelope_damper_sustain_curve,
-			   double *p_envelope_damper_sustain_duration_in_seconds)
+			   int *p_envelope_note_off_hold_sustain_level,
+			   int *p_envelope_note_off_hold_sustain_curve,
+			   double *p_envelope_note_off_hold_sustain_duration_in_seconds)
 {
 	*p_waveform = GetWaveform();
 
@@ -118,9 +118,9 @@ void MelodicTimbreFrame::GetTimbre(int *p_waveform,
 	*p_envelope_release_curve = ui->ReleaseCurveComboBox->currentIndex();
 	*p_envelope_release_duration_in_seconds = ui->ReleaseTimeSpinBox->value()/1000.0;
 
-	*p_envelope_damper_sustain_level = ui->DamperSustainLevelSpinBox->value();
-	*p_envelope_damper_sustain_curve = ui->DamperSustainCurveComboBox->currentIndex();
-	*p_envelope_damper_sustain_duration_in_seconds = ui->DamperSustainTimeDoubleSpinBox->value();
+	*p_envelope_note_off_hold_sustain_level = ui->NoteOffHoldSustainLevelSpinBox->value();
+	*p_envelope_note_off_hold_sustain_curve = ui->NoteOffHoldSustainCurveComboBox->currentIndex();
+	*p_envelope_note_off_hold_sustain_duration_in_seconds = ui->NoteOffHoldSustainTimeDoubleSpinBox->value();
 }
 
 /**********************************************************************************/
@@ -130,9 +130,9 @@ void MelodicTimbreFrame::SetTimbre(int waveform,
 			   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
 			   int envelope_note_on_sustain_level,
 			   int envelope_release_curve, double envelope_release_duration_in_seconds,
-			   int envelope_damper_sustain_level,
-			   int envelope_damper_sustain_curve,
-			   double envelope_damper_sustain_duration_in_seconds)
+			   int envelope_note_off_hold_sustain_level,
+			   int envelope_note_off_hold_sustain_curve,
+			   double envelope_note_off_hold_sustain_duration_in_seconds)
 {
 	switch(waveform)
 	{
@@ -182,13 +182,13 @@ void MelodicTimbreFrame::SetTimbre(int waveform,
 	}
 	ui->ReleaseCurveComboBox->setCurrentIndex(envelope_release_curve);
 	ui->ReleaseTimeSpinBox->setValue(qRound(1000.0 * envelope_release_duration_in_seconds));
-	int damper_sustain_level = envelope_damper_sustain_level;
-	if(damper_sustain_level > ui->SustainLevelSpinBox->value()){
-		damper_sustain_level = ui->SustainLevelSpinBox->value();
+	int note_off_hold_sustain_level = envelope_note_off_hold_sustain_level;
+	if(note_off_hold_sustain_level > ui->SustainLevelSpinBox->value()){
+		note_off_hold_sustain_level = ui->SustainLevelSpinBox->value();
 	}
-	ui->DamperSustainLevelSpinBox->setValue(damper_sustain_level);
-	ui->DamperSustainCurveComboBox->setCurrentIndex(envelope_damper_sustain_curve);
-	ui->DamperSustainTimeDoubleSpinBox->setValue(envelope_damper_sustain_duration_in_seconds);
+	ui->NoteOffHoldSustainLevelSpinBox->setValue(note_off_hold_sustain_level);
+	ui->NoteOffHoldSustainCurveComboBox->setCurrentIndex(envelope_note_off_hold_sustain_curve);
+	ui->NoteOffHoldSustainTimeDoubleSpinBox->setValue(envelope_note_off_hold_sustain_duration_in_seconds);
 }
 
 /**********************************************************************************/
@@ -277,7 +277,7 @@ void MelodicTimbreFrame::on_DecayTimeSpinBox_valueChanged(int value)
 
 void MelodicTimbreFrame::on_SustainLevelSpinBox_valueChanged(int value)
 {
-	ui->DamperSustainLevelSpinBox->setMaximum(value);
+	ui->NoteOffHoldSustainLevelSpinBox->setMaximum(value);
 	EmitMelodicChannelTimbreChanged();
 }
 
@@ -299,7 +299,7 @@ void MelodicTimbreFrame::on_ReleaseTimeSpinBox_valueChanged(int value)
 
 /**********************************************************************************/
 
-void MelodicTimbreFrame::on_DamperSustainTimeDoubleSpinBox_valueChanged(double value)
+void MelodicTimbreFrame::on_NoteOffHoldSustainTimeDoubleSpinBox_valueChanged(double value)
 {
 	Q_UNUSED(value);
 	EmitMelodicChannelTimbreChanged();
@@ -307,7 +307,7 @@ void MelodicTimbreFrame::on_DamperSustainTimeDoubleSpinBox_valueChanged(double v
 
 /**********************************************************************************/
 
-void MelodicTimbreFrame::on_DamperSustainCurveComboBox_currentIndexChanged(int index)
+void MelodicTimbreFrame::on_NoteOffHoldSustainCurveComboBox_currentIndexChanged(int index)
 {
 	Q_UNUSED(index);
 	EmitMelodicChannelTimbreChanged();
@@ -315,7 +315,7 @@ void MelodicTimbreFrame::on_DamperSustainCurveComboBox_currentIndexChanged(int i
 
 /**********************************************************************************/
 
-void MelodicTimbreFrame::on_DamperSustainLevelSpinBox_valueChanged(int value)
+void MelodicTimbreFrame::on_NoteOffHoldSustainLevelSpinBox_valueChanged(int value)
 {
 	Q_UNUSED(value);
 	EmitMelodicChannelTimbreChanged();

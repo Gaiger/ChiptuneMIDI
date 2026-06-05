@@ -92,9 +92,9 @@ void ChannelListWidget::GetMelodicChannelTimbre(int channel_index, int *p_wavefo
 			   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
 			   int *p_envelope_note_on_sustain_level,
 			   int *p_envelope_release_curve, double *p_envelope_release_duration_in_seconds,
-			   int *p_envelope_damper_sustain_level,
-			   int *p_envelope_damper_sustain_curve,
-			   double *p_envelope_damper_sustain_duration_in_seconds)
+			   int *p_envelope_note_off_hold_sustain_level,
+			   int *p_envelope_note_off_hold_sustain_curve,
+			   double *p_envelope_note_off_hold_sustain_duration_in_seconds)
 {
 	ChannelNodeWidget *p_channel_node_widget
 			= (ChannelNodeWidget*)m_p_vboxlayout->itemAt(m_channel_position_map.value(channel_index))->widget();
@@ -103,9 +103,9 @@ void ChannelListWidget::GetMelodicChannelTimbre(int channel_index, int *p_wavefo
 									p_envelope_decay_curve, p_envelope_decay_duration_in_seconds,
 									p_envelope_note_on_sustain_level,
 									p_envelope_release_curve, p_envelope_release_duration_in_seconds,
-									p_envelope_damper_sustain_level,
-									p_envelope_damper_sustain_curve,
-									p_envelope_damper_sustain_duration_in_seconds);
+									p_envelope_note_off_hold_sustain_level,
+									p_envelope_note_off_hold_sustain_curve,
+									p_envelope_note_off_hold_sustain_duration_in_seconds);
 }
 
 /**********************************************************************************/
@@ -115,9 +115,9 @@ void ChannelListWidget::SetMelodicChannelTimbre(int channel_index, int waveform,
 			   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
 			   int envelope_note_on_sustain_level,
 			   int envelope_release_curve, double envelope_release_duration_in_seconds,
-			   int envelope_damper_sustain_level,
-			   int envelope_damper_sustain_curve,
-			   double envelope_damper_sustain_duration_in_seconds,
+			   int envelope_note_off_hold_sustain_level,
+			   int envelope_note_off_hold_sustain_curve,
+			   double envelope_note_off_hold_sustain_duration_in_seconds,
 			   bool is_to_darker_title_for_a_while)
 {
 	ChannelNodeWidget *p_channel_node_widget
@@ -128,8 +128,8 @@ void ChannelListWidget::SetMelodicChannelTimbre(int channel_index, int waveform,
 									envelope_decay_curve, envelope_decay_duration_in_seconds,
 									envelope_note_on_sustain_level,
 									envelope_release_curve, envelope_release_duration_in_seconds,
-									envelope_damper_sustain_level,
-									envelope_damper_sustain_curve,
-									envelope_damper_sustain_duration_in_seconds,
+									envelope_note_off_hold_sustain_level,
+									envelope_note_off_hold_sustain_curve,
+									envelope_note_off_hold_sustain_duration_in_seconds,
 									is_to_darker_title_for_a_while);
 }

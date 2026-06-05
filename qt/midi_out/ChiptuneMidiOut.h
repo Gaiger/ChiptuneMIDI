@@ -52,9 +52,9 @@ public:
 								uint8_t const envelope_note_on_sustain_level = 96,
 								int8_t const envelope_release_curve = EnvelopeCurveExponential,
 								float const envelope_release_duration_in_seconds = 0.03f,
-								uint8_t const envelope_damper_sustain_level = 24,
-								int8_t const envelope_damper_sustain_curve = EnvelopeCurveLinear,
-								float const envelope_damper_sustain_duration_in_seconds = 8.0f);
+								uint8_t const envelope_note_off_hold_sustain_level = 24,
+								int8_t const envelope_note_off_hold_sustain_curve = EnvelopeCurveLinear,
+								float const envelope_note_off_hold_sustain_duration_in_seconds = 8.0f);
 
 private:
 	ChiptuneMidiOutPrivate * const m_p_private;

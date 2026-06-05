@@ -25,9 +25,9 @@ typedef struct _test_instrument_timbre_t
 	bool has_note_on_sustain_level;
 	bool has_release_curve;
 	bool has_release_duration;
-	bool has_damper_sustain_level;
-	bool has_damper_sustain_curve;
-	bool has_damper_sustain_duration;
+	bool has_note_off_hold_sustain_level;
+	bool has_note_off_hold_sustain_curve;
+	bool has_note_off_hold_sustain_duration;
 
 	instrument_timbre_t expected_instrument_timbre;
 } test_instrument_timbre_t;
@@ -116,7 +116,7 @@ static bool ShouldKeepBasicKey(int const instrument_code, int const key_index)
 }
 
 /******************************************************************************/
-static bool ShouldKeepDamperSustainKey(int const instrument_code, int const key_index)
+static bool ShouldKeepNoteOffHoldSustainKey(int const instrument_code, int const key_index)
 {
 	return 1 <= (GetDice(instrument_code, key_index) >> 31);
 }
@@ -189,9 +189,9 @@ static test_instrument_timbre_t MakeTestInstrumentTimbre(int const instrument_co
 	test_timbre.has_note_on_sustain_level = ShouldKeepBasicKey(instrument_code, 6);
 	test_timbre.has_release_curve = ShouldKeepBasicKey(instrument_code, 7);
 	test_timbre.has_release_duration = ShouldKeepBasicKey(instrument_code, 8);
-	test_timbre.has_damper_sustain_level = ShouldKeepDamperSustainKey(instrument_code, 9);
-	test_timbre.has_damper_sustain_curve = ShouldKeepDamperSustainKey(instrument_code, 10);
-	test_timbre.has_damper_sustain_duration = ShouldKeepDamperSustainKey(instrument_code, 11);
+	test_timbre.has_note_off_hold_sustain_level = ShouldKeepNoteOffHoldSustainKey(instrument_code, 9);
+	test_timbre.has_note_off_hold_sustain_curve = ShouldKeepNoteOffHoldSustainKey(instrument_code, 10);
+	test_timbre.has_note_off_hold_sustain_duration = ShouldKeepNoteOffHoldSustainKey(instrument_code, 11);
 
 	test_timbre.expected_instrument_timbre.waveform = WaveformFromIndex(instrument_code);
 	test_timbre.expected_instrument_timbre.envelope_attack_curve = CurveFromIndex(instrument_code);
@@ -201,9 +201,9 @@ static test_instrument_timbre_t MakeTestInstrumentTimbre(int const instrument_co
 	test_timbre.expected_instrument_timbre.envelope_note_on_sustain_level = (uint8_t)(instrument_code & 0x7f);
 	test_timbre.expected_instrument_timbre.envelope_release_curve = CurveFromIndex(instrument_code + 2);
 	test_timbre.expected_instrument_timbre.envelope_release_duration_in_seconds = 0.003f * (float)(instrument_code + 1);
-	test_timbre.expected_instrument_timbre.envelope_damper_sustain_level = (uint8_t)((127 - instrument_code) & 0x7f);
-	test_timbre.expected_instrument_timbre.envelope_damper_sustain_curve = CurveFromIndex(instrument_code + 3);
-	test_timbre.expected_instrument_timbre.envelope_damper_sustain_duration_in_seconds = 0.004f * (float)(instrument_code + 1);
+	test_timbre.expected_instrument_timbre.envelope_note_off_hold_sustain_level = (uint8_t)((127 - instrument_code) & 0x7f);
+	test_timbre.expected_instrument_timbre.envelope_note_off_hold_sustain_curve = CurveFromIndex(instrument_code + 3);
+	test_timbre.expected_instrument_timbre.envelope_note_off_hold_sustain_duration_in_seconds = 0.004f * (float)(instrument_code + 1);
 
 	return test_timbre;
 }
@@ -247,16 +247,16 @@ static void WriteTestTimbre(QSettings * const p_settings, int const instrument_c
 		p_settings->setValue("release_duration_ms",
 							 1000.0f * test_timbre.expected_instrument_timbre.envelope_release_duration_in_seconds);
 	}
-	if(true == test_timbre.has_damper_sustain_level){
-		p_settings->setValue("damper_sustain_level", (uint)test_timbre.expected_instrument_timbre.envelope_damper_sustain_level);
+	if(true == test_timbre.has_note_off_hold_sustain_level){
+		p_settings->setValue("note_off_hold_sustain_level", (uint)test_timbre.expected_instrument_timbre.envelope_note_off_hold_sustain_level);
 	}
-	if(true == test_timbre.has_damper_sustain_curve){
-		p_settings->setValue("damper_sustain_curve",
-							 GetCurveNameString(test_timbre.expected_instrument_timbre.envelope_damper_sustain_curve));
+	if(true == test_timbre.has_note_off_hold_sustain_curve){
+		p_settings->setValue("note_off_hold_sustain_curve",
+							 GetCurveNameString(test_timbre.expected_instrument_timbre.envelope_note_off_hold_sustain_curve));
 	}
-	if(true == test_timbre.has_damper_sustain_duration){
-		p_settings->setValue("damper_sustain_duration_ms",
-							 1000.0f * test_timbre.expected_instrument_timbre.envelope_damper_sustain_duration_in_seconds);
+	if(true == test_timbre.has_note_off_hold_sustain_duration){
+		p_settings->setValue("note_off_hold_sustain_duration_ms",
+							 1000.0f * test_timbre.expected_instrument_timbre.envelope_note_off_hold_sustain_duration_in_seconds);
 	}
 	p_settings->endGroup();
 }
@@ -292,9 +292,9 @@ static bool HasMissingEffectiveKey(test_instrument_timbre_t const& test_timbre)
 			|| false == test_timbre.has_note_on_sustain_level
 			|| false == test_timbre.has_release_curve
 			|| false == test_timbre.has_release_duration
-			|| false == test_timbre.has_damper_sustain_level
-			|| false == test_timbre.has_damper_sustain_curve
-			|| false == test_timbre.has_damper_sustain_duration;
+			|| false == test_timbre.has_note_off_hold_sustain_level
+			|| false == test_timbre.has_note_off_hold_sustain_curve
+			|| false == test_timbre.has_note_off_hold_sustain_duration;
 }
 
 /******************************************************************************/
@@ -370,25 +370,25 @@ static int TestSingleInstrumentFromMap(QMap<int8_t, instrument_timbre_t> const& 
 						"missing-key release duration mismatch")){
 		return -1;
 	}
-	if(0 != ExpectTrue((false == test_timbre.has_damper_sustain_level
-						 ? default_instrument_timbre.envelope_damper_sustain_level
-						 : test_timbre.expected_instrument_timbre.envelope_damper_sustain_level)
-						== actual_instrument_timbre.envelope_damper_sustain_level,
-						"missing-key damper sustain level mismatch")){
+	if(0 != ExpectTrue((false == test_timbre.has_note_off_hold_sustain_level
+						 ? default_instrument_timbre.envelope_note_off_hold_sustain_level
+						 : test_timbre.expected_instrument_timbre.envelope_note_off_hold_sustain_level)
+						== actual_instrument_timbre.envelope_note_off_hold_sustain_level,
+						"missing-key note-off hold sustain level mismatch")){
 		return -1;
 	}
-	if(0 != ExpectTrue((false == test_timbre.has_damper_sustain_curve
-						 ? default_instrument_timbre.envelope_damper_sustain_curve
-						 : test_timbre.expected_instrument_timbre.envelope_damper_sustain_curve)
-						== actual_instrument_timbre.envelope_damper_sustain_curve,
-						"missing-key damper sustain curve mismatch")){
+	if(0 != ExpectTrue((false == test_timbre.has_note_off_hold_sustain_curve
+						 ? default_instrument_timbre.envelope_note_off_hold_sustain_curve
+						 : test_timbre.expected_instrument_timbre.envelope_note_off_hold_sustain_curve)
+						== actual_instrument_timbre.envelope_note_off_hold_sustain_curve,
+						"missing-key note-off hold sustain curve mismatch")){
 		return -1;
 	}
-	if(0 != ExpectTrue(IsNear(false == test_timbre.has_damper_sustain_duration
-								? default_instrument_timbre.envelope_damper_sustain_duration_in_seconds
-								: test_timbre.expected_instrument_timbre.envelope_damper_sustain_duration_in_seconds,
-								actual_instrument_timbre.envelope_damper_sustain_duration_in_seconds),
-						"missing-key damper sustain duration mismatch")){
+	if(0 != ExpectTrue(IsNear(false == test_timbre.has_note_off_hold_sustain_duration
+								? default_instrument_timbre.envelope_note_off_hold_sustain_duration_in_seconds
+								: test_timbre.expected_instrument_timbre.envelope_note_off_hold_sustain_duration_in_seconds,
+								actual_instrument_timbre.envelope_note_off_hold_sustain_duration_in_seconds),
+						"missing-key note-off hold sustain duration mismatch")){
 		return -1;
 	}
 
@@ -473,9 +473,9 @@ static int TestSingleCompleteInstrumentTimbreWriteReadRemove(QString const& ini_
 								written_instrument_timbre.envelope_note_on_sustain_level,
 								written_instrument_timbre.envelope_release_curve,
 								written_instrument_timbre.envelope_release_duration_in_seconds,
-								written_instrument_timbre.envelope_damper_sustain_level,
-								written_instrument_timbre.envelope_damper_sustain_curve,
-								written_instrument_timbre.envelope_damper_sustain_duration_in_seconds);
+								written_instrument_timbre.envelope_note_off_hold_sustain_level,
+								written_instrument_timbre.envelope_note_off_hold_sustain_curve,
+								written_instrument_timbre.envelope_note_off_hold_sustain_duration_in_seconds);
 
 	QMap<int8_t, instrument_timbre_t> instrument_timbre_map;
 	int ret = timbre_ini_file.ReadTimbres(&instrument_timbre_map);
@@ -497,9 +497,9 @@ static int TestSingleCompleteInstrumentTimbreWriteReadRemove(QString const& ini_
 					   "written attack duration mismatch")){
 		return -1;
 	}
-	if(0 != ExpectTrue(written_instrument_timbre.envelope_damper_sustain_curve
-					   == read_instrument_timbre.envelope_damper_sustain_curve,
-					   "written damper sustain curve mismatch")){
+	if(0 != ExpectTrue(written_instrument_timbre.envelope_note_off_hold_sustain_curve
+					   == read_instrument_timbre.envelope_note_off_hold_sustain_curve,
+					   "written note-off hold sustain curve mismatch")){
 		return -1;
 	}
 

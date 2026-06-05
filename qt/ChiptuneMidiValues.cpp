@@ -165,9 +165,9 @@ instrument_timbre_t GetInstrumentTimbre(int waveform,
 										int envelope_note_on_sustain_level,
 										int envelope_release_curve,
 										float envelope_release_duration_in_seconds,
-										int envelope_damper_sustain_level,
-										int envelope_damper_sustain_curve,
-										float envelope_damper_sustain_duration_in_seconds)
+										int envelope_note_off_hold_sustain_level,
+										int envelope_note_off_hold_sustain_curve,
+										float envelope_note_off_hold_sustain_duration_in_seconds)
 {
 	return
 	{
@@ -187,10 +187,10 @@ instrument_timbre_t GetInstrumentTimbre(int waveform,
 		{0, 0}, //release_padding[2]
 		envelope_release_duration_in_seconds, //envelope_release_duration_in_seconds
 
-		(uint8_t)envelope_damper_sustain_level, //envelope_damper_sustain_level
-		(int8_t)envelope_damper_sustain_curve, //envelope_damper_sustain_curve
-		{0, 0}, //damper_sustain_padding[2]
-		envelope_damper_sustain_duration_in_seconds //envelope_damper_sustain_duration_in_seconds
+		(uint8_t)envelope_note_off_hold_sustain_level, //envelope_note_off_hold_sustain_level
+		(int8_t)envelope_note_off_hold_sustain_curve, //envelope_note_off_hold_sustain_curve
+		{0, 0}, //note_off_hold_sustain_padding[2]
+		envelope_note_off_hold_sustain_duration_in_seconds //envelope_note_off_hold_sustain_duration_in_seconds
 	};
 }
 
@@ -204,9 +204,9 @@ instrument_timbre_t GetInstrumentTimbre(int waveform,
 #define DEFAULT_ENVELOPE_NOTE_ON_SUSTAIN_LEVEL		(96)
 #define DEFAULT_ENVELOPE_RELEASE_CURVE				(TuneManager::EnvelopeCurveExponential)
 #define DEFAULT_ENVELOPE_RELEASE_DURATION_IN_SECOND	(0.03f)
-#define DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_LEVEL	(72)
-#define DEFAULT_ENVELOPE_DAMPER_ON_CURVE			(TuneManager::EnvelopeCurveLinear)
-#define DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_DURATION_IN_SECOND (8.0f)
+#define DEFAULT_ENVELOPE_NOTE_OFF_HOLD_SUSTAIN_LEVEL	(72)
+#define DEFAULT_ENVELOPE_NOTE_OFF_HOLD_CURVE			(TuneManager::EnvelopeCurveLinear)
+#define DEFAULT_ENVELOPE_NOTE_OFF_HOLD_SUSTAIN_DURATION_IN_SECOND (8.0f)
 
 instrument_timbre_t GetDefaultInstrumentTimbre(void)
 {
@@ -218,7 +218,7 @@ instrument_timbre_t GetDefaultInstrumentTimbre(void)
 							   DEFAULT_ENVELOPE_NOTE_ON_SUSTAIN_LEVEL,
 							   DEFAULT_ENVELOPE_RELEASE_CURVE,
 							   DEFAULT_ENVELOPE_RELEASE_DURATION_IN_SECOND,
-							   DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_LEVEL,
-							   DEFAULT_ENVELOPE_DAMPER_ON_CURVE,
-							   DEFAULT_ENVELOPE_DAMPER_ON_SUSTAIN_DURATION_IN_SECOND);
+							   DEFAULT_ENVELOPE_NOTE_OFF_HOLD_SUSTAIN_LEVEL,
+							   DEFAULT_ENVELOPE_NOTE_OFF_HOLD_CURVE,
+							   DEFAULT_ENVELOPE_NOTE_OFF_HOLD_SUSTAIN_DURATION_IN_SECOND);
 }

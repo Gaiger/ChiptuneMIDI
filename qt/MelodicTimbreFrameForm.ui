@@ -397,7 +397,7 @@ QSpinBox:disabled {
     <string>Sustain</string>
    </property>
   </widget>
-  <widget class="QGroupBox" name="DamperSustainGroupBox">
+  <widget class="QGroupBox" name="NoteOffHoldSustainGroupBox">
    <property name="geometry">
     <rect>
      <x>8</x>
@@ -412,12 +412,12 @@ QSpinBox:disabled {
     </font>
    </property>
    <property name="title">
-    <string>Damper Sustain</string>
+    <string>Pedal Note-Off Hold Sustain</string>
    </property>
    <property name="flat">
     <bool>false</bool>
    </property>
-   <widget class="QDoubleSpinBox" name="DamperSustainTimeDoubleSpinBox">
+   <widget class="QDoubleSpinBox" name="NoteOffHoldSustainTimeDoubleSpinBox">
     <property name="geometry">
      <rect>
       <x>228</x>
@@ -455,7 +455,7 @@ QSpinBox:disabled {
      <string>sec</string>
     </property>
    </widget>
-   <widget class="QSpinBox" name="DamperSustainLevelSpinBox">
+   <widget class="QSpinBox" name="NoteOffHoldSustainLevelSpinBox">
     <property name="geometry">
      <rect>
       <x>92</x>
@@ -493,7 +493,7 @@ QSpinBox:disabled {
      <string>StartLevel</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="DamperSustainCurveComboBox">
+   <widget class="QComboBox" name="NoteOffHoldSustainCurveComboBox">
     <property name="geometry">
      <rect>
       <x>64</x>

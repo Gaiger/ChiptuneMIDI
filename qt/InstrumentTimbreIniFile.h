@@ -19,9 +19,9 @@ public:
 					 int8_t const envelope_decay_curve, float const envelope_decay_duration_in_seconds,
 					 uint8_t const envelope_note_on_sustain_level,
 					 int8_t const envelope_release_curve, float const envelope_release_duration_in_seconds,
-					 uint8_t const envelope_damper_sustain_level,
-					 int8_t const envelope_damper_sustain_curve,
-					 float const envelope_damper_sustain_duration_in_seconds);
+					 uint8_t const envelope_note_off_hold_sustain_level,
+					 int8_t const envelope_note_off_hold_sustain_curve,
+					 float const envelope_note_off_hold_sustain_duration_in_seconds);
 	void RemoveTimbre(int8_t const instrument_code);
 
 private:
@@ -30,9 +30,9 @@ private:
 				   int8_t * const p_envelope_decay_curve, float * const p_envelope_decay_duration_in_seconds,
 				   uint8_t * const p_envelope_note_on_sustain_level,
 				   int8_t * const p_envelope_release_curve, float * const p_envelope_release_duration_in_seconds,
-				   uint8_t * const p_envelope_damper_sustain_level,
-				   int8_t * const p_envelope_damper_sustain_curve,
-				   float * const p_envelope_damper_sustain_duration_in_seconds);
+				   uint8_t * const p_envelope_note_off_hold_sustain_level,
+				   int8_t * const p_envelope_note_off_hold_sustain_curve,
+				   float * const p_envelope_note_off_hold_sustain_duration_in_seconds);
 	QSettings m_settings;
 };
 

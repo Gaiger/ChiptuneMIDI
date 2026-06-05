@@ -158,9 +158,9 @@ int InstrumentTimbreIniFile::ReadTimbre(int8_t const instrument_code, int8_t * c
 										uint8_t * const p_envelope_note_on_sustain_level,
 										int8_t * const p_envelope_release_curve,
 										float * const p_envelope_release_duration_in_seconds,
-										uint8_t * const p_envelope_damper_sustain_level,
-										int8_t * const p_envelope_damper_sustain_curve,
-										float * const p_envelope_damper_sustain_duration_in_seconds)
+										uint8_t * const p_envelope_note_off_hold_sustain_level,
+										int8_t * const p_envelope_note_off_hold_sustain_curve,
+										float * const p_envelope_note_off_hold_sustain_duration_in_seconds)
 {
 	if(false == QFileInfo::exists(m_settings.fileName())){
 		return -1;
@@ -276,39 +276,39 @@ int InstrumentTimbreIniFile::ReadTimbre(int8_t const instrument_code, int8_t * c
 				m_settings.value("release_duration_ms").toFloat() / 1000.0f;
 	}
 
-	if(false == m_settings.contains("damper_sustain_level")){
+	if(false == m_settings.contains("note_off_hold_sustain_level")){
 		qWarning() << "Instrument timbre missing key:"
-				   << instrument_name_string << "damper_sustain_level";
+				   << instrument_name_string << "note_off_hold_sustain_level";
 		ret = 1;
-		*p_envelope_damper_sustain_level = default_instrument_timbre.envelope_damper_sustain_level;
+		*p_envelope_note_off_hold_sustain_level = default_instrument_timbre.envelope_note_off_hold_sustain_level;
 	}else{
-		*p_envelope_damper_sustain_level =
-				(uint8_t)m_settings.value("damper_sustain_level").toUInt();
+		*p_envelope_note_off_hold_sustain_level =
+				(uint8_t)m_settings.value("note_off_hold_sustain_level").toUInt();
 	}
-	if(false == m_settings.contains("damper_sustain_curve")){
+	if(false == m_settings.contains("note_off_hold_sustain_curve")){
 		qWarning() << "Instrument timbre missing key:"
-				   << instrument_name_string << "damper_sustain_curve";
+				   << instrument_name_string << "note_off_hold_sustain_curve";
 		ret = 1;
-		*p_envelope_damper_sustain_curve = default_instrument_timbre.envelope_damper_sustain_curve;
+		*p_envelope_note_off_hold_sustain_curve = default_instrument_timbre.envelope_note_off_hold_sustain_curve;
 	}else{
-		*p_envelope_damper_sustain_curve =
-				GetEnvelopeCurveCode(m_settings.value("damper_sustain_curve").toString());
-		if(0 > *p_envelope_damper_sustain_curve){
+		*p_envelope_note_off_hold_sustain_curve =
+				GetEnvelopeCurveCode(m_settings.value("note_off_hold_sustain_curve").toString());
+		if(0 > *p_envelope_note_off_hold_sustain_curve){
 			qWarning() << "Instrument timbre invalid key:"
-					   << instrument_name_string << "damper_sustain_curve";
+					   << instrument_name_string << "note_off_hold_sustain_curve";
 			ret = 1;
-			*p_envelope_damper_sustain_curve = default_instrument_timbre.envelope_damper_sustain_curve;
+			*p_envelope_note_off_hold_sustain_curve = default_instrument_timbre.envelope_note_off_hold_sustain_curve;
 		}
 	}
-	if(false == m_settings.contains("damper_sustain_duration_ms")){
+	if(false == m_settings.contains("note_off_hold_sustain_duration_ms")){
 		qWarning() << "Instrument timbre missing key:"
-				   << instrument_name_string << "damper_sustain_duration_ms";
+				   << instrument_name_string << "note_off_hold_sustain_duration_ms";
 		ret = 1;
-		*p_envelope_damper_sustain_duration_in_seconds =
-				default_instrument_timbre.envelope_damper_sustain_duration_in_seconds;
+		*p_envelope_note_off_hold_sustain_duration_in_seconds =
+				default_instrument_timbre.envelope_note_off_hold_sustain_duration_in_seconds;
 	}else{
-		*p_envelope_damper_sustain_duration_in_seconds =
-				m_settings.value("damper_sustain_duration_ms").toFloat() / 1000.0f;
+		*p_envelope_note_off_hold_sustain_duration_in_seconds =
+				m_settings.value("note_off_hold_sustain_duration_ms").toFloat() / 1000.0f;
 	}
 	m_settings.endGroup();
 
@@ -344,9 +344,9 @@ int InstrumentTimbreIniFile::ReadTimbres(QMap<int8_t, instrument_timbre_t> * con
 										&read_instrument_timbre.envelope_note_on_sustain_level,
 										&read_instrument_timbre.envelope_release_curve,
 										&read_instrument_timbre.envelope_release_duration_in_seconds,
-										&read_instrument_timbre.envelope_damper_sustain_level,
-										&read_instrument_timbre.envelope_damper_sustain_curve,
-										&read_instrument_timbre.envelope_damper_sustain_duration_in_seconds);
+										&read_instrument_timbre.envelope_note_off_hold_sustain_level,
+										&read_instrument_timbre.envelope_note_off_hold_sustain_curve,
+										&read_instrument_timbre.envelope_note_off_hold_sustain_duration_in_seconds);
 		if(1 == read_ret){
 			ret = 1;
 		}else if(0 > read_ret){
@@ -367,9 +367,9 @@ void InstrumentTimbreIniFile::WriteTimbre(int8_t const instrument_code, int8_t c
 										  uint8_t const envelope_note_on_sustain_level,
 										  int8_t const envelope_release_curve,
 										  float const envelope_release_duration_in_seconds,
-										  uint8_t const envelope_damper_sustain_level,
-										  int8_t const envelope_damper_sustain_curve,
-										  float const envelope_damper_sustain_duration_in_seconds)
+										  uint8_t const envelope_note_off_hold_sustain_level,
+										  int8_t const envelope_note_off_hold_sustain_curve,
+										  float const envelope_note_off_hold_sustain_duration_in_seconds)
 {
 	m_settings.beginGroup(GetInstrumentTimbreGroupName(instrument_code));
 	m_settings.setValue("waveform", GetWaveformNameString(waveform));
@@ -383,11 +383,11 @@ void InstrumentTimbreIniFile::WriteTimbre(int8_t const instrument_code, int8_t c
 	m_settings.setValue("note_on_sustain_level", (uint)envelope_note_on_sustain_level);
 	m_settings.setValue("release_curve", GetEnvelopeCurveNameString(envelope_release_curve));
 	m_settings.setValue("release_duration_ms", qRound(1000.0f * envelope_release_duration_in_seconds));
-	m_settings.setValue("damper_sustain_level", (uint)envelope_damper_sustain_level);
-	m_settings.setValue("damper_sustain_curve",
-						GetEnvelopeCurveNameString(envelope_damper_sustain_curve));
-	m_settings.setValue("damper_sustain_duration_ms",
-						qRound(1000.0f * envelope_damper_sustain_duration_in_seconds));
+	m_settings.setValue("note_off_hold_sustain_level", (uint)envelope_note_off_hold_sustain_level);
+	m_settings.setValue("note_off_hold_sustain_curve",
+						GetEnvelopeCurveNameString(envelope_note_off_hold_sustain_curve));
+	m_settings.setValue("note_off_hold_sustain_duration_ms",
+						qRound(1000.0f * envelope_note_off_hold_sustain_duration_in_seconds));
 	m_settings.endGroup();
 	m_settings.sync();
 }

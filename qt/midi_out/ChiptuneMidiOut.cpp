@@ -165,9 +165,9 @@ int ChiptuneMidiOut::SetMelodicChannelTimbre(int8_t const channel_index,
 											 uint8_t const envelope_note_on_sustain_level,
 											 int8_t const envelope_release_curve,
 											 float const envelope_release_duration_in_seconds,
-											 uint8_t const envelope_damper_sustain_level,
-											 int8_t const envelope_damper_sustain_curve,
-											 float const envelope_damper_sustain_duration_in_seconds)
+											 uint8_t const envelope_note_off_hold_sustain_level,
+											 int8_t const envelope_note_off_hold_sustain_curve,
+											 float const envelope_note_off_hold_sustain_duration_in_seconds)
 {
 	if(nullptr == m_p_private->m_p_tune_manager){
 		return -1;
@@ -183,7 +183,7 @@ int ChiptuneMidiOut::SetMelodicChannelTimbre(int8_t const channel_index,
 		envelope_note_on_sustain_level,
 		envelope_release_curve,
 		envelope_release_duration_in_seconds,
-		envelope_damper_sustain_level,
-		envelope_damper_sustain_curve,
-		envelope_damper_sustain_duration_in_seconds);
+		envelope_note_off_hold_sustain_level,
+		envelope_note_off_hold_sustain_curve,
+		envelope_note_off_hold_sustain_duration_in_seconds);
 }

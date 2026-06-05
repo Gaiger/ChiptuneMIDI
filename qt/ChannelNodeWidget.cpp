@@ -175,9 +175,9 @@ void ChannelNodeWidget::HandleMelodicTimbreFrameTimbreChanged(int waveform,
 										   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
 										   int envelope_note_on_sustain_level,
 										   int envelope_release_curve, double envelope_release_duration_in_seconds,
-										   int envelope_damper_sustain_level,
-										   int envelope_damper_sustain_curve,
-										   double envelope_damper_sustain_duration_in_seconds)
+										   int envelope_note_off_hold_sustain_level,
+										   int envelope_note_off_hold_sustain_curve,
+										   double envelope_note_off_hold_sustain_duration_in_seconds)
 {
 	emit MelodicChannelTimbreChanged(m_channel_index,
 									 waveform,
@@ -185,9 +185,9 @@ void ChannelNodeWidget::HandleMelodicTimbreFrameTimbreChanged(int waveform,
 									 envelope_decay_curve, envelope_decay_duration_in_seconds,
 									 envelope_note_on_sustain_level,
 									 envelope_release_curve, envelope_release_duration_in_seconds,
-									 envelope_damper_sustain_level,
-									 envelope_damper_sustain_curve,
-									 envelope_damper_sustain_duration_in_seconds);
+									 envelope_note_off_hold_sustain_level,
+									 envelope_note_off_hold_sustain_curve,
+									 envelope_note_off_hold_sustain_duration_in_seconds);
 }
 
 /**********************************************************************************/
@@ -197,9 +197,9 @@ void ChannelNodeWidget::GetMelodicChannelTimbre(int *p_waveform,
 			   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
 			   int *p_envelope_note_on_sustain_level,
 			   int *p_envelope_release_curve, double *p_envelope_release_duration_in_seconds,
-			   int *p_envelope_damper_sustain_level,
-			   int *p_envelope_damper_sustain_curve,
-			   double *p_envelope_damper_sustain_duration_in_seconds)
+			   int *p_envelope_note_off_hold_sustain_level,
+			   int *p_envelope_note_off_hold_sustain_curve,
+			   double *p_envelope_note_off_hold_sustain_duration_in_seconds)
 {
 	do
 	{
@@ -211,9 +211,9 @@ void ChannelNodeWidget::GetMelodicChannelTimbre(int *p_waveform,
 										 p_envelope_decay_curve, p_envelope_decay_duration_in_seconds,
 										 p_envelope_note_on_sustain_level,
 										 p_envelope_release_curve, p_envelope_release_duration_in_seconds,
-										 p_envelope_damper_sustain_level,
-										 p_envelope_damper_sustain_curve,
-										 p_envelope_damper_sustain_duration_in_seconds);
+										 p_envelope_note_off_hold_sustain_level,
+										 p_envelope_note_off_hold_sustain_curve,
+										 p_envelope_note_off_hold_sustain_duration_in_seconds);
 
 	}while(0);
 }
@@ -225,9 +225,9 @@ void ChannelNodeWidget::SetMelodicChannelTimbre(int waveform,
 			   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
 			   int envelope_note_on_sustain_level,
 			   int envelope_release_curve, double envelope_release_duration_in_seconds,
-			   int envelope_damper_sustain_level,
-			   int envelope_damper_sustain_curve,
-			   double envelope_damper_sustain_duration_in_seconds,
+			   int envelope_note_off_hold_sustain_level,
+			   int envelope_note_off_hold_sustain_curve,
+			   double envelope_note_off_hold_sustain_duration_in_seconds,
 			   bool is_to_darker_title_for_a_while)
 {
 	do
@@ -241,9 +241,9 @@ void ChannelNodeWidget::SetMelodicChannelTimbre(int waveform,
 											envelope_decay_curve, envelope_decay_duration_in_seconds,
 											envelope_note_on_sustain_level,
 											envelope_release_curve, envelope_release_duration_in_seconds,
-											envelope_damper_sustain_level,
-											envelope_damper_sustain_curve,
-											envelope_damper_sustain_duration_in_seconds);
+											envelope_note_off_hold_sustain_level,
+											envelope_note_off_hold_sustain_curve,
+											envelope_note_off_hold_sustain_duration_in_seconds);
 
 		if(false == is_to_darker_title_for_a_while){
 			break;

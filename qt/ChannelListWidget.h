@@ -29,17 +29,17 @@ public :
 				   int *p_envelope_decay_curve, double *p_envelope_decay_duration_in_seconds,
 				   int *p_envelope_note_on_sustain_level,
 				   int *p_envelope_release_curve, double *p_envelope_release_duration_in_seconds,
-				   int *p_envelope_damper_sustain_level,
-				   int *p_envelope_damper_sustain_curve,
-				   double *p_envelope_damper_sustain_duration_in_seconds);
+				   int *p_envelope_note_off_hold_sustain_level,
+				   int *p_envelope_note_off_hold_sustain_curve,
+				   double *p_envelope_note_off_hold_sustain_duration_in_seconds);
 	void SetMelodicChannelTimbre(int channel_index, int waveform,
 				   int envelope_attack_curve, double envelope_attack_duration_in_seconds,
 				   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
 				   int envelope_note_on_sustain_level,
 				   int envelope_release_curve, double envelope_release_duration_in_seconds,
-				   int envelope_damper_sustain_level,
-				   int envelope_damper_sustain_curve,
-				   double envelope_damper_sustain_duration_in_seconds, bool is_to_darker_title_for_a_while);
+				   int envelope_note_off_hold_sustain_level,
+				   int envelope_note_off_hold_sustain_curve,
+				   double envelope_note_off_hold_sustain_duration_in_seconds, bool is_to_darker_title_for_a_while);
 public:
 	signals:
 void OutputEnabled(int channel_index, bool is_enabled);
@@ -49,9 +49,9 @@ void MelodicChannelTimbreChanged(int channel_index,
 				   int envelope_decay_curve, double envelope_decay_duration_in_seconds,
 				   int envelope_note_on_sustain_level,
 				   int envelope_release_curve, double envelope_release_duration_in_seconds,
-				   int envelope_damper_sustain_level,
-				   int envelope_damper_sustain_curve,
-				   double envelope_damper_sustain_duration_in_seconds);
+				   int envelope_note_off_hold_sustain_level,
+				   int envelope_note_off_hold_sustain_curve,
+				   double envelope_note_off_hold_sustain_duration_in_seconds);
 private:
 	QVBoxLayout *m_p_vboxlayout;
 	QMap<int, int> m_channel_position_map;
