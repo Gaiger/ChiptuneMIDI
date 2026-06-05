@@ -23,64 +23,65 @@ if (QT_VERSION_MAJOR EQUAL 5)
 endif()
 
 set(ENGINE
-    ${CHIPTUNE_ROOT_DIR}/chiptune.c
-    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_note_internal.c
-    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_effect_internal.c
-    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_control_change_internal.c
-    ${CHIPTUNE_ROOT_DIR}/chiptune_envelope_internal.c
-    ${CHIPTUNE_ROOT_DIR}/chiptune_event_internal.c
+    ${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.c
+    ${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.c
     ${CHIPTUNE_ROOT_DIR}/chiptune_oscillator_internal.c
     ${CHIPTUNE_ROOT_DIR}/chiptune_channel_controller_internal.c
-    ${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.c
-    ${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.c
+    ${CHIPTUNE_ROOT_DIR}/chiptune_envelope_internal.c
+    ${CHIPTUNE_ROOT_DIR}/chiptune_event_internal.c
+    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_effect_internal.c
+    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_note_internal.c
+    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_control_change_internal.c
+    ${CHIPTUNE_ROOT_DIR}/chiptune.c
 
-    ${CHIPTUNE_ROOT_DIR}/chiptune.h
-    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_note_internal.h
-    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_effect_internal.h
-    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_control_change_internal.h
-    ${CHIPTUNE_ROOT_DIR}/chiptune_envelope_internal.h
-    ${CHIPTUNE_ROOT_DIR}/chiptune_event_internal.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune_config_internal.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_define.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune_version_internal.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.h
     ${CHIPTUNE_ROOT_DIR}/chiptune_oscillator_internal.h
     ${CHIPTUNE_ROOT_DIR}/chiptune_channel_controller_internal.h
-    ${CHIPTUNE_ROOT_DIR}/chiptune_printf_internal.h
-    ${CHIPTUNE_ROOT_DIR}/chiptune_common_internal.h
-    ${CHIPTUNE_ROOT_DIR}/chiptune_version_internal.h
-    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_define.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune_envelope_internal.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune_event_internal.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_effect_internal.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_note_internal.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune_midi_control_change_internal.h
+    ${CHIPTUNE_ROOT_DIR}/chiptune.h
 )
 
 
 set(APPLICATION_COMMON
-    ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.cpp
-    ${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp
-    ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp
-    ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.cpp
-    ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.cpp
     ${CHIPTUNE_QT_DIR}/TuneManager.cpp
     ${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.cpp
     ${CHIPTUNE_QT_DIR}/AudioPlayer.cpp
+    ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.cpp
+    ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.cpp
     ${CHIPTUNE_QT_DIR}/WaveChartView.cpp
+    ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.cpp
+    ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.cpp
+    ${CHIPTUNE_QT_DIR}/ChannelListWidget.cpp
 
-    ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.h
-    ${CHIPTUNE_QT_DIR}/ChannelListWidget.h
-    ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.h
-    ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.h
-    ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h
     ${CHIPTUNE_QT_DIR}/TuneManager.h
     ${CHIPTUNE_QT_DIR}/AudioPlayerPrivate.h
     ${CHIPTUNE_QT_DIR}/AudioPlayer.h
+    ${CHIPTUNE_QT_DIR}/ChiptuneMidiValues.h
+    ${CHIPTUNE_QT_DIR}/InstrumentTimbreIniFile.h
     ${CHIPTUNE_QT_DIR}/WaveChartView.h
+    ${CHIPTUNE_QT_DIR}/MelodicTimbreFrame.h
+    ${CHIPTUNE_QT_DIR}/ChannelNodeWidget.h
+    ${CHIPTUNE_QT_DIR}/ChannelListWidget.h
 )
 
 set(APPLICATION_PLAYER
     ${CHIPTUNE_QT_PLAYER_DIR}/MidSongManager.cpp
-    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.cpp
     ${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.cpp
     ${CHIPTUNE_QT_PLAYER_DIR}/PlayerSequencerWidget.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.cpp
 
     ${CHIPTUNE_QT_PLAYER_DIR}/MidSongManager.h
-    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.h
     ${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.h
     ${CHIPTUNE_QT_PLAYER_DIR}/PlayerSequencerWidget.h
+    ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.h
 
     ${CHIPTUNE_QT_PLAYER_DIR}/main.cpp
 )

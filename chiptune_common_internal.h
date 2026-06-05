@@ -13,20 +13,8 @@
 	#define MAYBE_UNUSED_FUNCTION
 #endif
 
+#include "chiptune_config_internal.h" // IWYU pragma: export
 #include "chiptune_midi_define.h" // IWYU pragma: export
-
-
-#define _USE_SAMPLE_INDEX_AS_TIMEBASE
-//#define _USE_SCALED_RECIPROCAL_MULTIPLIER_FOR_WAVE_AMPLITUDE_NORMALIZATION
-//#define _USE_STATIC_RESOURCE_ALLOCATION
-
-#define _PRINT_DEVELOPING
-//#define _PRINT_MIDI_NOTE
-//#define _PRINT_MIDI_CONTROLCHANGE
-//#define _PRINT_MIDI_PROGRAMCHANGE
-//#define _PRINT_MIDI_CHANNELPRESSURE
-//#define _PRINT_MIDI_PITCH_WHEEL
-//#define _PRINT_EVENT_TRIGGERING
 
 #define INT8_MAX_PLUS_1								(INT8_MAX + 1)
 #define INT16_MAX_PLUS_1							(INT16_MAX + 1)

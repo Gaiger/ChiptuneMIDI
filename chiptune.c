@@ -19,10 +19,10 @@
 
 #include "chiptune.h"
 
-#ifdef _USE_SAMPLE_INDEX_AS_TIMEBASE
-typedef float chiptune_float;
-#else
+#ifdef _USE_ACCUMULATED_DELTA_TICK_AS_TIMEBASE
 typedef double chiptune_float;
+#else
+typedef float chiptune_float;
 #endif
 
 #define DEFAULT_SAMPLING_RATE						(16000)
@@ -35,7 +35,56 @@ static uint32_t s_resolution = MIDI_DEFAULT_RESOLUTION;
 static bool s_is_stereo = false;
 bool s_is_processing_left_channel = true;
 
-#ifdef _USE_SAMPLE_INDEX_AS_TIMEBASE
+#ifdef _USE_ACCUMULATED_DELTA_TICK_AS_TIMEBASE
+static chiptune_float s_current_tick = (chiptune_float)0.0;
+static chiptune_float s_delta_tick_per_sample = (MIDI_DEFAULT_RESOLUTION / ( (chiptune_float)DEFAULT_SAMPLING_RATE/((chiptune_float)MIDI_DEFAULT_TEMPO / (chiptune_float)60.0) ) );
+
+#define	UPDATE_DELTA_TICK_PER_SAMPLE()				\
+													do { \
+														s_delta_tick_per_sample = ( s_resolution * s_tempo * s_playing_speed_ratio/ (chiptune_float)s_sampling_rate/(chiptune_float)60.0 ); \
+													} while(0)
+
+#define UPDATE_SAMPLING_RATE(SAMPLING_RATE)			\
+													do { \
+														s_sampling_rate = (SAMPLING_RATE); \
+														UPDATE_DELTA_TICK_PER_SAMPLE(); \
+													} while(0)
+
+#define UPDATE_RESOLUTION(RESOLUTION)				\
+													do { \
+														s_resolution = (RESOLUTION); \
+														UPDATE_DELTA_TICK_PER_SAMPLE(); \
+													} while(0)
+
+#define UPDATE_TEMPO(TEMPO)							\
+													do { \
+														s_tempo = (TEMPO); \
+														UPDATE_DELTA_TICK_PER_SAMPLE(); \
+													} while(0)
+
+#define UPDATE_PLAYING_SPEED_RATIO(PLAYING_SPEED_RATIO) \
+													do { \
+														s_playing_speed_ratio = (PLAYING_SPEED_RATIO); \
+														UPDATE_TEMPO(s_tempo); \
+													} while(0)
+
+#define RESET_CURRENT_TICK()						\
+													do { \
+														s_current_tick = 0.0; \
+													} while(0)
+
+#define CURRENT_TICK()								((uint32_t)(s_current_tick + 0.5))
+
+#define ADVANCE_CURRENT_TICK()			\
+													do { \
+														s_current_tick += s_delta_tick_per_sample; \
+													} while(0)
+
+#define UPDATE_CURRENT_TICK(TICK)					do { \
+														s_current_tick = (chiptune_float)(TICK); \
+													} while(0)
+
+#else
 static uint32_t s_current_sample_index = 0;
 static chiptune_float s_tick_to_sample_index_ratio = \
 		(chiptune_float)(DEFAULT_SAMPLING_RATE * 1.0/(MIDI_DEFAULT_TEMPO * DEFAULT_PLAYING_SPEED_RATIO/60.0)/MIDI_DEFAULT_RESOLUTION);
@@ -97,55 +146,6 @@ static uint32_t s_current_tick = 0;
 #define UPDATE_CURRENT_TICK(TICK)					do { \
 														s_current_sample_index = (uint32_t)((TICK) * s_tick_to_sample_index_ratio + 0.5); \
 														s_current_tick = (uint32_t)((s_current_sample_index * s_sample_index_to_tick_ratio) + 0.5); \
-													} while(0)
-
-#else
-static chiptune_float s_current_tick = (chiptune_float)0.0;
-static chiptune_float s_delta_tick_per_sample = (MIDI_DEFAULT_RESOLUTION / ( (chiptune_float)DEFAULT_SAMPLING_RATE/((chiptune_float)MIDI_DEFAULT_TEMPO / (chiptune_float)60.0) ) );
-
-#define	UPDATE_DELTA_TICK_PER_SAMPLE()				\
-													do { \
-														s_delta_tick_per_sample = ( s_resolution * s_tempo * s_playing_speed_ratio/ (chiptune_float)s_sampling_rate/(chiptune_float)60.0 ); \
-													} while(0)
-
-#define UPDATE_SAMPLING_RATE(SAMPLING_RATE)			\
-													do { \
-														s_sampling_rate = (SAMPLING_RATE); \
-														UPDATE_DELTA_TICK_PER_SAMPLE(); \
-													} while(0)
-
-#define UPDATE_RESOLUTION(RESOLUTION)				\
-													do { \
-														s_resolution = (RESOLUTION); \
-														UPDATE_DELTA_TICK_PER_SAMPLE(); \
-													} while(0)
-
-#define UPDATE_TEMPO(TEMPO)							\
-													do { \
-														s_tempo = (TEMPO); \
-														UPDATE_DELTA_TICK_PER_SAMPLE(); \
-													} while(0)
-
-#define UPDATE_PLAYING_SPEED_RATIO(PLAYING_SPEED_RATIO) \
-													do { \
-														s_playing_speed_ratio = (PLAYING_SPEED_RATIO); \
-														UPDATE_TEMPO(s_tempo); \
-													} while(0)
-
-#define RESET_CURRENT_TICK()						\
-													do { \
-														s_current_tick = 0.0; \
-													} while(0)
-
-#define CURRENT_TICK()								((uint32_t)(s_current_tick + 0.5))
-
-#define ADVANCE_CURRENT_TICK()			\
-													do { \
-														s_current_tick += s_delta_tick_per_sample; \
-													} while(0)
-
-#define UPDATE_CURRENT_TICK(TICK)					do { \
-														s_current_tick = (chiptune_float)(TICK); \
 													} while(0)
 
 #endif
