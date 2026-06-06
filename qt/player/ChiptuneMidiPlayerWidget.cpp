@@ -291,7 +291,7 @@ ChiptuneMidiPlayerWidget::ChiptuneMidiPlayerWidget(TuneManager * p_tune_manager,
 
 	qApp->installEventFilter(this);
 	EjectMidiFile();
-	SetTimbresFileButtonsEnabled(false);
+	ui->StoreTimbresPushButton->setEnabled(false);
 }
 
 /**********************************************************************************/
@@ -397,7 +397,6 @@ int ChiptuneMidiPlayerWidget::LoadAndPlayMidiFile(QString filename_string)
 		if(true == ui->LoadTimbresPushButton->isChecked()){
 			int const load_timbres_ret = LoadAndApplyTimbres();
 			if(-1 == load_timbres_ret){
-				m_ini_instrument_timbre_map.clear();
 				ui->LoadTimbresPushButton->setChecked(false);
 				QMessageBox::warning(this, QStringLiteral("Load Timbres"),
 									 tr("%1 not found.").arg(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING));
@@ -429,7 +428,7 @@ int ChiptuneMidiPlayerWidget::LoadAndPlayMidiFile(QString filename_string)
 		ui->SaveWavFilePushButton->setEnabled(true);
 
 		SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(0);
-		SetTimbresFileButtonsEnabled(true);
+		ui->StoreTimbresPushButton->setEnabled(true);
 	}while(0);
 
 	message_string += QString::asprintf(" :: <b>%s</b>", m_opened_file_info.fileName().toUtf8().data());
@@ -482,15 +481,7 @@ void ChiptuneMidiPlayerWidget::EjectMidiFile(void)
 	}
 	//delete ui->TimbreListWidget->layout();
 	ui->SaveWavFilePushButton->setEnabled(false);
-	SetTimbresFileButtonsEnabled(false);
-}
-
-/**********************************************************************************/
-
-void ChiptuneMidiPlayerWidget::SetTimbresFileButtonsEnabled(bool is_enabled)
-{
-	ui->LoadTimbresPushButton->setEnabled(is_enabled);
-	ui->StoreTimbresPushButton->setEnabled(is_enabled);
+	ui->StoreTimbresPushButton->setEnabled(false);
 }
 
 /**********************************************************************************/
@@ -937,7 +928,7 @@ static inline bool IsInstrumentTimbreIdentical(instrument_timbre_t const * const
 }
 
 /**********************************************************************************/
-static instrument_timbre_t GetChannelInstrumentTimbre(ChannelListWidget * const p_channel_list_widget,
+static instrument_timbre_t GetChannelInstrumentTimbreFromGUI(ChannelListWidget * const p_channel_list_widget,
 													  int const channel_index)
 {
 	int waveform;
@@ -973,7 +964,9 @@ static instrument_timbre_t GetChannelInstrumentTimbre(ChannelListWidget * const 
 /**********************************************************************************/
 void ChiptuneMidiPlayerWidget::ApplyMelodicChannelInstrumentTimbre(
 		ChannelListWidget * const p_channel_list_widget,
-		int channel_index, int instrument_code, bool is_to_darker_title_for_a_while)
+		int channel_index,
+		instrument_timbre_t const * const p_instrument_timbre,
+		bool is_to_darker_title_for_a_while)
 {
 	do
 	{
@@ -985,14 +978,8 @@ void ChiptuneMidiPlayerWidget::ApplyMelodicChannelInstrumentTimbre(
 		}
 
 		instrument_timbre_t instrument_timbre = GetDefaultInstrumentTimbre();
-		if(true == m_ini_instrument_timbre_map.contains((int8_t)instrument_code)){
-			instrument_timbre = m_ini_instrument_timbre_map.value((int8_t)instrument_code);
-		}
-
-		instrument_timbre_t const channel_instrument_timbre
-				= GetChannelInstrumentTimbre(p_channel_list_widget, channel_index);
-		if(true == IsInstrumentTimbreIdentical(&instrument_timbre, &channel_instrument_timbre)){
-			break;
+		if(nullptr != p_instrument_timbre){
+			instrument_timbre = *p_instrument_timbre;
 		}
 
 		p_channel_list_widget->SetMelodicChannelTimbre(
@@ -1028,10 +1015,15 @@ void ChiptuneMidiPlayerWidget::ApplyMelodicChannelInstrumentTimbre(
 /**********************************************************************************/
 int ChiptuneMidiPlayerWidget::LoadAndApplyTimbres(void)
 {
-	InstrumentTimbreIniFile timbre_ini_file(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING);
-	int const ret = timbre_ini_file.ReadTimbres(&m_ini_instrument_timbre_map);
+	QMap<int8_t, instrument_timbre_t> ini_instrument_timbre_map;
+	int ret = 0;
 
 	do {
+		if(nullptr == m_p_mid_song_manager){
+			break;
+		}
+		InstrumentTimbreIniFile timbre_ini_file(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING);
+		ret = timbre_ini_file.ReadTimbres(&ini_instrument_timbre_map);
 		if(-1 == ret){
 			break;
 		}
@@ -1054,15 +1046,30 @@ int ChiptuneMidiPlayerWidget::LoadAndApplyTimbres(void)
 				}
 
 				instrument_timbre_t const channel_instrument_timbre
-						= GetChannelInstrumentTimbre(p_channel_list_widget, channel_index);
-				ApplyMelodicChannelInstrumentTimbre(p_channel_list_widget,
-													channel_index,
-													channel_instrument_code,
-													true);
-				instrument_timbre_t const applied_instrument_timbre
-						= GetChannelInstrumentTimbre(p_channel_list_widget, channel_index);
-				if(true == IsInstrumentTimbreIdentical(&applied_instrument_timbre, &channel_instrument_timbre)){
-					break;
+						= GetChannelInstrumentTimbreFromGUI(p_channel_list_widget, channel_index);
+				{
+					instrument_timbre_t const * p_instrument_timbre = nullptr;
+					instrument_timbre_t ini_instrument_timbre;
+					instrument_timbre_t target_instrument_timbre;
+					if(true == ini_instrument_timbre_map.contains((int8_t)channel_instrument_code)){
+						ini_instrument_timbre = ini_instrument_timbre_map.value((int8_t)channel_instrument_code);
+						p_instrument_timbre = &ini_instrument_timbre;
+					}
+					do
+					{
+						if(nullptr == p_instrument_timbre){
+							target_instrument_timbre = GetDefaultInstrumentTimbre();
+							break;
+						}
+						memcpy(&target_instrument_timbre, p_instrument_timbre, sizeof(instrument_timbre_t));
+					}while(0);
+					if(true == IsInstrumentTimbreIdentical(&target_instrument_timbre, &channel_instrument_timbre)){
+						break;
+					}
+					ApplyMelodicChannelInstrumentTimbre(p_channel_list_widget,
+														channel_index,
+														p_instrument_timbre,
+														true);
 				}
 				qInfo() << Q_FUNC_INFO
 						<< "applied timbre,"
@@ -1078,32 +1085,28 @@ int ChiptuneMidiPlayerWidget::LoadAndApplyTimbres(void)
 /**********************************************************************************/
 void ChiptuneMidiPlayerWidget::on_LoadTimbresPushButton_toggled(bool is_checked)
 {
-	ChannelListWidget * const p_channel_list_widget = ui->TimbreListWidget->findChild<ChannelListWidget*>();
 	do {
+		if(nullptr == m_p_mid_song_manager){
+			break;
+		}
+		ChannelListWidget * const p_channel_list_widget = ui->TimbreListWidget->findChild<ChannelListWidget*>();
+		if(nullptr == p_channel_list_widget){
+			break;
+		}
+
 		if(false == is_checked){
-			m_ini_instrument_timbre_map.clear();
-			do
-			{
-				if(nullptr == p_channel_list_widget){
-					break;
-				}
-				QList<QPair<int, int>> const channel_instrument_pair_list =
-						m_p_tune_manager->GetChannelInstrumentPairList();
-				for(int i = 0; i < channel_instrument_pair_list.size(); i++){
-					int const channel_index = channel_instrument_pair_list.at(i).first;
-					int const channel_instrument_code = channel_instrument_pair_list.at(i).second;
-					ApplyMelodicChannelInstrumentTimbre(p_channel_list_widget,
-														channel_index,
-														channel_instrument_code,
-														true);
-				}
-			}while(0);
+			QList<QPair<int, int>> const channel_instrument_pair_list =
+					m_p_tune_manager->GetChannelInstrumentPairList();
+			for(int i = 0; i < channel_instrument_pair_list.size(); i++){
+				int const channel_index = channel_instrument_pair_list.at(i).first;
+				ApplyMelodicChannelInstrumentTimbre(
+							p_channel_list_widget, channel_index, nullptr, true);
+			}
 			break;
 		}
 
 		int const ret = LoadAndApplyTimbres();
 		if(-1 == ret){
-			m_ini_instrument_timbre_map.clear();
 			ui->LoadTimbresPushButton->setChecked(false);
 			QMessageBox::warning(this, QStringLiteral("Load Timbres"),
 								 tr("%1 not found.").arg(INSTRUMENT_TIMBRES_INI_FILE_NAME_STRING));
@@ -1138,7 +1141,7 @@ void ChiptuneMidiPlayerWidget::on_StoreTimbresPushButton_released(void)
 			}
 
 			instrument_timbre_t const channel_instrument_timbre
-					= GetChannelInstrumentTimbre(p_channel_list_widget, channel_index);
+					= GetChannelInstrumentTimbreFromGUI(p_channel_list_widget, channel_index);
 
 			if(false == ini_instrument_timbre_map.contains((int8_t)channel_instrument_code)){
 				instrument_timbre_t const default_instrument_timbre = GetDefaultInstrumentTimbre();
@@ -1178,7 +1181,7 @@ void ChiptuneMidiPlayerWidget::on_StoreTimbresPushButton_released(void)
 				}
 
 				instrument_timbre_t const channel_instrument_timbre
-						= GetChannelInstrumentTimbre(p_channel_list_widget, channel_index);
+						= GetChannelInstrumentTimbreFromGUI(p_channel_list_widget, channel_index);
 				bool is_to_write = true;
 				do
 				{

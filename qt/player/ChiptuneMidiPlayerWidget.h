@@ -72,9 +72,9 @@ private:
 	void SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds);
 	void EjectMidiFile(void);
 	void UpdateTempoLabelText(void);
-	void SetTimbresFileButtonsEnabled(bool is_enabled);
 	void ApplyMelodicChannelInstrumentTimbre(ChannelListWidget * const p_channel_list_widget,
-											 int channel_index, int instrument_code,
+											 int channel_index,
+											 instrument_timbre_t const * const p_instrument_timbre,
 											 bool is_to_darker_title_for_a_while);
 	int LoadAndApplyTimbres(void);
 
@@ -96,7 +96,6 @@ private :
 	QTimer				m_defer_start_play_timer;
 
 	int					m_audio_player_buffer_in_milliseconds;
-	QMap<int8_t, instrument_timbre_t> m_ini_instrument_timbre_map;
 private:
 	WaveChartView *		m_p_wave_chartview;
 	PlayerSequencerWidget *	m_p_sequencer_widget;
