@@ -488,7 +488,7 @@ static inline bool IsInstrumentTimbreIdentical(instrument_timbre_t const * const
 }
 
 /**********************************************************************************/
-static instrument_timbre_t GetChannelInstrumentTimbre(ChannelListWidget * const p_channel_list_widget,
+static instrument_timbre_t GetChannelInstrumentTimbreFromGUI(ChannelListWidget * const p_channel_list_widget,
 													  int const channel_index)
 {
 	int waveform;
@@ -540,7 +540,7 @@ void ChiptuneMidiSynthesizerWidget::ApplyMelodicChannelInstrumentTimbre(
 		}
 
 		instrument_timbre_t const channel_instrument_timbre
-				= GetChannelInstrumentTimbre(m_p_channel_list_widget, channel_index);
+				= GetChannelInstrumentTimbreFromGUI(m_p_channel_list_widget, channel_index);
 		if(true == IsInstrumentTimbreIdentical(&instrument_timbre, &channel_instrument_timbre)){
 			break;
 		}
@@ -600,10 +600,10 @@ int ChiptuneMidiSynthesizerWidget::LoadAndApplyTimbres(void)
 				}
 
 				instrument_timbre_t const channel_instrument_timbre
-						= GetChannelInstrumentTimbre(m_p_channel_list_widget, channel_index);
+						= GetChannelInstrumentTimbreFromGUI(m_p_channel_list_widget, channel_index);
 				ApplyMelodicChannelInstrumentTimbre(channel_index, channel_instrument_code, true);
 				instrument_timbre_t const applied_instrument_timbre
-						= GetChannelInstrumentTimbre(m_p_channel_list_widget, channel_index);
+						= GetChannelInstrumentTimbreFromGUI(m_p_channel_list_widget, channel_index);
 				if(true == IsInstrumentTimbreIdentical(&applied_instrument_timbre, &channel_instrument_timbre)){
 					break;
 				}
@@ -673,7 +673,7 @@ void ChiptuneMidiSynthesizerWidget::on_StoreTimbresPushButton_released(void)
 			}
 
 			instrument_timbre_t const channel_instrument_timbre
-					= GetChannelInstrumentTimbre(m_p_channel_list_widget, channel_index);
+					= GetChannelInstrumentTimbreFromGUI(m_p_channel_list_widget, channel_index);
 
 			if(false == ini_instrument_timbre_map.contains((int8_t)channel_instrument_code)){
 				instrument_timbre_t const default_instrument_timbre = GetDefaultInstrumentTimbre();
@@ -713,7 +713,7 @@ void ChiptuneMidiSynthesizerWidget::on_StoreTimbresPushButton_released(void)
 				}
 
 				instrument_timbre_t const channel_instrument_timbre
-						= GetChannelInstrumentTimbre(m_p_channel_list_widget, channel_index);
+						= GetChannelInstrumentTimbreFromGUI(m_p_channel_list_widget, channel_index);
 				bool is_to_write = true;
 				do
 				{
