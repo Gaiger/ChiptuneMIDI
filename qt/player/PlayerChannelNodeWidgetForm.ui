@@ -24,7 +24,7 @@ color: rgb(208, 208, 208);
     <rect>
      <x>4</x>
      <y>4</y>
-     <width>88</width>
+     <width>84</width>
      <height>20</height>
     </rect>
    </property>
@@ -40,7 +40,7 @@ color: rgb(208, 208, 208);
     <rect>
      <x>112</x>
      <y>4</y>
-     <width>224</width>
+     <width>232</width>
      <height>24</height>
     </rect>
    </property>
