@@ -9,6 +9,8 @@ namespace Ui {
 class ChannelListWidget;
 }
 
+class ChannelNodeWidget;
+
 class ChannelListWidget : public QWidget
 {
 	Q_OBJECT
@@ -17,9 +19,7 @@ public :
 	explicit ChannelListWidget(QWidget *parent = nullptr);
 	~ChannelListWidget();
 
-	void AddChannel(int channel_index, int instrument_code,
-					bool is_displayed_channel_index_start_from_one = false,
-					bool is_channel_indicator_enabled = false);
+	void AddChannelNode(int channel_index, ChannelNodeWidget * const p_channel_node_widget);
 	void SetAllOutputEnabled(bool is_enabled);
 	bool IsOutputEnabled(int channel_index);
 	void SetMelodicChannelInstrument(int channel_index, int instrument_code);

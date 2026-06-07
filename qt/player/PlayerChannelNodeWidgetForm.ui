@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ChannelNodeWidget</class>
- <widget class="QWidget" name="ChannelNodeWidget">
+ <class>PlayerChannelNodeWidget</class>
+ <widget class="QWidget" name="PlayerChannelNodeWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -15,7 +15,7 @@
   </property>
   <property name="styleSheet">
    <string notr="true">QWidget {
-background-color: rgb(56, 56, 56); 
+background-color: rgb(56, 56, 56);
 color: rgb(208, 208, 208);
 }</string>
   </property>

@@ -22,6 +22,7 @@
 #include "InstrumentTimbreIniFile.h"
 #include "WaveChartView.h"
 #include "MidiInputManager.h"
+#include "SynthesizerChannelNodeWidget.h"
 #include "SynthesizerSequencerWidget.h"
 
 #include "ChiptuneMidiSynthesizerWidget.h"
@@ -73,7 +74,11 @@ static void SetupChannelListWidget(ChannelListWidget * const p_channel_list_widg
 {
 	instrument_timbre_t const default_instrument_timbre = GetDefaultInstrumentTimbre();
 	for(int channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; ++channel_index){
-		p_channel_list_widget->AddChannel(channel_index, AcousticGrandPiano, true, true);
+		SynthesizerChannelNodeWidget * const p_channel_node_widget =
+				new SynthesizerChannelNodeWidget(channel_index, AcousticGrandPiano,
+												 true,
+												 p_channel_list_widget);
+		p_channel_list_widget->AddChannelNode(channel_index, p_channel_node_widget);
 
 		if(MIDI_PERCUSSION_CHANNEL == channel_index){
 			continue;

@@ -75,11 +75,13 @@ set(APPLICATION_COMMON
 set(APPLICATION_PLAYER
     ${CHIPTUNE_QT_PLAYER_DIR}/MidSongManager.cpp
     ${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.cpp
+    ${CHIPTUNE_QT_PLAYER_DIR}/PlayerChannelNodeWidget.cpp
     ${CHIPTUNE_QT_PLAYER_DIR}/PlayerSequencerWidget.cpp
     ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.cpp
 
     ${CHIPTUNE_QT_PLAYER_DIR}/MidSongManager.h
     ${CHIPTUNE_QT_PLAYER_DIR}/ProgressSlider.h
+    ${CHIPTUNE_QT_PLAYER_DIR}/PlayerChannelNodeWidget.h
     ${CHIPTUNE_QT_PLAYER_DIR}/PlayerSequencerWidget.h
     ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidget.h
 
@@ -96,12 +98,12 @@ set(MID_SONG
 
 
 set(PLAYER_FORMS
+    ${CHIPTUNE_QT_PLAYER_DIR}/PlayerChannelNodeWidgetForm.ui
     ${CHIPTUNE_QT_PLAYER_DIR}/ChiptuneMidiPlayerWidgetForm.ui
 )
 
 set(COMMON_FORMS
     ${CHIPTUNE_QT_DIR}/ChannelListWidgetForm.ui
-    ${CHIPTUNE_QT_DIR}/ChannelNodeWidgetForm.ui
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrameForm.ui
 )
 

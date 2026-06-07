@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SynthesizerChannelNodeWidget</class>
+ <widget class="QWidget" name="SynthesizerChannelNodeWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>344</width>
+    <height>268</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget {
+background-color: rgb(56, 56, 56);
+color: rgb(208, 208, 208);
+}</string>
+  </property>
+  <widget class="QPushButton" name="ExpandCollapsePushButton">
+   <property name="geometry">
+    <rect>
+     <x>44</x>
+     <y>4</y>
+     <width>292</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QWidget" name="MelodicTimbreWidget" native="true">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>28</y>
+     <width>336</width>
+     <height>240</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QWidget" name="ChannelColorWidget" native="true">
+   <property name="geometry">
+    <rect>
+     <x>4</x>
+     <y>4</y>
+     <width>16</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QWidget" name="ChannelIndicatorWidget" native="true">
+   <property name="geometry">
+    <rect>
+     <x>24</x>
+     <y>4</y>
+     <width>16</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

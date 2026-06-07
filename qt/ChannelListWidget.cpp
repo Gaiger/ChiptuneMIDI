@@ -31,18 +31,12 @@ ChannelListWidget::~ChannelListWidget()
 }
 
 /**********************************************************************************/
-void ChannelListWidget::AddChannel(int channel_index, int instrument_code,
-								   bool is_displayed_channel_index_start_from_one,
-								   bool is_channel_indicator_enabled)
+void ChannelListWidget::AddChannelNode(int channel_index, ChannelNodeWidget * const p_channel_node_widget)
 {
-	ChannelNodeWidget *p_channelnode_widget = new ChannelNodeWidget(channel_index, instrument_code,
-																	is_displayed_channel_index_start_from_one,
-																	is_channel_indicator_enabled,
-																	this);
-	m_p_vboxlayout->addWidget(p_channelnode_widget);
-	QObject::connect(p_channelnode_widget, &ChannelNodeWidget::OutputEnabled, this,
+	m_p_vboxlayout->addWidget(p_channel_node_widget);
+	QObject::connect(p_channel_node_widget, &ChannelNodeWidget::OutputEnabled, this,
 					 &ChannelListWidget::OutputEnabled);
-	QObject::connect(p_channelnode_widget, &ChannelNodeWidget::MelodicChannelTimbreChanged, this,
+	QObject::connect(p_channel_node_widget, &ChannelNodeWidget::MelodicChannelTimbreChanged, this,
 					 &ChannelListWidget::MelodicChannelTimbreChanged);
 	m_channel_position_map.insert(channel_index, m_p_vboxlayout->count() - 1);
 }

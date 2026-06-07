@@ -31,6 +31,7 @@
 #include "WaveChartView.h"
 #include "PlayerSequencerWidget.h"
 #include "ChannelListWidget.h"
+#include "PlayerChannelNodeWidget.h"
 
 #include "ChiptuneMidiPlayerWidget.h"
 
@@ -363,7 +364,9 @@ int ChiptuneMidiPlayerWidget::LoadAndPlayMidiFile(QString filename_string)
 		for(int i = 0; i < channel_number; i++){
 			int channel_index = m_p_tune_manager->GetChannelInstrumentPairList().at(i).first;
 			int instrument_code = m_p_tune_manager->GetChannelInstrumentPairList().at(i).second;
-			p_channel_list_widget->AddChannel(channel_index, instrument_code);
+			PlayerChannelNodeWidget * const p_channel_node_widget =
+					new PlayerChannelNodeWidget(channel_index, instrument_code, p_channel_list_widget);
+			p_channel_list_widget->AddChannelNode(channel_index, p_channel_node_widget);
 
 			if(MIDI_PERCUSSION_CHANNEL == channel_index){
 				continue;

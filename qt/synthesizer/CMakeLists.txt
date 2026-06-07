@@ -80,10 +80,12 @@ set(APPLICATION_COMMON
 
 set(APPLICATION_SYNTHESIZER
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/MidiInputManager.cpp
+    ${CHIPTUNE_QT_SYNTHESIZER_DIR}/SynthesizerChannelNodeWidget.cpp
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/SynthesizerSequencerWidget.cpp
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/ChiptuneMidiSynthesizerWidget.cpp
 
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/MidiInputManager.h
+    ${CHIPTUNE_QT_SYNTHESIZER_DIR}/SynthesizerChannelNodeWidget.h
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/SynthesizerSequencerWidget.h
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/ChiptuneMidiSynthesizerWidget.h
 
@@ -99,12 +101,12 @@ set(MID_SONG
 
 
 set(SYNTHESIZER_FORMS
+    ${CHIPTUNE_QT_SYNTHESIZER_DIR}/SynthesizerChannelNodeWidgetForm.ui
     ${CHIPTUNE_QT_SYNTHESIZER_DIR}/ChiptuneMidiSynthesizerWidgetForm.ui
 )
 
 set(COMMON_FORMS
     ${CHIPTUNE_QT_DIR}/ChannelListWidgetForm.ui
-    ${CHIPTUNE_QT_DIR}/ChannelNodeWidgetForm.ui
     ${CHIPTUNE_QT_DIR}/MelodicTimbreFrameForm.ui
 )
 
