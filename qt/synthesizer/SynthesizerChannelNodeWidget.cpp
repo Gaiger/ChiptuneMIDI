@@ -50,6 +50,7 @@ SynthesizerChannelNodeWidget::SynthesizerChannelNodeWidget(int const channel_ind
 				"}";
 	}
 
+	ui->ChannelIndexLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 	ui->InstrumentNameLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 
 	if(MIDI_PERCUSSION_CHANNEL == channel_index){
@@ -88,13 +89,25 @@ int SynthesizerChannelNodeWidget::GetDisplayedChannelIndex(void) const
 /**********************************************************************************/
 void SynthesizerChannelNodeWidget::SetTitleText(QString const &text)
 {
-	ui->InstrumentNameLabel->setText(text);
+	int const title_separator_index = text.indexOf(' ');
+	do
+	{
+		if(title_separator_index < 0){
+			ui->ChannelIndexLabel->setText(QString());
+			ui->InstrumentNameLabel->setText(text);
+			break;
+		}
+		ui->ChannelIndexLabel->setText(text.left(title_separator_index));
+		ui->InstrumentNameLabel->setText(text.mid(title_separator_index + 1));
+	} while(0);
 }
 
 /**********************************************************************************/
 void SynthesizerChannelNodeWidget::SetTitleStyleSheet(QString const &style_sheet)
 {
-	ui->InstrumentNameLabel->setStyleSheet("color: rgb(208, 208, 208);" + style_sheet);
+	QString const title_style_sheet = "color: rgb(208, 208, 208);" + style_sheet;
+	ui->ChannelIndexLabel->setStyleSheet(title_style_sheet);
+	ui->InstrumentNameLabel->setStyleSheet(title_style_sheet);
 }
 
 /**********************************************************************************/
