@@ -51,8 +51,7 @@ private:
 	void UpdateIndicatorsAndSequencerByMidiMessage(uint32_t const midi_message);
 	void SendAllNotesOffMessages(void);
 	int LoadAndApplyTimbres(void);
-	void ApplyMelodicChannelInstrumentTimbre(int channel_index, int instrument_code,
-											 bool is_to_darker_title_for_a_while);
+	int ApplyMelodicChannelInstrumentTimbre(int channel_index, int instrument_code);
 private:
 	TuneManager * const	m_p_tune_manager;
 	AudioPlayer *		m_p_audio_player;

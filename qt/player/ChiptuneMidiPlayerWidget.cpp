@@ -962,24 +962,32 @@ static instrument_timbre_t GetChannelInstrumentTimbreFromGUI(ChannelListWidget *
 }
 
 /**********************************************************************************/
-void ChiptuneMidiPlayerWidget::ApplyMelodicChannelInstrumentTimbre(
+int ChiptuneMidiPlayerWidget::ApplyMelodicChannelInstrumentTimbre(
 		ChannelListWidget * const p_channel_list_widget,
 		int channel_index,
-		instrument_timbre_t const * const p_instrument_timbre,
-		bool is_to_darker_title_for_a_while)
+		instrument_timbre_t const * const p_instrument_timbre)
 {
+	int ret = -1;
 	do
 	{
 		if(nullptr == p_channel_list_widget){
 			break;
 		}
 		if(MIDI_PERCUSSION_CHANNEL == channel_index){
+			ret = 1;
 			break;
 		}
 
 		instrument_timbre_t instrument_timbre = GetDefaultInstrumentTimbre();
 		if(nullptr != p_instrument_timbre){
 			instrument_timbre = *p_instrument_timbre;
+		}
+
+		instrument_timbre_t const channel_instrument_timbre
+				= GetChannelInstrumentTimbreFromGUI(p_channel_list_widget, channel_index);
+		if(true == IsInstrumentTimbreIdentical(&instrument_timbre, &channel_instrument_timbre)){
+			ret = 1;
+			break;
 		}
 
 		p_channel_list_widget->SetMelodicChannelTimbre(
@@ -995,7 +1003,7 @@ void ChiptuneMidiPlayerWidget::ApplyMelodicChannelInstrumentTimbre(
 					instrument_timbre.envelope_note_off_hold_sustain_level,
 					instrument_timbre.envelope_note_off_hold_sustain_curve,
 					instrument_timbre.envelope_note_off_hold_sustain_duration_in_seconds,
-					is_to_darker_title_for_a_while);
+					true);
 		m_p_tune_manager->SetMelodicChannelTimbre(
 					(int8_t)channel_index,
 					instrument_timbre.waveform,
@@ -1009,7 +1017,9 @@ void ChiptuneMidiPlayerWidget::ApplyMelodicChannelInstrumentTimbre(
 					instrument_timbre.envelope_note_off_hold_sustain_level,
 					instrument_timbre.envelope_note_off_hold_sustain_curve,
 					instrument_timbre.envelope_note_off_hold_sustain_duration_in_seconds);
+		ret = 0;
 	}while(0);
+	return ret;
 }
 
 /**********************************************************************************/
@@ -1045,31 +1055,20 @@ int ChiptuneMidiPlayerWidget::LoadAndApplyTimbres(void)
 					break;
 				}
 
-				instrument_timbre_t const channel_instrument_timbre
-						= GetChannelInstrumentTimbreFromGUI(p_channel_list_widget, channel_index);
 				{
 					instrument_timbre_t const * p_instrument_timbre = nullptr;
 					instrument_timbre_t ini_instrument_timbre;
-					instrument_timbre_t target_instrument_timbre;
 					if(true == ini_instrument_timbre_map.contains((int8_t)channel_instrument_code)){
 						ini_instrument_timbre = ini_instrument_timbre_map.value((int8_t)channel_instrument_code);
 						p_instrument_timbre = &ini_instrument_timbre;
 					}
-					do
-					{
-						if(nullptr == p_instrument_timbre){
-							target_instrument_timbre = GetDefaultInstrumentTimbre();
-							break;
-						}
-						memcpy(&target_instrument_timbre, p_instrument_timbre, sizeof(instrument_timbre_t));
-					}while(0);
-					if(true == IsInstrumentTimbreIdentical(&target_instrument_timbre, &channel_instrument_timbre)){
+					int const apply_timbre_ret =
+							ApplyMelodicChannelInstrumentTimbre(p_channel_list_widget,
+																channel_index,
+																p_instrument_timbre);
+					if(0 != apply_timbre_ret){
 						break;
 					}
-					ApplyMelodicChannelInstrumentTimbre(p_channel_list_widget,
-														channel_index,
-														p_instrument_timbre,
-														true);
 				}
 				qInfo() << Q_FUNC_INFO
 						<< "applied timbre,"
@@ -1099,8 +1098,17 @@ void ChiptuneMidiPlayerWidget::on_LoadTimbresPushButton_toggled(bool is_checked)
 					m_p_tune_manager->GetChannelInstrumentPairList();
 			for(int i = 0; i < channel_instrument_pair_list.size(); i++){
 				int const channel_index = channel_instrument_pair_list.at(i).first;
-				ApplyMelodicChannelInstrumentTimbre(
-							p_channel_list_widget, channel_index, nullptr, true);
+				int const channel_instrument_code = channel_instrument_pair_list.at(i).second;
+				int const apply_timbre_ret =
+						ApplyMelodicChannelInstrumentTimbre(
+							p_channel_list_widget, channel_index, nullptr);
+				if(0 != apply_timbre_ret){
+					continue;
+				}
+				qInfo() << Q_FUNC_INFO
+						<< "recovered default timbre,"
+						<< "channel =" << channel_index
+						<< "instrument =" << GetInstrumentNameString(channel_instrument_code);
 			}
 			break;
 		}

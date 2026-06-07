@@ -368,7 +368,7 @@ void ChiptuneMidiSynthesizerWidget::UpdateIndicatorsAndSequencerByMidiMessage(
 			int const instrument_code = (uint8_t)((midi_message >> 8) & 0xFF);
 			if(nullptr != m_p_channel_list_widget){
 				m_p_channel_list_widget->SetMelodicChannelInstrument(channel_index, instrument_code);
-				ApplyMelodicChannelInstrumentTimbre(channel_index, instrument_code, true);
+				ApplyMelodicChannelInstrumentTimbre(channel_index, instrument_code);
 
 				m_p_channel_list_widget->SetChannelNodeIndicator(channel_index, true);
 				std::function<void()> set_indicator_not_highlight_function = [this, channel_index](){
@@ -522,15 +522,17 @@ static instrument_timbre_t GetChannelInstrumentTimbreFromGUI(ChannelListWidget *
 }
 
 /**********************************************************************************/
-void ChiptuneMidiSynthesizerWidget::ApplyMelodicChannelInstrumentTimbre(
-		int channel_index, int instrument_code, bool is_to_darker_title_for_a_while)
+int ChiptuneMidiSynthesizerWidget::ApplyMelodicChannelInstrumentTimbre(
+		int channel_index, int instrument_code)
 {
+	int ret = -1;
 	do
 	{
 		if(nullptr == m_p_channel_list_widget){
 			break;
 		}
 		if(MIDI_PERCUSSION_CHANNEL == channel_index){
+			ret = 1;
 			break;
 		}
 
@@ -542,6 +544,7 @@ void ChiptuneMidiSynthesizerWidget::ApplyMelodicChannelInstrumentTimbre(
 		instrument_timbre_t const channel_instrument_timbre
 				= GetChannelInstrumentTimbreFromGUI(m_p_channel_list_widget, channel_index);
 		if(true == IsInstrumentTimbreIdentical(&instrument_timbre, &channel_instrument_timbre)){
+			ret = 1;
 			break;
 		}
 
@@ -558,7 +561,7 @@ void ChiptuneMidiSynthesizerWidget::ApplyMelodicChannelInstrumentTimbre(
 					instrument_timbre.envelope_note_off_hold_sustain_level,
 					instrument_timbre.envelope_note_off_hold_sustain_curve,
 					instrument_timbre.envelope_note_off_hold_sustain_duration_in_seconds,
-					is_to_darker_title_for_a_while);
+					true);
 		m_p_tune_manager->SetMelodicChannelTimbre(
 					(int8_t)channel_index,
 					instrument_timbre.waveform,
@@ -572,7 +575,9 @@ void ChiptuneMidiSynthesizerWidget::ApplyMelodicChannelInstrumentTimbre(
 					instrument_timbre.envelope_note_off_hold_sustain_level,
 					instrument_timbre.envelope_note_off_hold_sustain_curve,
 					instrument_timbre.envelope_note_off_hold_sustain_duration_in_seconds);
+		ret = 0;
 	}while(0);
+	return ret;
 }
 
 /**********************************************************************************/
@@ -599,12 +604,9 @@ int ChiptuneMidiSynthesizerWidget::LoadAndApplyTimbres(void)
 					break;
 				}
 
-				instrument_timbre_t const channel_instrument_timbre
-						= GetChannelInstrumentTimbreFromGUI(m_p_channel_list_widget, channel_index);
-				ApplyMelodicChannelInstrumentTimbre(channel_index, channel_instrument_code, true);
-				instrument_timbre_t const applied_instrument_timbre
-						= GetChannelInstrumentTimbreFromGUI(m_p_channel_list_widget, channel_index);
-				if(true == IsInstrumentTimbreIdentical(&applied_instrument_timbre, &channel_instrument_timbre)){
+				int const apply_timbre_ret =
+						ApplyMelodicChannelInstrumentTimbre(channel_index, channel_instrument_code);
+				if(0 != apply_timbre_ret){
 					break;
 				}
 				qInfo() << Q_FUNC_INFO
@@ -631,7 +633,15 @@ void ChiptuneMidiSynthesizerWidget::on_LoadTimbresPushButton_toggled(bool is_che
 				for(int channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; channel_index++){
 					int const channel_instrument_code =
 							m_p_tune_manager->GetCurrentChannelInstrument(channel_index);
-					ApplyMelodicChannelInstrumentTimbre(channel_index, channel_instrument_code, true);
+					int const apply_timbre_ret =
+							ApplyMelodicChannelInstrumentTimbre(channel_index, channel_instrument_code);
+					if(0 != apply_timbre_ret){
+						continue;
+					}
+					qInfo() << Q_FUNC_INFO
+							<< "recovered default timbre,"
+							<< "channel =" << channel_index
+							<< "instrument =" << GetInstrumentNameString(channel_instrument_code);
 				}
 			}while(0);
 			break;

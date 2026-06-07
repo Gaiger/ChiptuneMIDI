@@ -72,10 +72,9 @@ private:
 	void SetTuneStartTimeAndCheckPlayPausePushButtonIconToPlay(int start_time_in_milliseconds);
 	void EjectMidiFile(void);
 	void UpdateTempoLabelText(void);
-	void ApplyMelodicChannelInstrumentTimbre(ChannelListWidget * const p_channel_list_widget,
-											 int channel_index,
-											 instrument_timbre_t const * const p_instrument_timbre,
-											 bool is_to_darker_title_for_a_while);
+	int ApplyMelodicChannelInstrumentTimbre(ChannelListWidget * const p_channel_list_widget,
+											int channel_index,
+											instrument_timbre_t const * const p_instrument_timbre);
 	int LoadAndApplyTimbres(void);
 
 private:
