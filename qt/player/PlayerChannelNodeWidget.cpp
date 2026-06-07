@@ -34,16 +34,10 @@ PlayerChannelNodeWidget::PlayerChannelNodeWidget(int const channel_index, int co
 		ui->ChannelColorWidget->setStyleSheet(style_sheet_string);
 	}
 
-	do
-	{
-		if(MIDI_PERCUSSION_CHANNEL == channel_index){
-			ui->ExpandCollapsePushButton->setEnabled(false);
-			break;
-		}
-
-		ChannelNodeWidget::SetupMelodicTimbreWidget(ui->MelodicTimbreWidget);
-	} while(0);
-
+	if(MIDI_PERCUSSION_CHANNEL == channel_index){
+		ui->ExpandCollapsePushButton->setEnabled(false);
+	}
+	ChannelNodeWidget::SetupMelodicTimbreWidget(ui->MelodicTimbreWidget);
 	ChannelNodeWidget::SetupTitleWidget();
 	ChannelNodeWidget::SetInstrument(instrument_code);
 }

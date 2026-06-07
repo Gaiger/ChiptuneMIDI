@@ -22,17 +22,30 @@ color: rgb(208, 208, 208);
   <widget class="QPushButton" name="ExpandCollapsePushButton">
    <property name="geometry">
     <rect>
+     <x>272</x>
+     <y>4</y>
+     <width>64</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Timbres</string>
+   </property>
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="InstrumentNameLabel">
+   <property name="geometry">
+    <rect>
      <x>44</x>
      <y>4</y>
-     <width>292</width>
+     <width>224</width>
      <height>24</height>
     </rect>
    </property>
    <property name="text">
     <string/>
-   </property>
-   <property name="checkable">
-    <bool>true</bool>
    </property>
   </widget>
   <widget class="QWidget" name="MelodicTimbreWidget" native="true">

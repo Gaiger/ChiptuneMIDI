@@ -50,16 +50,12 @@ SynthesizerChannelNodeWidget::SynthesizerChannelNodeWidget(int const channel_ind
 				"}";
 	}
 
-	do
-	{
-		if(MIDI_PERCUSSION_CHANNEL == channel_index){
-			ui->ExpandCollapsePushButton->setEnabled(false);
-			break;
-		}
+	ui->InstrumentNameLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 
-		ChannelNodeWidget::SetupMelodicTimbreWidget(ui->MelodicTimbreWidget);
-	} while(0);
-
+	if(MIDI_PERCUSSION_CHANNEL == channel_index){
+		ui->ExpandCollapsePushButton->setEnabled(false);
+	}
+	ChannelNodeWidget::SetupMelodicTimbreWidget(ui->MelodicTimbreWidget);
 	ChannelNodeWidget::SetupTitleWidget();
 	ChannelNodeWidget::SetInstrument(instrument_code);
 }
@@ -92,17 +88,17 @@ int SynthesizerChannelNodeWidget::GetDisplayedChannelIndex(void) const
 /**********************************************************************************/
 void SynthesizerChannelNodeWidget::SetTitleText(QString const &text)
 {
-	ui->ExpandCollapsePushButton->setText(text);
+	ui->InstrumentNameLabel->setText(text);
 }
 
 /**********************************************************************************/
 void SynthesizerChannelNodeWidget::SetTitleStyleSheet(QString const &style_sheet)
 {
-	ui->ExpandCollapsePushButton->setStyleSheet(style_sheet);
+	ui->InstrumentNameLabel->setStyleSheet("color: rgb(208, 208, 208);" + style_sheet);
 }
 
 /**********************************************************************************/
 QString SynthesizerChannelNodeWidget::GetTitleStyleSheet(void) const
 {
-	return ui->ExpandCollapsePushButton->styleSheet();
+	return ui->InstrumentNameLabel->styleSheet();
 }
