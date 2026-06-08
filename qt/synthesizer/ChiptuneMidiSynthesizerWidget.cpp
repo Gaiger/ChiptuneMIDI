@@ -175,6 +175,8 @@ ChiptuneMidiSynthesizerWidget::ChiptuneMidiSynthesizerWidget(TuneManager * p_tun
 	m_p_channel_list_widget = new ChannelListWidget(ui->TimbreListWidget);
 	QObject::connect(m_p_channel_list_widget, &ChannelListWidget::OutputEnabled,
 					 this, &ChiptuneMidiSynthesizerWidget::HandleChannelOutputEnabled);
+	QObject::connect(m_p_channel_list_widget, &ChannelListWidget::MelodicChannelInstrumentChanged,
+					 this, &ChiptuneMidiSynthesizerWidget::HandleMelodicChannelInstrumentChanged);
 	QObject::connect(m_p_channel_list_widget, &ChannelListWidget::MelodicChannelTimbreChanged,
 					 this, &ChiptuneMidiSynthesizerWidget::HandleMelodicChannelTimbreChanged);
 	FillWidget(m_p_channel_list_widget, ui->TimbreListWidget);
@@ -428,6 +430,23 @@ void ChiptuneMidiSynthesizerWidget::timerEvent(QTimerEvent *event)
 void ChiptuneMidiSynthesizerWidget::HandleChannelOutputEnabled(int channel_index, bool is_enabled)
 {
 	m_p_tune_manager->SetChannelOutputEnabled(channel_index, is_enabled);
+}
+
+/**********************************************************************************/
+void ChiptuneMidiSynthesizerWidget::HandleMelodicChannelInstrumentChanged(int channel_index, int instrument_code)
+{
+	/*qInfo() << Q_FUNC_INFO
+			<< "melodic channel instrument changed,"
+			<< "channel =" << channel_index
+			<< "instrument =" << GetInstrumentNameString(instrument_code);
+			*/
+	uint32_t const midi_message =
+			(uint32_t)(MIDI_MESSAGE_PROGRAM_CHANGE | channel_index)
+			| ((uint32_t)instrument_code << 8);
+	m_p_tune_manager->SendMidiMessage(midi_message);
+	if(true == ui->LoadTimbresPushButton->isChecked()){
+		LoadAndApplyTimbres();
+	}
 }
 
 /**********************************************************************************/

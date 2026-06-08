@@ -37,6 +37,7 @@ public:
 	virtual bool IsOutputEnabled(void) const;
 signals:
 	void OutputEnabled(int channel_index, bool is_enabled);
+	void MelodicChannelInstrumentChanged(int channel_index, int instrument_code);
 	void MelodicChannelTimbreChanged(int channel_index,
 				   int waveform,
 				   int envelope_attack_curve, double envelope_attack_duration_in_seconds,

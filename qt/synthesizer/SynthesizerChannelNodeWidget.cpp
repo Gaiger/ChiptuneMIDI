@@ -1,6 +1,8 @@
 #include <QLabel>
+#include <QComboBox>
 #include <QDebug>
 #include <QColor>
+#include <QSignalBlocker>
 #include <QTimer>
 
 #include "chiptune_midi_define.h"
@@ -17,6 +19,7 @@ SynthesizerChannelNodeWidget::SynthesizerChannelNodeWidget(int const channel_ind
 									 QWidget *parent) :
 	ChannelNodeWidget(channel_index, parent),
 	m_is_displayed_channel_index_start_from_one(is_displayed_channel_index_start_from_one),
+	m_p_percussion_name_label(nullptr),
 	ui(new Ui::SynthesizerChannelNodeWidget)
 {
 	ui->setupUi(this);
@@ -51,10 +54,16 @@ SynthesizerChannelNodeWidget::SynthesizerChannelNodeWidget(int const channel_ind
 	}
 
 	ui->ChannelIndexLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-	ui->InstrumentNameLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+	for(int instrument_code = 0; instrument_code <= MIDI_SEVEN_BITS_MAX_VALUE; instrument_code++){
+		ui->InstrumentNameComboBox->addItem(GetInstrumentNameString(instrument_code), instrument_code);
+	}
 
 	if(MIDI_PERCUSSION_CHANNEL == channel_index){
 		ui->ExpandCollapsePushButton->setEnabled(false);
+		m_p_percussion_name_label = new QLabel(this);
+		m_p_percussion_name_label->setGeometry(ui->InstrumentNameComboBox->geometry());
+		m_p_percussion_name_label->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+		m_p_percussion_name_label->hide();
 	}
 	ChannelNodeWidget::SetupMelodicTimbreWidget(ui->MelodicTimbreWidget);
 	ChannelNodeWidget::SetupTitleWidget();
@@ -81,6 +90,18 @@ void SynthesizerChannelNodeWidget::SetIndicator(bool const is_to_highlight)
 }
 
 /**********************************************************************************/
+void SynthesizerChannelNodeWidget::on_InstrumentNameComboBox_currentIndexChanged(int const index)
+{
+	do
+	{
+		if(index < 0){
+			break;
+		}
+		emit MelodicChannelInstrumentChanged(m_channel_index, index);
+	} while(0);
+}
+
+/**********************************************************************************/
 int SynthesizerChannelNodeWidget::GetDisplayedChannelIndex(void) const
 {
 	return m_channel_index + (true == m_is_displayed_channel_index_start_from_one ? 1 : 0);
@@ -90,15 +111,32 @@ int SynthesizerChannelNodeWidget::GetDisplayedChannelIndex(void) const
 void SynthesizerChannelNodeWidget::SetTitleText(QString const &text)
 {
 	int const title_separator_index = text.indexOf(' ');
+	QString instrument_name = text;
 	do
 	{
 		if(title_separator_index < 0){
 			ui->ChannelIndexLabel->setText(QString());
-			ui->InstrumentNameLabel->setText(text);
 			break;
 		}
 		ui->ChannelIndexLabel->setText(text.left(title_separator_index));
-		ui->InstrumentNameLabel->setText(text.mid(title_separator_index + 1));
+		instrument_name = text.mid(title_separator_index + 1);
+	} while(0);
+
+	int const instrument_name_combo_box_index = ui->InstrumentNameComboBox->findText(instrument_name);
+	do
+	{
+		if(0 <= instrument_name_combo_box_index){
+			ui->InstrumentNameComboBox->show();
+			QSignalBlocker signal_blocker(ui->InstrumentNameComboBox);
+			ui->InstrumentNameComboBox->setCurrentIndex(instrument_name_combo_box_index);
+			break;
+		}
+		if(nullptr == m_p_percussion_name_label){
+			break;
+		}
+		ui->InstrumentNameComboBox->hide();
+		m_p_percussion_name_label->show();
+		m_p_percussion_name_label->setText(instrument_name);
 	} while(0);
 }
 
@@ -107,11 +145,14 @@ void SynthesizerChannelNodeWidget::SetTitleStyleSheet(QString const &style_sheet
 {
 	QString const title_style_sheet = "color: rgb(208, 208, 208);" + style_sheet;
 	ui->ChannelIndexLabel->setStyleSheet(title_style_sheet);
-	ui->InstrumentNameLabel->setStyleSheet(title_style_sheet);
+	ui->InstrumentNameComboBox->setStyleSheet(title_style_sheet);
+	if(nullptr != m_p_percussion_name_label){
+		m_p_percussion_name_label->setStyleSheet(title_style_sheet);
+	}
 }
 
 /**********************************************************************************/
 QString SynthesizerChannelNodeWidget::GetTitleStyleSheet(void) const
 {
-	return ui->InstrumentNameLabel->styleSheet();
+	return ui->InstrumentNameComboBox->styleSheet();
 }

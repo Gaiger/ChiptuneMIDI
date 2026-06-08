@@ -36,6 +36,7 @@ private slots:
 	void HandleMidiMessageDelivered(uint32_t midi_message);
 	void HandleAudioPlayerStateChanged(AudioPlayer::PlaybackState state);
 	void HandleChannelOutputEnabled(int channel_index, bool is_enabled);
+	void HandleMelodicChannelInstrumentChanged(int channel_index, int instrument_code);
 	void HandleMelodicChannelTimbreChanged(int channel_index,
 										   int waveform,
 										   int envelope_attack_curve, double envelope_attack_duration_in_seconds,

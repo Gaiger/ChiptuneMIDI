@@ -36,6 +36,8 @@ void ChannelListWidget::AddChannelNode(int channel_index, ChannelNodeWidget * co
 	m_p_vboxlayout->addWidget(p_channel_node_widget);
 	QObject::connect(p_channel_node_widget, &ChannelNodeWidget::OutputEnabled, this,
 					 &ChannelListWidget::OutputEnabled);
+	QObject::connect(p_channel_node_widget, &ChannelNodeWidget::MelodicChannelInstrumentChanged, this,
+					 &ChannelListWidget::MelodicChannelInstrumentChanged);
 	QObject::connect(p_channel_node_widget, &ChannelNodeWidget::MelodicChannelTimbreChanged, this,
 					 &ChannelListWidget::MelodicChannelTimbreChanged);
 	m_channel_position_map.insert(channel_index, m_p_vboxlayout->count() - 1);

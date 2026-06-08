@@ -22,30 +22,30 @@ color: rgb(208, 208, 208);
   <widget class="QPushButton" name="ExpandCollapsePushButton">
    <property name="geometry">
     <rect>
-     <x>272</x>
+     <x>300</x>
      <y>4</y>
-     <width>72</width>
+     <width>44</width>
      <height>24</height>
     </rect>
    </property>
    <property name="text">
-    <string>Timbres</string>
+    <string>Env</string>
+   </property>
+   <property name="toolTip">
+    <string>Edit envelope</string>
    </property>
    <property name="checkable">
     <bool>true</bool>
    </property>
   </widget>
-  <widget class="QLabel" name="InstrumentNameLabel">
+  <widget class="QComboBox" name="InstrumentNameComboBox">
    <property name="geometry">
     <rect>
      <x>72</x>
      <y>4</y>
-     <width>196</width>
+     <width>224</width>
      <height>24</height>
     </rect>
-   </property>
-   <property name="text">
-    <string/>
    </property>
   </widget>
   <widget class="QLabel" name="ChannelIndexLabel">
