@@ -672,6 +672,10 @@ static inline int16_t get_single_effect_associate_number(uint8_t const midi_effe
 			associate_number = DETUNE_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER;
 			break;
 		}
+		if(MidiEffectPhaser == midi_effect_type){
+			associate_number = PHASER_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER;
+			break;
+		}
 	}while(0);
 
 	return associate_number;

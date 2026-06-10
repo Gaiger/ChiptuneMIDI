@@ -15,6 +15,9 @@
 #if REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER > SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER
 	#error "REVERB_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER > SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER"
 #endif
+#if PHASER_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER > SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER
+	#error "PHASER_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER > SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER"
+#endif
 
 /**********************************************************************************/
 
@@ -317,6 +320,76 @@ static int process_chorus_effect(uint32_t const tick, int8_t const event_type,
 }
 
 /**********************************************************************************/
+static int process_phaser_effect(uint32_t const tick, int8_t const event_type,
+								 int8_t const voice, midi_value_t const note,
+								 normalized_midi_level_t const velocity,
+								 int16_t const primary_oscillator_index)
+{
+	(void)note;
+	(void)velocity;
+	if(MIDI_PERCUSSION_CHANNEL == voice){
+		return 1;
+	}
+	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	if(0 == p_channel_controller->phaser){
+		return 2;
+	}
+
+	do {
+		if(EventTypeActivate == event_type){
+			int cooperative_oscillator_number = 0;
+			cooperative_oscillator_number += 1;
+			cooperative_oscillator_number += calculate_all_subordinate_oscillator_number(
+						WITHOUT_EFFECT(MidiEffectPhaser), primary_oscillator_index);
+			STACK_ARRAY(int16_t, cooperative_oscillator_indexes, cooperative_oscillator_number);
+			cooperative_oscillator_indexes[0] = primary_oscillator_index;
+			collect_subordinate_oscillator_indexes(
+						WITHOUT_EFFECT(MidiEffectPhaser),
+						primary_oscillator_index, &cooperative_oscillator_indexes[1]);
+
+			for(int k = 0; k < cooperative_oscillator_number; k++){
+				oscillator_t * const p_cooperative_oscillator
+						= get_oscillator_pointer_from_index(cooperative_oscillator_indexes[k]);
+				uint16_t const loudness = p_cooperative_oscillator->loudness;
+				uint16_t const associate_loudness = DIVIDE_BY_2(loudness);
+				//uint16_t const associate_loudness = DIVIDE_BY_256(loudness) * p_channel_controller->phaser;
+				uint16_t const original_loudness = loudness - associate_loudness;
+				p_cooperative_oscillator->loudness = original_loudness;
+
+				int16_t associate_oscillator_indexes[PHASER_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER];
+				for(int16_t i = 0; i < PHASER_EFFECT_ASSOCIATE_OSCILLATOR_NUMBER; i++){
+					int16_t oscillator_index;
+					oscillator_t * const p_oscillator
+							= replicate_oscillator(cooperative_oscillator_indexes[k], &oscillator_index);
+					if(NULL == p_oscillator){
+						return -1;
+					}
+					associate_oscillator_indexes[i] = oscillator_index;
+					p_oscillator->loudness = associate_loudness;
+					p_oscillator->midi_effect_association = MidiEffectPhaser;
+				}
+				store_associate_oscillator_indexes(MidiEffectPhaser, cooperative_oscillator_indexes[k],
+												   &associate_oscillator_indexes[0]);
+			}
+			break;
+		}
+	} while(0);
+
+	{
+		int effect_subordinate_oscillator_number = 0;
+		effect_subordinate_oscillator_number = calculate_all_subordinate_oscillator_number(MidiEffectPhaser,
+																				 primary_oscillator_index);
+		STACK_ARRAY(int16_t, effect_subordinate_oscillator_indexes, effect_subordinate_oscillator_number);
+		collect_subordinate_oscillator_indexes(MidiEffectPhaser, primary_oscillator_index,
+											   &effect_subordinate_oscillator_indexes[0]);
+		for(int16_t i = 0; i < effect_subordinate_oscillator_number; i++){
+			put_event(event_type, effect_subordinate_oscillator_indexes[i], tick);
+		}
+	}
+	return 0;
+}
+
+/**********************************************************************************/
 
 #define MAX_REVERB_OSCILLAOTERS_OVERALL_INTERVAL_IN_SECOND	\
 													(0.150)
@@ -457,6 +530,7 @@ int process_effects(uint32_t const tick, int8_t const event_type, int8_t const v
 {
 	process_detune_effect(tick, event_type, voice, note, velocity, primary_oscillator_index);
 	process_chorus_effect(tick, event_type, voice, note, velocity, primary_oscillator_index);
+	process_phaser_effect(tick, event_type, voice, note, velocity, primary_oscillator_index);
 	process_reverb_effect(tick, event_type, voice, note, velocity, primary_oscillator_index);
 	return 0;
 }

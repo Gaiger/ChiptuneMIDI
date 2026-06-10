@@ -425,6 +425,16 @@ static void process_cc_detune_effect(uint32_t const tick, int8_t const voice, mi
 
 /**********************************************************************************/
 
+static void process_cc_phaser_effect(uint32_t const tick, int8_t const voice, midi_value_t const value)
+{
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_PHASER_EFFECT(%d) :: voice = %d, depth = %d\r\n",
+					tick, MIDI_CC_PHASER_EFFECT, voice, value);
+	get_channel_controller_pointer_from_index(voice)->phaser
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
+}
+
+/**********************************************************************************/
+
 static void process_cc_all_sound_off(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
 	(void)value;
@@ -584,6 +594,9 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 		break;
 	case MIDI_CC_DETUNE_EFFECT:
 		process_cc_detune_effect(tick, voice, value);
+		break;
+	case MIDI_CC_PHASER_EFFECT:
+		process_cc_phaser_effect(tick, voice, value);
 		break;
 	case MIDI_CC_RPN_LSB:
 		CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_RPN_LSB(%d) :: voice = %d, value = %d\r\n",

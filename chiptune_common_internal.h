@@ -26,6 +26,7 @@
 #define DIVIDE_BY_32(VALUE)							((VALUE) >> 5)
 #define DIVIDE_BY_64(VALUE)							((VALUE) >> 6)
 #define DIVIDE_BY_128(VALUE)						((VALUE) >> 7)
+#define DIVIDE_BY_256(VALUE)						((VALUE) >> 8)
 
 #define MULTIPLY_BY_2(VALUE)						((VALUE) << 1)
 #define MULTIPLY_BY_128(VALUE)						((VALUE) << 7)

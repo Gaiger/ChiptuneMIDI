@@ -12,9 +12,9 @@ enum MidiEffectType
 	//MidiEffectTremolo	= (0x01 << 1),
 	MidiEffectChorus	= (0x01 << 2),
 	MidiEffectDetune	= (0x01 << 3),
-	//MidiEffectPhaser	= (0x01 << 4),
+	MidiEffectPhaser	= (0x01 << 4),
 	MidiEffectAll
-		= (MidiEffectReverb | MidiEffectChorus | MidiEffectDetune),
+		= (MidiEffectReverb | MidiEffectChorus | MidiEffectDetune | MidiEffectPhaser),
 };
 
 typedef struct _oscillator

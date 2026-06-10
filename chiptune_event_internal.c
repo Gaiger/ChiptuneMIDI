@@ -368,6 +368,18 @@ static inline char const * get_event_additional_string(int16_t const event_index
 			is_empty_content = false;
 		}
 
+		if(MidiEffectPhaser == p_oscillator->midi_effect_association){
+			if(false == is_empty_content){
+				size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
+				snprintf(&s_event_additional_string[event_addition_string_length],
+						 sizeof(s_event_additional_string) - event_addition_string_length, "|");
+			}
+			size_t event_addition_string_length = strlen(&s_event_additional_string[0]);
+			snprintf(&s_event_additional_string[event_addition_string_length], sizeof(s_event_additional_string)
+					 - event_addition_string_length, "phaser");
+			is_empty_content = false;
+		}
+
 		if((true == IS_NOTE_OFF_HOLD(p_oscillator))
 				&& false == IS_NOTE_ON(p_oscillator->state_bits)){
 			if(false == is_empty_content){
