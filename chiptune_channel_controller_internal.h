@@ -72,6 +72,9 @@ typedef struct _channel_controller
 	uint16_t					vibrato_same_index_number;
 
 	normalized_midi_level_t		reverb;
+	normalized_midi_level_t		tremolo;
+	uint8_t const *				p_tremolo_lookup_table;
+	uint16_t					tremolo_same_index_number;
 	normalized_midi_level_t		chorus;
 	normalized_midi_level_t		detune;
 	normalized_midi_level_t		phaser;

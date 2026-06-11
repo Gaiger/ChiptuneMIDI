@@ -404,6 +404,15 @@ static void process_cc_reverb_effect(uint32_t const tick, int8_t const voice, mi
 }
 
 /**********************************************************************************/
+static void process_cc_tremolo_effect(uint32_t const tick, int8_t const voice, midi_value_t const value)
+{
+	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %u, MIDI_CC_TREMOLO_EFFECT(%d) :: voice = %d, depth = %d\r\n",
+					tick, MIDI_CC_TREMOLO_EFFECT, voice, value);
+	get_channel_controller_pointer_from_index(voice)->tremolo
+			= (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(value);
+}
+
+/**********************************************************************************/
 
 static void process_cc_chorus_effect(uint32_t const tick, int8_t const voice, midi_value_t const value)
 {
@@ -589,6 +598,9 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 	case MIDI_CC_REVERB_EFFECT:
 		process_cc_reverb_effect(tick, voice, value);
 		break;
+	case MIDI_CC_TREMOLO_EFFECT:
+		process_cc_tremolo_effect(tick, voice, value);
+		break;
 	case MIDI_CC_CHORUS_EFFECT:
 		process_cc_chorus_effect(tick, voice, value);
 		break;
@@ -623,11 +635,6 @@ int process_control_change_message(uint32_t const tick, int8_t const voice,
 		do
 		{
 			int const print_type = cMidiControlChange;
-			if(MIDI_CC_EFFECT_2 == number){
-				CHIPTUNE_PRINTF(print_type, "tick = %u, MIDI_CC_EFFECT_2(%d) :: voice = %d, depth = %d %s\r\n",
-								tick, number, voice, value, "(NOT IMPLEMENTED YET)");
-				break;
-			}
 			if(MIDI_CC_EFFECT_5 == number){
 				CHIPTUNE_PRINTF(print_type, "tick = %u, MIDI_CC_EFFECT_5(%d) :: voice = %d, depth = %d %s\r\n",
 								tick, number, voice, value, "(NOT IMPLEMENTED YET)");

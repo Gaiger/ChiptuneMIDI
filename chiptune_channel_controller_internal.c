@@ -9,6 +9,7 @@
 static channel_controller_t s_channel_controllers[MIDI_MAX_CHANNEL_NUMBER];
 
 static int8_t s_vibrato_lookup_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
+static uint8_t s_tremolo_lookup_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
 static int8_t s_phaser_lookup_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
 
 static int8_t s_linear_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
@@ -56,6 +57,7 @@ void reset_channel_controller_to_midi_defaults(int8_t const channel_index)
 
 	p_channel_controller->modulation_wheel = NORMALIZE_MIDI_LEVEL(0);
 	p_channel_controller->reverb = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
+	p_channel_controller->tremolo = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
 	p_channel_controller->chorus = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
 	p_channel_controller->detune = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
 	p_channel_controller->phaser = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
@@ -377,12 +379,16 @@ static void initialize_envelope_tables(void)
 }
 
 /**********************************************************************************/
-
 void initialize_channel_controllers(void)
 {
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
 		s_vibrato_lookup_table[i]
 				= (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
+	}
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		s_tremolo_lookup_table[i]
+				= (uint8_t)((INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH))
+							+ INT8_MAX);
 	}
 	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
 		s_phaser_lookup_table[i]
@@ -398,14 +404,18 @@ void initialize_channel_controllers(void)
 #define DEFAULT_VIBRATO_DEPTH_IN_SEMITONES			(1)
 #define DEFAULT_VIBRATO_RATE_IN_HZ					(4)
 		p_channel_controller->vibrato_depth_in_semitones = DEFAULT_VIBRATO_DEPTH_IN_SEMITONES;
-			p_channel_controller->p_vibrato_phase_table = &s_vibrato_lookup_table[0];
-			p_channel_controller->vibrato_same_index_number
+		p_channel_controller->p_vibrato_phase_table = &s_vibrato_lookup_table[0];
+		p_channel_controller->vibrato_same_index_number
 				= (uint16_t)(get_sampling_rate()/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_RATE_IN_HZ);
+#define DEFAULT_TREMOLO_RATE_IN_HZ					(6)
+		p_channel_controller->p_tremolo_lookup_table = &s_tremolo_lookup_table[0];
+		p_channel_controller->tremolo_same_index_number
+				= (uint16_t)(get_sampling_rate()/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_TREMOLO_RATE_IN_HZ);
 #define DEFAULT_PHASER_RATE_IN_HZ					(1)
-			p_channel_controller->p_phaser_phase_table = &s_phaser_lookup_table[0];
-			p_channel_controller->phaser_same_index_number
+		p_channel_controller->p_phaser_phase_table = &s_phaser_lookup_table[0];
+		p_channel_controller->phaser_same_index_number
 				= (uint16_t)(get_sampling_rate()/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_PHASER_RATE_IN_HZ);
-		}
+	}
 	reset_all_channels_to_defaults(false);
 }
 

@@ -717,6 +717,45 @@ void update_mono_wave_amplitude(oscillator_t * const p_oscillator)
 }
 
 /**********************************************************************************/
+void process_tremolo(oscillator_t * const p_oscillator)
+{
+	do {
+		if(true == is_stereo()
+				&& false == is_processing_left_channel()){
+			break;
+		}
+		if(true == IS_PERCUSSION_OSCILLATOR(p_oscillator)){
+			break;
+		}
+		channel_controller_t const * const p_channel_controller
+				= get_channel_controller_pointer_from_index(p_oscillator->voice);
+		if(0 == p_channel_controller->tremolo){
+			break;
+		}
+
+#define TREMOLO_DEPTH_LEVEL(MODULATION, TREMOLO)			DIVIDE_BY_256((uint32_t)(MODULATION) * (TREMOLO))
+		uint16_t const tremolo_depth_level = TREMOLO_DEPTH_LEVEL(
+					p_channel_controller->p_tremolo_lookup_table[p_oscillator->tremolo_table_index],
+					p_channel_controller->tremolo);
+#define TREMOLO_ATTENUATION(DEPTH_LEVEL)			DIVIDE_BY_2(DEPTH_LEVEL)
+#define TREMOLO_GAIN(DEPTH_LEVEL)					(INT8_MAX_PLUS_1 - (TREMOLO_ATTENUATION(DEPTH_LEVEL)))
+		uint16_t const tremolo_gain = TREMOLO_GAIN(tremolo_depth_level);
+
+#define TREMOLO_WAVE_AMPLITUDE(WAVE_AMPLITUDE, GAIN) \
+	((int32_t)DIVIDE_BY_128((int64_t)(WAVE_AMPLITUDE) * (GAIN)))
+		p_oscillator->mono_wave_amplitude =
+				TREMOLO_WAVE_AMPLITUDE(p_oscillator->mono_wave_amplitude, tremolo_gain);
+
+		p_oscillator->tremolo_same_index_count += 1;
+		if(p_channel_controller->tremolo_same_index_number == p_oscillator->tremolo_same_index_count){
+			p_oscillator->tremolo_same_index_count = 0;
+			p_oscillator->tremolo_table_index = REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(
+						p_oscillator->tremolo_table_index + 1);
+		}
+	} while(0);
+}
+
+/**********************************************************************************/
 
 #define PHASER_ALLPASS_MIN_COEFFICIENT				(32)
 #define PHASER_ALLPASS_COEFFICIENT_RANGE			(40)
@@ -733,7 +772,6 @@ static int32_t allpass_filter(int32_t const input, int32_t * const p_filter_stat
 }
 
 /**********************************************************************************/
-
 static uint8_t calculate_phaser_allpass_coefficient(oscillator_t const * const p_oscillator, int const stage_index)
 {
 	channel_controller_t const * const p_channel_controller
@@ -750,7 +788,6 @@ static uint8_t calculate_phaser_allpass_coefficient(oscillator_t const * const p
 }
 
 /**********************************************************************************/
-
 void process_phaser_filter(oscillator_t * const p_oscillator)
 {
 	do {
@@ -874,6 +911,7 @@ static int32_t generate_32bit_wave(void)
 			perform_percussion(p_oscillator);
 
 			update_mono_wave_amplitude(p_oscillator);
+			process_tremolo(p_oscillator);
 			process_phaser_filter(p_oscillator);
 			int32_t panned_wave_amplitude = generate_panned_wave_amplitude(p_oscillator);
 			int32_t const mix_wave_amplitude = panned_wave_amplitude/MIX_WAVE_AMPLITUDE_DIVISOR;

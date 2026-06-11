@@ -49,6 +49,8 @@ union{
 		uint16_t	max_vibrato_phase_increment;
 		uint16_t	vibrato_table_index;
 		uint16_t	vibrato_same_index_count;
+		uint16_t	tremolo_table_index;
+		uint16_t	tremolo_same_index_count;
 
 		float		pitch_detune_in_semitones;
 
