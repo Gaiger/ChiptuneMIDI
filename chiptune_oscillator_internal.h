@@ -17,6 +17,8 @@ enum MidiEffectType
 		= (MidiEffectReverb | MidiEffectChorus | MidiEffectDetune | MidiEffectPhaser),
 };
 
+#define PHASER_ALLPASS_STAGE_NUMBER					(4)
+
 typedef struct _oscillator
 {
 	uint8_t			state_bits;
@@ -53,6 +55,9 @@ union{
 		uint8_t		midi_effect_association;
 		int16_t		midi_effect_associate_link_index;//internal
 
+		int32_t		phaser_filter_states[PHASER_ALLPASS_STAGE_NUMBER];
+		uint16_t	phaser_table_index;
+		uint16_t	phaser_same_index_count;
 		int32_t		mono_wave_amplitude;
 	};
 	struct {

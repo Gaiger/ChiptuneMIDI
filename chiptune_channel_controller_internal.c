@@ -9,6 +9,7 @@
 static channel_controller_t s_channel_controllers[MIDI_MAX_CHANNEL_NUMBER];
 
 static int8_t s_vibrato_lookup_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
+static int8_t s_phaser_lookup_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
 
 static int8_t s_linear_decline_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
 static int8_t s_linear_growth_table[CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH] = {0};
@@ -383,6 +384,10 @@ void initialize_channel_controllers(void)
 		s_vibrato_lookup_table[i]
 				= (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
 	}
+	for(int16_t i = 0; i < CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH; i++){
+		s_phaser_lookup_table[i]
+				= (int8_t)(INT8_MAX * sinf( 2.0f * (float)M_PI * i / (float)CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH));
+	}
 	initialize_envelope_tables();
 
 	for(int8_t channel_index = 0; channel_index < MIDI_MAX_CHANNEL_NUMBER; channel_index++){
@@ -393,10 +398,14 @@ void initialize_channel_controllers(void)
 #define DEFAULT_VIBRATO_DEPTH_IN_SEMITONES			(1)
 #define DEFAULT_VIBRATO_RATE_IN_HZ					(4)
 		p_channel_controller->vibrato_depth_in_semitones = DEFAULT_VIBRATO_DEPTH_IN_SEMITONES;
-		p_channel_controller->p_vibrato_phase_table = &s_vibrato_lookup_table[0];
-		p_channel_controller->vibrato_same_index_number
-			= (uint16_t)(get_sampling_rate()/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_RATE_IN_HZ);
-	}
+			p_channel_controller->p_vibrato_phase_table = &s_vibrato_lookup_table[0];
+			p_channel_controller->vibrato_same_index_number
+				= (uint16_t)(get_sampling_rate()/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_VIBRATO_RATE_IN_HZ);
+#define DEFAULT_PHASER_RATE_IN_HZ					(1)
+			p_channel_controller->p_phaser_phase_table = &s_phaser_lookup_table[0];
+			p_channel_controller->phaser_same_index_number
+				= (uint16_t)(get_sampling_rate()/CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH/(float)DEFAULT_PHASER_RATE_IN_HZ);
+		}
 	reset_all_channels_to_defaults(false);
 }
 

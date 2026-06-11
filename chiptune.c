@@ -718,6 +718,68 @@ void update_mono_wave_amplitude(oscillator_t * const p_oscillator)
 
 /**********************************************************************************/
 
+#define PHASER_ALLPASS_MIN_COEFFICIENT				(32)
+#define PHASER_ALLPASS_COEFFICIENT_RANGE			(40)
+#define PHASER_ALLPASS_STAGE_COEFFICIENT_DELTA		(12)
+#define PHASER_ALLPASS_FILTER(INPUT, STATE, COEFFICIENT) \
+	((STATE) - DIVIDE_BY_128((int64_t)(COEFFICIENT) * (INPUT)))
+
+static int32_t allpass_filter(int32_t const input, int32_t * const p_filter_state,
+							  uint8_t const coefficient)
+{
+	int32_t const output = PHASER_ALLPASS_FILTER(input, *p_filter_state, coefficient);
+	*p_filter_state = input + DIVIDE_BY_128((int64_t)output * coefficient);
+	return output;
+}
+
+/**********************************************************************************/
+
+static uint8_t calculate_phaser_allpass_coefficient(oscillator_t const * const p_oscillator, int const stage_index)
+{
+	channel_controller_t const * const p_channel_controller
+			= get_channel_controller_pointer_from_index(p_oscillator->voice);
+	int16_t const phaser_phase = p_channel_controller->p_phaser_phase_table[p_oscillator->phaser_table_index];
+	uint16_t coefficient = (uint16_t)(PHASER_ALLPASS_MIN_COEFFICIENT
+									  + DIVIDE_BY_8(phaser_phase + INT8_MAX_PLUS_1)
+									  * PHASER_ALLPASS_COEFFICIENT_RANGE / DIVIDE_BY_4(INT8_MAX_PLUS_1)
+									  + stage_index * PHASER_ALLPASS_STAGE_COEFFICIENT_DELTA);
+	if(INT8_MAX < coefficient){
+		coefficient = INT8_MAX;
+	}
+	return (uint8_t)coefficient;
+}
+
+/**********************************************************************************/
+
+void process_phaser_filter(oscillator_t * const p_oscillator)
+{
+	do {
+		if(true == is_stereo()
+				&& false == is_processing_left_channel()){
+			break;
+		}
+		if(MidiEffectPhaser != p_oscillator->midi_effect_association){
+			break;
+		}
+		channel_controller_t const * const p_channel_controller
+				= get_channel_controller_pointer_from_index(p_oscillator->voice);
+		for(int i = 0; i < PHASER_ALLPASS_STAGE_NUMBER; i++){
+			uint8_t const coefficient = calculate_phaser_allpass_coefficient(p_oscillator, i);
+			p_oscillator->mono_wave_amplitude =
+					allpass_filter(p_oscillator->mono_wave_amplitude,
+								   &p_oscillator->phaser_filter_states[i], coefficient);
+		}
+		p_oscillator->phaser_same_index_count += 1;
+		if(p_channel_controller->phaser_same_index_number == p_oscillator->phaser_same_index_count){
+			p_oscillator->phaser_same_index_count = 0;
+			p_oscillator->phaser_table_index = REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(
+						p_oscillator->phaser_table_index + 1);
+		}
+	} while(0);
+}
+
+/**********************************************************************************/
+
 #define PANNED_WAVE_AMPLITUDE(MONO_WAVE_AMPLITUDE, PANNING_WEIGHT) \
 	DIVIDE_BY_128((int64_t)(MONO_WAVE_AMPLITUDE) * (PANNING_WEIGHT))
 
@@ -812,6 +874,7 @@ static int32_t generate_32bit_wave(void)
 			perform_percussion(p_oscillator);
 
 			update_mono_wave_amplitude(p_oscillator);
+			process_phaser_filter(p_oscillator);
 			int32_t panned_wave_amplitude = generate_panned_wave_amplitude(p_oscillator);
 			int32_t const mix_wave_amplitude = panned_wave_amplitude/MIX_WAVE_AMPLITUDE_DIVISOR;
 #ifdef _DEBUG

@@ -330,10 +330,13 @@ static int process_phaser_effect(uint32_t const tick, int8_t const event_type,
 	if(MIDI_PERCUSSION_CHANNEL == voice){
 		return 1;
 	}
-	channel_controller_t const * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
+	channel_controller_t * const p_channel_controller = get_channel_controller_pointer_from_index(voice);
 	if(0 == p_channel_controller->phaser){
 		return 2;
 	}
+#if 1
+	p_channel_controller->phaser = INT8_MAX_PLUS_1;
+#endif
 
 	do {
 		if(EventTypeActivate == event_type){
@@ -351,8 +354,8 @@ static int process_phaser_effect(uint32_t const tick, int8_t const event_type,
 				oscillator_t * const p_cooperative_oscillator
 						= get_oscillator_pointer_from_index(cooperative_oscillator_indexes[k]);
 				uint16_t const loudness = p_cooperative_oscillator->loudness;
-				uint16_t const associate_loudness = DIVIDE_BY_2(loudness);
-				//uint16_t const associate_loudness = DIVIDE_BY_256(loudness) * p_channel_controller->phaser;
+				uint16_t const associate_loudness
+						= DIVIDE_BY_16(DIVIDE_BY_64(loudness) * p_channel_controller->phaser) * 3;
 				uint16_t const original_loudness = loudness - associate_loudness;
 				p_cooperative_oscillator->loudness = original_loudness;
 
@@ -366,6 +369,11 @@ static int process_phaser_effect(uint32_t const tick, int8_t const event_type,
 					}
 					associate_oscillator_indexes[i] = oscillator_index;
 					p_oscillator->loudness = associate_loudness;
+					for(int j = 0; j < PHASER_ALLPASS_STAGE_NUMBER; j++){
+						p_oscillator->phaser_filter_states[j] = 0;
+					}
+					p_oscillator->phaser_table_index = 0;
+					p_oscillator->phaser_same_index_count = 0;
 					p_oscillator->midi_effect_association = MidiEffectPhaser;
 				}
 				store_associate_oscillator_indexes(MidiEffectPhaser, cooperative_oscillator_indexes[k],
