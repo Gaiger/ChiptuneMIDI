@@ -334,9 +334,6 @@ static int process_phaser_effect(uint32_t const tick, int8_t const event_type,
 	if(0 == p_channel_controller->phaser){
 		return 2;
 	}
-#if 1
-	p_channel_controller->phaser = INT8_MAX_PLUS_1;
-#endif
 
 	do {
 		if(EventTypeActivate == event_type){

@@ -760,14 +760,17 @@ void process_tremolo(oscillator_t * const p_oscillator)
 #define PHASER_ALLPASS_MIN_COEFFICIENT				(32)
 #define PHASER_ALLPASS_COEFFICIENT_RANGE			(40)
 #define PHASER_ALLPASS_STAGE_COEFFICIENT_DELTA		(12)
-#define PHASER_ALLPASS_FILTER(INPUT, STATE, COEFFICIENT) \
+#define ALLPASS_FILTER_OUTPUT(INPUT, STATE, COEFFICIENT) \
 	((STATE) - DIVIDE_BY_128((int64_t)(COEFFICIENT) * (INPUT)))
 
-static int32_t allpass_filter(int32_t const input, int32_t * const p_filter_state,
-							  uint8_t const coefficient)
+#define ALLPASS_FILTER_STATE(INPUT, OUTPUT, COEFFICIENT) \
+	((INPUT) + DIVIDE_BY_128((int64_t)(OUTPUT) * (COEFFICIENT)))
+
+static int32_t apply_allpass_filter(int32_t const input, int32_t * const p_filter_state,
+									uint8_t const coefficient)
 {
-	int32_t const output = PHASER_ALLPASS_FILTER(input, *p_filter_state, coefficient);
-	*p_filter_state = input + DIVIDE_BY_128((int64_t)output * coefficient);
+	int32_t const output = ALLPASS_FILTER_OUTPUT(input, *p_filter_state, coefficient);
+	*p_filter_state = ALLPASS_FILTER_STATE(input, output, coefficient);
 	return output;
 }
 
@@ -776,10 +779,26 @@ static uint8_t calculate_phaser_allpass_coefficient(oscillator_t const * const p
 {
 	channel_controller_t const * const p_channel_controller
 			= get_channel_controller_pointer_from_index(p_oscillator->voice);
-	int16_t const phaser_phase = p_channel_controller->p_phaser_phase_table[p_oscillator->phaser_table_index];
+// Phaser low-frequency oscillation level uses 256 as full scale.
+#define PHASER_LOW_FREQUENCY_OSCILLATION_LEVEL_FULL_SCALE_BIT_NUMBER	(8)
+#define PHASER_ALLPASS_COEFFICIENT_RANGE_LEVEL_BIT_NUMBER				(5)
+#define PHASER_LOW_FREQUENCY_OSCILLATION_LEVEL_DESCALE_BIT_NUMBER \
+	(PHASER_LOW_FREQUENCY_OSCILLATION_LEVEL_FULL_SCALE_BIT_NUMBER - PHASER_ALLPASS_COEFFICIENT_RANGE_LEVEL_BIT_NUMBER)
+
+#define DESCALE_PHASER_LOW_FREQUENCY_OSCILLATION_LEVEL(LEVEL) \
+	((LEVEL) >> PHASER_LOW_FREQUENCY_OSCILLATION_LEVEL_DESCALE_BIT_NUMBER)
+#define DESCALE_REMAINING_PHASER_LOW_FREQUENCY_OSCILLATION_SCALE(VALUE) \
+	((VALUE) >> PHASER_ALLPASS_COEFFICIENT_RANGE_LEVEL_BIT_NUMBER)
+
+#define SCALE_TO_PHASER_ALLPASS_COEFFICIENT_RANGE(LEVEL) \
+	DESCALE_REMAINING_PHASER_LOW_FREQUENCY_OSCILLATION_SCALE( \
+		DESCALE_PHASER_LOW_FREQUENCY_OSCILLATION_LEVEL(LEVEL) * PHASER_ALLPASS_COEFFICIENT_RANGE)
+
+	uint8_t const phaser_low_frequency_oscillation_level
+			= p_channel_controller->p_phaser_low_frequency_oscillation_lookup_table[p_oscillator->phaser_table_index];
 	uint16_t coefficient = (uint16_t)(PHASER_ALLPASS_MIN_COEFFICIENT
-									  + DIVIDE_BY_8(phaser_phase + INT8_MAX_PLUS_1)
-									  * PHASER_ALLPASS_COEFFICIENT_RANGE / DIVIDE_BY_4(INT8_MAX_PLUS_1)
+									  + SCALE_TO_PHASER_ALLPASS_COEFFICIENT_RANGE(
+											phaser_low_frequency_oscillation_level)
 									  + stage_index * PHASER_ALLPASS_STAGE_COEFFICIENT_DELTA);
 	if(INT8_MAX < coefficient){
 		coefficient = INT8_MAX;
@@ -803,8 +822,8 @@ void process_phaser_filter(oscillator_t * const p_oscillator)
 		for(int i = 0; i < PHASER_ALLPASS_STAGE_NUMBER; i++){
 			uint8_t const coefficient = calculate_phaser_allpass_coefficient(p_oscillator, i);
 			p_oscillator->mono_wave_amplitude =
-					allpass_filter(p_oscillator->mono_wave_amplitude,
-								   &p_oscillator->phaser_filter_states[i], coefficient);
+					apply_allpass_filter(p_oscillator->mono_wave_amplitude,
+										 &p_oscillator->phaser_filter_states[i], coefficient);
 		}
 		p_oscillator->phaser_same_index_count += 1;
 		if(p_channel_controller->phaser_same_index_number == p_oscillator->phaser_same_index_count){

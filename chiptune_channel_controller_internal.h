@@ -78,7 +78,7 @@ typedef struct _channel_controller
 	normalized_midi_level_t		chorus;
 	normalized_midi_level_t		detune;
 	normalized_midi_level_t		phaser;
-	int8_t const *				p_phaser_phase_table;
+	uint8_t const *				p_phaser_low_frequency_oscillation_lookup_table;
 	uint16_t					phaser_same_index_number;
 
 	int8_t const *				p_envelope_attack_table;
