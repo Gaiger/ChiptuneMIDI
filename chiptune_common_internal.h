@@ -33,7 +33,16 @@
 
 #define MULTIPLY_THEN_DIVIDE_BY_128(A, B) 			((int16_t)DIVIDE_BY_128((int32_t)(A) * (int32_t)(B)))
 
-// Reference implementations (for clarity)
+// Reference implementation for SATURATE_TO_INT8_MAX (for clarity)
+#if 0
+inline uint8_t saturate_to_int8_max(uint16_t const value){
+	uint16_t const mask = (uint16_t)(0u - (uint16_t)!!(value >> 7));
+	return (uint8_t)((value | mask) & INT8_MAX);
+}
+#endif
+#define SATURATE_TO_INT8_MAX(VALUE)					((uint8_t)(((VALUE) | (uint16_t)(0u - (uint16_t)!!((VALUE) >> 7))) & INT8_MAX))
+
+// Reference implementation for ONE_TO_ZERO (for clarity)
 #if 0
 inline uint8_t one_to_zero(uint8_t x){
 	uint8_t u = x ^ 0x01;

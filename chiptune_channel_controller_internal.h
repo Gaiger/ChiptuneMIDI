@@ -7,7 +7,6 @@
 #include <math.h>
 
 #include "chiptune_common_internal.h"
-#include "chiptune_oscillator_internal.h"
 
 #define CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH		(64)
 #define REMAINDER_OF_DIVIDE_BY_CHANNEL_CONTROLLER_LOOKUP_TABLE_LENGTH(INDEX) \

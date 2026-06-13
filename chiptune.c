@@ -800,10 +800,7 @@ static uint8_t calculate_phaser_allpass_coefficient(oscillator_t const * const p
 									  + SCALE_TO_PHASER_ALLPASS_COEFFICIENT_RANGE(
 											phaser_low_frequency_oscillation_level)
 									  + stage_index * PHASER_ALLPASS_STAGE_COEFFICIENT_DELTA);
-	if(INT8_MAX < coefficient){
-		coefficient = INT8_MAX;
-	}
-	return (uint8_t)coefficient;
+	return SATURATE_TO_INT8_MAX(coefficient);
 }
 
 /**********************************************************************************/
