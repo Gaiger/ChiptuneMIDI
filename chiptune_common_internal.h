@@ -44,22 +44,13 @@ inline uint8_t saturate_to_int8_max(uint16_t const value){
 
 // Reference implementation for ONE_TO_ZERO (for clarity)
 #if 0
-inline uint8_t one_to_zero(uint8_t x){
-	uint8_t u = x ^ 0x01;
-	uint8_t mask = 0 - ((uint8_t)(u | (0 - u)) >> 7);
-	return x & mask;
+inline uint8_t one_to_zero(uint8_t const x){
+	uint8_t const u = x ^ 0x01;
+	uint8_t const mask = (uint8_t)(0u - (uint8_t)!!u);
+	return (uint8_t)(x & mask);
 }
 #endif
-
-// Optimized version (matches the macro below)
-#if 0
-inline uint8_t one_to_zero(uint8_t x){
-	uint32_t u = (uint32_t)x ^ 0x01;
-	uint32_t mask = 0 - ((0 - u) >> 31);
-	return x & mask;
-}
-#endif
-#define ONE_TO_ZERO(VALUE)							((VALUE) & (0 - ((0 - ((uint32_t)(VALUE) ^ 0x01)) >> 31)))
+#define ONE_TO_ZERO(VALUE)							((VALUE) & (0 - !!((VALUE) ^ 0x01)))
 #define ZERO_AS_ONE(VALUE)							((VALUE) + !((VALUE)))
 
 #define NORMALIZE_MIDI_LEVEL(VALUE)					ONE_TO_ZERO((VALUE) + 1)
