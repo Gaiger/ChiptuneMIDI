@@ -4,6 +4,10 @@
 
 #include "chiptune_envelope_internal.h"
 
+#ifdef _DEBUG
+#define _ENABLE_CHECK_MELODIC_ENVELOPE_AMPLITUDE_JUMP
+#endif
+
 #define SCALE_BY_LEVEL(VALUE, LEVEL) \
 	MULTIPLY_THEN_DIVIDE_BY_128((VALUE), (LEVEL))
 
@@ -18,6 +22,43 @@
 
 #define PERCUSSION_ENVELOPE(LOUDNESS, ENVELOPE_TABLE_VALUE)	\
 	SCALE_BY_LEVEL((LOUDNESS), (ENVELOPE_TABLE_VALUE))
+
+#ifdef _ENABLE_CHECK_MELODIC_ENVELOPE_AMPLITUDE_JUMP
+
+#define ABS(VALUE)												(0 > (VALUE) ? -(VALUE) : (VALUE))
+
+static int check_melodic_envelope_amplitude_jump(uint16_t const previous_amplitude,
+												 uint16_t const current_amplitude)
+{
+	int ret = 0;
+#define MELODIC_ENVELOPE_AMPLITUDE_JUMP_DIFFERENCE_FLOOR		(512)
+	if(MELODIC_ENVELOPE_AMPLITUDE_JUMP_DIFFERENCE_FLOOR >=
+			ABS((int)current_amplitude - (int)previous_amplitude)){
+		return ret;
+	}
+
+	uint16_t smaller_amplitude = previous_amplitude;
+	uint16_t greater_amplitude = current_amplitude;
+	if(smaller_amplitude > greater_amplitude){
+		uint16_t const swapped_amplitude = smaller_amplitude;
+		smaller_amplitude = greater_amplitude;
+		greater_amplitude = swapped_amplitude;
+	}
+#define MELODIC_ENVELOPE_AMPLITUDE_JUMP_FLOOR					(256)
+	if(MELODIC_ENVELOPE_AMPLITUDE_JUMP_FLOOR > smaller_amplitude){
+		smaller_amplitude = MELODIC_ENVELOPE_AMPLITUDE_JUMP_FLOOR;
+	}
+	if(MELODIC_ENVELOPE_AMPLITUDE_JUMP_FLOOR > greater_amplitude){
+		greater_amplitude = MELODIC_ENVELOPE_AMPLITUDE_JUMP_FLOOR;
+	}
+#define MELODIC_ENVELOPE_AMPLITUDE_JUMP_RATIO					(3.0f / 2.0f)
+	if((float)greater_amplitude > MELODIC_ENVELOPE_AMPLITUDE_JUMP_RATIO * (float)smaller_amplitude){
+		ret = -1;
+	}
+
+	return ret;
+}
+#endif
 
 uint16_t calculate_sustain_amplitude(uint16_t const loudness,
 								   normalized_midi_level_t const envelope_sustain_level)
@@ -184,6 +225,22 @@ void update_melodic_envelope(oscillator_t * const p_oscillator)
 				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: amplitude = %u, "
 								"greater than INT16_MAX_PLUS_1 in %s\r\n", p_oscillator->amplitude, __func__);
 			}
+#ifdef _ENABLE_CHECK_MELODIC_ENVELOPE_AMPLITUDE_JUMP
+			if(0 > check_melodic_envelope_amplitude_jump(p_oscillator->envelope_reference_amplitude,
+														 p_oscillator->amplitude)){
+				CHIPTUNE_PRINTF(cDeveloping, "WARNING :: voice = %d, note = %d, "
+											 "envelope amplitude jump from %u to %u, "
+											 "envelope_state = %u, envelope_table_index = %u, "
+											 "envelope_same_index_count = %u in %s\r\n",
+								p_oscillator->voice, p_oscillator->note,
+								p_oscillator->envelope_reference_amplitude,
+								p_oscillator->amplitude,
+								p_oscillator->envelope_state,
+								p_oscillator->envelope_table_index,
+								p_oscillator->envelope_same_index_count,
+								__func__);
+			}
+#endif
 			p_oscillator->envelope_reference_amplitude = p_oscillator->amplitude;
 		} while(0);
 
