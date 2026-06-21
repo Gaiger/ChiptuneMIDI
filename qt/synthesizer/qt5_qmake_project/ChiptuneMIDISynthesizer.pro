@@ -110,7 +110,7 @@ win32{
     RC_FILE = $${CHIPTUNE_QT_SYNTHESIZER_DIR}/ChiptuneMIDISynthesizer.rc
     DEFINES += __WINDOWS_MM__
     LIBS += -lwinmm
-    VERSION = 0.1.0.0
+    VERSION = 0.1.1.0
     QMAKE_TARGET_PRODUCT = "ChiptuneMIDISynthesizer"
     QMAKE_TARGET_DESCRIPTION = "ChiptuneMIDISynthesizer: Play live MIDI input as chiptune music"
     QMAKE_TARGET_COPYRIGHT = "Copyright 2026 by Chen Gaiger"
