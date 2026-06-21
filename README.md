@@ -145,6 +145,33 @@ ChiptuneMIDI/
   └─ midi_out/ # Qt MIDI output library and console example
 ```
 
+## Engine MIDI Message Support
+<!--- MIDI messages with user-facing engine behavior. -->
+
+In addition to basic note on/off handling, the engine supports these user-facing MIDI messages:
+
+| MIDI Message | MIDI Message Purpose | Note |
+|--------------|----------------------|------|
+| Program Change | Changes channel instrument | Stores channel instrument code for the application to apply timbres |
+| Channel Pressure | Channel pressure | Controls loudness by pressure |
+| Pitch Wheel | Pitch bend | |
+
+| MIDI CC # | MIDI CC Purpose |
+|-----------|-----------------|
+| 1 | Modulation Wheel |
+| 2 | Breath Controller |
+| 7 | Channel Volume |
+| 10 | Pan |
+| 11 | Expression |
+| 64 | Damper Pedal |
+| 66 | Sostenuto Pedal |
+| 67 | Soft Pedal |
+| 91 | Reverb Effect Depth |
+| 92 | Tremolo Effect Depth |
+| 93 | Chorus Effect Depth |
+| 94 | Detune Effect Depth |
+| 95 | Phaser Effect Depth |
+
 ## Roadmap
 <!--- Planned future improvements. -->
 - [x] Support live MIDI synthesizer usage.
