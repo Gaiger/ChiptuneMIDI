@@ -88,6 +88,11 @@ You can build the Qt applications in two ways:
    - `qt/midi_out/example/qt5_qmake_project/ChiptuneMidiOutExample.pro`
 2. Build and run
 
+## Configuration
+<!--- How to configure settings, environment variables, etc. -->
+No special configuration is required.
+Open the project in QtCreator and build with either Qt5 or Qt6 — both are supported.
+
 ## Usage
 <!--- Examples of how to run or use the project. -->
 
@@ -139,12 +144,6 @@ ChiptuneMIDI/
   ├─ synthesizer/ # Qt live MIDI input synthesizer application
   └─ midi_out/ # Qt MIDI output library and console example
 ```
-
-## Configuration
-<!--- How to configure settings, environment variables, etc. -->
-No special configuration is required.  
-Open the project in QtCreator and build with either Qt5 or Qt6 — both are supported.
-
 
 ## Roadmap
 <!--- Planned future improvements. -->
