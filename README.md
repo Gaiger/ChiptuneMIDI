@@ -150,13 +150,13 @@ ChiptuneMIDI/
 
 In addition to basic note on/off handling, the engine supports these user-facing MIDI messages:
 
-| MIDI Message | MIDI Message Purpose | Note |
+| **MIDI Message** | **MIDI Message Purpose** | **Note** |
 |--------------|----------------------|------|
 | Program Change | Changes channel instrument | Stores channel instrument code for the application to apply timbres |
 | Channel Pressure | Channel pressure | Controls loudness by pressure |
 | Pitch Wheel | Pitch bend | |
 
-| MIDI CC # | MIDI CC Purpose |
+| **MIDI CC #** | **MIDI CC Purpose** |
 |-----------|-----------------|
 | 1 | Modulation Wheel |
 | 2 | Breath Controller |
