@@ -325,11 +325,10 @@ static midi_effect_associate_link_t * const get_midi_effect_associate_link_from_
 
 #ifdef _USE_STATIC_RESOURCE_ALLOCATION
 /**********************************************************************************/
-static inline bool is_to_midi_effect_associate_link_pool_successfully(void){ return false; }
+static inline bool is_append_to_midi_effect_associate_link_pool_successfully(void){ return false; }
 #else
 
 /**********************************************************************************/
-
 static int allocate_and_append_midi_effect_associate_link_pool(void)
 {
 	int ret = 0;
@@ -356,8 +355,7 @@ static int allocate_and_append_midi_effect_associate_link_pool(void)
 }
 
 /**********************************************************************************/
-
-static inline bool is_to_midi_effect_associate_link_pool_successfully(void)
+static inline bool is_append_to_midi_effect_associate_link_pool_successfully(void)
 {
 	int ret = true;
 	do
@@ -378,12 +376,11 @@ static inline bool is_to_midi_effect_associate_link_pool_successfully(void)
 #endif
 
 /**********************************************************************************/
-
 static bool is_unused_midi_effect_associate_link_available()
 {
 	bool ret = true;
 	if(get_midi_effect_associate_link_capacity() == s_used_midi_effect_associate_link_number){
-		ret = is_to_midi_effect_associate_link_pool_successfully();
+		ret = is_append_to_midi_effect_associate_link_pool_successfully();
 	}
 	return ret;
 }
@@ -420,6 +417,245 @@ static void release_all_midi_effect_associate_links(void)
 
 /**********************************************************************************/
 
+#define NO_PHASER_FILTER_STATE_INDEX				(-1)
+#define PHASER_FILTER_STATE_UNUSED					(UINT16_MAX)
+#define SET_PHASER_FILTER_STATE_UNUSED(PHASER_FILTER_STATE_POINTER) \
+	((PHASER_FILTER_STATE_POINTER)->table_index = PHASER_FILTER_STATE_UNUSED)
+#define IS_PHASER_FILTER_STATE_UNUSED(PHASER_FILTER_STATE_POINTER) \
+	(PHASER_FILTER_STATE_UNUSED == (PHASER_FILTER_STATE_POINTER)->table_index)
+
+#define PHASER_FILTER_STATE_POOL_CAPACITY			(256)
+
+typedef struct _phaser_filter_state_pool
+{
+	phaser_filter_state_t phaser_filter_states[PHASER_FILTER_STATE_POOL_CAPACITY];
+} phaser_filter_state_pool_t;
+
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
+static phaser_filter_state_pool_t	s_phaser_filter_state_pool;
+static phaser_filter_state_pool_t *	const s_phaser_filter_state_pool_pointer_table[1]
+											= {&s_phaser_filter_state_pool};
+static int16_t const	s_number_of_phaser_filter_state_pool = 1;
+#else
+static phaser_filter_state_pool_t *	s_phaser_filter_state_pool_pointer_table[(INT16_MAX + 1)/PHASER_FILTER_STATE_POOL_CAPACITY];
+static int16_t			s_number_of_phaser_filter_state_pool = 0;
+#endif
+
+int16_t s_used_phaser_filter_state_number = 0;
+
+/**********************************************************************************/
+static void mark_phaser_filter_state_unused(phaser_filter_state_t * const p_phaser_filter)
+{
+	SET_PHASER_FILTER_STATE_UNUSED(p_phaser_filter);
+}
+
+/**********************************************************************************/
+static inline int16_t const get_phaser_filter_state_capacity()
+{
+	return s_number_of_phaser_filter_state_pool * PHASER_FILTER_STATE_POOL_CAPACITY;
+}
+
+/**********************************************************************************/
+static phaser_filter_state_t * const get_phaser_filter_state_from_index(
+		int16_t const phaser_filter_state_index)
+{
+	return &s_phaser_filter_state_pool_pointer_table[
+			phaser_filter_state_index / PHASER_FILTER_STATE_POOL_CAPACITY]
+				->phaser_filter_states[phaser_filter_state_index % PHASER_FILTER_STATE_POOL_CAPACITY];
+}
+
+/**********************************************************************************/
+
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
+/**********************************************************************************/
+static inline bool is_append_to_phaser_filter_state_pool_successfully(void){ return false; }
+#else
+
+/**********************************************************************************/
+static int allocate_and_append_phaser_filter_state_pool(void)
+{
+	int ret = 0;
+	do
+	{
+		phaser_filter_state_pool_t * const p_new_phaser_filter_pool
+			= (phaser_filter_state_pool_t*)chiptune_malloc(1 * sizeof(phaser_filter_state_pool_t));
+
+		if(NULL == p_new_phaser_filter_pool){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: allocate phaser_filter_state_pool_t fail\r\n");
+			ret = -1;
+			break;
+		}
+		for(int16_t i = 0; i < PHASER_FILTER_STATE_POOL_CAPACITY; i++){
+			mark_phaser_filter_state_unused(&p_new_phaser_filter_pool->phaser_filter_states[i]);
+		}
+
+		s_phaser_filter_state_pool_pointer_table[s_number_of_phaser_filter_state_pool]
+				= p_new_phaser_filter_pool;
+		s_number_of_phaser_filter_state_pool += 1;
+	}while(0);
+
+	return ret;
+}
+
+/**********************************************************************************/
+static inline bool is_append_to_phaser_filter_state_pool_successfully(void)
+{
+	int ret = true;
+	do
+	{
+		if(INT16_MAX == s_used_phaser_filter_state_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_used_phaser_filter_state_number"
+										 " reaches the CAP INT16_MAX\r\n");
+			ret = false;
+			break;
+		}
+		if(0 > allocate_and_append_phaser_filter_state_pool()){
+			ret = false;
+			break;
+		}
+	}while(0);
+	return ret;
+}
+#endif
+
+/**********************************************************************************/
+static bool is_unused_phaser_filter_state_available()
+{
+	bool ret = true;
+	if(get_phaser_filter_state_capacity() == s_used_phaser_filter_state_number){
+		ret = is_append_to_phaser_filter_state_pool_successfully();
+	}
+	return ret;
+}
+
+/**********************************************************************************/
+static void mark_all_phaser_filter_states_unused(void)
+{
+	for(int16_t j = 0; j < s_number_of_phaser_filter_state_pool; j++){
+		phaser_filter_state_pool_t * const p_phaser_filter_state_pool
+				= s_phaser_filter_state_pool_pointer_table[j];
+		for(int16_t i = 0; i < PHASER_FILTER_STATE_POOL_CAPACITY; i++){
+			mark_phaser_filter_state_unused(&p_phaser_filter_state_pool->phaser_filter_states[i]);
+		}
+	}
+	s_used_phaser_filter_state_number = 0;
+}
+
+/**********************************************************************************/
+static void release_all_phaser_filter_states(void)
+{
+#ifdef _USE_STATIC_RESOURCE_ALLOCATION
+	mark_all_phaser_filter_states_unused();
+#else
+	for(int16_t j = 0; j < s_number_of_phaser_filter_state_pool; j++){
+		chiptune_free(s_phaser_filter_state_pool_pointer_table[j]);
+		s_phaser_filter_state_pool_pointer_table[j] = NULL;
+	}
+	s_number_of_phaser_filter_state_pool = 0;
+	s_used_phaser_filter_state_number = 0;
+#endif
+}
+
+/**********************************************************************************/
+static phaser_filter_state_t * acquire_phaser_filter_state_index(int16_t * const p_phaser_filter_state_index)
+{
+	*p_phaser_filter_state_index = NO_PHASER_FILTER_STATE_INDEX;
+	if(false == is_unused_phaser_filter_state_available()){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all phaser_filters are used\r\n");
+		return NULL;
+	}
+
+	int16_t i;
+	for(i = 0; i < get_phaser_filter_state_capacity(); i++){
+		if(true == IS_PHASER_FILTER_STATE_UNUSED(get_phaser_filter_state_from_index(i))){
+			break;
+		}
+	}
+
+	phaser_filter_state_t * p_phaser_filter = NULL;
+	do
+	{
+		if(get_phaser_filter_state_capacity() == i){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: available phaser_filter is not found\r\n");
+			break;
+		}
+		p_phaser_filter = get_phaser_filter_state_from_index(i);
+		s_used_phaser_filter_state_number += 1;
+		*p_phaser_filter_state_index = i;
+		memset(p_phaser_filter, 0, sizeof(phaser_filter_state_t));
+	} while(0);
+
+	return p_phaser_filter;
+}
+
+/**********************************************************************************/
+static int discard_phaser_filter_state_index(int16_t const phaser_filter_state_index)
+{
+	if(NO_PHASER_FILTER_STATE_INDEX == phaser_filter_state_index){
+		return 0;
+	}
+	phaser_filter_state_t * const p_phaser_filter
+			= get_phaser_filter_state_from_index(phaser_filter_state_index);
+	if(true == IS_PHASER_FILTER_STATE_UNUSED(p_phaser_filter)){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: phaser_filter index = %d is not used \r\n",
+						phaser_filter_state_index);
+		return -2;
+	}
+	mark_phaser_filter_state_unused(p_phaser_filter);
+	s_used_phaser_filter_state_number -= 1;
+	return 0;
+}
+
+/**********************************************************************************/
+int attach_phaser_filter_state(oscillator_t * const p_oscillator)
+{
+	int ret = 0;
+	do
+	{
+		if(MidiEffectPhaser != p_oscillator->midi_effect_association){
+			ret = -1;
+			break;
+		}
+		if(NO_PHASER_FILTER_STATE_INDEX != p_oscillator->phaser_filter_state_index){
+			ret = -2;
+			break;
+		}
+		if(NULL == acquire_phaser_filter_state_index(&p_oscillator->phaser_filter_state_index)){
+			ret = -3;
+			break;
+		}
+	} while(0);
+
+	return ret;
+}
+
+/**********************************************************************************/
+phaser_filter_state_t * get_phaser_filter_state(oscillator_t * p_oscillator)
+{
+	if(NO_PHASER_FILTER_STATE_INDEX == p_oscillator->phaser_filter_state_index){
+		return NULL;
+	}
+
+	if(0 > p_oscillator->phaser_filter_state_index
+			|| get_phaser_filter_state_capacity() <= p_oscillator->phaser_filter_state_index){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: phaser_filter index = %d, out of range \r\n",
+						p_oscillator->phaser_filter_state_index);
+		return NULL;
+	}
+
+	phaser_filter_state_t * const p_phaser_filter
+			= get_phaser_filter_state_from_index(p_oscillator->phaser_filter_state_index);
+	if(true == IS_PHASER_FILTER_STATE_UNUSED(p_phaser_filter)){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: phaser_filter index = %d is not used \r\n",
+						p_oscillator->phaser_filter_state_index);
+		return NULL;
+	}
+
+	return p_phaser_filter;
+}
+
+/**********************************************************************************/
+
 static int occupy_oscillator(int16_t const oscillator_index)
 {
 	if(UNOCCUPIED_OSCILLATOR != get_oscillator_address_from_index(oscillator_index)->voice){
@@ -450,7 +686,6 @@ static int occupy_oscillator(int16_t const oscillator_index)
 }
 
 /**********************************************************************************/
-
 oscillator_t * acquire_oscillator(int16_t * const p_oscillator_index)
 {
 	*p_oscillator_index = UNOCCUPIED_OSCILLATOR;
@@ -481,13 +716,13 @@ oscillator_t * acquire_oscillator(int16_t * const p_oscillator_index)
 		p_oscillator = get_oscillator_address_from_index(i);
 		memset(p_oscillator, 0, sizeof(oscillator_t));
 		p_oscillator->midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+		p_oscillator->phaser_filter_state_index = NO_PHASER_FILTER_STATE_INDEX;
 	} while(0);
 
 	return p_oscillator;
 }
 
 /**********************************************************************************/
-
 oscillator_t * replicate_oscillator(int16_t const original_oscillator_index,
 										  int16_t * const p_replicated_oscillator_index)
 {
@@ -501,13 +736,13 @@ oscillator_t * replicate_oscillator(int16_t const original_oscillator_index,
 				= get_oscillator_address_from_index(original_oscillator_index);
 		memcpy(p_replicated_oscillator, p_original_oscillator, sizeof(oscillator_t));
 		p_replicated_oscillator->midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+		p_replicated_oscillator->phaser_filter_state_index = NO_PHASER_FILTER_STATE_INDEX;
 	}while(0);
 
 	return p_replicated_oscillator;
 }
 
 /**********************************************************************************/
-
 int discard_oscillator(int16_t const oscillator_index)
 {
 	oscillator_link_t * const p_this_link
@@ -567,6 +802,10 @@ int discard_oscillator(int16_t const oscillator_index)
 			}
 		}
 		p_oscillator->midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+		if(NO_PHASER_FILTER_STATE_INDEX != p_oscillator->phaser_filter_state_index){
+			discard_phaser_filter_state_index(p_oscillator->phaser_filter_state_index);
+			p_oscillator->phaser_filter_state_index = NO_PHASER_FILTER_STATE_INDEX;
+		}
 	}
 	p_oscillator->voice = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_number -= 1;
@@ -638,18 +877,18 @@ oscillator_t * get_oscillator_pointer_from_index(int16_t const oscillator_index)
 }
 
 /**********************************************************************************/
-
 void clear_all_oscillators(void)
 {
 	mark_all_midi_effect_associate_links_unused();
+	mark_all_phaser_filter_states_unused();
 	mark_all_oscillators_and_links_unused();
 }
 
 /**********************************************************************************/
-
 void destroy_all_oscillators(void)
 {
 	release_all_midi_effect_associate_links();
+	release_all_phaser_filter_states();
 	release_all_oscillators_and_links();
 }
 

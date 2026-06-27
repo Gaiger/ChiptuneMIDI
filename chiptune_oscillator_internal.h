@@ -19,6 +19,13 @@ enum MidiEffectType
 
 #define PHASER_ALLPASS_STAGE_NUMBER					(4)
 
+typedef struct _phaser_filter_state
+{
+	int32_t		allpass_stage_states[PHASER_ALLPASS_STAGE_NUMBER];
+	uint16_t	table_index;
+	uint16_t	same_index_count;
+} phaser_filter_state_t;
+
 typedef struct _oscillator
 {
 	uint8_t			state_bits;
@@ -56,10 +63,7 @@ union{
 
 		uint8_t		midi_effect_association;
 		int16_t		midi_effect_associate_link_index;//internal
-
-		int32_t		phaser_filter_states[PHASER_ALLPASS_STAGE_NUMBER];
-		uint16_t	phaser_table_index;
-		uint16_t	phaser_same_index_count;
+		int16_t		phaser_filter_state_index;//internal
 		int32_t		mono_wave_amplitude;
 	};
 	struct {
@@ -141,5 +145,8 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 int16_t calculate_all_subordinate_oscillator_number(uint8_t const midi_effect_type, int16_t const root_oscillator_index);
 int collect_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_oscillator_index,
 										   int16_t * const p_subordinate_indexes);
+
+int attach_phaser_filter_state(oscillator_t * const p_oscillator);
+phaser_filter_state_t * get_phaser_filter_state(oscillator_t * p_oscillator);
 
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_

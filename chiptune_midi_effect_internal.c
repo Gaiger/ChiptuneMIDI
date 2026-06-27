@@ -366,12 +366,8 @@ static int process_phaser_effect(uint32_t const tick, int8_t const event_type,
 					}
 					associate_oscillator_indexes[i] = oscillator_index;
 					p_oscillator->loudness = associate_loudness;
-					for(int j = 0; j < PHASER_ALLPASS_STAGE_NUMBER; j++){
-						p_oscillator->phaser_filter_states[j] = 0;
-					}
-					p_oscillator->phaser_table_index = 0;
-					p_oscillator->phaser_same_index_count = 0;
 					p_oscillator->midi_effect_association = MidiEffectPhaser;
+					attach_phaser_filter_state(p_oscillator);
 				}
 				store_associate_oscillator_indexes(MidiEffectPhaser, cooperative_oscillator_indexes[k],
 												   &associate_oscillator_indexes[0]);
