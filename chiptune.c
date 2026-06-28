@@ -818,7 +818,7 @@ void process_phaser_filter(oscillator_t * const p_oscillator)
 		if(MidiEffectPhaser != p_oscillator->midi_effect_association){
 			break;
 		}
-		phaser_filter_state_t * const p_filter_state = get_phaser_filter_state(p_oscillator);
+		phaser_filter_state_t * const p_filter_state = get_phaser_filter_state_pointer(p_oscillator);
 		if(NULL == p_filter_state){
 			break;
 		}

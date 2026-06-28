@@ -716,7 +716,7 @@ int attach_phaser_filter_state(oscillator_t * const p_oscillator)
 }
 
 /**********************************************************************************/
-phaser_filter_state_t * get_phaser_filter_state(oscillator_t * p_oscillator)
+phaser_filter_state_t * get_phaser_filter_state_pointer(oscillator_t * p_oscillator)
 {
 	if(NO_PHASER_FILTER_STATE_INDEX == p_oscillator->phaser_filter_state_index){
 		return NULL;

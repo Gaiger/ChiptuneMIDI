@@ -51,7 +51,6 @@ union{
 		uint16_t		shift_amplitude;
 
 		uint16_t	envelope_reference_amplitude;
-			//uint16_t	envelope_note_off_hold_start_amplitude;
 
 		uint16_t	max_vibrato_phase_increment;
 		uint16_t	vibrato_table_index;
@@ -138,15 +137,14 @@ int16_t get_occupied_oscillator_next_index(int16_t const oscillator_index);
 
 oscillator_t * get_oscillator_pointer_from_index(int16_t const oscillator_index);
 
-#define WITHOUT_EFFECT(MIDI_EFFECT)					(MidiEffectAll & (~(MIDI_EFFECT)))
-
 int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const primary_oscillator_index,
 									  int16_t const * const p_associate_oscillator_indexes);
+#define WITHOUT_EFFECT(MIDI_EFFECT)					(MidiEffectAll & (~(MIDI_EFFECT)))
 int16_t calculate_all_subordinate_oscillator_number(uint8_t const midi_effect_type, int16_t const root_oscillator_index);
 int collect_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16_t const root_oscillator_index,
 										   int16_t * const p_subordinate_indexes);
 
 int attach_phaser_filter_state(oscillator_t * const p_oscillator);
-phaser_filter_state_t * get_phaser_filter_state(oscillator_t * p_oscillator);
+phaser_filter_state_t * get_phaser_filter_state_pointer(oscillator_t * p_oscillator);
 
 #endif // _CHIPTUNE_OSCILLATOR_INTERNAL_H_
