@@ -416,6 +416,92 @@ static void release_all_midi_effect_associate_links(void)
 }
 
 /**********************************************************************************/
+static midi_effect_associate_link_t * acquire_midi_effect_associate_link(
+		int16_t * const p_midi_effect_associate_link_index)
+{
+	*p_midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+	if(false == is_unused_midi_effect_associate_link_available()){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all midi_effect_associate_link are used\r\n");
+		return NULL;
+	}
+
+	int16_t i;
+	for(i = 0; i < get_midi_effect_associate_link_capacity(); i++){
+		if(MidiEffectNone == get_midi_effect_associate_link_from_index(i)->midi_effect_type){
+			break;
+		}
+	}
+
+	midi_effect_associate_link_t * p_midi_effect_associate_link = NULL;
+	do
+	{
+		if(get_midi_effect_associate_link_capacity() == i){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: available midi_effect_associate_link is not found\r\n");
+			break;
+		}
+		p_midi_effect_associate_link = get_midi_effect_associate_link_from_index(i);
+		s_used_midi_effect_associate_link_number += 1;
+		*p_midi_effect_associate_link_index = i;
+		memset(p_midi_effect_associate_link, 0, sizeof(midi_effect_associate_link_t));
+		p_midi_effect_associate_link->next_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+	} while(0);
+
+	return p_midi_effect_associate_link;
+}
+
+/**********************************************************************************/
+static midi_effect_associate_link_t * append_midi_effect_associate_link(
+		oscillator_t * const p_oscillator)
+{
+	int16_t new_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+	midi_effect_associate_link_t * const p_new_link
+			= acquire_midi_effect_associate_link(&new_link_index);
+	do
+	{
+		if(NULL == p_new_link){
+			break;
+		}
+		p_new_link->next_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+
+		int16_t current_link_index = p_oscillator->midi_effect_associate_link_index;
+		if(NO_MIDI_EFFECT_ASSOCIATE_LINK == current_link_index){
+			p_oscillator->midi_effect_associate_link_index = new_link_index;
+			break;
+		}
+
+		while(1)
+		{
+			midi_effect_associate_link_t * p_current_link
+					= get_midi_effect_associate_link_from_index(current_link_index);
+			if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_current_link->next_link_index){
+				p_current_link->next_link_index = new_link_index;
+				break;
+			}
+			current_link_index = p_current_link->next_link_index;
+		}
+	} while(0);
+
+	return p_new_link;
+}
+
+/**********************************************************************************/
+static void discard_midi_effect_associate_links(oscillator_t * const p_oscillator)
+{
+	int16_t midi_effect_associate_link_index = p_oscillator->midi_effect_associate_link_index;
+	while(NO_MIDI_EFFECT_ASSOCIATE_LINK != midi_effect_associate_link_index)
+	{
+		midi_effect_associate_link_t * const p_midi_effect_associate_link
+				= get_midi_effect_associate_link_from_index(midi_effect_associate_link_index);
+		int16_t const next_link_index = p_midi_effect_associate_link->next_link_index;
+		p_midi_effect_associate_link->midi_effect_type = MidiEffectNone;
+		p_midi_effect_associate_link->next_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+		s_used_midi_effect_associate_link_number -= 1;
+		midi_effect_associate_link_index = next_link_index;
+	}
+	p_oscillator->midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+}
+
+/**********************************************************************************/
 
 #define NO_PHASER_FILTER_STATE_INDEX				(-1)
 #define PHASER_FILTER_STATE_UNUSED					(UINT16_MAX)
@@ -787,21 +873,7 @@ int discard_oscillator(int16_t const oscillator_index)
 	oscillator_t * const p_oscillator = get_oscillator_address_from_index(oscillator_index);
 
 	if(false == (true == IS_PERCUSSION_OSCILLATOR(p_oscillator))){
-		if(NO_MIDI_EFFECT_ASSOCIATE_LINK != p_oscillator->midi_effect_associate_link_index){
-			midi_effect_associate_link_t *p_midi_effect_associate_link
-					= get_midi_effect_associate_link_from_index(p_oscillator->midi_effect_associate_link_index);
-			while(1)
-			{
-				p_midi_effect_associate_link->midi_effect_type = MidiEffectNone;
-				s_used_midi_effect_associate_link_number -= 1;
-				if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_midi_effect_associate_link->next_link_index){
-					break;
-				}
-				p_midi_effect_associate_link
-						= get_midi_effect_associate_link_from_index(p_midi_effect_associate_link->next_link_index);
-			}
-		}
-		p_oscillator->midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+		discard_midi_effect_associate_links(p_oscillator);
 		if(NO_PHASER_FILTER_STATE_INDEX != p_oscillator->phaser_filter_state_index){
 			discard_phaser_filter_state_index(p_oscillator->phaser_filter_state_index);
 			p_oscillator->phaser_filter_state_index = NO_PHASER_FILTER_STATE_INDEX;
@@ -941,47 +1013,15 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 			break;
 		}
 
-		if(false == is_unused_midi_effect_associate_link_available()){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all midi_effect_associate_link are used\r\n");
+		midi_effect_associate_link_t * const p_new_link
+				= append_midi_effect_associate_link(p_primary_oscillator);
+		if(NULL == p_new_link){
 			break;
 		}
-
-		int16_t new_link_index;
-		for(new_link_index = 0; new_link_index < get_midi_effect_associate_link_capacity(); new_link_index++){
-			if(MidiEffectNone == get_midi_effect_associate_link_from_index(new_link_index)->midi_effect_type){
-				break;
-			}
-		}
-		s_used_midi_effect_associate_link_number += 1;
-
-		{
-			midi_effect_associate_link_t * const p_new_link
-					= get_midi_effect_associate_link_from_index(new_link_index);
-			p_new_link->midi_effect_type = midi_effect_type;
-			p_new_link->next_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
-			int16_t const associate_oscillator_number = get_single_effect_associate_number(midi_effect_type);
-			for(int16_t i = 0; i < associate_oscillator_number; i++){
-				p_new_link->associate_oscillator_indexes[i] = p_associate_oscillator_indexes[i];
-			}
-		}
-
-		{
-			int16_t current_link_index = p_primary_oscillator->midi_effect_associate_link_index;
-			if(NO_MIDI_EFFECT_ASSOCIATE_LINK == current_link_index){
-				p_primary_oscillator->midi_effect_associate_link_index = new_link_index;
-				break;
-			}
-
-			while(1)
-			{
-				midi_effect_associate_link_t * p_current_link
-						= get_midi_effect_associate_link_from_index(current_link_index);
-				if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_current_link->next_link_index){
-					get_midi_effect_associate_link_from_index(current_link_index)->next_link_index = new_link_index;
-					break;
-				}
-				current_link_index = p_current_link->next_link_index;
-			}
+		p_new_link->midi_effect_type = midi_effect_type;
+		int16_t const associate_oscillator_number = get_single_effect_associate_number(midi_effect_type);
+		for(int16_t i = 0; i < associate_oscillator_number; i++){
+			p_new_link->associate_oscillator_indexes[i] = p_associate_oscillator_indexes[i];
 		}
 	}while(0);
 
