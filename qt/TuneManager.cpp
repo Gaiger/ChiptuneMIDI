@@ -15,6 +15,12 @@
 class TuneManagerPrivate
 {
 public:
+	static void ChiptuneLockCallback(bool is_to_lock, void const * const p_user_data)
+	{
+		TuneManagerPrivate * const p_private = (TuneManagerPrivate *)p_user_data;
+		p_private->ChiptuneLock(is_to_lock);
+	}
+
 	void ChiptuneLock(bool const is_to_lock){
 		do
 		{
@@ -24,6 +30,13 @@ public:
 			}
 			m_chiptune_mutex.lock();
 		}while(0);
+	}
+
+	static int GetMidiMessageCallback(uint32_t const message_index, uint32_t * const p_tick, uint32_t * const p_message,
+									  void const * const p_user_data)
+	{
+		TuneManagerPrivate * const p_private = (TuneManagerPrivate *)p_user_data;
+		return p_private->GetMidiMessage((int)message_index, p_tick, p_message);
 	}
 
 	int GetMidiMessage(int const index, uint32_t * const p_tick, uint32_t * const p_message)
@@ -106,19 +119,6 @@ public:
 };
 
 /**********************************************************************************/
-static TuneManagerPrivate *s_p_private_instance = nullptr;
-
-extern "C" void chiptune_lock(bool is_to_lock)
-{
-	s_p_private_instance->ChiptuneLock(is_to_lock);
-}
-
-extern "C" int get_midi_message(uint32_t const message_index, uint32_t * const p_tick, uint32_t * const p_message)
-{
-	return s_p_private_instance->GetMidiMessage((int)message_index, p_tick, p_message);
-}
-
-/**********************************************************************************/
 TuneManager::TuneManager(bool const is_stereo,
 						 int const sampling_rate, int const sampling_size,
 						 QObject *parent)
@@ -161,10 +161,8 @@ TuneManager::TuneManager(bool const is_stereo,
 	m_p_private->m_channel_instrument_pair_list.clear();
 	m_p_private->m_connection_type = Qt::AutoConnection;
 
-	s_p_private_instance = m_p_private;
-
-	chiptune_set_lock_callback(chiptune_lock);
-	chiptune_set_pull_message_callback(nullptr);
+	chiptune_set_lock_callback(TuneManagerPrivate::ChiptuneLockCallback, m_p_private);
+	chiptune_set_pull_message_callback(nullptr, m_p_private);
 	chiptune_initialize( 2 == m_p_private->m_number_of_channels ? true : false,
 						 (uint32_t)m_p_private->m_sampling_rate);
 	chiptune_prepare_session(MIDI_DEFAULT_RESOLUTION);
@@ -193,12 +191,12 @@ void TuneManager::SetMidiMessageProvider(MidiMessageProvider *p_midi_message_pro
 	do
 	{
 		if(nullptr == p_midi_message_provider){
-			chiptune_set_pull_message_callback(nullptr);
+			chiptune_set_pull_message_callback(nullptr, m_p_private);
 			chiptune_prepare_session(MIDI_DEFAULT_RESOLUTION);
 			break;
 		}
 
-		chiptune_set_pull_message_callback(get_midi_message);
+		chiptune_set_pull_message_callback(TuneManagerPrivate::GetMidiMessageCallback, m_p_private);
 		chiptune_prepare_session((uint32_t)p_midi_message_provider->GetMidSongPointer()->GetResolution());
 
 		int8_t instrument_code_array[MIDI_MAX_CHANNEL_NUMBER];

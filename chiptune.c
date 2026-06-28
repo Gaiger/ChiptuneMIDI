@@ -156,7 +156,9 @@ static int16_t s_sine_table[SINE_TABLE_LENGTH]		= {0};
 /**********************************************************************************/
 
 static chiptune_lock_callback_t s_handler_lock = NULL;
+static void const *s_p_handler_lock_user_data = NULL;
 static chiptune_pull_midi_message_callback_t s_handler_pull_midi_message = NULL;
+static void const *s_p_handler_pull_midi_message_user_data = NULL;
 
 static bool s_is_tune_ending = false;
 
@@ -337,7 +339,8 @@ static int fetch_midi_tick_message(uint32_t const message_index, struct _tick_me
 {
 	uint32_t tick;
 	uint32_t message;
-	int ret = s_handler_pull_midi_message(message_index, &tick, &message);
+	int ret = s_handler_pull_midi_message(message_index, &tick, &message,
+										  s_p_handler_pull_midi_message_user_data);
 	do {
 		if(0 > ret){
 			SET_TICK_MESSAGE_NULL(*p_tick_message);
@@ -360,13 +363,13 @@ int chiptune_push_midi_message(uint32_t const message)
 	if(NULL == s_handler_lock){
 		return INT_MIN;
 	}
-	s_handler_lock(true);
+	s_handler_lock(true, s_p_handler_lock_user_data);
 
 	struct _tick_message tick_message;
 	tick_message.tick = CURRENT_TICK();
 	tick_message.message = message;
 	int ret = process_midi_message(tick_message);
-	s_handler_lock(false);
+	s_handler_lock(false, s_p_handler_lock_user_data);
 
 	return ret;
 }
@@ -985,11 +988,11 @@ static int32_t chiptune_fetch_32bit_wave(void)
 	}
 
 	if(true == is_push_mode()){
-		s_handler_lock(true);
+		s_handler_lock(true, s_p_handler_lock_user_data);
 	}
 	int32_t const wave = generate_32bit_wave();
 	if(true == is_push_mode()){
-		s_handler_lock(false);
+		s_handler_lock(false, s_p_handler_lock_user_data);
 	}
 	return wave;
 }
@@ -1423,16 +1426,20 @@ void chiptune_prepare_session(uint32_t const resolution)
 }
 
 /**********************************************************************************/
-void chiptune_set_lock_callback(chiptune_lock_callback_t const lock_callback)
+void chiptune_set_lock_callback(chiptune_lock_callback_t const lock_callback,
+								void const * const p_user_data)
 {
 	s_handler_lock = lock_callback;
+	s_p_handler_lock_user_data = p_user_data;
 }
 
 /**********************************************************************************/
 void chiptune_set_pull_message_callback(
-		chiptune_pull_midi_message_callback_t const pull_midi_message_callback)
+		chiptune_pull_midi_message_callback_t const pull_midi_message_callback,
+		void const * const p_user_data)
 {
 	s_handler_pull_midi_message = pull_midi_message_callback;
+	s_p_handler_pull_midi_message_user_data = p_user_data;
 }
 
 /**********************************************************************************/
@@ -1452,7 +1459,7 @@ int chiptune_set_current_message_index(uint32_t const message_index)
 void chiptune_set_tempo(float const tempo)
 {
 	if(true == is_push_mode()){
-		s_handler_lock(true);
+		s_handler_lock(true, s_p_handler_lock_user_data);
 	}
 	CHIPTUNE_PRINTF(cMidiControlChange, "tick = %d, set tempo as %3.1f\r\n", CURRENT_TICK(), tempo);
 	adjust_event_triggering_tick_by_playing_tempo(CURRENT_TICK(), tempo * get_playing_speed_ratio());
@@ -1460,7 +1467,7 @@ void chiptune_set_tempo(float const tempo)
 	update_effect_tick();
 	synchronize_channel_controllers_to_playing_tempo();
 	if(true == is_push_mode()){
-		s_handler_lock(false);
+		s_handler_lock(false, s_p_handler_lock_user_data);
 	}
 }
 
@@ -1476,14 +1483,14 @@ float chiptune_get_tempo(void)
 void chiptune_set_playing_speed_ratio(float const playing_speed_ratio)
 {
 	if(true == is_push_mode()){
-		s_handler_lock(true);
+		s_handler_lock(true, s_p_handler_lock_user_data);
 	}
 	adjust_event_triggering_tick_by_playing_tempo(CURRENT_TICK(), chiptune_get_tempo() * playing_speed_ratio);
 	UPDATE_PLAYING_SPEED_RATIO(playing_speed_ratio);
 	update_effect_tick();
 	synchronize_channel_controllers_to_playing_tempo();
 	if(true == is_push_mode()){
-		s_handler_lock(false);
+		s_handler_lock(false, s_p_handler_lock_user_data);
 	}
 }
 

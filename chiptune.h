@@ -15,12 +15,16 @@ void chiptune_get_version(uint8_t * const p_major_version,
 						  uint8_t * const p_minor_version,
 						  uint8_t * const p_micro_version);
 
-typedef void (*chiptune_lock_callback_t)(bool const is_to_lock);
-void chiptune_set_lock_callback(chiptune_lock_callback_t const lock_callback);
+typedef void (*chiptune_lock_callback_t)(bool const is_to_lock,
+										 void const * const p_user_data);
+void chiptune_set_lock_callback(chiptune_lock_callback_t const lock_callback,
+								void const * const p_user_data);
 
 typedef int (*chiptune_pull_midi_message_callback_t)(
-		uint32_t const message_index, uint32_t * const p_tick, uint32_t * const p_message);
-void chiptune_set_pull_message_callback(chiptune_pull_midi_message_callback_t const pull_midi_message_callback);
+		uint32_t const message_index, uint32_t * const p_tick, uint32_t * const p_message,
+		void const * const p_user_data);
+void chiptune_set_pull_message_callback(chiptune_pull_midi_message_callback_t const pull_midi_message_callback,
+										void const * const p_user_data);
 
 int chiptune_initialize(bool const is_stereo, uint32_t const sampling_rate);
 
