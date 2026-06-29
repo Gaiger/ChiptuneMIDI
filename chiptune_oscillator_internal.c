@@ -48,11 +48,12 @@ void update_oscillator_phase_increment(oscillator_t * const p_oscillator)
 
 /**********************************************************************************/
 
-typedef struct _oscillator_link
+typedef struct _oscillator_node
 {
+	oscillator_t oscillator;
 	int16_t previous_index;
 	int16_t next_index;
-} oscillator_link_t;
+} oscillator_node_t;
 
 #ifdef _USE_STATIC_RESOURCE_ALLOCATION
 	#define OSCILLATOR_POOL_CAPACITY			(512)
@@ -60,96 +61,82 @@ typedef struct _oscillator_link
 	#define OSCILLATOR_POOL_CAPACITY			(64)
 #endif
 
-typedef struct _oscillator_pool
+typedef struct _oscillator_node_pool
 {
-	oscillator_t oscillators[OSCILLATOR_POOL_CAPACITY];
-	oscillator_link_t oscillator_links[OSCILLATOR_POOL_CAPACITY];
-} oscillator_pool_t;
+	oscillator_node_t oscillator_nodes[OSCILLATOR_POOL_CAPACITY];
+} oscillator_node_pool_t;
 
 #ifdef _USE_STATIC_RESOURCE_ALLOCATION
-static oscillator_pool_t	s_oscillator_pool;
+static oscillator_node_pool_t	s_oscillator_node_pool;
 
-static oscillator_pool_t *	const s_oscillator_pool_pointer_table[1] = {&s_oscillator_pool};
-static int16_t const		s_number_of_oscillator_pool = 1;
+static oscillator_node_pool_t *	const s_oscillator_node_pool_pointer_table[1] = {&s_oscillator_node_pool};
+static int16_t const			s_number_of_oscillator_node_pool = 1;
 #else
-static oscillator_pool_t *	s_oscillator_pool_pointer_table[(INT16_MAX+1) / OSCILLATOR_POOL_CAPACITY] = {NULL};
-static int16_t				s_number_of_oscillator_pool = 0;
+static oscillator_node_pool_t *	s_oscillator_node_pool_pointer_table[(INT16_MAX+1) / OSCILLATOR_POOL_CAPACITY] = {NULL};
+static int16_t					s_number_of_oscillator_node_pool = 0;
 #endif
 
-static int16_t s_occupied_oscillator_number = 0;
-int16_t s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
-int16_t s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
+static int16_t s_occupied_oscillator_node_number = 0;
+int16_t s_occupied_oscillator_node_head_index = UNOCCUPIED_OSCILLATOR;
+int16_t s_occupied_oscillator_node_last_index = UNOCCUPIED_OSCILLATOR;
 
 /**********************************************************************************/
-
-static inline int16_t const get_oscillator_capacity()
+static inline int16_t const get_oscillator_node_capacity()
 {
-	return s_number_of_oscillator_pool * OSCILLATOR_POOL_CAPACITY;
+	return s_number_of_oscillator_node_pool * OSCILLATOR_POOL_CAPACITY;
 }
 
 /**********************************************************************************/
-
-static inline oscillator_link_t * const get_oscillator_link_address_from_index(int16_t const oscillator_index)
+static inline oscillator_node_t * const get_oscillator_node_address_from_index(int16_t const oscillator_index)
 {
-	return &s_oscillator_pool_pointer_table[oscillator_index / OSCILLATOR_POOL_CAPACITY]
-				->oscillator_links[oscillator_index % OSCILLATOR_POOL_CAPACITY];
-}
-
-/**********************************************************************************/
-
-static inline oscillator_t * const get_oscillator_address_from_index(int16_t const oscillator_index)
-{
-	return &s_oscillator_pool_pointer_table[oscillator_index / OSCILLATOR_POOL_CAPACITY]
-				->oscillators[oscillator_index % OSCILLATOR_POOL_CAPACITY];
+	return &s_oscillator_node_pool_pointer_table[oscillator_index / OSCILLATOR_POOL_CAPACITY]
+				->oscillator_nodes[oscillator_index % OSCILLATOR_POOL_CAPACITY];
 }
 
 #ifdef _USE_STATIC_RESOURCE_ALLOCATION
 /**********************************************************************************/
-
-static inline bool is_to_append_oscillator_pool_successfully(void){ return false;}
+static inline bool is_to_append_oscillator_node_pool_successfully(void){ return false;}
 
 #else
 /**********************************************************************************/
-
-static int allocate_append_oscillator_pool(void)
+static int allocate_append_oscillator_node_pool(void)
 {
 	int ret = 0;
 	do
 	{
-		oscillator_pool_t *p_new_appending_oscillator_pool
-			= (oscillator_pool_t*)chiptune_malloc(1 * sizeof(oscillator_pool_t));
-		if(NULL == p_new_appending_oscillator_pool){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: allocate oscillator_pool_t fail\r\n");
+		oscillator_node_pool_t *p_new_appending_oscillator_node_pool
+			= (oscillator_node_pool_t*)chiptune_malloc(1 * sizeof(oscillator_node_pool_t));
+		if(NULL == p_new_appending_oscillator_node_pool){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: allocate oscillator_node_pool_t fail\r\n");
 			ret = -1;
 			break;
 		}
 		for(int16_t i = 0; i < OSCILLATOR_POOL_CAPACITY; i++){
-			p_new_appending_oscillator_pool->oscillators[i].voice = UNOCCUPIED_OSCILLATOR;
-			p_new_appending_oscillator_pool->oscillator_links[i].previous_index = UNOCCUPIED_OSCILLATOR;
-			p_new_appending_oscillator_pool->oscillator_links[i].next_index = UNOCCUPIED_OSCILLATOR;
+			p_new_appending_oscillator_node_pool->oscillator_nodes[i].oscillator.voice = UNOCCUPIED_OSCILLATOR;
+			p_new_appending_oscillator_node_pool->oscillator_nodes[i].previous_index = UNOCCUPIED_OSCILLATOR;
+			p_new_appending_oscillator_node_pool->oscillator_nodes[i].next_index = UNOCCUPIED_OSCILLATOR;
 		}
 
-		s_oscillator_pool_pointer_table[s_number_of_oscillator_pool] = p_new_appending_oscillator_pool;
-		s_number_of_oscillator_pool += 1;
+		s_oscillator_node_pool_pointer_table[s_number_of_oscillator_node_pool] = p_new_appending_oscillator_node_pool;
+		s_number_of_oscillator_node_pool += 1;
 	}while(0);
 
 	return ret;
 }
 
 /**********************************************************************************/
-
-static inline bool is_to_append_oscillator_pool_successfully(void)
+static inline bool is_to_append_oscillator_node_pool_successfully(void)
 {
 	bool ret = true;
 	do
 	{
-		if(INT16_MAX == s_occupied_oscillator_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number"
+		if(INT16_MAX == s_occupied_oscillator_node_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_node_number"
 										 " reaches the CAP INT16_MAX\r\n");
 			ret = false;
 			break;
 		}
-		if(0 > allocate_append_oscillator_pool()){
+		if(0 > allocate_append_oscillator_node_pool()){
 			ret = false;
 			break;
 		}
@@ -160,71 +147,67 @@ static inline bool is_to_append_oscillator_pool_successfully(void)
 #endif
 
 /**********************************************************************************/
-
-static bool is_unoccupied_oscillator_available()
+static bool is_unoccupied_oscillator_node_available()
 {
 	bool ret = true;
-	if(get_oscillator_capacity() == s_occupied_oscillator_number){
-		ret = is_to_append_oscillator_pool_successfully();
+	if(get_oscillator_node_capacity() == s_occupied_oscillator_node_number){
+		ret = is_to_append_oscillator_node_pool_successfully();
 	}
 	return ret;
 }
 
 /**********************************************************************************/
-
-static void mark_all_oscillators_and_links_unused(void)
+static void mark_all_oscillator_nodes_unused(void)
 {
-	for(int j = 0; j < s_number_of_oscillator_pool; j++){
-		oscillator_pool_t *p_oscillator_pool = s_oscillator_pool_pointer_table[j];
+	for(int j = 0; j < s_number_of_oscillator_node_pool; j++){
+		oscillator_node_pool_t *p_oscillator_node_pool = s_oscillator_node_pool_pointer_table[j];
 		for(int16_t i = 0; i < OSCILLATOR_POOL_CAPACITY; i++){
-			p_oscillator_pool->oscillators[i].voice = UNOCCUPIED_OSCILLATOR;
-			p_oscillator_pool->oscillator_links[i].previous_index = UNOCCUPIED_OSCILLATOR;
-			p_oscillator_pool->oscillator_links[i].next_index = UNOCCUPIED_OSCILLATOR;
+			p_oscillator_node_pool->oscillator_nodes[i].oscillator.voice = UNOCCUPIED_OSCILLATOR;
+			p_oscillator_node_pool->oscillator_nodes[i].previous_index = UNOCCUPIED_OSCILLATOR;
+			p_oscillator_node_pool->oscillator_nodes[i].next_index = UNOCCUPIED_OSCILLATOR;
 		}
 	}
 
-	s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
-	s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
-	s_occupied_oscillator_number = 0;
+	s_occupied_oscillator_node_head_index = UNOCCUPIED_OSCILLATOR;
+	s_occupied_oscillator_node_last_index = UNOCCUPIED_OSCILLATOR;
+	s_occupied_oscillator_node_number = 0;
 }
 
 /**********************************************************************************/
-
-static void release_all_oscillators_and_links(void)
+static void release_all_oscillator_nodes()
 {
 #ifdef _USE_STATIC_RESOURCE_ALLOCATION
-	mark_all_oscillators_and_links_unused();
+	mark_all_oscillator_nodes_unused();
 #else
-	for(int j = 0; j < s_number_of_oscillator_pool; j++){
-		chiptune_free(s_oscillator_pool_pointer_table[j]);
-		s_oscillator_pool_pointer_table[j] = NULL;
+	for(int j = 0; j < s_number_of_oscillator_node_pool; j++){
+		chiptune_free(s_oscillator_node_pool_pointer_table[j]);
+		s_oscillator_node_pool_pointer_table[j] = NULL;
 	}
-	s_number_of_oscillator_pool = 0;
+	s_number_of_oscillator_node_pool = 0;
 
-	s_occupied_oscillator_head_index = UNOCCUPIED_OSCILLATOR;
-	s_occupied_oscillator_last_index = UNOCCUPIED_OSCILLATOR;
-	s_occupied_oscillator_number = 0;
+	s_occupied_oscillator_node_head_index = UNOCCUPIED_OSCILLATOR;
+	s_occupied_oscillator_node_last_index = UNOCCUPIED_OSCILLATOR;
+	s_occupied_oscillator_node_number = 0;
 #endif
 }
 
 #ifdef _ENABLE_CHECK_OCCUPIED_OSCILLATOR_LIST
 /**********************************************************************************/
-
-static int check_occupied_oscillator_list(void)
+static int check_occupied_oscillator_node_list(void)
 {
 	int ret = 0;
 	do {
-		if(0 > s_occupied_oscillator_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number = %d\r\n",
-							s_occupied_oscillator_number);
+		if(0 > s_occupied_oscillator_node_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_node_number = %d\r\n",
+							s_occupied_oscillator_node_number);
 			ret = -1;
 			break;
 		}
 
-		if(0 == s_occupied_oscillator_number){
-			if(UNOCCUPIED_OSCILLATOR != s_occupied_oscillator_head_index){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_number = 0"
-											 " but s_occupied_oscillator_head_index is not UNOCCUPIED_OSCILLATOR\r\n");
+		if(0 == s_occupied_oscillator_node_number){
+			if(UNOCCUPIED_OSCILLATOR != s_occupied_oscillator_node_head_index){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_node_number = 0"
+											 " but s_occupied_oscillator_node_head_index is not UNOCCUPIED_OSCILLATOR\r\n");
 				ret = -2;
 			}
 			break;
@@ -233,31 +216,31 @@ static int check_occupied_oscillator_list(void)
 		int16_t current_index;
 		int16_t counter;
 
-		current_index = s_occupied_oscillator_head_index;
+		current_index = s_occupied_oscillator_node_head_index;
 		counter= 1;
-		while(UNOCCUPIED_OSCILLATOR != get_oscillator_link_address_from_index(current_index)->next_index)
+		while(UNOCCUPIED_OSCILLATOR != get_oscillator_node_address_from_index(current_index)->next_index)
 		{
 			counter += 1;
-			current_index = get_oscillator_link_address_from_index(current_index)->next_index;
+			current_index = get_oscillator_node_address_from_index(current_index)->next_index;
 		}
-		if(counter != s_occupied_oscillator_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: FORWARDING occupied_oscillators list length = %d"
-							", not matches s_occupied_oscillator_number = %d\r\n", counter, s_occupied_oscillator_number);
+		if(counter != s_occupied_oscillator_node_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: FORWARDING occupied_oscillator_nodes list length = %d"
+							", not matches s_occupied_oscillator_node_number = %d\r\n", counter, s_occupied_oscillator_node_number);
 			ret = -3;
 			break;
 		}
 
-		current_index = s_occupied_oscillator_last_index;
+		current_index = s_occupied_oscillator_node_last_index;
 		counter = 1;
-		while(UNOCCUPIED_OSCILLATOR != get_oscillator_link_address_from_index(current_index)->previous_index)
+		while(UNOCCUPIED_OSCILLATOR != get_oscillator_node_address_from_index(current_index)->previous_index)
 		{
 			counter += 1;
-			current_index = get_oscillator_link_address_from_index(current_index)->previous_index;
+			current_index = get_oscillator_node_address_from_index(current_index)->previous_index;
 		}
 
-		if(counter != s_occupied_oscillator_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: BACKWARDING occupied_oscillators list length = %d"
-							", not matches s_occupied_oscillator_number = %d\r\n", counter, s_occupied_oscillator_number);
+		if(counter != s_occupied_oscillator_node_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: BACKWARDING occupied_oscillator_nodes list length = %d"
+							", not matches s_occupied_oscillator_node_number = %d\r\n", counter, s_occupied_oscillator_node_number);
 
 			ret = -4;
 			break;
@@ -741,32 +724,31 @@ phaser_filter_state_t * get_phaser_filter_state_pointer(oscillator_t * p_oscilla
 }
 
 /**********************************************************************************/
-
-static int occupy_oscillator(int16_t const oscillator_index)
+static int occupy_oscillator_node(int16_t const oscillator_index)
 {
-	if(UNOCCUPIED_OSCILLATOR != get_oscillator_address_from_index(oscillator_index)->voice){
+	if(UNOCCUPIED_OSCILLATOR != get_oscillator_node_address_from_index(oscillator_index)->oscillator.voice){
 		return -1;
 	}
 
 	do {
-		oscillator_link_t * const p_this_link
-				= get_oscillator_link_address_from_index(oscillator_index);
-		if(0 == s_occupied_oscillator_number){
-			p_this_link->previous_index = UNOCCUPIED_OSCILLATOR;
-			p_this_link->next_index = UNOCCUPIED_OSCILLATOR;
-			s_occupied_oscillator_head_index = oscillator_index;
+		oscillator_node_t * const p_this_node
+				= get_oscillator_node_address_from_index(oscillator_index);
+		if(0 == s_occupied_oscillator_node_number){
+			p_this_node->previous_index = UNOCCUPIED_OSCILLATOR;
+			p_this_node->next_index = UNOCCUPIED_OSCILLATOR;
+			s_occupied_oscillator_node_head_index = oscillator_index;
 			break;
 		}
 
-		get_oscillator_link_address_from_index(s_occupied_oscillator_last_index)->next_index
+		get_oscillator_node_address_from_index(s_occupied_oscillator_node_last_index)->next_index
 				= oscillator_index;
-		p_this_link->previous_index = s_occupied_oscillator_last_index;
-		p_this_link->next_index = UNOCCUPIED_OSCILLATOR;
+		p_this_node->previous_index = s_occupied_oscillator_node_last_index;
+		p_this_node->next_index = UNOCCUPIED_OSCILLATOR;
 	} while(0);
-	s_occupied_oscillator_last_index = oscillator_index;
-	s_occupied_oscillator_number += 1;
+	s_occupied_oscillator_node_last_index = oscillator_index;
+	s_occupied_oscillator_node_number += 1;
 #ifdef _ENABLE_CHECK_OCCUPIED_OSCILLATOR_LIST
-	check_occupied_oscillator_list();
+	check_occupied_oscillator_node_list();
 #endif
 	return 0;
 }
@@ -775,14 +757,14 @@ static int occupy_oscillator(int16_t const oscillator_index)
 oscillator_t * acquire_oscillator(int16_t * const p_oscillator_index)
 {
 	*p_oscillator_index = UNOCCUPIED_OSCILLATOR;
-	if(false == is_unoccupied_oscillator_available()){
+	if(false == is_unoccupied_oscillator_node_available()){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all oscillators are used\r\n");
 		return NULL;
 	}
 
 	int16_t i;
-	for(i = 0; i < get_oscillator_capacity(); i++){
-		if(UNOCCUPIED_OSCILLATOR == get_oscillator_address_from_index(i)->voice){
+	for(i = 0; i < get_oscillator_node_capacity(); i++){
+		if(UNOCCUPIED_OSCILLATOR == get_oscillator_node_address_from_index(i)->oscillator.voice){
 			break;
 		}
 	}
@@ -790,16 +772,16 @@ oscillator_t * acquire_oscillator(int16_t * const p_oscillator_index)
 	oscillator_t * p_oscillator = NULL;
 	do
 	{
-		if(get_oscillator_capacity() == i){
+		if(get_oscillator_node_capacity() == i){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: available oscillator is not found\r\n");
 			break;
 		}
-		if(0 != occupy_oscillator(i)){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: occupy oscillator %d fail\r\n", i);
+		if(0 != occupy_oscillator_node(i)){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: occupy oscillator_node %d fail\r\n", i);
 			break;
 		}
 		*p_oscillator_index = i;
-		p_oscillator = get_oscillator_address_from_index(i);
+		p_oscillator = &get_oscillator_node_address_from_index(i)->oscillator;
 		memset(p_oscillator, 0, sizeof(oscillator_t));
 		p_oscillator->midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
 		p_oscillator->phaser_filter_state_index = NO_PHASER_FILTER_STATE_INDEX;
@@ -819,7 +801,7 @@ oscillator_t * replicate_oscillator(int16_t const original_oscillator_index,
 			break;
 		}
 		oscillator_t * const p_original_oscillator
-				= get_oscillator_address_from_index(original_oscillator_index);
+				= &get_oscillator_node_address_from_index(original_oscillator_index)->oscillator;
 		memcpy(p_replicated_oscillator, p_original_oscillator, sizeof(oscillator_t));
 		p_replicated_oscillator->midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
 		p_replicated_oscillator->phaser_filter_state_index = NO_PHASER_FILTER_STATE_INDEX;
@@ -831,46 +813,53 @@ oscillator_t * replicate_oscillator(int16_t const original_oscillator_index,
 /**********************************************************************************/
 int discard_oscillator(int16_t const oscillator_index)
 {
-	oscillator_link_t * const p_this_link
-			= get_oscillator_link_address_from_index(oscillator_index);
-	int16_t const previous_index = p_this_link->previous_index;
-	int16_t const next_index = p_this_link->next_index;
+	oscillator_node_t * const p_this_node
+			= get_oscillator_node_address_from_index(oscillator_index);
+	int16_t const previous_index = p_this_node->previous_index;
+	int16_t const next_index = p_this_node->next_index;
 
 	do {
-		if(0 == s_occupied_oscillator_number){
+		if(0 == s_occupied_oscillator_node_number){
 			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all oscillators have been discarded\r\n");
 			return -1;
 		}
 
-		if(1 != s_occupied_oscillator_number
-				&& (UNOCCUPIED_OSCILLATOR == previous_index && UNOCCUPIED_OSCILLATOR == next_index) ){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator %d is not on the occupied list\r\n", oscillator_index);
-			return -2;
+		if(1 != s_occupied_oscillator_node_number){
+			if(UNOCCUPIED_OSCILLATOR == previous_index && UNOCCUPIED_OSCILLATOR == next_index){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator %d is not on the occupied list\r\n", oscillator_index);
+				return -2;
+			}
 		}
 	} while(0);
 
 	do {
-		if(oscillator_index == s_occupied_oscillator_head_index){
-			s_occupied_oscillator_head_index = next_index;
-			get_oscillator_link_address_from_index(s_occupied_oscillator_head_index)->previous_index
+		if(1 == s_occupied_oscillator_node_number){
+			s_occupied_oscillator_node_head_index = UNOCCUPIED_OSCILLATOR;
+			s_occupied_oscillator_node_last_index = UNOCCUPIED_OSCILLATOR;
+			break;
+		}
+
+		if(oscillator_index == s_occupied_oscillator_node_head_index){
+			s_occupied_oscillator_node_head_index = next_index;
+			get_oscillator_node_address_from_index(s_occupied_oscillator_node_head_index)->previous_index
 					= UNOCCUPIED_OSCILLATOR;
 			break;
 		}
 
-		if(oscillator_index == s_occupied_oscillator_last_index){
-			s_occupied_oscillator_last_index = previous_index;
-			get_oscillator_link_address_from_index(s_occupied_oscillator_last_index)->next_index
+		if(oscillator_index == s_occupied_oscillator_node_last_index){
+			s_occupied_oscillator_node_last_index = previous_index;
+			get_oscillator_node_address_from_index(s_occupied_oscillator_node_last_index)->next_index
 					= UNOCCUPIED_OSCILLATOR;
 			break;
 		}
 
-		get_oscillator_link_address_from_index(previous_index)->next_index = next_index;
-		get_oscillator_link_address_from_index(next_index)->previous_index = previous_index;
+		get_oscillator_node_address_from_index(previous_index)->next_index = next_index;
+		get_oscillator_node_address_from_index(next_index)->previous_index = previous_index;
 	} while (0);
-	p_this_link->previous_index = UNOCCUPIED_OSCILLATOR;
-	p_this_link->next_index = UNOCCUPIED_OSCILLATOR;
+	p_this_node->previous_index = UNOCCUPIED_OSCILLATOR;
+	p_this_node->next_index = UNOCCUPIED_OSCILLATOR;
 
-	oscillator_t * const p_oscillator = get_oscillator_address_from_index(oscillator_index);
+	oscillator_t * const p_oscillator = &get_oscillator_node_address_from_index(oscillator_index)->oscillator;
 
 	if(false == (true == IS_PERCUSSION_OSCILLATOR(p_oscillator))){
 		discard_midi_effect_associate_links(p_oscillator);
@@ -880,42 +869,39 @@ int discard_oscillator(int16_t const oscillator_index)
 		}
 	}
 	p_oscillator->voice = UNOCCUPIED_OSCILLATOR;
-	s_occupied_oscillator_number -= 1;
+	s_occupied_oscillator_node_number -= 1;
 #ifdef _ENABLE_CHECK_OCCUPIED_OSCILLATOR_LIST
-	check_occupied_oscillator_list();
+	check_occupied_oscillator_node_list();
 #endif
 	return 0;
 }
 
 /**********************************************************************************/
-
 int16_t get_occupied_oscillator_number(void)
 {
-	return s_occupied_oscillator_number;
+	return s_occupied_oscillator_node_number;
 }
 
 /**********************************************************************************/
-
 int16_t get_occupied_oscillator_head_index()
 {
-	if(-1 == s_occupied_oscillator_head_index
-			&& 0 != s_occupied_oscillator_number){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_head_index = -1:: but s_occupied_oscillator_number = %d\r\n",
-						s_occupied_oscillator_number);
+	if(-1 == s_occupied_oscillator_node_head_index
+			&& 0 != s_occupied_oscillator_node_number){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_node_head_index = -1:: but s_occupied_oscillator_node_number = %d\r\n",
+						s_occupied_oscillator_node_number);
 	}
-	return s_occupied_oscillator_head_index;
+	return s_occupied_oscillator_node_head_index;
 }
 
 /**********************************************************************************/
-
-static inline bool is_occupied_oscillator_index_out_of_range(int16_t const oscillator_index)
+static inline bool is_occupied_oscillator_node_index_out_of_range(int16_t const oscillator_index)
 {
 	bool is_out_of_range = true;
 	do {
 		if(oscillator_index < 0){
 			break;
 		}
-		if(oscillator_index >= get_oscillator_capacity()){
+		if(oscillator_index >= get_oscillator_node_capacity()){
 			break;
 		}
 		is_out_of_range = false;
@@ -928,24 +914,24 @@ static inline bool is_occupied_oscillator_index_out_of_range(int16_t const oscil
 
 int16_t get_occupied_oscillator_next_index(int16_t const oscillator_index)
 {
-	if(true == is_occupied_oscillator_index_out_of_range(oscillator_index)){
+	if(true == is_occupied_oscillator_node_index_out_of_range(oscillator_index)){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator index = %d, out of range \r\n", oscillator_index);
 		return UNOCCUPIED_OSCILLATOR;
 	}
 
-	return get_oscillator_link_address_from_index(oscillator_index)->next_index;
+	return get_oscillator_node_address_from_index(oscillator_index)->next_index;
 }
 
 /**********************************************************************************/
 
 oscillator_t * get_oscillator_pointer_from_index(int16_t const oscillator_index)
 {
-	if(true == is_occupied_oscillator_index_out_of_range(oscillator_index)){
+	if(true == is_occupied_oscillator_node_index_out_of_range(oscillator_index)){
 		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: oscillator index = %d, out of range \r\n", oscillator_index);
 		return NULL;
 	}
 
-	return get_oscillator_address_from_index(oscillator_index);
+	return &get_oscillator_node_address_from_index(oscillator_index)->oscillator;
 }
 
 /**********************************************************************************/
@@ -953,7 +939,7 @@ void clear_all_oscillators(void)
 {
 	mark_all_midi_effect_associate_links_unused();
 	mark_all_phaser_filter_states_unused();
-	mark_all_oscillators_and_links_unused();
+	mark_all_oscillator_nodes_unused();
 }
 
 /**********************************************************************************/
@@ -961,7 +947,7 @@ void destroy_all_oscillators(void)
 {
 	release_all_midi_effect_associate_links();
 	release_all_phaser_filter_states();
-	release_all_oscillators_and_links();
+	release_all_oscillator_nodes();
 }
 
 /**********************************************************************************/
@@ -998,7 +984,8 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 									  int16_t const * const p_associate_oscillator_indexes)
 {
 	int ret = 0;
-	oscillator_t  * const p_primary_oscillator = get_oscillator_address_from_index(primary_oscillator_index);
+	oscillator_t  * const p_primary_oscillator
+			= &get_oscillator_node_address_from_index(primary_oscillator_index)->oscillator;
 	do
 	{
 		if(NULL == p_primary_oscillator){
@@ -1041,7 +1028,7 @@ int collect_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16
 										   int16_t * const p_subordinate_indexes)
 {
 	oscillator_t * const p_root_oscillator
-			= get_oscillator_address_from_index(root_oscillator_index);
+			= &get_oscillator_node_address_from_index(root_oscillator_index)->oscillator;
 	int16_t subordinate_number = 0;
 	do{
 		if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_root_oscillator->midi_effect_associate_link_index){
