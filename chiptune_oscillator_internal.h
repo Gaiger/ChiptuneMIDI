@@ -28,42 +28,55 @@ typedef struct _phaser_filter_state
 
 typedef struct _oscillator
 {
-	uint8_t			state_bits;
+	struct{
+		uint8_t			state_bits;
+
+		uint16_t		base_phase_increment;
+		uint16_t		current_phase;
+
+		uint16_t		loudness; // [0, INT16_MAX_PLUS_1]
+		uint16_t		amplitude; // [0, INT16_MAX_PLUS_1]
+	};
 
 	int8_t			voice;
 	midi_value_t	note;
 
-	uint16_t		base_phase_increment;
-	uint16_t		current_phase;
-
-	uint16_t		loudness; // [0, INT16_MAX_PLUS_1]
-	uint16_t		amplitude; // [0, INT16_MAX_PLUS_1]
 union{
 	struct {
+		struct{
+			struct{
+				uint8_t			envelope_state;
+				int8_t const *  p_envelope_table;
+				uint16_t		envelope_table_index;
+				uint16_t		envelope_same_index_count;
+				uint16_t		delta_amplitude;
+				uint16_t		shift_amplitude;
+				uint16_t		envelope_reference_amplitude;
+			};
+
+			int32_t			mono_wave_amplitude;
+
+			uint8_t		midi_effect_association;
+			int16_t		midi_effect_association_link_node_index;//internal
+			int16_t		phaser_filter_state_index;//internal
+		};
+
 		normalized_midi_level_t velocity;
-		bool			is_sostenuto_latched;
-		uint8_t			envelope_state;
 
-		int8_t const *  p_envelope_table;
-		uint16_t		envelope_table_index;
-		uint16_t		envelope_same_index_count;
-		uint16_t		delta_amplitude;
-		uint16_t		shift_amplitude;
+		struct{
+			uint16_t	max_vibrato_phase_increment;
+			uint16_t	vibrato_table_index;
+			uint16_t	vibrato_same_index_count;
+		};
 
-		uint16_t	envelope_reference_amplitude;
+		bool		is_sostenuto_latched;
 
-		uint16_t	max_vibrato_phase_increment;
-		uint16_t	vibrato_table_index;
-		uint16_t	vibrato_same_index_count;
-		uint16_t	tremolo_table_index;
-		uint16_t	tremolo_same_index_count;
+		struct{
+			uint16_t	tremolo_table_index;
+			uint16_t	tremolo_same_index_count;
+		};
 
 		float		pitch_detune_in_semitones;
-
-		uint8_t		midi_effect_association;
-		int16_t		midi_effect_association_link_node_index;//internal
-		int16_t		phaser_filter_state_index;//internal
-		int32_t		mono_wave_amplitude;
 	};
 	struct {
 		int8_t		percussion_waveform_segment_index;

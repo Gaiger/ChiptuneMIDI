@@ -38,32 +38,34 @@ channel_controller_t * get_channel_controller_pointer_from_index(int8_t const ch
 void reset_channel_controller_to_midi_defaults(int8_t const channel_index)
 {
 	channel_controller_t * const p_channel_controller = &s_channel_controllers[channel_index];
+	p_channel_controller->modulation_wheel = NORMALIZE_MIDI_LEVEL(0);
+
+	p_channel_controller->breath = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
+	p_channel_controller->volume = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(MIDI_SEVEN_BITS_CENTER_VALUE);
+	p_channel_controller->pan = (midi_value_t)MIDI_SEVEN_BITS_CENTER_VALUE;
+	p_channel_controller->expression = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(INT8_MAX);
+
+	p_channel_controller->is_damper_pedal_on = false;
+	p_channel_controller->is_sostenuto_pedal_on = false;
+	p_channel_controller->is_soft_pedal_on = false;
+
+	p_channel_controller->reverb = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
+	p_channel_controller->tremolo = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
+	p_channel_controller->chorus = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
+	p_channel_controller->detune = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
+	p_channel_controller->phaser = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
+
 	p_channel_controller->coarse_tuning_value = (midi_value_t)MIDI_SEVEN_BITS_CENTER_VALUE;
 	p_channel_controller->fine_tuning_value = MIDI_FOURTEEN_BITS_CENTER_VALUE;
 	p_channel_controller->tuning_in_semitones
 			= (float)(p_channel_controller->coarse_tuning_value - MIDI_SEVEN_BITS_CENTER_VALUE)
 			+ (p_channel_controller->fine_tuning_value - MIDI_FOURTEEN_BITS_CENTER_VALUE)/(float)MIDI_FOURTEEN_BITS_CENTER_VALUE;
 
-	p_channel_controller->volume = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(MIDI_SEVEN_BITS_CENTER_VALUE);
 	p_channel_controller->pressure = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
-	p_channel_controller->expression = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(INT8_MAX);
-	p_channel_controller->breath = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
-
-	p_channel_controller->pan = (midi_value_t)MIDI_SEVEN_BITS_CENTER_VALUE;
 
 	p_channel_controller->pitch_wheel_bend_range_in_semitones
 			= (midi_value_t)MIDI_DEFAULT_PITCH_WHEEL_BEND_RANGE_IN_SEMITONES;
 	p_channel_controller->pitch_wheel_bend_in_semitones = 0.0f;
-
-	p_channel_controller->modulation_wheel = NORMALIZE_MIDI_LEVEL(0);
-	p_channel_controller->reverb = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
-	p_channel_controller->tremolo = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
-	p_channel_controller->chorus = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
-	p_channel_controller->detune = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
-	p_channel_controller->phaser = (normalized_midi_level_t)NORMALIZE_MIDI_LEVEL(0);
-	p_channel_controller->is_damper_pedal_on = false;
-	p_channel_controller->is_sostenuto_pedal_on = false;
-	p_channel_controller->is_soft_pedal_on = false;
 }
 
 /**********************************************************************************/

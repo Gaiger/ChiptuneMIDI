@@ -46,65 +46,104 @@ enum EnvelopeCurve
 
 typedef struct _channel_controller
 {
-	midi_value_t				instrument_code;
-	midi_value_t				coarse_tuning_value;
-	int16_t						fine_tuning_value;
-	float						tuning_in_semitones;
+	struct{
+		bool					is_output_enabled;
 
-	normalized_midi_level_t		volume;
-	normalized_midi_level_t		pressure;
-	normalized_midi_level_t		expression;
-	normalized_midi_level_t		breath;
+		struct{
+			int8_t				waveform;
+			uint16_t			duty_cycle_critical_phase;
+		};
 
-	midi_value_t				pan;
+		struct{
+			struct{
+				int8_t const *	p_envelope_attack_table;
+				uint16_t		envelope_attack_same_index_number;
+			};
 
-	int8_t						waveform;
-	uint8_t						: 8;
-	uint16_t					duty_cycle_critical_phase;
+			struct{
+				int8_t const *	p_envelope_decay_table;
+				uint16_t		envelope_decay_same_index_number;
+			};
 
-	midi_value_t				pitch_wheel_bend_range_in_semitones;
-	float						pitch_wheel_bend_in_semitones;
+			struct{
+				normalized_midi_level_t	envelope_note_on_sustain_level;
+			};
 
-	normalized_midi_level_t		modulation_wheel;
-	int8_t						vibrato_depth_in_semitones;
-	int8_t const *				p_vibrato_phase_table;
-	uint16_t					vibrato_same_index_number;
+			struct{
+				float			envelope_release_duration_in_seconds;
+				int8_t const *	p_envelope_release_table;
+				uint16_t		envelope_release_same_index_number;
+				uint16_t		envelope_release_tick_number;
+			};
 
-	normalized_midi_level_t		reverb;
-	normalized_midi_level_t		tremolo;
-	uint8_t const *				p_tremolo_lookup_table;
-	uint16_t					tremolo_same_index_number;
-	normalized_midi_level_t		chorus;
-	normalized_midi_level_t		detune;
-	normalized_midi_level_t		phaser;
-	uint8_t const *				p_phaser_low_frequency_oscillation_lookup_table;
-	uint16_t					phaser_same_index_number;
+			struct{
+				normalized_midi_level_t	envelope_note_off_hold_sustain_level;
+				int8_t const *			p_envelope_note_off_hold_sustain_table;
+				uint16_t				envelope_note_off_hold_sustain_same_index_number;
+			};
+		};
+	};
 
-	int8_t const *				p_envelope_attack_table;
-	uint16_t					envelope_attack_same_index_number;
+	struct{
+		struct{
+			normalized_midi_level_t	modulation_wheel;
+			int8_t					vibrato_depth_in_semitones;
+			int8_t const *			p_vibrato_phase_table;
+			uint16_t				vibrato_same_index_number;
+		};
 
-	int8_t const *				p_envelope_decay_table;
-	uint16_t					envelope_decay_same_index_number;
+		normalized_midi_level_t	breath;
+		normalized_midi_level_t	volume;
+		midi_value_t			pan;
+		normalized_midi_level_t	expression;
 
-	normalized_midi_level_t		envelope_note_on_sustain_level;
+		bool					is_damper_pedal_on;
+		bool					is_sostenuto_pedal_on;
+		bool					is_soft_pedal_on;
 
-	float						envelope_release_duration_in_seconds;
-	int8_t const *				p_envelope_release_table;
-	uint16_t					envelope_release_same_index_number;
-	uint16_t					envelope_release_tick_number;
+		normalized_midi_level_t	reverb;
 
-	bool						is_damper_pedal_on;
-	bool						is_sostenuto_pedal_on;
-	bool						is_soft_pedal_on;
+		struct{
+			normalized_midi_level_t	tremolo;
+			uint8_t const *			p_tremolo_lookup_table;
+			uint16_t				tremolo_same_index_number;
+		};
 
-	normalized_midi_level_t 	envelope_note_off_hold_sustain_level;
-	int8_t const *				p_envelope_note_off_hold_sustain_table;
-	uint16_t					envelope_note_off_hold_sustain_same_index_number;
+		normalized_midi_level_t	chorus;
+		normalized_midi_level_t	detune;
 
-	uint16_t					registered_parameter_number;
-	uint16_t					registered_parameter_value;
+		struct{
+			normalized_midi_level_t	phaser;
+			uint8_t const *			p_phaser_low_frequency_oscillation_lookup_table;
+			uint16_t				phaser_same_index_number;
+		};
 
-	bool						is_output_enabled;
+		struct{
+			uint16_t			registered_parameter_number;
+			uint16_t			registered_parameter_value;
+		};
+
+		struct{
+			midi_value_t		coarse_tuning_value;
+			int16_t				fine_tuning_value;
+			float				tuning_in_semitones;
+		};
+	};
+
+	struct{
+		struct{
+			midi_value_t		instrument_code;
+		};
+
+		struct{
+			normalized_midi_level_t	pressure;
+		};
+
+		struct{
+			midi_value_t		pitch_wheel_bend_range_in_semitones;
+			float				pitch_wheel_bend_in_semitones;
+		};
+	};
 } channel_controller_t;
 
 #define CHANNEL_CONTROLLER_INSTRUMENT_NOT_SPECIFIED		(-1)
