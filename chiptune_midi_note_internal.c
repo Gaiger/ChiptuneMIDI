@@ -29,13 +29,7 @@ static void finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const 
 			break;
 		}
 
-		update_oscillator_phase_increment(p_oscillator);
 		p_oscillator->amplitude = 0;
-
-		p_oscillator->pitch_detune_in_semitones = 0.0;
-		p_oscillator->vibrato_table_index = 0;
-		p_oscillator->vibrato_same_index_count = 0;
-
 		p_oscillator->envelope_state = EnvelopeStateAttack;
 		p_oscillator->envelope_same_index_count = 0;
 		p_oscillator->envelope_table_index = 0;
@@ -43,7 +37,16 @@ static void finalize_melodic_oscillator_setup(uint32_t const tick, int8_t const 
 
 		p_oscillator->midi_effect_association = MidiEffectNone;
 
+		p_oscillator->vibrato_table_index = 0;
+		p_oscillator->vibrato_same_index_count = 0;
+
 		p_oscillator->is_sostenuto_latched = false;
+
+		p_oscillator->tremolo_table_index = 0;
+		p_oscillator->tremolo_same_index_count = 0;
+
+		p_oscillator->pitch_detune_in_semitones = 0.0;
+		update_oscillator_phase_increment(p_oscillator);
 	} while(0);
 }
 
@@ -121,13 +124,14 @@ static int process_note_on_message(uint32_t const tick, int8_t const voice,
 	}
 	RESET_STATE_BITES(p_oscillator->state_bits);
 	SET_NOTE_ON(p_oscillator->state_bits);
-	p_oscillator->voice = voice;
-	p_oscillator->note = note;
-	p_oscillator->velocity = velocity;
+	p_oscillator->current_phase = 0;
 	p_oscillator->loudness = calculate_loudness(velocity, p_channel_controller->volume,
 											  p_channel_controller->pressure, p_channel_controller->expression,
 											  p_channel_controller->breath, p_channel_controller->is_soft_pedal_on);
-	p_oscillator->current_phase = 0;
+
+	p_oscillator->voice = voice;
+	p_oscillator->note = note;
+	p_oscillator->velocity = velocity;
 	do {
 		if(MIDI_PERCUSSION_CHANNEL == voice){
 			finalize_percussion_oscillator_setup(tick, voice, note, velocity, p_oscillator);
