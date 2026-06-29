@@ -252,104 +252,108 @@ static int check_occupied_oscillator_node_list(void)
 
 /**********************************************************************************/
 
-typedef struct _midi_effect_associate_link_t
+typedef struct _midi_effect_association_link
 {
 	uint8_t midi_effect_type;
 	int16_t associate_oscillator_indexes[SINGLE_EFFECT_MAX_ASSOCIATE_OSCILLATOR_NUMBER];
-	int16_t next_link_index;
-} midi_effect_associate_link_t;
+} midi_effect_association_link_t;
 
-#define NO_MIDI_EFFECT_ASSOCIATE_LINK				(-1)
+typedef struct _midi_effect_association_link_node
+{
+	midi_effect_association_link_t midi_effect_association_link;
+	int16_t next_node_index;
+} midi_effect_association_link_node_t;
+
+#define NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX				(-1)
 #define IS_MIDI_EFFECT_TYPE_MATCHED(TYPE_A, TYPE_B)	( ((TYPE_A) & (TYPE_B)) ? true : false)
 
 #if 1
-	#define MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY \
-													(256)
+	#define MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY (256)
 #else
-	#define MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY	(32)
+	#define MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY	(32)
 #endif
 
-typedef struct _midi_effect_associate_link_pool
+typedef struct _midi_effect_association_link_node_pool
 {
-	midi_effect_associate_link_t midi_effect_associate_links[MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY];
-} midi_effect_associate_link_pool_t;
+	midi_effect_association_link_node_t midi_effect_association_link_nodes[MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY];
+} midi_effect_association_link_node_pool_t;
 
 
 #ifdef _USE_STATIC_RESOURCE_ALLOCATION
-static midi_effect_associate_link_pool_t	s_associate_midi_effect_associate_link_pool;
-static midi_effect_associate_link_pool_t *	const s_midi_effect_associate_link_pool_t_pointer_table[1]
-											= {&s_associate_midi_effect_associate_link_pool};
-static int16_t const	s_number_of_associate_midi_effect_associate_link_pool = 1;
+static midi_effect_association_link_node_pool_t	s_midi_effect_association_link_node_pool;
+static midi_effect_association_link_node_pool_t *	const s_midi_effect_association_link_node_pool_pointer_table[1]
+											= {&s_midi_effect_association_link_node_pool};
+static int16_t const	s_number_of_midi_effect_association_link_node_pool = 1;
 #else
-static midi_effect_associate_link_pool_t *	s_midi_effect_associate_link_pool_t_pointer_table[(INT16_MAX + 1)/MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY];
-static int16_t			s_number_of_associate_midi_effect_associate_link_pool = 0;
+static midi_effect_association_link_node_pool_t *	s_midi_effect_association_link_node_pool_pointer_table[(INT16_MAX + 1)/MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY];
+static int16_t			s_number_of_midi_effect_association_link_node_pool = 0;
 #endif
 
-int16_t s_used_midi_effect_associate_link_number = 0;
+int16_t s_used_midi_effect_association_link_node_number = 0;
 
 /**********************************************************************************/
-
-static inline int16_t const get_midi_effect_associate_link_capacity()
+static inline int16_t const get_midi_effect_association_link_node_capacity()
 {
-	return s_number_of_associate_midi_effect_associate_link_pool * MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY;
+	return s_number_of_midi_effect_association_link_node_pool * MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY;
 }
 
 /**********************************************************************************/
-
-static midi_effect_associate_link_t * const get_midi_effect_associate_link_from_index(
-		int16_t const oscillator_index)
+static midi_effect_association_link_node_t * const get_midi_effect_association_link_node_from_index(
+		int16_t const node_index)
 {
-	return &s_midi_effect_associate_link_pool_t_pointer_table[
-			oscillator_index / MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY]
-				->midi_effect_associate_links[oscillator_index % MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY];
+	return &s_midi_effect_association_link_node_pool_pointer_table[
+			node_index / MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY]
+				->midi_effect_association_link_nodes[node_index % MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY];
 }
 
 /**********************************************************************************/
 
 #ifdef _USE_STATIC_RESOURCE_ALLOCATION
 /**********************************************************************************/
-static inline bool is_append_to_midi_effect_associate_link_pool_successfully(void){ return false; }
+static inline bool is_append_to_midi_effect_association_link_node_pool_successfully(void){ return false; }
 #else
 
 /**********************************************************************************/
-static int allocate_and_append_midi_effect_associate_link_pool(void)
+static int allocate_and_append_midi_effect_association_link_node_pool(void)
 {
 	int ret = 0;
 	do
 	{
-		midi_effect_associate_link_pool_t * const p_new_midi_effect_associate_link_pool
-			= (midi_effect_associate_link_pool_t*)chiptune_malloc(1 * sizeof(midi_effect_associate_link_pool_t));
+		midi_effect_association_link_node_pool_t * const p_new_midi_effect_association_link_node_pool
+			= (midi_effect_association_link_node_pool_t*)chiptune_malloc(1 * sizeof(midi_effect_association_link_node_pool_t));
 
-		if(NULL == p_new_midi_effect_associate_link_pool){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: allocate midi_effect_associate_link_pool_t fail\r\n");
+		if(NULL == p_new_midi_effect_association_link_node_pool){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: allocate midi_effect_association_link_node_pool_t fail\r\n");
 			ret = -1;
 			break;
 		}
-		for(int16_t i = 0; i < MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY; i++){
-			p_new_midi_effect_associate_link_pool->midi_effect_associate_links[i].midi_effect_type = MidiEffectNone;
+		for(int16_t i = 0; i < MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY; i++){
+			p_new_midi_effect_association_link_node_pool
+					->midi_effect_association_link_nodes[i]
+							.midi_effect_association_link.midi_effect_type = MidiEffectNone;
 		}
 
-		s_midi_effect_associate_link_pool_t_pointer_table[s_number_of_associate_midi_effect_associate_link_pool]
-				= p_new_midi_effect_associate_link_pool;
-		s_number_of_associate_midi_effect_associate_link_pool += 1;
+		s_midi_effect_association_link_node_pool_pointer_table[s_number_of_midi_effect_association_link_node_pool]
+				= p_new_midi_effect_association_link_node_pool;
+		s_number_of_midi_effect_association_link_node_pool += 1;
 	}while(0);
 
 	return ret;
 }
 
 /**********************************************************************************/
-static inline bool is_append_to_midi_effect_associate_link_pool_successfully(void)
+static inline bool is_append_to_midi_effect_association_link_node_pool_successfully(void)
 {
 	int ret = true;
 	do
 	{
-		if(INT16_MAX == s_used_midi_effect_associate_link_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_used_midi_effect_associate_link_number"
+		if(INT16_MAX == s_used_midi_effect_association_link_node_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_used_midi_effect_association_link_node_number"
 										 " reaches the CAP INT16_MAX\r\n");
 			ret = false;
 			break;
 		}
-		if(0 > allocate_and_append_midi_effect_associate_link_pool()){
+		if(0 > allocate_and_append_midi_effect_association_link_node_pool()){
 			ret = false;
 			break;
 		}
@@ -359,129 +363,129 @@ static inline bool is_append_to_midi_effect_associate_link_pool_successfully(voi
 #endif
 
 /**********************************************************************************/
-static bool is_unused_midi_effect_associate_link_available()
+static bool is_unused_midi_effect_association_link_node_available()
 {
 	bool ret = true;
-	if(get_midi_effect_associate_link_capacity() == s_used_midi_effect_associate_link_number){
-		ret = is_append_to_midi_effect_associate_link_pool_successfully();
+	if(get_midi_effect_association_link_node_capacity() == s_used_midi_effect_association_link_node_number){
+		ret = is_append_to_midi_effect_association_link_node_pool_successfully();
 	}
 	return ret;
 }
 
 /**********************************************************************************/
-
-static void mark_all_midi_effect_associate_links_unused(void)
+static void mark_all_midi_effect_association_link_nodes_unused(void)
 {
-	for(int16_t j = 0; j < s_number_of_associate_midi_effect_associate_link_pool; j++){
-		midi_effect_associate_link_pool_t * const p_midi_effect_associate_link_pool
-				= s_midi_effect_associate_link_pool_t_pointer_table[j];
-		for(int16_t i = 0; i < MIDI_EFFECT_ASSOCIATE_LINK_POOL_CAPACITY; i++){
-			p_midi_effect_associate_link_pool->midi_effect_associate_links[i].midi_effect_type = MidiEffectNone;
+	for(int16_t j = 0; j < s_number_of_midi_effect_association_link_node_pool; j++){
+		midi_effect_association_link_node_pool_t * const p_midi_effect_association_link_node_pool
+				= s_midi_effect_association_link_node_pool_pointer_table[j];
+		for(int16_t i = 0; i < MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY; i++){
+			p_midi_effect_association_link_node_pool->midi_effect_association_link_nodes[i]
+					.midi_effect_association_link.midi_effect_type = MidiEffectNone;
 		}
 	}
-	s_used_midi_effect_associate_link_number = 0;
+	s_used_midi_effect_association_link_node_number = 0;
 }
 
 /**********************************************************************************/
-
-static void release_all_midi_effect_associate_links(void)
+static void release_all_midi_effect_association_link_nodes(void)
 {
 #ifdef _USE_STATIC_RESOURCE_ALLOCATION
-	mark_all_midi_effect_associate_links_unused();
+	mark_all_midi_effect_association_link_nodes_unused();
 #else
-	for(int16_t j = 0; j < s_number_of_associate_midi_effect_associate_link_pool; j++){
-		chiptune_free(s_midi_effect_associate_link_pool_t_pointer_table[j]);
-		s_midi_effect_associate_link_pool_t_pointer_table[j] = NULL;
+	for(int16_t j = 0; j < s_number_of_midi_effect_association_link_node_pool; j++){
+		chiptune_free(s_midi_effect_association_link_node_pool_pointer_table[j]);
+		s_midi_effect_association_link_node_pool_pointer_table[j] = NULL;
 	}
-	s_number_of_associate_midi_effect_associate_link_pool = 0;
-	s_used_midi_effect_associate_link_number = 0;
+	s_number_of_midi_effect_association_link_node_pool = 0;
+	s_used_midi_effect_association_link_node_number = 0;
 #endif
 }
 
 /**********************************************************************************/
-static midi_effect_associate_link_t * acquire_midi_effect_associate_link(
-		int16_t * const p_midi_effect_associate_link_index)
+static midi_effect_association_link_node_t * acquire_midi_effect_association_link_node(
+		int16_t * const p_midi_effect_association_link_node_index)
 {
-	*p_midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
-	if(false == is_unused_midi_effect_associate_link_available()){
-		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all midi_effect_associate_link are used\r\n");
+	*p_midi_effect_association_link_node_index = NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX;
+	if(false == is_unused_midi_effect_association_link_node_available()){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: all midi_effect_association_link_node are used\r\n");
 		return NULL;
 	}
 
 	int16_t i;
-	for(i = 0; i < get_midi_effect_associate_link_capacity(); i++){
-		if(MidiEffectNone == get_midi_effect_associate_link_from_index(i)->midi_effect_type){
+	for(i = 0; i < get_midi_effect_association_link_node_capacity(); i++){
+		if(MidiEffectNone == get_midi_effect_association_link_node_from_index(i)
+				->midi_effect_association_link.midi_effect_type){
 			break;
 		}
 	}
 
-	midi_effect_associate_link_t * p_midi_effect_associate_link = NULL;
+	midi_effect_association_link_node_t * p_midi_effect_association_link_node = NULL;
 	do
 	{
-		if(get_midi_effect_associate_link_capacity() == i){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: available midi_effect_associate_link is not found\r\n");
+		if(get_midi_effect_association_link_node_capacity() == i){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: available midi_effect_association_link_node is not found\r\n");
 			break;
 		}
-		p_midi_effect_associate_link = get_midi_effect_associate_link_from_index(i);
-		s_used_midi_effect_associate_link_number += 1;
-		*p_midi_effect_associate_link_index = i;
-		memset(p_midi_effect_associate_link, 0, sizeof(midi_effect_associate_link_t));
-		p_midi_effect_associate_link->next_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+		p_midi_effect_association_link_node = get_midi_effect_association_link_node_from_index(i);
+		s_used_midi_effect_association_link_node_number += 1;
+		*p_midi_effect_association_link_node_index = i;
+		memset(p_midi_effect_association_link_node, 0, sizeof(midi_effect_association_link_node_t));
+		p_midi_effect_association_link_node->next_node_index = NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX;
 	} while(0);
 
-	return p_midi_effect_associate_link;
+	return p_midi_effect_association_link_node;
 }
 
 /**********************************************************************************/
-static midi_effect_associate_link_t * append_midi_effect_associate_link(
+static midi_effect_association_link_node_t * append_midi_effect_association_link_node(
 		oscillator_t * const p_oscillator)
 {
-	int16_t new_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
-	midi_effect_associate_link_t * const p_new_link
-			= acquire_midi_effect_associate_link(&new_link_index);
+	int16_t new_node_index = NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX;
+	midi_effect_association_link_node_t * const p_new_node
+			= acquire_midi_effect_association_link_node(&new_node_index);
 	do
 	{
-		if(NULL == p_new_link){
+		if(NULL == p_new_node){
 			break;
 		}
-		p_new_link->next_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+		p_new_node->next_node_index = NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX;
 
-		int16_t current_link_index = p_oscillator->midi_effect_associate_link_index;
-		if(NO_MIDI_EFFECT_ASSOCIATE_LINK == current_link_index){
-			p_oscillator->midi_effect_associate_link_index = new_link_index;
+		int16_t current_node_index = p_oscillator->midi_effect_association_link_node_index;
+		if(NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX == current_node_index){
+			p_oscillator->midi_effect_association_link_node_index = new_node_index;
 			break;
 		}
 
 		while(1)
 		{
-			midi_effect_associate_link_t * p_current_link
-					= get_midi_effect_associate_link_from_index(current_link_index);
-			if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_current_link->next_link_index){
-				p_current_link->next_link_index = new_link_index;
+			midi_effect_association_link_node_t * p_current_node
+					= get_midi_effect_association_link_node_from_index(current_node_index);
+			if(NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX == p_current_node->next_node_index){
+				p_current_node->next_node_index = new_node_index;
 				break;
 			}
-			current_link_index = p_current_link->next_link_index;
+			current_node_index = p_current_node->next_node_index;
 		}
 	} while(0);
 
-	return p_new_link;
+	return p_new_node;
 }
 
 /**********************************************************************************/
-static void discard_midi_effect_associate_links(oscillator_t * const p_oscillator)
+static void discard_midi_effect_association_link_nodes(oscillator_t * const p_oscillator)
 {
-	int16_t midi_effect_associate_link_index = p_oscillator->midi_effect_associate_link_index;
-	while(NO_MIDI_EFFECT_ASSOCIATE_LINK != midi_effect_associate_link_index)
+	int16_t midi_effect_association_link_node_index = p_oscillator->midi_effect_association_link_node_index;
+	while(NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX != midi_effect_association_link_node_index)
 	{
-		midi_effect_associate_link_t * const p_midi_effect_associate_link
-				= get_midi_effect_associate_link_from_index(midi_effect_associate_link_index);
-		int16_t const next_link_index = p_midi_effect_associate_link->next_link_index;
-		p_midi_effect_associate_link->midi_effect_type = MidiEffectNone;
-		p_midi_effect_associate_link->next_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
-		s_used_midi_effect_associate_link_number -= 1;
-		midi_effect_associate_link_index = next_link_index;
+		midi_effect_association_link_node_t * const p_midi_effect_association_link_node
+				= get_midi_effect_association_link_node_from_index(midi_effect_association_link_node_index);
+		int16_t const next_node_index = p_midi_effect_association_link_node->next_node_index;
+		p_midi_effect_association_link_node->midi_effect_association_link.midi_effect_type = MidiEffectNone;
+		p_midi_effect_association_link_node->next_node_index = NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX;
+		s_used_midi_effect_association_link_node_number -= 1;
+		midi_effect_association_link_node_index = next_node_index;
 	}
-	p_oscillator->midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+	p_oscillator->midi_effect_association_link_node_index = NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX;
 }
 
 /**********************************************************************************/
@@ -783,7 +787,7 @@ oscillator_t * acquire_oscillator(int16_t * const p_oscillator_index)
 		*p_oscillator_index = i;
 		p_oscillator = &get_oscillator_node_address_from_index(i)->oscillator;
 		memset(p_oscillator, 0, sizeof(oscillator_t));
-		p_oscillator->midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+		p_oscillator->midi_effect_association_link_node_index = NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX;
 		p_oscillator->phaser_filter_state_index = NO_PHASER_FILTER_STATE_INDEX;
 	} while(0);
 
@@ -803,7 +807,7 @@ oscillator_t * replicate_oscillator(int16_t const original_oscillator_index,
 		oscillator_t * const p_original_oscillator
 				= &get_oscillator_node_address_from_index(original_oscillator_index)->oscillator;
 		memcpy(p_replicated_oscillator, p_original_oscillator, sizeof(oscillator_t));
-		p_replicated_oscillator->midi_effect_associate_link_index = NO_MIDI_EFFECT_ASSOCIATE_LINK;
+		p_replicated_oscillator->midi_effect_association_link_node_index = NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX;
 		p_replicated_oscillator->phaser_filter_state_index = NO_PHASER_FILTER_STATE_INDEX;
 	}while(0);
 
@@ -862,7 +866,7 @@ int discard_oscillator(int16_t const oscillator_index)
 	oscillator_t * const p_oscillator = &get_oscillator_node_address_from_index(oscillator_index)->oscillator;
 
 	if(false == (true == IS_PERCUSSION_OSCILLATOR(p_oscillator))){
-		discard_midi_effect_associate_links(p_oscillator);
+		discard_midi_effect_association_link_nodes(p_oscillator);
 		if(NO_PHASER_FILTER_STATE_INDEX != p_oscillator->phaser_filter_state_index){
 			discard_phaser_filter_state_index(p_oscillator->phaser_filter_state_index);
 			p_oscillator->phaser_filter_state_index = NO_PHASER_FILTER_STATE_INDEX;
@@ -937,7 +941,7 @@ oscillator_t * get_oscillator_pointer_from_index(int16_t const oscillator_index)
 /**********************************************************************************/
 void clear_all_oscillators(void)
 {
-	mark_all_midi_effect_associate_links_unused();
+	mark_all_midi_effect_association_link_nodes_unused();
 	mark_all_phaser_filter_states_unused();
 	mark_all_oscillator_nodes_unused();
 }
@@ -945,7 +949,7 @@ void clear_all_oscillators(void)
 /**********************************************************************************/
 void destroy_all_oscillators(void)
 {
-	release_all_midi_effect_associate_links();
+	release_all_midi_effect_association_link_nodes();
 	release_all_phaser_filter_states();
 	release_all_oscillator_nodes();
 }
@@ -1000,15 +1004,16 @@ int store_associate_oscillator_indexes(uint8_t const midi_effect_type, int16_t c
 			break;
 		}
 
-		midi_effect_associate_link_t * const p_new_link
-				= append_midi_effect_associate_link(p_primary_oscillator);
-		if(NULL == p_new_link){
+		midi_effect_association_link_node_t * const p_new_node
+				= append_midi_effect_association_link_node(p_primary_oscillator);
+		if(NULL == p_new_node){
 			break;
 		}
-		p_new_link->midi_effect_type = midi_effect_type;
+		p_new_node->midi_effect_association_link.midi_effect_type = midi_effect_type;
 		int16_t const associate_oscillator_number = get_single_effect_associate_number(midi_effect_type);
 		for(int16_t i = 0; i < associate_oscillator_number; i++){
-			p_new_link->associate_oscillator_indexes[i] = p_associate_oscillator_indexes[i];
+			p_new_node->midi_effect_association_link.associate_oscillator_indexes[i]
+					= p_associate_oscillator_indexes[i];
 		}
 	}while(0);
 
@@ -1031,34 +1036,36 @@ int collect_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16
 			= &get_oscillator_node_address_from_index(root_oscillator_index)->oscillator;
 	int16_t subordinate_number = 0;
 	do{
-		if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_root_oscillator->midi_effect_associate_link_index){
+		if(NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX == p_root_oscillator->midi_effect_association_link_node_index){
 			break;
 		}
-		int16_t midi_effect_associate_link_index = p_root_oscillator->midi_effect_associate_link_index;
+		int16_t midi_effect_association_link_node_index = p_root_oscillator->midi_effect_association_link_node_index;
 
 		while(1)
 		{
-			midi_effect_associate_link_t * const p_midi_effect_associate_link
-					= get_midi_effect_associate_link_from_index(midi_effect_associate_link_index);
-			if(MidiEffectNone == p_midi_effect_associate_link->midi_effect_type){
-				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: midi_effect_associate_link index = %d is labeled as MidiEffectNone\r\n",
-								midi_effect_associate_link_index);
+			midi_effect_association_link_node_t * const p_midi_effect_association_link_node
+					= get_midi_effect_association_link_node_from_index(midi_effect_association_link_node_index);
+			midi_effect_association_link_t const * const p_midi_effect_association_link
+					= &p_midi_effect_association_link_node->midi_effect_association_link;
+			if(MidiEffectNone == p_midi_effect_association_link->midi_effect_type){
+				CHIPTUNE_PRINTF(cDeveloping, "ERROR :: midi_effect_association_link_node index = %d is labeled as MidiEffectNone\r\n",
+								midi_effect_association_link_node_index);
 				break;
 			}
 
 			int16_t const associate_oscillator_number
-					= get_single_effect_associate_number(p_midi_effect_associate_link->midi_effect_type);
+					= get_single_effect_associate_number(p_midi_effect_association_link->midi_effect_type);
 			do
 			{
 				if(false == IS_MIDI_EFFECT_TYPE_MATCHED(midi_effect_type,
-													   p_midi_effect_associate_link->midi_effect_type)){
+													   p_midi_effect_association_link->midi_effect_type)){
 					break;
 				}
 
 				if(NULL != p_subordinate_indexes){
 					for(int16_t i = 0; i < associate_oscillator_number; i++){
 						p_subordinate_indexes[subordinate_number + i]
-								= p_midi_effect_associate_link->associate_oscillator_indexes[i];
+								= p_midi_effect_association_link->associate_oscillator_indexes[i];
 					}
 				}
 				subordinate_number += associate_oscillator_number;
@@ -1068,14 +1075,14 @@ int collect_subordinate_oscillator_indexes(uint8_t const midi_effect_type, int16
 						= p_subordinate_indexes + subordinate_number * ( NULL != p_subordinate_indexes);
 				subordinate_number +=
 						collect_subordinate_oscillator_indexes(midi_effect_type,
-															   p_midi_effect_associate_link->associate_oscillator_indexes[i],
+															   p_midi_effect_association_link->associate_oscillator_indexes[i],
 															   p_moving_subordinate_indexes);
 			}
 
-			if(NO_MIDI_EFFECT_ASSOCIATE_LINK == p_midi_effect_associate_link->next_link_index){
+			if(NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX == p_midi_effect_association_link_node->next_node_index){
 				break;
 			}
-			midi_effect_associate_link_index = p_midi_effect_associate_link->next_link_index;
+			midi_effect_association_link_node_index = p_midi_effect_association_link_node->next_node_index;
 		}
 	}while(0);
 

@@ -61,7 +61,7 @@ union{
 		float		pitch_detune_in_semitones;
 
 		uint8_t		midi_effect_association;
-		int16_t		midi_effect_associate_link_index;//internal
+		int16_t		midi_effect_association_link_node_index;//internal
 		int16_t		phaser_filter_state_index;//internal
 		int32_t		mono_wave_amplitude;
 	};
