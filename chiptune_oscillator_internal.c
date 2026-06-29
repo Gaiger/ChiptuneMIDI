@@ -728,33 +728,44 @@ phaser_filter_state_t * get_phaser_filter_state_pointer(oscillator_t * p_oscilla
 }
 
 /**********************************************************************************/
-static int occupy_oscillator_node(int16_t const oscillator_index)
+static oscillator_node_t * occupy_one_oscillator_node(int16_t * const p_oscillator_index)
 {
-	if(UNOCCUPIED_OSCILLATOR != get_oscillator_node_address_from_index(oscillator_index)->oscillator.voice){
-		return -1;
+	*p_oscillator_index = UNOCCUPIED_OSCILLATOR;
+
+	oscillator_node_t * p_oscillator_node = NULL;
+	int16_t oscillator_index;
+	for(oscillator_index = 0; oscillator_index < get_oscillator_node_capacity(); oscillator_index++){
+		if(UNOCCUPIED_OSCILLATOR == get_oscillator_node_address_from_index(oscillator_index)->oscillator.voice){
+			p_oscillator_node = get_oscillator_node_address_from_index(oscillator_index);
+			break;
+		}
+	}
+
+	if(NULL == p_oscillator_node){
+		CHIPTUNE_PRINTF(cDeveloping, "ERROR :: available oscillator_node is not found\r\n");
+		return NULL;
 	}
 
 	do {
-		oscillator_node_t * const p_this_node
-				= get_oscillator_node_address_from_index(oscillator_index);
 		if(0 == s_occupied_oscillator_node_number){
-			p_this_node->previous_index = UNOCCUPIED_OSCILLATOR;
-			p_this_node->next_index = UNOCCUPIED_OSCILLATOR;
+			p_oscillator_node->previous_index = UNOCCUPIED_OSCILLATOR;
+			p_oscillator_node->next_index = UNOCCUPIED_OSCILLATOR;
 			s_occupied_oscillator_node_head_index = oscillator_index;
 			break;
 		}
 
 		get_oscillator_node_address_from_index(s_occupied_oscillator_node_last_index)->next_index
 				= oscillator_index;
-		p_this_node->previous_index = s_occupied_oscillator_node_last_index;
-		p_this_node->next_index = UNOCCUPIED_OSCILLATOR;
+		p_oscillator_node->previous_index = s_occupied_oscillator_node_last_index;
+		p_oscillator_node->next_index = UNOCCUPIED_OSCILLATOR;
 	} while(0);
 	s_occupied_oscillator_node_last_index = oscillator_index;
 	s_occupied_oscillator_node_number += 1;
+	*p_oscillator_index = oscillator_index;
 #ifdef _ENABLE_CHECK_OCCUPIED_OSCILLATOR_LIST
 	check_occupied_oscillator_node_list();
 #endif
-	return 0;
+	return p_oscillator_node;
 }
 
 /**********************************************************************************/
@@ -766,26 +777,14 @@ oscillator_t * acquire_oscillator(int16_t * const p_oscillator_index)
 		return NULL;
 	}
 
-	int16_t i;
-	for(i = 0; i < get_oscillator_node_capacity(); i++){
-		if(UNOCCUPIED_OSCILLATOR == get_oscillator_node_address_from_index(i)->oscillator.voice){
-			break;
-		}
-	}
-
 	oscillator_t * p_oscillator = NULL;
 	do
 	{
-		if(get_oscillator_node_capacity() == i){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: available oscillator is not found\r\n");
+		oscillator_node_t * const p_oscillator_node = occupy_one_oscillator_node(p_oscillator_index);
+		if(NULL == p_oscillator_node){
 			break;
 		}
-		if(0 != occupy_oscillator_node(i)){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: occupy oscillator_node %d fail\r\n", i);
-			break;
-		}
-		*p_oscillator_index = i;
-		p_oscillator = &get_oscillator_node_address_from_index(i)->oscillator;
+		p_oscillator = &p_oscillator_node->oscillator;
 		memset(p_oscillator, 0, sizeof(oscillator_t));
 		p_oscillator->midi_effect_association_link_node_index = NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX;
 		p_oscillator->phaser_filter_state_index = NO_PHASER_FILTER_STATE_INDEX;
