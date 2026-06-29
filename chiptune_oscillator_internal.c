@@ -814,12 +814,12 @@ oscillator_t * replicate_oscillator(int16_t const original_oscillator_index,
 }
 
 /**********************************************************************************/
-int discard_oscillator(int16_t const oscillator_index)
+static int vacate_occupied_oscillator_node(int16_t const oscillator_index)
 {
-	oscillator_node_t * const p_this_node
+	oscillator_node_t * const p_oscillator_node
 			= get_oscillator_node_address_from_index(oscillator_index);
-	int16_t const previous_index = p_this_node->previous_index;
-	int16_t const next_index = p_this_node->next_index;
+	int16_t const previous_index = p_oscillator_node->previous_index;
+	int16_t const next_index = p_oscillator_node->next_index;
 
 	do {
 		if(0 == s_occupied_oscillator_node_number){
@@ -833,9 +833,7 @@ int discard_oscillator(int16_t const oscillator_index)
 				return -2;
 			}
 		}
-	} while(0);
 
-	do {
 		if(1 == s_occupied_oscillator_node_number){
 			s_occupied_oscillator_node_head_index = UNOCCUPIED_OSCILLATOR;
 			s_occupied_oscillator_node_last_index = UNOCCUPIED_OSCILLATOR;
@@ -859,24 +857,39 @@ int discard_oscillator(int16_t const oscillator_index)
 		get_oscillator_node_address_from_index(previous_index)->next_index = next_index;
 		get_oscillator_node_address_from_index(next_index)->previous_index = previous_index;
 	} while (0);
-	p_this_node->previous_index = UNOCCUPIED_OSCILLATOR;
-	p_this_node->next_index = UNOCCUPIED_OSCILLATOR;
-
-	oscillator_t * const p_oscillator = &get_oscillator_node_address_from_index(oscillator_index)->oscillator;
-
-	if(false == (true == IS_PERCUSSION_OSCILLATOR(p_oscillator))){
-		discard_midi_effect_association_link_nodes(p_oscillator);
-		if(NO_PHASER_FILTER_STATE_INDEX != p_oscillator->phaser_filter_state_index){
-			discard_phaser_filter_state_index(p_oscillator->phaser_filter_state_index);
-			p_oscillator->phaser_filter_state_index = NO_PHASER_FILTER_STATE_INDEX;
-		}
-	}
-	p_oscillator->voice = UNOCCUPIED_OSCILLATOR;
+	p_oscillator_node->previous_index = UNOCCUPIED_OSCILLATOR;
+	p_oscillator_node->next_index = UNOCCUPIED_OSCILLATOR;
+	p_oscillator_node->oscillator.voice = UNOCCUPIED_OSCILLATOR;
 	s_occupied_oscillator_node_number -= 1;
 #ifdef _ENABLE_CHECK_OCCUPIED_OSCILLATOR_LIST
 	check_occupied_oscillator_node_list();
 #endif
 	return 0;
+}
+
+/**********************************************************************************/
+int discard_oscillator(int16_t const oscillator_index)
+{
+	oscillator_t * const p_oscillator = &get_oscillator_node_address_from_index(oscillator_index)->oscillator;
+	bool const is_percussion_oscillator = IS_PERCUSSION_OSCILLATOR(p_oscillator);
+	int ret = 0;
+	do
+	{
+		ret = vacate_occupied_oscillator_node(oscillator_index);
+		if(0 != ret){
+			break;
+		}
+
+		if(false == is_percussion_oscillator){
+			discard_midi_effect_association_link_nodes(p_oscillator);
+			if(NO_PHASER_FILTER_STATE_INDEX != p_oscillator->phaser_filter_state_index){
+				discard_phaser_filter_state_index(p_oscillator->phaser_filter_state_index);
+				p_oscillator->phaser_filter_state_index = NO_PHASER_FILTER_STATE_INDEX;
+			}
+		}
+	} while(0);
+
+	return ret;
 }
 
 /**********************************************************************************/
