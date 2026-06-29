@@ -178,8 +178,28 @@ NoteDurationWidget::NoteDurationWidget(MidSongManager *p_mid_song_manager, TuneM
 	m_last_sought_index(0),
 	m_last_tick_in_center(0)
 {
-	QSize size = QSize(parent->width() - (ONE_NAME_WIDTH + NOTE_NAME_PAINT_MARGIN_WIDTH),
-					   (m_drawn_highest_pitch - A0 + 1) * ONE_NAME_HEIGHT);
+	QScrollArea const *p_parent_scroll_area = nullptr;
+	QObject const *p_parent_object = QObject::parent();
+	while(nullptr != p_parent_object)
+	{
+		QScrollArea const * const p_scroll_area =
+						qobject_cast<QScrollArea const *>(p_parent_object);
+		if(nullptr != p_scroll_area){
+				p_parent_scroll_area = p_scroll_area;
+				break;
+		}
+		p_parent_object = p_parent_object->parent();
+	}
+
+#define DEFAULT_VERTICAL_SCROLLBAR_WIDTH				(18)
+	int vertical_scrollbar_width = DEFAULT_VERTICAL_SCROLLBAR_WIDTH;
+	if(nullptr != p_parent_scroll_area){
+		vertical_scrollbar_width = p_parent_scroll_area->verticalScrollBar()->sizeHint().width();
+	}
+
+	QSize size = QSize(
+				parent->width() - (ONE_NAME_WIDTH + NOTE_NAME_PAINT_MARGIN_WIDTH) - vertical_scrollbar_width,
+				(m_drawn_highest_pitch - A0 + 1) * ONE_NAME_HEIGHT);
 	QWidget::setFixedSize(size);
 
 	for(int j = 0; j < 2; j++){
