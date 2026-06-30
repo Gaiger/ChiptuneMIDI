@@ -10,6 +10,16 @@
 
 #include "chiptune_event_internal.h"
 
+#if (EVENT_POOL_CAPACITY > INT16_MAX)
+	#error EVENT_POOL_CAPACITY must not exceed INT16_MAX
+#endif
+
+#ifndef _USE_STATIC_RESOURCE_ALLOCATION
+	#if (MAX_EVENT_CAPACITY > INT16_MAX)
+		#error MAX_EVENT_CAPACITY must not exceed INT16_MAX
+	#endif
+#endif
+
 #ifdef _DEBUG
 #define _ENABLE_CHECK_EVENT_LIST
 #endif
@@ -32,10 +42,8 @@ typedef struct _event
 	int16_t next_event_index;
 } event_t;
 
-#ifdef _USE_STATIC_RESOURCE_ALLOCATION
-	#define EVENT_POOL_CAPACITY						(768)
-#else
-	#define EVENT_POOL_CAPACITY						(64)
+#ifndef EVENT_POOL_CAPACITY
+	#define EVENT_POOL_CAPACITY						(1024)
 #endif
 
 typedef struct _event_pool
@@ -49,7 +57,11 @@ static event_pool_t		s_event_pool;
 static event_pool_t *	const s_event_pool_pointer_table[1] = {&s_event_pool};
 static int16_t const	s_number_of_event_pool = 1;
 #else
-static event_pool_t *	s_event_pool_pointer_table[(INT16_MAX + 1)/EVENT_POOL_CAPACITY] = {NULL};
+#ifndef MAX_EVENT_CAPACITY
+	#define MAX_EVENT_CAPACITY						(INT16_MAX)
+#endif
+static event_pool_t *	s_event_pool_pointer_table[(MAX_EVENT_CAPACITY + EVENT_POOL_CAPACITY - 1)
+												   / EVENT_POOL_CAPACITY] = {NULL};
 static int16_t			s_number_of_event_pool = 0;
 #endif
 
@@ -105,15 +117,15 @@ static int allocate_and_append_event_pool(void)
 }
 
 /**********************************************************************************/
-
 static inline bool is_to_append_event_pool_successfully(void)
 {
 	int ret = true;
 	do
 	{
-		if(INT16_MAX == s_queued_event_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_queued_event_number"
-										 " reaches the CAP INT16_MAX\r\n");
+		if(MAX_EVENT_CAPACITY == s_queued_event_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_queued_event_number = %d"
+										 " reaches MAX_EVENT_CAPACITY\r\n",
+							s_queued_event_number);
 			ret = false;
 			break;
 		}

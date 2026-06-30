@@ -9,6 +9,32 @@
 
 #include "chiptune_oscillator_internal.h"
 
+#if (OSCILLATOR_POOL_CAPACITY > INT16_MAX)
+	#error OSCILLATOR_POOL_CAPACITY must not exceed INT16_MAX
+#endif
+
+#if (MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY > INT16_MAX)
+	#error MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY must not exceed INT16_MAX
+#endif
+
+#if (PHASER_FILTER_STATE_POOL_CAPACITY > INT16_MAX)
+	#error PHASER_FILTER_STATE_POOL_CAPACITY must not exceed INT16_MAX
+#endif
+
+#ifndef _USE_STATIC_RESOURCE_ALLOCATION
+	#if (MAX_OSCILLATOR_NODE_CAPACITY > INT16_MAX)
+		#error MAX_OSCILLATOR_NODE_CAPACITY must not exceed INT16_MAX
+	#endif
+
+	#if (MAX_MIDI_EFFECT_ASSOCIATION_LINK_NODE_CAPACITY > INT16_MAX)
+		#error MAX_MIDI_EFFECT_ASSOCIATION_LINK_NODE_CAPACITY must not exceed INT16_MAX
+	#endif
+
+	#if (MAX_PHASER_FILTER_STATE_CAPACITY > INT16_MAX)
+		#error MAX_PHASER_FILTER_STATE_CAPACITY must not exceed INT16_MAX
+	#endif
+#endif
+
 #ifdef _DEBUG
 #define _ENABLE_CHECK_OCCUPIED_OSCILLATOR_LIST
 #endif
@@ -47,6 +73,9 @@ void update_oscillator_phase_increment(oscillator_t * const p_oscillator)
 }
 
 /**********************************************************************************/
+#ifndef OSCILLATOR_POOL_CAPACITY
+	#define OSCILLATOR_POOL_CAPACITY			(512)
+#endif
 
 typedef struct _oscillator_node
 {
@@ -54,12 +83,6 @@ typedef struct _oscillator_node
 	int16_t previous_index;
 	int16_t next_index;
 } oscillator_node_t;
-
-#ifdef _USE_STATIC_RESOURCE_ALLOCATION
-	#define OSCILLATOR_POOL_CAPACITY			(512)
-#else
-	#define OSCILLATOR_POOL_CAPACITY			(64)
-#endif
 
 typedef struct _oscillator_node_pool
 {
@@ -72,7 +95,10 @@ static oscillator_node_pool_t	s_oscillator_node_pool;
 static oscillator_node_pool_t *	const s_oscillator_node_pool_pointer_table[1] = {&s_oscillator_node_pool};
 static int16_t const			s_number_of_oscillator_node_pool = 1;
 #else
-static oscillator_node_pool_t *	s_oscillator_node_pool_pointer_table[(INT16_MAX+1) / OSCILLATOR_POOL_CAPACITY] = {NULL};
+#ifndef MAX_OSCILLATOR_NODE_CAPACITY
+	#define MAX_OSCILLATOR_NODE_CAPACITY		(INT16_MAX)
+#endif
+static oscillator_node_pool_t *	s_oscillator_node_pool_pointer_table[(MAX_OSCILLATOR_NODE_CAPACITY + OSCILLATOR_POOL_CAPACITY - 1)/ OSCILLATOR_POOL_CAPACITY] = {NULL};
 static int16_t					s_number_of_oscillator_node_pool = 0;
 #endif
 
@@ -130,9 +156,10 @@ static inline bool is_to_append_oscillator_node_pool_successfully(void)
 	bool ret = true;
 	do
 	{
-		if(INT16_MAX == s_occupied_oscillator_node_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_node_number"
-										 " reaches the CAP INT16_MAX\r\n");
+		if(MAX_OSCILLATOR_NODE_CAPACITY == s_occupied_oscillator_node_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_occupied_oscillator_node_number = %d"
+										 " reaches MAX_OSCILLATOR_NODE_CAPACITY\r\n",
+							s_occupied_oscillator_node_number);
 			ret = false;
 			break;
 		}
@@ -267,10 +294,8 @@ typedef struct _midi_effect_association_link_node
 #define NO_MIDI_EFFECT_ASSOCIATION_LINK_NODE_INDEX				(-1)
 #define IS_MIDI_EFFECT_TYPE_MATCHED(TYPE_A, TYPE_B)	( ((TYPE_A) & (TYPE_B)) ? true : false)
 
-#if 1
-	#define MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY (256)
-#else
-	#define MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY	(32)
+#ifndef MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY
+	#define MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY	(256)
 #endif
 
 typedef struct _midi_effect_association_link_node_pool
@@ -285,7 +310,12 @@ static midi_effect_association_link_node_pool_t *	const s_midi_effect_associatio
 											= {&s_midi_effect_association_link_node_pool};
 static int16_t const	s_number_of_midi_effect_association_link_node_pool = 1;
 #else
-static midi_effect_association_link_node_pool_t *	s_midi_effect_association_link_node_pool_pointer_table[(INT16_MAX + 1)/MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY];
+#ifndef MAX_MIDI_EFFECT_ASSOCIATION_LINK_NODE_CAPACITY
+	#define MAX_MIDI_EFFECT_ASSOCIATION_LINK_NODE_CAPACITY	(INT16_MAX)
+#endif
+static midi_effect_association_link_node_pool_t *	s_midi_effect_association_link_node_pool_pointer_table[
+		(MAX_MIDI_EFFECT_ASSOCIATION_LINK_NODE_CAPACITY + MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY - 1)
+				/ MIDI_EFFECT_ASSOCIATION_LINK_NODE_POOL_CAPACITY];
 static int16_t			s_number_of_midi_effect_association_link_node_pool = 0;
 #endif
 
@@ -347,9 +377,10 @@ static inline bool is_append_to_midi_effect_association_link_node_pool_successfu
 	int ret = true;
 	do
 	{
-		if(INT16_MAX == s_used_midi_effect_association_link_node_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_used_midi_effect_association_link_node_number"
-										 " reaches the CAP INT16_MAX\r\n");
+		if(MAX_MIDI_EFFECT_ASSOCIATION_LINK_NODE_CAPACITY == s_used_midi_effect_association_link_node_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_used_midi_effect_association_link_node_number = %d"
+										 " reaches MAX_MIDI_EFFECT_ASSOCIATION_LINK_NODE_CAPACITY\r\n",
+							s_used_midi_effect_association_link_node_number);
 			ret = false;
 			break;
 		}
@@ -497,7 +528,9 @@ static void discard_midi_effect_association_link_nodes(oscillator_t * const p_os
 #define IS_PHASER_FILTER_STATE_UNUSED(PHASER_FILTER_STATE_POINTER) \
 	(PHASER_FILTER_STATE_UNUSED == (PHASER_FILTER_STATE_POINTER)->table_index)
 
-#define PHASER_FILTER_STATE_POOL_CAPACITY			(256)
+#ifndef PHASER_FILTER_STATE_POOL_CAPACITY
+	#define PHASER_FILTER_STATE_POOL_CAPACITY		(256)
+#endif
 
 typedef struct _phaser_filter_state_pool
 {
@@ -510,7 +543,12 @@ static phaser_filter_state_pool_t *	const s_phaser_filter_state_pool_pointer_tab
 											= {&s_phaser_filter_state_pool};
 static int16_t const	s_number_of_phaser_filter_state_pool = 1;
 #else
-static phaser_filter_state_pool_t *	s_phaser_filter_state_pool_pointer_table[(INT16_MAX + 1)/PHASER_FILTER_STATE_POOL_CAPACITY];
+#ifndef MAX_PHASER_FILTER_STATE_CAPACITY
+	#define MAX_PHASER_FILTER_STATE_CAPACITY		(INT16_MAX)
+#endif
+static phaser_filter_state_pool_t *	s_phaser_filter_state_pool_pointer_table[
+		(MAX_PHASER_FILTER_STATE_CAPACITY + PHASER_FILTER_STATE_POOL_CAPACITY - 1)
+				/ PHASER_FILTER_STATE_POOL_CAPACITY];
 static int16_t			s_number_of_phaser_filter_state_pool = 0;
 #endif
 
@@ -576,9 +614,10 @@ static inline bool is_append_to_phaser_filter_state_pool_successfully(void)
 	int ret = true;
 	do
 	{
-		if(INT16_MAX == s_used_phaser_filter_state_number){
-			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_used_phaser_filter_state_number"
-										 " reaches the CAP INT16_MAX\r\n");
+		if(MAX_PHASER_FILTER_STATE_CAPACITY == s_used_phaser_filter_state_number){
+			CHIPTUNE_PRINTF(cDeveloping, "ERROR :: s_used_phaser_filter_state_number = %d"
+										 " reaches MAX_PHASER_FILTER_STATE_CAPACITY\r\n",
+							s_used_phaser_filter_state_number);
 			ret = false;
 			break;
 		}
